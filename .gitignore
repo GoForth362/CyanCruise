@@ -5,6 +5,7 @@ logs/
 build/
 filestorage/
 script_modules/
+local_dataentity/
 
 # Gradle
 build
@@ -118,3 +119,5 @@ findbugs-*.xml
 
 *.hprof
 report-task.txt
+
+local_dataentity/
