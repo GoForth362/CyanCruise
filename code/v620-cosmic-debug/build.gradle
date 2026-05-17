@@ -23,4 +23,6 @@ task runDebugApplication(type: JavaExec) {
 	mainClass = 'v620.cosmic.debug.DebugApplication'
 	classpath = sourceSets.main.runtimeClasspath
 	workingDir = rootProject.projectDir
+	jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+			'--add-opens', 'java.base/java.lang.ref=ALL-UNNAMED'
 }
