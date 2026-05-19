@@ -11,7 +11,7 @@
 - `admin-frontend`：Vue 3 / Element Plus 管理端。
 - `body-lang-sidecar`：独立侧车模块，待后续确认语言和运行方式。
 
-当前项目 `CyanCruise` 是金蝶云苍穹 Cosmic Gradle 多模块二开工程，当前已切换为 JDK 17 编译配置，业务模块基本还是模板骨架。
+当前项目 `CyanCruise` 是金蝶云苍穹 Cosmic Gradle 多模块二开工程，当前仍按 Java 8 编译，业务模块基本还是模板骨架。
 
 ## 旧后端能力
 
@@ -44,8 +44,8 @@
 
 2. 运行模型和依赖生态仍然不同
 
-旧项目要求 Java 17，当前苍穹工程也已切换到 Java 17 编译。
-但这只解决语言版本问题，不能消除 Spring Boot 3 / Jakarta / JPA 与苍穹运行模型之间的差异。
+旧项目要求 Java 17，当前苍穹工程用 Java 8 编译。
+需要解决语言版本问题，消除 Spring Boot 3 / Jakarta / JPA 与苍穹运行模型之间的差异。
 迁移时仍然要避免把 Spring Boot 应用入口、Controller、Repository、JPA Entity 原样搬进苍穹工程。
 
 3. 数据访问方式不同
@@ -164,10 +164,37 @@ Spring Boot、JPA、Redis、JWT、Flyway、PDF、OSS、DashScope 等依赖需要
 
 ## 下一步执行清单
 
-- [ ] 读取 `CareerAgentServiceImpl` 完整逻辑和相关 DTO。
-- [ ] 分离纯规则输入/输出模型。
-- [ ] 在 `base-common` 新增 DTO。
-- [ ] 在 `base-helper` 新增规则服务。
-- [ ] 移除 Lombok、Spring、JPA 依赖。
-- [ ] 编译当前 Gradle 工程。
-- [ ] 再决定是否接入苍穹 WebAPI 或表单插件。
+- [x] 读取 `CareerAgentServiceImpl` 完整逻辑和相关 DTO。
+- [x] 分离纯规则输入/输出模型。
+- [x] 在 `base-common` 新增 DTO。
+- [x] 在 `base-helper` 新增规则服务。
+- [x] 移除 Lombok、Spring、JPA 依赖。
+- [x] 编译当前 Gradle 工程。
+- [x] 增加苍穹 WebAPI 薄入口，先暴露纯规则服务。
+- [x] 增加应用服务和数据源接口，隔离规则层与未来 BOS 数据读取。
+- [x] 梳理 Career Agent 最小数据模型。
+- [ ] 再决定是否接入表单插件、操作插件或真实数据模型。
+
+## 已完成迁移落点
+
+- `code/base/v620-cc001-base-common/src/main/java/v620/cc001/base/common/dto/career/CareerAgentTodayDto.java`
+- `code/base/v620-cc001-base-common/src/main/java/v620/cc001/base/common/dto/career/CareerAgentRuleInput.java`
+- `code/base/v620-cc001-base-common/src/main/java/v620/cc001/base/common/dto/career/UserProfileSnapshot.java`
+- `code/base/v620-cc001-base-helper/src/main/java/v620/base/helper/career/CareerAgentTodayRuleService.java`
+- `code/cloud01/v620-cc001-cloud01-app01/src/main/java/v620/cc001/cloud01/app01/mservice/CareerAgentRuleInputSource.java`
+- `code/cloud01/v620-cc001-cloud01-app01/src/main/java/v620/cc001/cloud01/app01/mservice/CareerAgentRuleInputSourceUnavailable.java`
+- `code/cloud01/v620-cc001-cloud01-app01/src/main/java/v620/cc001/cloud01/app01/mservice/CareerAgentTodayApplicationService.java`
+- `code/cloud01/v620-cc001-cloud01-app01/src/main/java/v620/cc001/cloud01/app01/webapi/CareerAgentWebApi.java`
+- `docs/career-agent-data-model.md`
+
+本轮只迁移 `CareerAgentServiceImpl#getToday` 的纯规则决策链。未迁移旧系统中的 Spring 事务、Repository、任务同步、Agent 状态刷新、LLM reason 生成、旧 Controller 语义改造。
+
+WebAPI 入口目前只做 `CareerAgentRuleInput` 到 `CareerAgentTodayRuleService` 的透传，用于验证苍穹侧调用链。它不读取苍穹数据模型，也不写入 Agent 状态。
+
+数据适配边界已预留在 `CareerAgentRuleInputSource`。当前默认实现会明确提示 BOS 数据模型尚未配置，避免在模型未创建前伪造数据读取逻辑。
+
+验证结果：
+
+- `.\gradlew.bat build` 通过。
+- `.\gradlew.bat clean build` 未完成，原因是现有 `build/libs/*.jar` 被本机进程占用，Gradle 无法删除旧构建目录；这不是新增代码编译错误。
+- `.\gradlew.bat :v620-cc001-cloud01-app01:compileJava` 通过，WebAPI 薄入口可编译。
