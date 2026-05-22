@@ -2,7 +2,6 @@
 
 ## Purpose
 定义 CyanCruise 职业测评核心的数据结构、提交评分、维度统计和画像生成规则，为后续用户画像、今日行动建议和测评页面接入提供稳定内核。
-
 ## Requirements
 ### Requirement: 表达测评量表结构
 系统 SHALL 使用 JDK 8 兼容 DTO 表达测评量表、题目和选项，且不得依赖 Spring、JPA、Lombok 或 Jackson 注解。
@@ -48,8 +47,13 @@
 - **THEN** 结果摘要由计数最高的前三个维度按降序拼接
 
 ### Requirement: 返回可写入用户画像的测评摘要
-评分结果 SHALL 包含量表 ID、量表标题、状态、画像摘要、维度计数和答案快照，以便后续写入 `UserProfileSnapshot.AssessmentBlock`。
+评分结果 SHALL 包含量表 ID、量表标题、状态、画像摘要、维度计数和答案快照，以便后续写入 `UserProfileSnapshot.AssessmentBlock`。应用服务 SHALL 能够把一次评分结果合并到指定用户的职业画像快照，并刷新统一画像。
 
 #### Scenario: 测评完成
 - **WHEN** 评分服务完成一次提交
 - **THEN** 返回状态为 `COMPLETED` 的结果，并包含画像摘要和维度计数
+
+#### Scenario: 测评结果写入画像快照
+- **WHEN** 用户提交测评并完成评分
+- **THEN** 应用服务把量表 ID、量表标题、画像摘要和完成时间写入该用户的 `AssessmentBlock`
+
