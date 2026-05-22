@@ -18,8 +18,8 @@
 | IPD 能力 | IPD 源位置 | 关键业务规则 | CyanCruise 目标位置 | 实现策略 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 业务主循环 | `AI_PRODUCT_HANDOFF.md` | 目标岗位驱动求职准备闭环 | `docs`、`openspec/specs` | 先固化规格，再逐项实现 | P0 | 已建立基线 change |
-| 用户画像 | `AgentProfileService`、`UserProfileSnapshotService`、`UserFactService`、`AgentUserProfile` | 汇总身份、目标岗位、测评、简历、面试、计划和偏好 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 DTO、helper、应用服务、WebAPI 与内存占位存储；待 datamodel 持久化适配 | P0 | 第一版已实现：`migrate-career-profile-onboarding` |
-| Onboarding | `frontend/src/pages/onboarding`、`onboardingSync.ts`、用户 profile snapshot API | 收集身份类型、目标岗位、是否已有简历 | `webapp`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成后端保存边界与合并语义；待 webapp 页面与 datamodel 持久化适配 | P0 | 第一版已实现：`migrate-career-profile-onboarding` |
+| 用户画像 | `AgentProfileService`、`UserProfileSnapshotService`、`UserFactService`、`AgentUserProfile` | 汇总身份、目标岗位、测评、简历、面试、计划和偏好 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 DTO、helper、应用服务、WebAPI 与内存占位存储；helper 规则已有单元测试；待 datamodel 持久化适配 | P0 | 第一版已实现：`migrate-career-profile-onboarding`，测试增强：`add-career-profile-onboarding-tests` |
+| Onboarding | `frontend/src/pages/onboarding`、`onboardingSync.ts`、用户 profile snapshot API | 收集身份类型、目标岗位、是否已有简历 | `webapp`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成后端保存边界与合并语义；合并规则已有单元测试；待 webapp 页面与 datamodel 持久化适配 | P0 | 第一版已实现：`migrate-career-profile-onboarding`，测试增强：`add-career-profile-onboarding-tests` |
 | AI 今日任务 | `CareerAgentService`、`CareerAgentController`、`AgentTask`、`AgentState` | 根据目标岗位、简历、测评、面试状态生成今日下一步 | `datamodel`、`code/cloud01/v620-cc001-cloud01-app01` | 先迁规则引擎，不迁自主 agent | P0 | 待迁移 |
 | 职业测评 | `AssessmentController`、`AssessmentService`、`AssessmentScale/Question/Option/Record/Answer`、`V5/V8/V10` SQL | 量表启用、题目排序、提交答案、生成结果记录 | `datamodel`、`code/cloud01/v620-cc001-cloud01-app01` | 抽取量表数据结构和评分规则 | P0 | 待迁移 |
 | 简历基础 | `ResumeController`、`ResumeService`、`Resume`、`FileService` | 保存简历文件 key、用户简历列表、详情、删除 | `datamodel`、`filestorage`、`code/cloud01/v620-cc001-cloud01-app01` | 先实现记录管理，再接诊断/生成 | P0 | 待迁移 |

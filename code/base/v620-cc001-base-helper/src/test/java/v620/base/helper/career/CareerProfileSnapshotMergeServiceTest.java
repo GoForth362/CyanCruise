@@ -1,0 +1,56 @@
+package v620.base.helper.career;
+
+import org.junit.jupiter.api.Test;
+import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
+import v620.cc001.base.common.dto.career.UserProfileSnapshot;
+
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+class CareerProfileSnapshotMergeServiceTest {
+
+    private final CareerProfileSnapshotMergeService service = new CareerProfileSnapshotMergeService();
+
+    @Test
+    void mergeOnboardingPreservesExistingSnapshotBlocks() {
+        UserProfileSnapshot snapshot = new UserProfileSnapshot();
+        UserProfileSnapshot.AssessmentBlock assessment = new UserProfileSnapshot.AssessmentBlock();
+        assessment.setScaleTitle("MBTI");
+        snapshot.setAssessment(assessment);
+        UserProfileSnapshot.ResumeBlock resume = new UserProfileSnapshot.ResumeBlock();
+        resume.setTitle("Java Resume");
+        snapshot.setResume(resume);
+
+        CareerProfileOnboardingRequest request = new CareerProfileOnboardingRequest();
+        request.setIdentityType("new_graduate");
+        request.setPainPoint("resume_weak");
+
+        UserProfileSnapshot merged = service.mergeOnboarding(snapshot, request);
+
+        assertEquals("MBTI", merged.getAssessment().getScaleTitle());
+        assertEquals("Java Resume", merged.getResume().getTitle());
+        assertEquals("new_graduate", merged.getOnboarding().getIdentityType());
+        assertEquals("resume_weak", merged.getOnboarding().getPainPoint());
+        assertNotNull(merged.getUpdatedAt());
+    }
+
+    @Test
+    void blankOnboardingTargetRoleDoesNotClearExistingPreference() {
+        UserProfileSnapshot snapshot = new UserProfileSnapshot();
+        UserProfileSnapshot.PreferencesBlock preferences = new UserProfileSnapshot.PreferencesBlock();
+        preferences.setTargetRole("Java Backend Engineer");
+        snapshot.setPreferences(preferences);
+        snapshot.setUpdatedAt(LocalDateTime.now().minusDays(1));
+
+        CareerProfileOnboardingRequest request = new CareerProfileOnboardingRequest();
+        request.setIdentityType("student");
+        request.setTargetRole("   ");
+
+        UserProfileSnapshot merged = service.mergeOnboarding(snapshot, request);
+
+        assertEquals("Java Backend Engineer", merged.getPreferences().getTargetRole());
+        assertEquals("student", merged.getOnboarding().getIdentityType());
+    }
+}

@@ -2,10 +2,9 @@
 
 ## Purpose
 Define how CyanCruise captures onboarding intake, maintains a cross-tool career profile snapshot, and derives a unified career profile for later CareerLoop capabilities.
-
 ## Requirements
 ### Requirement: Maintain a cross-tool user profile snapshot
-The system SHALL maintain a user profile snapshot with independent blocks for assessment, resume, interview, preferences, and onboarding so each migrated capability can update its own block without overwriting unrelated data.
+The system SHALL maintain a user profile snapshot with independent blocks for assessment, resume, interview, preferences, and onboarding so each migrated capability can update its own block without overwriting unrelated data. The snapshot merge helper SHALL have focused test coverage for preserving unrelated blocks and for blank target-role input not clearing existing preferences.
 
 #### Scenario: Merge onboarding into existing snapshot
 - **WHEN** onboarding data is submitted for a user who already has assessment or resume data
@@ -14,6 +13,10 @@ The system SHALL maintain a user profile snapshot with independent blocks for as
 #### Scenario: Read empty snapshot
 - **WHEN** no profile snapshot exists for a user
 - **THEN** the system returns an empty versioned snapshot rather than failing or returning null
+
+#### Scenario: Run snapshot merge tests
+- **WHEN** the helper module test suite runs
+- **THEN** tests verify onboarding merge preserves existing snapshot blocks and does not clear an existing target role with blank input
 
 ### Requirement: Capture onboarding intake fields
 The onboarding block SHALL capture identity type, stage, pain point, self-reported resume state, resume readiness status, timeline, education, weekly availability, priority help, recommended entry, and completion timestamp.
@@ -38,7 +41,7 @@ The system SHALL store target role in the profile preferences block and SHALL NO
 - **THEN** the system does not replace an existing non-empty target role with a blank value
 
 ### Requirement: Resolve target role by evidence priority
-The unified profile SHALL resolve target role using the priority order preferences, resume target job, interview position, explicit user input fact, then assessment suggested role.
+The unified profile SHALL resolve target role using the priority order preferences, resume target job, interview position, explicit user input fact, then assessment suggested role. The target-role priority SHALL have focused test coverage.
 
 #### Scenario: Preference overrides inferred role
 - **WHEN** preferences contain a target role and assessment also suggests roles
@@ -48,8 +51,12 @@ The unified profile SHALL resolve target role using the priority order preferenc
 - **WHEN** no preference, resume target job, interview position, or explicit user-input target role exists and assessment suggested roles are available
 - **THEN** the unified profile uses the first assessment suggested role as an inferred target
 
+#### Scenario: Run target resolution tests
+- **WHEN** the helper module test suite runs
+- **THEN** tests verify preference priority and assessment fallback behavior
+
 ### Requirement: Compute unified profile outputs
-The system SHALL produce a unified profile summary with personalization level, completeness score, current stage, target role source, readiness indicators, missing signals, and evidence.
+The system SHALL produce a unified profile summary with personalization level, completeness score, current stage, target role source, readiness indicators, missing signals, and evidence. The current-stage and readiness rules SHALL have focused test coverage for onboarding-only users.
 
 #### Scenario: Missing core signals
 - **WHEN** the user has no target role, assessment, resume, interview, or career plan
@@ -58,6 +65,10 @@ The system SHALL produce a unified profile summary with personalization level, c
 #### Scenario: Onboarding affects current stage
 - **WHEN** onboarding identity type is career switcher
 - **THEN** the unified profile current stage reflects career-switch positioning before later resume or interview optimization stages
+
+#### Scenario: Run onboarding profile derivation tests
+- **WHEN** the helper module test suite runs
+- **THEN** tests verify career-switch stage inference and self-reported resume readiness does not mark a real resume as present
 
 ### Requirement: Support user-supplied profile inputs
 The system SHALL accept optional user-supplied career inputs including target city, target industry, timeline, weekly hours, preferred task difficulty, graduate-school consideration, study-abroad consideration, and free-text career goal note.
@@ -79,3 +90,4 @@ The system SHALL expose application-level operations to read a snapshot, merge o
 #### Scenario: Web API calls merge onboarding
 - **WHEN** a web or form entry calls the onboarding operation
 - **THEN** the operation merges the snapshot, refreshes the unified profile, and returns the updated snapshot or profile result according to the API contract
+
