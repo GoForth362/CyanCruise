@@ -122,3 +122,5 @@ findbugs-*.xml
 report-task.txt
 
 local_dataentity/
+
+.codex
