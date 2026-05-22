@@ -1,4 +1,4 @@
-# assessment-core Specification
+# 职业测评核心规格
 
 ## Purpose
 定义 CyanCruise 职业测评核心的数据结构、提交评分、维度统计和画像生成规则，为后续用户画像、今日行动建议和测评页面接入提供稳定内核。
@@ -56,4 +56,3 @@
 #### Scenario: 测评结果写入画像快照
 - **WHEN** 用户提交测评并完成评分
 - **THEN** 应用服务把量表 ID、量表标题、画像摘要和完成时间写入该用户的 `AssessmentBlock`
-
