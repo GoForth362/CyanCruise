@@ -1,0 +1,12 @@
+cosmic.server.host=127.0.0.1
+cosmic.zk.port=2181
+cosmic.zk.user=zookeeper
+cosmic.zk.password=
+cosmic.mc.port=8090
+cosmic.web.port=8881
+cosmic.cluster.number=cosmic
+cosmic.tenant.number=ierp
+
+# Optional full overrides. Use these only when host/port fields are not enough.
+# cosmic.config.url=127.0.0.1:2181?user=zookeeper&password=your-password
+# cosmic.mc.url=http://127.0.0.1:8090/

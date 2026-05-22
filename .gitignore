@@ -96,6 +96,7 @@ coverage.ec
 .pmd
 
 config.client.*
+debug-local.properties
 
 temp/
 *.pid
