@@ -9,6 +9,7 @@
 dependencies {
 	api project(':v620-cc001-base-common')
 	api project(':v620-cc001-base-helper')
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
 } 
 
 
