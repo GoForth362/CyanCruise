@@ -1,12 +1,15 @@
 package v620.cc001.base.common.dto.career;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
  * Cross-tool user portrait copied from IPD without Spring, Jackson, JPA, or Lombok coupling.
  */
-public class UserProfileSnapshot {
+public class UserProfileSnapshot implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private Integer version = 1;
     private LocalDateTime updatedAt;
@@ -72,7 +75,8 @@ public class UserProfileSnapshot {
         this.onboarding = onboarding;
     }
 
-    public static class AssessmentBlock {
+    public static class AssessmentBlock implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long lastRecordId;
         private Long scaleId;
         private String scaleTitle;
@@ -129,7 +133,8 @@ public class UserProfileSnapshot {
         }
     }
 
-    public static class ResumeBlock {
+    public static class ResumeBlock implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long lastResumeId;
         private String lastResumeKey;
         private String title;
@@ -186,7 +191,8 @@ public class UserProfileSnapshot {
         }
     }
 
-    public static class InterviewBlock {
+    public static class InterviewBlock implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Long lastInterviewId;
         private String positionName;
         private String difficulty;
@@ -252,7 +258,8 @@ public class UserProfileSnapshot {
         }
     }
 
-    public static class PreferencesBlock {
+    public static class PreferencesBlock implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String targetRole;
         private String interviewMode;
 
@@ -273,7 +280,8 @@ public class UserProfileSnapshot {
         }
     }
 
-    public static class OnboardingBlock {
+    public static class OnboardingBlock implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String identityType;
         private String stage;
         private String painPoint;
@@ -375,7 +383,8 @@ public class UserProfileSnapshot {
         }
     }
 
-    public static class EducationBlock {
+    public static class EducationBlock implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String school;
         private String major;
         private String degree;

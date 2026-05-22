@@ -1,5 +1,6 @@
 package v620.cc001.base.common.dto.career;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -9,7 +10,9 @@ import java.util.Map;
 /**
  * Unified career profile derived from snapshot blocks and user-supplied facts.
  */
-public class CareerUserProfileDto {
+public class CareerUserProfileDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String personalizationLevel;
     private Integer completenessScore;
@@ -84,7 +87,8 @@ public class CareerUserProfileDto {
         this.evidence = evidence;
     }
 
-    public static class TargetRole {
+    public static class TargetRole implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String role;
         private String source;
         private BigDecimal confidence;
@@ -114,7 +118,8 @@ public class CareerUserProfileDto {
         }
     }
 
-    public static class Readiness {
+    public static class Readiness implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Integer overallPercent;
         private Integer directionClarityPercent;
         private Integer resumeReadinessPercent;
@@ -216,7 +221,8 @@ public class CareerUserProfileDto {
         }
     }
 
-    public static class Behavior {
+    public static class Behavior implements Serializable {
+        private static final long serialVersionUID = 1L;
         private Integer streakDays;
         private Integer weeklyDays;
         private Integer todayCompleted;
@@ -264,7 +270,8 @@ public class CareerUserProfileDto {
         }
     }
 
-    public static class MissingSignal {
+    public static class MissingSignal implements Serializable {
+        private static final long serialVersionUID = 1L;
         private String key;
         private String label;
         private String priority;

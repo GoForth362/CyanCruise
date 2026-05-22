@@ -21,7 +21,7 @@ public class CareerProfileApplicationService {
     private final CareerProfileBuildService buildService;
 
     public CareerProfileApplicationService() {
-        this(new InMemoryCareerProfileStorage(), new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
+        this(new FileCareerProfileStorage(), new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
     }
 
     public CareerProfileApplicationService(CareerProfileStorage storage,
