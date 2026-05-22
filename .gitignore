@@ -96,6 +96,7 @@ coverage.ec
 .pmd
 
 config.client.*
+debug-local.properties
 
 temp/
 *.pid
@@ -121,3 +122,5 @@ findbugs-*.xml
 report-task.txt
 
 local_dataentity/
+
+.codex

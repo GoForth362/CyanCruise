@@ -9,12 +9,18 @@ package v620.cosmic.debug;
 
 import kd.cosmic.debug.tools.CosmicLauncher;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 /**
  * 启动本地应用程序(微服务节点)
  */
 public class DebugApplication {
-	
-	
+
+    private static final String LOCAL_CONFIG_FILE = "debug-local.properties";
+    private static final Properties LOCAL_CONFIG = loadLocalConfig();
 
     public static void main(String[] args) {
     	
@@ -22,23 +28,96 @@ public class DebugApplication {
     	
         CosmicLauncher cosmic = new CosmicLauncher(false);
 
-        cosmic.setClusterNumber("cosmic");
-        cosmic.setTenantNumber("ierp");
-        
-//        cosmic.setConfigUrl("127.0.0.1:2181?user=zookeeper&password=xxx");
-        cosmic.setConfigUrl("127.0.0.1:2181?user=zookeeper&password=20041231RU");
-        
-//        cosmic.setMcServerUrl("http://127.0.0.1:8090");
-        cosmic.setMcServerUrl("http://127.0.0.1:8090/"); 
-        
-//        cosmic.setFsServerUrl("127.0.0.1", 8100);
-//        cosmic.setImageServerUrl("127.0.0.1", 8100);
+        String serverHost = config("cosmic.server.host", "COSMIC_SERVER_HOST", "127.0.0.1");
+        String zkUser = config("cosmic.zk.user", "COSMIC_ZK_USER", "zookeeper");
+        String zkPassword = config("cosmic.zk.password", "COSMIC_ZK_PASSWORD", "");
+        String configUrl = config("cosmic.config.url", "COSMIC_CONFIG_URL",
+                buildConfigUrl(serverHost, intConfig("cosmic.zk.port", "COSMIC_ZK_PORT", 2181), zkUser, zkPassword));
+        String mcUrl = config("cosmic.mc.url", "COSMIC_MC_URL",
+                "http://" + serverHost + ":" + intConfig("cosmic.mc.port", "COSMIC_MC_PORT", 8090) + "/");
+
+        cosmic.setClusterNumber(config("cosmic.cluster.number", "COSMIC_CLUSTER_NUMBER", "cosmic"));
+        cosmic.setTenantNumber(config("cosmic.tenant.number", "COSMIC_TENANT_NUMBER", "ierp"));
+        cosmic.setConfigUrl(configUrl);
+        cosmic.setMcServerUrl(mcUrl);
         
         // 自定义本地苍穹调试服务的端口
-        cosmic.setCosmicWebPort(8881);
+        cosmic.setCosmicWebPort(intConfig("cosmic.web.port", "COSMIC_WEB_PORT", 8881));
 
         cosmic.start();
-        
-        
+    }
+
+    private static String buildConfigUrl(String host, int port, String user, String password) {
+        String connectString = host + ":" + port;
+        if (isBlank(user) || isBlank(password)) {
+            return connectString;
+        }
+        return connectString + "?user=" + user + "&password=" + password;
+    }
+
+    private static int intConfig(String propertyKey, String envKey, int defaultValue) {
+        String value = config(propertyKey, envKey, String.valueOf(defaultValue));
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    private static String config(String propertyKey, String envKey, String defaultValue) {
+        String value = System.getProperty(propertyKey);
+        if (!isBlank(value)) {
+            return value.trim();
+        }
+        value = System.getenv(envKey);
+        if (!isBlank(value)) {
+            return value.trim();
+        }
+        value = LOCAL_CONFIG.getProperty(propertyKey);
+        if (!isBlank(value)) {
+            return value.trim();
+        }
+        return defaultValue;
+    }
+
+    private static Properties loadLocalConfig() {
+        Properties properties = new Properties();
+        File file = findLocalConfig();
+        if (file == null || !file.isFile()) {
+            return properties;
+        }
+
+        FileInputStream input = null;
+        try {
+            input = new FileInputStream(file);
+            properties.load(input);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to load " + file.getAbsolutePath(), e);
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException ignored) {
+                    // Ignore close failure for local debug configuration.
+                }
+            }
+        }
+        return properties;
+    }
+
+    private static File findLocalConfig() {
+        File dir = new File(System.getProperty("user.dir"));
+        while (dir != null) {
+            File file = new File(dir, LOCAL_CONFIG_FILE);
+            if (file.isFile()) {
+                return file;
+            }
+            dir = dir.getParentFile();
+        }
+        return null;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().length() == 0;
     }
 }
