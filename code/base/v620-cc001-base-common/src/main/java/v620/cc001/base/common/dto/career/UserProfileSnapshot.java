@@ -275,7 +275,15 @@ public class UserProfileSnapshot {
 
     public static class OnboardingBlock {
         private String identityType;
+        private String stage;
+        private String painPoint;
         private String hasResume;
+        private String resumeStatus;
+        private String timeline;
+        private EducationBlock education;
+        private String weeklyAvailability;
+        private String priorityHelp;
+        private String recommendedEntry;
         private String onboardingCompletedAt;
 
         public String getIdentityType() {
@@ -286,6 +294,22 @@ public class UserProfileSnapshot {
             this.identityType = identityType;
         }
 
+        public String getStage() {
+            return stage;
+        }
+
+        public void setStage(String stage) {
+            this.stage = stage;
+        }
+
+        public String getPainPoint() {
+            return painPoint;
+        }
+
+        public void setPainPoint(String painPoint) {
+            this.painPoint = painPoint;
+        }
+
         public String getHasResume() {
             return hasResume;
         }
@@ -294,12 +318,99 @@ public class UserProfileSnapshot {
             this.hasResume = hasResume;
         }
 
+        public String getResumeStatus() {
+            return resumeStatus;
+        }
+
+        public void setResumeStatus(String resumeStatus) {
+            this.resumeStatus = resumeStatus;
+        }
+
+        public String getTimeline() {
+            return timeline;
+        }
+
+        public void setTimeline(String timeline) {
+            this.timeline = timeline;
+        }
+
+        public EducationBlock getEducation() {
+            return education;
+        }
+
+        public void setEducation(EducationBlock education) {
+            this.education = education;
+        }
+
+        public String getWeeklyAvailability() {
+            return weeklyAvailability;
+        }
+
+        public void setWeeklyAvailability(String weeklyAvailability) {
+            this.weeklyAvailability = weeklyAvailability;
+        }
+
+        public String getPriorityHelp() {
+            return priorityHelp;
+        }
+
+        public void setPriorityHelp(String priorityHelp) {
+            this.priorityHelp = priorityHelp;
+        }
+
+        public String getRecommendedEntry() {
+            return recommendedEntry;
+        }
+
+        public void setRecommendedEntry(String recommendedEntry) {
+            this.recommendedEntry = recommendedEntry;
+        }
+
         public String getOnboardingCompletedAt() {
             return onboardingCompletedAt;
         }
 
         public void setOnboardingCompletedAt(String onboardingCompletedAt) {
             this.onboardingCompletedAt = onboardingCompletedAt;
+        }
+    }
+
+    public static class EducationBlock {
+        private String school;
+        private String major;
+        private String degree;
+        private String graduationYear;
+
+        public String getSchool() {
+            return school;
+        }
+
+        public void setSchool(String school) {
+            this.school = school;
+        }
+
+        public String getMajor() {
+            return major;
+        }
+
+        public void setMajor(String major) {
+            this.major = major;
+        }
+
+        public String getDegree() {
+            return degree;
+        }
+
+        public void setDegree(String degree) {
+            this.degree = degree;
+        }
+
+        public String getGraduationYear() {
+            return graduationYear;
+        }
+
+        public void setGraduationYear(String graduationYear) {
+            this.graduationYear = graduationYear;
         }
     }
 }
