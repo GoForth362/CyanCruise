@@ -6,6 +6,7 @@ cosmic.mc.port=8090
 cosmic.web.port=8881
 cosmic.cluster.number=cosmic
 cosmic.tenant.number=ierp
+vector.es.url=http://10.0.0.8:9200/
 
 # Optional full overrides. Use these only when host/port fields are not enough.
 # cosmic.config.url=127.0.0.1:2181?user=zookeeper&password=your-password
