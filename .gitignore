@@ -97,6 +97,7 @@ coverage.ec
 
 config.client.*
 debug-local.properties
+gradle.properties
 
 temp/
 *.pid
