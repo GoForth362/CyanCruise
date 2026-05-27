@@ -16,11 +16,25 @@ import v620.cc001.base.common.dto.career.CareerAgentTodayDto;
 @ApiMapping("/cc001/career-agent")
 public class CareerAgentWebApi {
 
-    private final CareerAgentTodayApplicationService todayApplicationService = new CareerAgentTodayApplicationService();
+    private final CareerAgentTodayApplicationService todayApplicationService;
+
+    public CareerAgentWebApi() {
+        this(new CareerAgentTodayApplicationService());
+    }
+
+    CareerAgentWebApi(CareerAgentTodayApplicationService todayApplicationService) {
+        this.todayApplicationService = todayApplicationService;
+    }
 
     @ApiPostMapping(value = "/today", desc = "生成今日职业规划建议", methodParamNames = {"input"})
     public @ApiResponseBody(value = "今日职业规划建议") CareerAgentTodayDto today(
             @ApiRequestBody(value = "规则输入", required = true) CareerAgentRuleInput input) {
         return todayApplicationService.recommend(input);
+    }
+
+    @ApiPostMapping(value = "/today/get", desc = "按用户生成今日职业规划建议", methodParamNames = {"userId"})
+    public @ApiResponseBody(value = "今日职业规划建议") CareerAgentTodayDto todayByUserId(
+            @ApiRequestBody(value = "用户ID", required = true) String userId) {
+        return todayApplicationService.recommendByUserId(userId);
     }
 }
