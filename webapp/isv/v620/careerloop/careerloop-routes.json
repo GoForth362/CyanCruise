@@ -186,6 +186,42 @@
       ]
     },
     {
+      "key": "employment-insight",
+      "title": "就业洞察",
+      "ipdPaths": ["pages/cdut-employment/index", "pages/cdut-employment/detail"],
+      "target": "index.html#employment-insight",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "employment insight",
+          "method": "POST",
+          "path": "/cc001/career-employment/insight/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "EmploymentInsightDto",
+          "fallback": "Show missing identity, unsupported school, no source, or pending verification state without borrowing another school's metrics."
+        }
+      ]
+    },
+    {
+      "key": "career-resources",
+      "title": "资源入口",
+      "ipdPaths": ["pages/home/index", "api/home.ts"],
+      "target": "index.html#career-resources",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "career resource feed",
+          "method": "POST",
+          "path": "/cc001/career-employment/resources/list",
+          "body": ["userId"],
+          "userIdRequired": false,
+          "dto": "CareerResourceFeedDto",
+          "fallback": "Show an empty resources state and keep the workbench navigable."
+        }
+      ]
+    },
+    {
       "key": "interview",
       "title": "模拟面试",
       "ipdPaths": [
@@ -258,9 +294,9 @@
       "reason": "等待任务模型和生产消息渠道稳定。"
     },
     {
-      "name": "CDUT 就业内容详情",
-      "ipdPaths": ["pages/cdut-employment/index", "pages/cdut-employment/detail"],
-      "reason": "P2 内容资源能力未纳入首轮主循环入口。"
+      "name": "外部就业内容抓取/全文详情",
+      "ipdPaths": ["pages/cdut-employment/detail", "HomeContentRefreshJob", "CdutEmploymentInsightServiceImpl#refreshSources"],
+      "reason": "本轮只迁移只读洞察和资源卡片契约；外部抓取、PDF/HTML 解析和全文内容详情待后续平台适配。"
     },
     {
       "name": "管理后台",

@@ -51,19 +51,26 @@
       route: "#assistant"
     },
     {
+      key: "employment-insight",
+      title: "就业洞察",
+      icon: "业",
+      summary: "按学校、专业和目标岗位查看可追溯就业来源、趋势和覆盖状态。",
+      state: "入口可用",
+      route: "#employment-insight"
+    },
+    {
+      key: "career-resources",
+      title: "资源入口",
+      icon: "源",
+      summary: "查看文章、视频、咨询提示和职业路径资源卡片。",
+      state: "入口可用",
+      route: "#career-resources"
+    },
+    {
       key: "messages",
       title: "消息提醒",
       icon: "信",
       summary: "任务通知和订阅消息等待后续迁移。",
-      state: "后续迁移",
-      route: "#pending",
-      pending: true
-    },
-    {
-      key: "employment",
-      title: "就业资源",
-      icon: "源",
-      summary: "CDUT 就业内容和资源详情暂不纳入首轮入口。",
       state: "后续迁移",
       route: "#pending",
       pending: true
@@ -86,7 +93,9 @@
     resumes: "/cc001/resume/list",
     plan: "/cc001/career-plan/summary",
     interviews: "/cc001/interview/list",
-    sessions: "/cc001/assistant-chat/session/list"
+    sessions: "/cc001/assistant-chat/session/list",
+    employmentInsight: "/cc001/career-employment/insight/get",
+    careerResources: "/cc001/career-employment/resources/list"
   };
 
   var els = {};
@@ -350,7 +359,7 @@
   function scrollToRoute(route) {
     var id = route || "workbench";
     var node = id === "onboarding" ? $("onboarding") : $("today-action");
-    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant") {
+    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources") {
       showMessage("info", "入口已就绪", "请在苍穹挂载后对接 " + id + " 对应页面状态和 WebAPI。");
     }
     if (node && node.scrollIntoView) {

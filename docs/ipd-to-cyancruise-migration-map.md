@@ -27,7 +27,7 @@
 | 职业计划 | `CareerPlanService`、`CareerController`、`UserCareerPlan` | 按目标岗位和用户状态生成计划摘要 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 摘要规则、默认计划、可替换存储边界、应用服务、Cosmic WebAPI、画像 `hasPlan` 和今日行动周重点接入；待 AI 生成、最终 Cosmic datamodel、计划页面和周复盘 | P1 | 职业计划摘要后端基础已实现：`migrate-career-plan-summary` |
 | 模拟面试 | `InterviewController`、`InterviewService`、`Interview/InterviewMessage/InterviewQuestion` | 开始面试、对话、结束、报告、历史 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 完成 JDK 8 DTO、纯 Java helper、会话/消息/报告摘要存储边界、应用服务、Cosmic WebAPI、画像 interview block 同步和聚焦测试；待题库管理、AI 追问/报告生成、语音/身体语言、通知、webapp 页面和最终 Cosmic datamodel | P1 | 模拟面试基础会话与报告已实现：`migrate-interview-core` |
 | 助手聊天 | `ChatController`、`ChatHistoryController`、`AiPersonas`、`AssistantSession/Message` | 多角色提示词共用聊天基础设施、会话历史、消息持久化和上下文组装 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java persona/helper、聊天生成与上下文可替换边界、会话/消息存储边界、应用服务、Cosmic WebAPI 和聚焦测试；待真实 AI、function calling、SSE、长期记忆摘要生成、事实抽取、webapp 页面和最终 Cosmic datamodel | P1 | 助手聊天后端基础已实现：`migrate-assistant-chat` |
-| 就业洞察/资源 | `CdutEmploymentInsightService`、`HomepageController`、home 实体 | 提供文章、视频、就业记录和资源搜索 | `datamodel`、`webapp` | 延后，只迁业务主循环需要的内容入口 | P2 | 待迁移 |
+| 就业洞察/资源 | `CdutEmploymentInsightService`、`HomepageController`、home 实体 | 提供文章、视频、就业记录和资源搜索 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移主循环需要的只读就业洞察、来源覆盖审计和资源卡片入口；外部抓取/全文详情/运营后台后续平台适配 | P2 | 后端契约与 webapp 入口迁移中：`migrate-employment-insights-resources` |
 | 通知/订阅 | `NotificationService`、`WechatSubscribeService`、`WeeklyReportJob` | 任务通知、周报、微信订阅 | `code/cloud01/v620-cc001-cloud01-app01` | 等核心任务模型稳定后迁移 | P2 | 待迁移 |
 | 管理后台 | `AdminController`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `webapp`、Cosmic 管理能力 | 按平台能力重新设计 | P2 | 待迁移 |
 
@@ -88,3 +88,16 @@
 | 迁移内容 | 重建 CareerLoop 首个 webapp 工作台入口，提供目标岗位/画像状态、准备度、今日行动、onboarding gate、主循环入口、pending 能力提示、响应式布局和可检查 workflow 视觉资产 |
 | 暂不迁移 | IPD Vue/uni-app 源码、Pinia/store、Vite/uView、小程序 tabBar、消息中心、微信订阅、CDUT 就业详情、管理后台、文件上传预览、语音/数字人面试、生产登录态和前端流式聊天 |
 | 验证方式 | OpenSpec 严格校验、webapp 静态资源/route-map 检查、JDK 8 `.\gradlew.bat clean build` |
+
+## 就业洞察/资源
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-employment-insights-resources` |
+| branch | `codex/migrate-employment-insights-resources` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\controller\CdutEmploymentInsightController.java`、`service\CdutEmploymentInsightService.java`、`service\impl\CdutEmploymentInsightServiceImpl.java`、`model\dto\CdutEmploymentInsightDto.java`、`model\entity\CdutEmploymentRecord.java`、`db\migration\V16__cdut_employment_insights.sql`、`V20__employment_records_school.sql`、`controller\HomepageController.java`、`model\entity\HomeArticle.java`、`HomeVideo.java`、`HomeConsultation.java`、`model\dto\HomeConsultationFeedDto.java`、`F:\Project\IPD\frontend\src\api\cdutEmployment.ts`、`api\home.ts`、`pages\cdut-employment\index.vue`、`pages\cdut-employment\detail.vue`、`pages\home\index.vue` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的就业洞察/资源 DTO、`code/base/v620-cc001-base-helper` 的匹配/覆盖审计/helper 规则、`code/cloud01/v620-cc001-cloud01-app01` 的应用服务、存储边界和 Cosmic WebAPI、`webapp/isv/v620/careerloop` 的 route/API 映射与入口卡片、`openspec/specs/employment-insights-resources/spec.md` |
+| 数据/接口映射 | 用户画像中的 school、major、targetRole 映射到 `EmploymentInsightProfileContext`；公开就业来源映射到 `EmploymentInsightRecordDto`，保留 school、year、sourceTitle、sourceUrl、sourceType、majorKeyword、careerKeyword、employmentRate、postgraduateRate、destinationSummary、rawExcerpt、fetchedAt；输出 `EmploymentInsightDto` 的 status、summary、latest metrics、trend、coverage、sources；资源文章/视频/咨询/职业路径统一映射为 `CareerResourceCardDto` 和 `CareerResourceFeedDto`；WebAPI 为 `/cc001/career-employment/insight/get` 与 `/cc001/career-employment/resources/list` |
+| 迁移内容 | JDK 8 DTO、支持学校归一、来源评分、趋势聚合、覆盖审计、无学校/未支持学校/无指标/缺目标岗位降级、资源卡片 feed、只读应用服务、内存型可替换存储边界、Cosmic WebAPI、webapp route/API map 和静态入口卡片 |
+| 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、Java 17 `HttpClient`、PDFBox、Redis、Bilibili 抓取、外部刷新任务、图片代理、Vue/uni-app 页面、Pinia/store、小程序 web-view、全文内容详情、生产内容运营后台和真实外部抓取调度 |
+| 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
