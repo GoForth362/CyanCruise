@@ -14,7 +14,7 @@ public class CareerAgentTodayApplicationService {
     private final CareerAgentRuleInputSource inputSource;
 
     public CareerAgentTodayApplicationService() {
-        this(new CareerAgentTodayRuleService(), new CareerAgentRuleInputSourceUnavailable());
+        this(new CareerAgentTodayRuleService(), new CareerProfileRuleInputSource());
     }
 
     public CareerAgentTodayApplicationService(CareerAgentTodayRuleService ruleService,
