@@ -26,7 +26,7 @@
 | 简历诊断 | `ResumeDiagnosisController`、`ResumeKeywordService`、`PdfTextExtractor` | 简历文本 + JD 输出匹配和建议 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 诊断解析、关键词抽取规则、可替换诊断/关键词存储边界、应用服务、Cosmic WebAPI、诊断分数回写画像和聚焦测试；待真实 AI 调用、PDF/OSS 文本解析、通知推送、webapp 页面和最终 Cosmic datamodel | P1 | 简历诊断后端基础已实现：`migrate-resume-diagnosis` |
 | 职业计划 | `CareerPlanService`、`CareerController`、`UserCareerPlan` | 按目标岗位和用户状态生成计划摘要 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 摘要规则、默认计划、可替换存储边界、应用服务、Cosmic WebAPI、画像 `hasPlan` 和今日行动周重点接入；待 AI 生成、最终 Cosmic datamodel、计划页面和周复盘 | P1 | 职业计划摘要后端基础已实现：`migrate-career-plan-summary` |
 | 模拟面试 | `InterviewController`、`InterviewService`、`Interview/InterviewMessage/InterviewQuestion` | 开始面试、对话、结束、报告、历史 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 完成 JDK 8 DTO、纯 Java helper、会话/消息/报告摘要存储边界、应用服务、Cosmic WebAPI、画像 interview block 同步和聚焦测试；待题库管理、AI 追问/报告生成、语音/身体语言、通知、webapp 页面和最终 Cosmic datamodel | P1 | 模拟面试基础会话与报告已实现：`migrate-interview-core` |
-| 助手聊天 | `ChatController`、`AiPersonas`、`AssistantSession/Message` | 多角色提示词共用聊天基础设施 | `datamodel`、`code/cloud01/v620-cc001-cloud01-app01` | 作为 AI 今日任务之后的增强项 | P1 | 待迁移 |
+| 助手聊天 | `ChatController`、`ChatHistoryController`、`AiPersonas`、`AssistantSession/Message` | 多角色提示词共用聊天基础设施、会话历史、消息持久化和上下文组装 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java persona/helper、聊天生成与上下文可替换边界、会话/消息存储边界、应用服务、Cosmic WebAPI 和聚焦测试；待真实 AI、function calling、SSE、长期记忆摘要生成、事实抽取、webapp 页面和最终 Cosmic datamodel | P1 | 助手聊天后端基础已实现：`migrate-assistant-chat` |
 | 就业洞察/资源 | `CdutEmploymentInsightService`、`HomepageController`、home 实体 | 提供文章、视频、就业记录和资源搜索 | `datamodel`、`webapp` | 延后，只迁业务主循环需要的内容入口 | P2 | 待迁移 |
 | 通知/订阅 | `NotificationService`、`WechatSubscribeService`、`WeeklyReportJob` | 任务通知、周报、微信订阅 | `code/cloud01/v620-cc001-cloud01-app01` | 等核心任务模型稳定后迁移 | P2 | 待迁移 |
 | 管理后台 | `AdminController`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `webapp`、Cosmic 管理能力 | 按平台能力重新设计 | P2 | 待迁移 |
@@ -41,6 +41,7 @@
 6. `migrate-career-plan-summary`：职业计划摘要。
 7. `migrate-interview-core`：模拟面试基础会话与报告。
 8. `migrate-resume-diagnosis`：简历诊断后端基础。
+9. `migrate-assistant-chat`：多角色助手聊天、会话历史与上下文组装。
 
 ## 验证基线
 
