@@ -63,3 +63,15 @@
 | 数据映射 | 画像、测评、简历、今日行动任务、职业计划、模拟面试、简历诊断摘要和助手聊天均通过结构化用户归属、状态、时间、排序、父子关系字段建模；AI 输出、证据、评分维度、报告和计划明细保留 JSON 文本字段 |
 | 暂不迁移 | Spring Boot、JPA、Flyway、Lombok、repository、Vue、uni-app、真实 AI SDK、生产数据补偿脚本和页面实现 |
 | 验证方式 | datamodel 字段映射 contract test、storage adapter 聚焦测试、OpenSpec 严格校验、JDK 8 Gradle 测试和完整构建 |
+
+## AI 基础设施接入
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-ai-infrastructure` |
+| branch | `codex/migrate-ai-infrastructure` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\service\AiService.java`、`impl\AiServiceImpl.java`、`service\ai\FunctionCallingService*.java`、`service\ai\tools\`、`ConversationSummaryServiceImpl.java`、`CareerPlanServiceImpl.java`、`TaskDecomposerImpl.java`、`InterviewServiceImpl.java`、`VoiceServiceImpl.java` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的 AI DTO、`code/base/v620-cc001-base-helper` 的 AI helper、`code/cloud01/v620-cc001-cloud01-app01` 的 AI gateway/provider 与 CareerLoop 场景 adapter、`openspec/specs/ai-infrastructure/spec.md` |
+| 迁移内容 | provider-neutral AI gateway、message/request/response/usage/tool/stream DTO、默认 system prompt 注入、JSON 提取与校验、function calling 服务端 userId 注入、调用上限、未配置 provider 降级、助手聊天/职业计划/简历诊断/任务拆解/面试/长期记忆接线点 |
+| 暂不迁移 | Spring Boot Controller、Spring `SseEmitter`、Java 17 `HttpClient`、JPA/Flyway、DashScope SDK 专有对象、语音 ASR/TTS、Vue/uni-app 页面、生产密钥配置和真实 provider 网络调用 |
+| 验证方式 | AI helper 聚焦测试、gateway/provider 聚焦测试、function calling 安全测试、stream event 测试、OpenSpec 严格校验、JDK 8 Gradle 测试和完整构建 |
