@@ -60,6 +60,22 @@ public class CareerProfileApplicationService {
         return snapshot;
     }
 
+    public UserProfileSnapshot saveResume(String userId, UserProfileSnapshot.ResumeBlock block) {
+        String safeUserId = requireUserId(userId);
+        UserProfileSnapshot snapshot = mergeService.mergeResume(storage.loadSnapshot(safeUserId), block);
+        storage.saveSnapshot(safeUserId, snapshot);
+        refreshProfile(safeUserId);
+        return snapshot;
+    }
+
+    public UserProfileSnapshot clearResume(String userId) {
+        String safeUserId = requireUserId(userId);
+        UserProfileSnapshot snapshot = mergeService.clearResume(storage.loadSnapshot(safeUserId));
+        storage.saveSnapshot(safeUserId, snapshot);
+        refreshProfile(safeUserId);
+        return snapshot;
+    }
+
     public CareerUserProfileDto saveProfileInputs(String userId, CareerProfileInputsRequest request) {
         String safeUserId = requireUserId(userId);
         if (request != null) {

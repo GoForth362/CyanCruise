@@ -89,6 +89,32 @@ public class CareerProfileSnapshotMergeService {
         return touch(snapshot);
     }
 
+    public UserProfileSnapshot mergeResume(UserProfileSnapshot current,
+                                           UserProfileSnapshot.ResumeBlock block) {
+        UserProfileSnapshot snapshot = ensureSnapshot(current);
+        if (block == null) {
+            return touch(snapshot);
+        }
+        UserProfileSnapshot.ResumeBlock resume = snapshot.getResume();
+        if (resume == null) {
+            resume = new UserProfileSnapshot.ResumeBlock();
+        }
+        if (block.getLastResumeId() != null) resume.setLastResumeId(block.getLastResumeId());
+        if (block.getLastResumeKey() != null) resume.setLastResumeKey(trimToNull(block.getLastResumeKey()));
+        if (block.getTitle() != null) resume.setTitle(trimToNull(block.getTitle()));
+        if (block.getTargetJob() != null) resume.setTargetJob(trimToNull(block.getTargetJob()));
+        if (block.getDiagnosisScore() != null) resume.setDiagnosisScore(block.getDiagnosisScore());
+        if (block.getUpdatedAt() != null) resume.setUpdatedAt(block.getUpdatedAt());
+        snapshot.setResume(resume);
+        return touch(snapshot);
+    }
+
+    public UserProfileSnapshot clearResume(UserProfileSnapshot current) {
+        UserProfileSnapshot snapshot = ensureSnapshot(current);
+        snapshot.setResume(null);
+        return touch(snapshot);
+    }
+
     public UserProfileSnapshot ensureSnapshot(UserProfileSnapshot snapshot) {
         UserProfileSnapshot safe = snapshot == null ? new UserProfileSnapshot() : snapshot;
         if (safe.getVersion() == null) {
