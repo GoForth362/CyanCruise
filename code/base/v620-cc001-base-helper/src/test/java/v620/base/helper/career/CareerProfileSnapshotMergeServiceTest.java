@@ -53,4 +53,51 @@ class CareerProfileSnapshotMergeServiceTest {
         assertEquals("Java Backend Engineer", merged.getPreferences().getTargetRole());
         assertEquals("student", merged.getOnboarding().getIdentityType());
     }
+
+    @Test
+    void mergeResumePreservesAssessmentOnboardingAndPreferences() {
+        UserProfileSnapshot snapshot = new UserProfileSnapshot();
+        UserProfileSnapshot.AssessmentBlock assessment = new UserProfileSnapshot.AssessmentBlock();
+        assessment.setSummary("ENTP");
+        snapshot.setAssessment(assessment);
+        UserProfileSnapshot.OnboardingBlock onboarding = new UserProfileSnapshot.OnboardingBlock();
+        onboarding.setIdentityType("new_graduate");
+        snapshot.setOnboarding(onboarding);
+        UserProfileSnapshot.PreferencesBlock preferences = new UserProfileSnapshot.PreferencesBlock();
+        preferences.setTargetRole("Product Manager");
+        snapshot.setPreferences(preferences);
+
+        UserProfileSnapshot.ResumeBlock resume = new UserProfileSnapshot.ResumeBlock();
+        resume.setLastResumeId(Long.valueOf(1001L));
+        resume.setLastResumeKey("resumes/1001.pdf");
+        resume.setTitle("PM Resume");
+        resume.setTargetJob("Product Manager");
+        resume.setDiagnosisScore(Integer.valueOf(80));
+
+        UserProfileSnapshot merged = service.mergeResume(snapshot, resume);
+
+        assertEquals("ENTP", merged.getAssessment().getSummary());
+        assertEquals("new_graduate", merged.getOnboarding().getIdentityType());
+        assertEquals("Product Manager", merged.getPreferences().getTargetRole());
+        assertEquals(Long.valueOf(1001L), merged.getResume().getLastResumeId());
+        assertEquals("resumes/1001.pdf", merged.getResume().getLastResumeKey());
+        assertEquals("PM Resume", merged.getResume().getTitle());
+    }
+
+    @Test
+    void clearResumeLeavesOtherBlocksIntact() {
+        UserProfileSnapshot snapshot = new UserProfileSnapshot();
+        UserProfileSnapshot.AssessmentBlock assessment = new UserProfileSnapshot.AssessmentBlock();
+        assessment.setSummary("ARI");
+        snapshot.setAssessment(assessment);
+        UserProfileSnapshot.ResumeBlock resume = new UserProfileSnapshot.ResumeBlock();
+        resume.setLastResumeId(Long.valueOf(7L));
+        snapshot.setResume(resume);
+
+        UserProfileSnapshot cleared = service.clearResume(snapshot);
+
+        assertEquals(null, cleared.getResume());
+        assertEquals("ARI", cleared.getAssessment().getSummary());
+        assertNotNull(cleared.getUpdatedAt());
+    }
 }
