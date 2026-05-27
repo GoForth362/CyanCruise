@@ -222,6 +222,114 @@
       ]
     },
     {
+      "key": "messages",
+      "title": "消息中心",
+      "ipdPaths": ["pages/messages/index", "api/notification.ts", "utils/wxSubscribe.ts"],
+      "target": "index.html#messages",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "list notifications",
+          "method": "POST",
+          "path": "/cc001/notifications/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<NotificationRecordDto>",
+          "fallback": "Show message center unavailable or empty state."
+        },
+        {
+          "name": "unread notification count",
+          "method": "POST",
+          "path": "/cc001/notifications/unread-count",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "NotificationUnreadCountDto",
+          "fallback": "Show unread count as 0 with recoverable warning."
+        },
+        {
+          "name": "mark notification read",
+          "method": "POST",
+          "path": "/cc001/notifications/read",
+          "body": ["userId", "notificationId"],
+          "userIdRequired": true,
+          "dto": "NotificationOperationResult",
+          "fallback": "Keep local unread state and show operation failed state."
+        },
+        {
+          "name": "mark all notifications read",
+          "method": "POST",
+          "path": "/cc001/notifications/read-all",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "NotificationOperationResult",
+          "fallback": "Keep message list navigable."
+        },
+        {
+          "name": "delete notification",
+          "method": "POST",
+          "path": "/cc001/notifications/delete",
+          "body": ["userId", "notificationId"],
+          "userIdRequired": true,
+          "dto": "NotificationOperationResult",
+          "fallback": "Restore deleted item in the UI."
+        }
+      ]
+    },
+    {
+      "key": "subscriptions",
+      "title": "订阅授权",
+      "ipdPaths": ["utils/wxSubscribe.ts", "WechatSubscribeController", "WechatSubscribeService"],
+      "target": "index.html#subscriptions",
+      "status": "entry-only",
+      "webApis": [
+        {
+          "name": "record subscription grant",
+          "method": "POST",
+          "path": "/cc001/notifications/subscription/grant",
+          "body": ["request"],
+          "userIdRequired": true,
+          "dto": "SubscriptionGrantRequest -> List<SubscriptionQuotaDto>",
+          "fallback": "Ignore grant result best-effort; never block the primary user action."
+        },
+        {
+          "name": "list subscription quota",
+          "method": "POST",
+          "path": "/cc001/notifications/subscription/quota",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<SubscriptionQuotaDto>",
+          "fallback": "Treat quota as unknown and do not request external send."
+        },
+        {
+          "name": "attempt subscription send",
+          "method": "POST",
+          "path": "/cc001/notifications/subscription/send",
+          "body": ["request"],
+          "userIdRequired": true,
+          "dto": "SubscriptionSendResult",
+          "fallback": "Return skipped/unavailable and keep in-app notification as canonical."
+        }
+      ]
+    },
+    {
+      "key": "weekly-report",
+      "title": "周报通知",
+      "ipdPaths": ["WeeklyReportService", "WeeklyReportJob"],
+      "target": "index.html#weekly-report",
+      "status": "entry-only",
+      "webApis": [
+        {
+          "name": "run weekly report",
+          "method": "POST",
+          "path": "/cc001/notifications/weekly-report/run",
+          "body": ["userId", "highlights"],
+          "userIdRequired": true,
+          "dto": "WeeklyReportSummaryDto",
+          "fallback": "Skip weekly report when activity is insufficient or notification service is unavailable."
+        }
+      ]
+    },
+    {
       "key": "interview",
       "title": "模拟面试",
       "ipdPaths": [
@@ -284,14 +392,9 @@
   ],
   "pendingCapabilities": [
     {
-      "name": "消息中心",
-      "ipdPaths": ["pages/messages/index"],
-      "reason": "通知/订阅迁移尚未开始。"
-    },
-    {
-      "name": "通知/订阅",
-      "ipdApis": ["api/notification.ts"],
-      "reason": "等待任务模型和生产消息渠道稳定。"
+      "name": "真实微信订阅消息发送",
+      "ipdApis": ["WechatSubscribeServiceImpl", "utils/wxSubscribe.ts"],
+      "reason": "本轮只迁移授权/配额/发送边界；真实微信 access token、模板和小程序运行时等待平台适配。"
     },
     {
       "name": "外部就业内容抓取/全文详情",

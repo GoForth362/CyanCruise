@@ -28,7 +28,7 @@
 | 模拟面试 | `InterviewController`、`InterviewService`、`Interview/InterviewMessage/InterviewQuestion` | 开始面试、对话、结束、报告、历史 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 完成 JDK 8 DTO、纯 Java helper、会话/消息/报告摘要存储边界、应用服务、Cosmic WebAPI、画像 interview block 同步和聚焦测试；待题库管理、AI 追问/报告生成、语音/身体语言、通知、webapp 页面和最终 Cosmic datamodel | P1 | 模拟面试基础会话与报告已实现：`migrate-interview-core` |
 | 助手聊天 | `ChatController`、`ChatHistoryController`、`AiPersonas`、`AssistantSession/Message` | 多角色提示词共用聊天基础设施、会话历史、消息持久化和上下文组装 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java persona/helper、聊天生成与上下文可替换边界、会话/消息存储边界、应用服务、Cosmic WebAPI 和聚焦测试；待真实 AI、function calling、SSE、长期记忆摘要生成、事实抽取、webapp 页面和最终 Cosmic datamodel | P1 | 助手聊天后端基础已实现：`migrate-assistant-chat` |
 | 就业洞察/资源 | `CdutEmploymentInsightService`、`HomepageController`、home 实体 | 提供文章、视频、就业记录和资源搜索 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移主循环需要的只读就业洞察、来源覆盖审计和资源卡片入口；外部抓取/全文详情/运营后台后续平台适配 | P2 | 后端契约与 webapp 入口迁移中：`migrate-employment-insights-resources` |
-| 通知/订阅 | `NotificationService`、`WechatSubscribeService`、`WeeklyReportJob` | 任务通知、周报、微信订阅 | `code/cloud01/v620-cc001-cloud01-app01` | 等核心任务模型稳定后迁移 | P2 | 待迁移 |
+| 通知/订阅 | `NotificationService`、`WechatSubscribeService`、`WeeklyReportJob` | 任务通知、周报、微信订阅 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移站内通知、未读/已读/删除、订阅授权配额和周报通知契约；真实微信发送/调度后续平台适配 | P2 | 迁移中：`migrate-notifications-subscriptions` |
 | 管理后台 | `AdminController`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `webapp`、Cosmic 管理能力 | 按平台能力重新设计 | P2 | 待迁移 |
 
 ## 推荐 change 顺序
@@ -100,4 +100,17 @@
 | 数据/接口映射 | 用户画像中的 school、major、targetRole 映射到 `EmploymentInsightProfileContext`；公开就业来源映射到 `EmploymentInsightRecordDto`，保留 school、year、sourceTitle、sourceUrl、sourceType、majorKeyword、careerKeyword、employmentRate、postgraduateRate、destinationSummary、rawExcerpt、fetchedAt；输出 `EmploymentInsightDto` 的 status、summary、latest metrics、trend、coverage、sources；资源文章/视频/咨询/职业路径统一映射为 `CareerResourceCardDto` 和 `CareerResourceFeedDto`；WebAPI 为 `/cc001/career-employment/insight/get` 与 `/cc001/career-employment/resources/list` |
 | 迁移内容 | JDK 8 DTO、支持学校归一、来源评分、趋势聚合、覆盖审计、无学校/未支持学校/无指标/缺目标岗位降级、资源卡片 feed、只读应用服务、内存型可替换存储边界、Cosmic WebAPI、webapp route/API map 和静态入口卡片 |
 | 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、Java 17 `HttpClient`、PDFBox、Redis、Bilibili 抓取、外部刷新任务、图片代理、Vue/uni-app 页面、Pinia/store、小程序 web-view、全文内容详情、生产内容运营后台和真实外部抓取调度 |
+| 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
+
+## 通知/订阅
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-notifications-subscriptions` |
+| branch | `codex/migrate-notifications-subscriptions` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\controller\NotificationController.java`、`WechatSubscribeController.java`、`model\NotificationTypes.java`、`model\entity\Notification.java`、`WxSubscribeQuota.java`、`repository\NotificationRepository.java`、`WxSubscribeQuotaRepository.java`、`service\NotificationService.java`、`service\impl\NotificationServiceImpl.java`、`service\WechatSubscribeService.java`、`service\impl\WechatSubscribeServiceImpl.java`、`service\WeeklyReportService.java`、`service\WeeklyReportJob.java`、`F:\Project\IPD\frontend\src\api\notification.ts`、`utils\wxSubscribe.ts`、`pages\messages\index.vue` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的通知/订阅 DTO 与类型常量、`code/base/v620-cc001-base-helper` 的分类/未读/配额/周报 helper、`code/cloud01/v620-cc001-cloud01-app01` 的应用服务、存储边界、不可用发送 adapter 和 Cosmic WebAPI、`webapp/isv/v620/careerloop` 的消息中心 route/API 映射、`openspec/specs/notifications-subscriptions/spec.md` |
+| 数据/接口映射 | `Notification` 映射为 `NotificationRecordDto`，保留 notificationId、userId、type、title、content、link、readFlag、createdAt，并补充分组/标签/iconKey；`WxSubscribeQuota` 映射为 `SubscriptionQuotaDto`；授权结果映射为 `SubscriptionGrantRequest`；发送边界映射为 `SubscriptionSendRequest/Result`；周报输出映射为 `WeeklyReportSummaryDto`；WebAPI 为 `/cc001/notifications/list`、`/unread-count`、`/push`、`/read`、`/read-all`、`/delete`、`/subscription/grant`、`/subscription/quota`、`/subscription/send`、`/weekly-report/run` |
+| 迁移内容 | JDK 8 DTO、通知类型归一、消息中心分组、未读聚合、所有权校验、best-effort push、订阅授权配额、发送前安全跳过、不可用外部 provider、周报 fallback 摘要、应用服务、内存型可替换存储边界、Cosmic WebAPI、webapp route/API map 和消息中心入口 |
+| 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、Redis token 缓存、Java 17 `HttpClient`、真实微信 access token/模板消息网络调用、生产 appid/secret、Spring `@Scheduled`、Vue/uni-app 消息页、小程序 tabbar、Pinia/store、`wx.requestSubscribeMessage` 运行时和生产调度 |
 | 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |

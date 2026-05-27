@@ -9,12 +9,19 @@ const app = fs.readFileSync(appPath, "utf8");
 const requiredRoutes = [
   "workbench",
   "employment-insight",
-  "career-resources"
+  "career-resources",
+  "messages"
 ];
 
 const requiredApis = [
   "/cc001/career-employment/insight/get",
   "/cc001/career-employment/resources/list",
+  "/cc001/notifications/list",
+  "/cc001/notifications/unread-count",
+  "/cc001/notifications/read",
+  "/cc001/notifications/subscription/grant",
+  "/cc001/notifications/subscription/quota",
+  "/cc001/notifications/weekly-report/run",
   "/cc001/career-profile/snapshot/get",
   "/cc001/career-agent/today/get"
 ];
