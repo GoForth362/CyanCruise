@@ -51,3 +51,15 @@
 - Gradle 构建：设置 JDK 8 后执行 `.\gradlew.bat clean build`
 - 迁移映射更新：本表中的状态和目标模块必须同步更新
 - 来源说明：change 的 design 或 tasks 中必须引用 IPD 源文件路径
+
+## Cosmic datamodel 正式适配
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-cosmic-datamodel-adapters` |
+| branch | `codex/migrate-cosmic-datamodel-adapters` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\model\entity\AgentUserProfile.java`、`AssessmentRecord.java`、`Resume.java`、`AgentTask.java`、`UserCareerPlan.java`、`Interview.java`、`InterviewMessage.java`、`AssistantSession.java`、`AssistantMessage.java`，以及 `F:\Project\IPD\backend\src\main\resources\db\migration\` 的字段语义 |
+| CyanCruise 目标 | `datamodel/careerloop-datamodel-map.md`、`code/cloud01/v620-cc001-cloud01-app01` 的 `Cosmic*Storage` adapter、`openspec/specs/cosmic-datamodel-adapters/spec.md` |
+| 数据映射 | 画像、测评、简历、今日行动任务、职业计划、模拟面试、简历诊断摘要和助手聊天均通过结构化用户归属、状态、时间、排序、父子关系字段建模；AI 输出、证据、评分维度、报告和计划明细保留 JSON 文本字段 |
+| 暂不迁移 | Spring Boot、JPA、Flyway、Lombok、repository、Vue、uni-app、真实 AI SDK、生产数据补偿脚本和页面实现 |
+| 验证方式 | datamodel 字段映射 contract test、storage adapter 聚焦测试、OpenSpec 严格校验、JDK 8 Gradle 测试和完整构建 |
