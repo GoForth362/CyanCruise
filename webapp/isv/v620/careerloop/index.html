@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CareerLoop 工作台</title>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="hero" aria-label="CareerLoop 工作台">
+      <div class="hero-copy">
+        <p class="eyebrow">CareerLoop</p>
+        <h1>今天先完成最关键的一步</h1>
+        <p class="lead" id="heroLead">连接目标岗位、画像、简历、面试和助手，让求职准备有清晰节奏。</p>
+        <div class="identity-panel" aria-label="用户身份">
+          <label for="userIdInput">用户 ID</label>
+          <div class="identity-row">
+            <input id="userIdInput" name="userId" autocomplete="off" placeholder="输入 userId 后加载工作台">
+            <button id="saveUserIdButton" type="button">加载</button>
+          </div>
+          <p id="identityHint" class="hint">生产登录态等待苍穹平台接入；当前使用显式 userId 验证。</p>
+        </div>
+      </div>
+      <img class="flow-image" src="assets/careerloop-flow.svg" alt="CareerLoop 主循环：目标岗位、画像测评、简历面试和今日行动">
+    </section>
+
+    <section class="status-grid" aria-label="用户状态">
+      <article class="status-card">
+        <span class="label">目标岗位</span>
+        <strong id="targetRole">待确认</strong>
+        <small id="profileStatus">等待用户身份</small>
+      </article>
+      <article class="status-card">
+        <span class="label">准备度</span>
+        <strong id="readinessScore">--</strong>
+        <small id="readinessHint">补齐画像后开始计算</small>
+      </article>
+      <article class="status-card">
+        <span class="label">简历状态</span>
+        <strong id="resumeState">未知</strong>
+        <small id="resumeHint">可从简历入口维护</small>
+      </article>
+      <article class="status-card">
+        <span class="label">面试练习</span>
+        <strong id="interviewState">未知</strong>
+        <small id="interviewHint">完成简历后进入练习</small>
+      </article>
+    </section>
+
+    <section id="messagePanel" class="message-panel" aria-live="polite">
+      <strong>等待加载</strong>
+      <span>请输入 userId，或使用 URL 参数 ?userId=。</span>
+    </section>
+
+    <section class="today-panel" id="today-action" aria-label="今日行动">
+      <div>
+        <p class="eyebrow">今日行动</p>
+        <h2 id="todayTitle">先建立你的求职画像</h2>
+        <p id="todaySummary">补齐身份、目标岗位和简历状态后，系统会给出下一步建议。</p>
+      </div>
+      <button id="todayButton" type="button" data-route="onboarding">开始补齐</button>
+    </section>
+
+    <section id="onboarding" class="onboarding-panel" aria-label="新用户引导">
+      <div class="section-heading">
+        <p class="eyebrow">Onboarding</p>
+        <h2>补齐求职方向</h2>
+      </div>
+      <form id="onboardingForm" class="onboarding-form">
+        <label>
+          身份类型
+          <select id="identityType" name="identityType">
+            <option value="student">在校学生</option>
+            <option value="graduate">应届毕业生</option>
+            <option value="career_switcher">转行求职</option>
+          </select>
+        </label>
+        <label>
+          目标岗位
+          <input id="targetRoleInput" name="targetRole" placeholder="例如 Java 开发工程师">
+        </label>
+        <label>
+          简历状态
+          <select id="resumeStatusInput" name="resumeStatus">
+            <option value="none">还没有简历</option>
+            <option value="draft">已有初稿</option>
+            <option value="ready">已有可投递简历</option>
+          </select>
+        </label>
+        <label>
+          偏好方向
+          <input id="preferenceInput" name="preference" placeholder="例如 后端、数据分析、产品运营">
+        </label>
+        <button type="submit">保存引导信息</button>
+      </form>
+    </section>
+
+    <section class="actions" aria-label="主循环入口">
+      <div class="section-heading">
+        <p class="eyebrow">Next</p>
+        <h2>继续推进</h2>
+      </div>
+      <div id="actionGrid" class="action-grid"></div>
+    </section>
+  </main>
+  <script src="assets/app.js"></script>
+</body>
+</html>

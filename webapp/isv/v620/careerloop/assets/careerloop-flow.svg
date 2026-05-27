@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-labelledby="title desc">
+  <title id="title">CareerLoop workflow</title>
+  <desc id="desc">Target role, profile, resume, assessment, interview, assistant and plan form a job-preparation loop.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#eef6f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="300" rx="24" fill="url(#panel)"/>
+  <path d="M119 150c0-71 58-129 129-129h464c71 0 129 58 129 129s-58 129-129 129H248c-71 0-129-58-129-129Z" fill="#ffffff" stroke="#d8e3dc" stroke-width="2"/>
+  <g fill="none" stroke="#577568" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M257 150h90"/>
+    <path d="m332 132 20 18-20 18"/>
+    <path d="M431 150h90"/>
+    <path d="m506 132 20 18-20 18"/>
+    <path d="M605 150h90"/>
+    <path d="m680 132 20 18-20 18"/>
+  </g>
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <g>
+      <circle cx="198" cy="150" r="54" fill="#e8f2ec" stroke="#8eb5a2" stroke-width="2"/>
+      <text x="198" y="145" font-size="17" fill="#1f3f34" font-weight="700">目标岗位</text>
+      <text x="198" y="169" font-size="13" fill="#577568">Target</text>
+    </g>
+    <g>
+      <circle cx="390" cy="150" r="54" fill="#eef2ff" stroke="#9aa8d6" stroke-width="2"/>
+      <text x="390" y="145" font-size="17" fill="#23315f" font-weight="700">画像测评</text>
+      <text x="390" y="169" font-size="13" fill="#5f6f9c">Profile</text>
+    </g>
+    <g>
+      <circle cx="564" cy="150" r="54" fill="#fff7ed" stroke="#ddb889" stroke-width="2"/>
+      <text x="564" y="145" font-size="17" fill="#68441d" font-weight="700">简历面试</text>
+      <text x="564" y="169" font-size="13" fill="#98723f">Practice</text>
+    </g>
+    <g>
+      <circle cx="756" cy="150" r="54" fill="#f0f9ff" stroke="#83b8d8" stroke-width="2"/>
+      <text x="756" y="145" font-size="17" fill="#16445c" font-weight="700">今日行动</text>
+      <text x="756" y="169" font-size="13" fill="#3f7896">Next step</text>
+    </g>
+  </g>
+</svg>

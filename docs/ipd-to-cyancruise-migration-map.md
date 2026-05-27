@@ -75,3 +75,16 @@
 | 迁移内容 | provider-neutral AI gateway、message/request/response/usage/tool/stream DTO、默认 system prompt 注入、JSON 提取与校验、function calling 服务端 userId 注入、调用上限、未配置 provider 降级、助手聊天/职业计划/简历诊断/任务拆解/面试/长期记忆接线点 |
 | 暂不迁移 | Spring Boot Controller、Spring `SseEmitter`、Java 17 `HttpClient`、JPA/Flyway、DashScope SDK 专有对象、语音 ASR/TTS、Vue/uni-app 页面、生产密钥配置和真实 provider 网络调用 |
 | 验证方式 | AI helper 聚焦测试、gateway/provider 聚焦测试、function calling 安全测试、stream event 测试、OpenSpec 严格校验、JDK 8 Gradle 测试和完整构建 |
+
+## Webapp CareerLoop 入口
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-webapp-careerloop-entry` |
+| branch | `codex/migrate-webapp-careerloop-entry` |
+| IPD 来源 | `F:\Project\IPD\frontend\src\pages.json`、`pages\home\index.vue`、`pages\onboarding\index.vue`、`pages\agent\index.vue`、`pages\assessment\*`、`pages\resume\*`、`pages\resume-ai\index.vue`、`pages\interview\*`、`pages\assistant\*`、`utils\onboardingGate.ts`、`utils\onboardingSync.ts`、`api\agent.ts`、`api\assessment.ts`、`api\career.ts`、`api\resume.ts`、`api\interview.ts`、`api\ai.ts` |
+| CyanCruise 目标 | `webapp/isv/v620/careerloop/` 的苍穹 webapp 静态入口、`careerloop-routes.json` 路由/API 契约地图、`openspec/specs/webapp-careerloop-entry/spec.md` |
+| 数据/接口映射 | 工作台消费 `/cc001/career-profile/snapshot/get` 和 `/cc001/career-agent/today/get`；onboarding 调用 `/cc001/career-profile/onboarding/save`；主入口映射测评、简历、简历诊断、职业计划、模拟面试和助手聊天 WebAPI；开发/验证态 userId 来自 query/localStorage/页面输入，生产态等待苍穹登录上下文接入 |
+| 迁移内容 | 重建 CareerLoop 首个 webapp 工作台入口，提供目标岗位/画像状态、准备度、今日行动、onboarding gate、主循环入口、pending 能力提示、响应式布局和可检查 workflow 视觉资产 |
+| 暂不迁移 | IPD Vue/uni-app 源码、Pinia/store、Vite/uView、小程序 tabBar、消息中心、微信订阅、CDUT 就业详情、管理后台、文件上传预览、语音/数字人面试、生产登录态和前端流式聊天 |
+| 验证方式 | OpenSpec 严格校验、webapp 静态资源/route-map 检查、JDK 8 `.\gradlew.bat clean build` |
