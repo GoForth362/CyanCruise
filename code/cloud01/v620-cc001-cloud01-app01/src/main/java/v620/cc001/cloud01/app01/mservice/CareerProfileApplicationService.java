@@ -17,17 +17,27 @@ import java.util.Map;
 public class CareerProfileApplicationService {
 
     private final CareerProfileStorage storage;
+    private final CareerPlanStorage planStorage;
     private final CareerProfileSnapshotMergeService mergeService;
     private final CareerProfileBuildService buildService;
 
     public CareerProfileApplicationService() {
-        this(new FileCareerProfileStorage(), new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
+        this(new FileCareerProfileStorage(), new FileCareerPlanStorage(),
+                new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
     }
 
     public CareerProfileApplicationService(CareerProfileStorage storage,
                                            CareerProfileSnapshotMergeService mergeService,
                                            CareerProfileBuildService buildService) {
+        this(storage, null, mergeService, buildService);
+    }
+
+    public CareerProfileApplicationService(CareerProfileStorage storage,
+                                           CareerPlanStorage planStorage,
+                                           CareerProfileSnapshotMergeService mergeService,
+                                           CareerProfileBuildService buildService) {
         this.storage = storage;
+        this.planStorage = planStorage;
         this.mergeService = mergeService;
         this.buildService = buildService;
     }
@@ -105,7 +115,8 @@ public class CareerProfileApplicationService {
         String safeUserId = requireUserId(userId);
         UserProfileSnapshot snapshot = mergeService.ensureSnapshot(storage.loadSnapshot(safeUserId));
         Map<String, String> facts = storage.loadFacts(safeUserId);
-        CareerUserProfileDto profile = buildService.build(snapshot, facts, new CareerAgentRuleInput.CheckInStatus(), false);
+        boolean hasPlan = planStorage != null && planStorage.exists(safeUserId);
+        CareerUserProfileDto profile = buildService.build(snapshot, facts, new CareerAgentRuleInput.CheckInStatus(), hasPlan);
         storage.saveProfile(safeUserId, profile);
         return profile;
     }

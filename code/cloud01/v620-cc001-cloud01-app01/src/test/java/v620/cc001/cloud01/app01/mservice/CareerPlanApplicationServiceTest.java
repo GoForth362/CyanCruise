@@ -1,0 +1,85 @@
+package v620.cc001.cloud01.app01.mservice;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import v620.base.helper.career.CareerPlanSummaryService;
+import v620.base.helper.career.CareerProfileBuildService;
+import v620.base.helper.career.CareerProfileSnapshotMergeService;
+import v620.cc001.base.common.dto.career.CareerPlanSaveRequest;
+import v620.cc001.base.common.dto.career.CareerPlanSummaryDto;
+import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
+
+import java.io.File;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class CareerPlanApplicationServiceTest {
+
+    @TempDir
+    File tempDir;
+
+    @Test
+    void fileStorageReloadsPlanFromFreshServiceInstance() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage(), null);
+        CareerPlanApplicationService first = service(new FileCareerPlanStorage(tempDir), profileService);
+        CareerPlanSaveRequest request = new CareerPlanSaveRequest();
+        request.setTargetRole("Java Engineer");
+        request.setWeeklyFocus(Arrays.asList("优化项目经历"));
+        first.savePlan("plan-user-1", request);
+
+        CareerPlanApplicationService second = service(new FileCareerPlanStorage(tempDir), profileService);
+        CareerPlanSummaryDto summary = second.getSummary("plan-user-1");
+
+        assertEquals(Boolean.TRUE, summary.getHasPlan());
+        assertEquals("Java Engineer", summary.getTargetRole());
+        assertEquals("优化项目经历", summary.getWeeklyFocus().get(0));
+    }
+
+    @Test
+    void ensurePlanUsesProfileTargetRoleWhenMissing() {
+        InMemoryCareerPlanStorage planStorage = new InMemoryCareerPlanStorage();
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage(), planStorage);
+        CareerProfilePreferencesRequest preferences = new CareerProfilePreferencesRequest();
+        preferences.setTargetRole("Data Analyst");
+        profileService.savePreferences("plan-user-2", preferences);
+        CareerPlanApplicationService service = service(planStorage, profileService);
+
+        CareerPlanSummaryDto summary = service.ensurePlan("plan-user-2");
+
+        assertEquals(Boolean.TRUE, summary.getHasPlan());
+        assertEquals("Data Analyst", summary.getTargetRole());
+        assertTrue(summary.getWeeklyFocus().get(0).contains("Data Analyst"));
+    }
+
+    @Test
+    void savePlanUpdatesSameUserAndIncrementsVersion() {
+        CareerPlanApplicationService service = service(new InMemoryCareerPlanStorage(),
+                profileService(new InMemoryCareerProfileStorage(), null));
+        CareerPlanSaveRequest first = new CareerPlanSaveRequest();
+        first.setTargetRole("Product Manager");
+        first.setWeeklyFocus(Arrays.asList("整理产品案例"));
+        CareerPlanSummaryDto created = service.savePlan("plan-user-3", first);
+
+        CareerPlanSaveRequest second = new CareerPlanSaveRequest();
+        second.setTargetRole("Product Manager");
+        second.setWeeklyFocus(Arrays.asList("投递产品岗位"));
+        CareerPlanSummaryDto updated = service.savePlan("plan-user-3", second);
+
+        assertEquals(Integer.valueOf(created.getVersion().intValue() + 1), updated.getVersion());
+        assertEquals(1, updated.getWeeklyFocus().size());
+        assertEquals("投递产品岗位", updated.getWeeklyFocus().get(0));
+    }
+
+    private CareerPlanApplicationService service(CareerPlanStorage storage,
+                                                 CareerProfileApplicationService profileService) {
+        return new CareerPlanApplicationService(storage, profileService, new CareerPlanSummaryService());
+    }
+
+    private CareerProfileApplicationService profileService(CareerProfileStorage profileStorage,
+                                                           CareerPlanStorage planStorage) {
+        return new CareerProfileApplicationService(profileStorage, planStorage,
+                new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
+    }
+}
