@@ -1,0 +1,285 @@
+{
+  "platform": "kingdee-cosmic-webapp",
+  "change": "migrate-webapp-careerloop-entry",
+  "sourceProject": "F:\\Project\\IPD",
+  "targetRoot": "webapp/isv/v620/careerloop",
+  "identity": {
+    "production": "pending-cosmic-login-context",
+    "development": ["query:userId", "localStorage:careerloop.userId", "manual-input"],
+    "rule": "Do not call user-owned WebAPI without an explicit userId."
+  },
+  "routes": [
+    {
+      "key": "workbench",
+      "title": "CareerLoop 工作台",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html#workbench",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "career profile snapshot",
+          "method": "POST",
+          "path": "/cc001/career-profile/snapshot/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "UserProfileSnapshot",
+          "fallback": "Show onboarding-required or empty profile state."
+        },
+        {
+          "name": "today action by user",
+          "method": "POST",
+          "path": "/cc001/career-agent/today/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerAgentTodayDto",
+          "fallback": "Show recoverable today-action unavailable state."
+        }
+      ]
+    },
+    {
+      "key": "onboarding",
+      "title": "新用户引导",
+      "ipdPaths": ["pages/onboarding/index"],
+      "target": "index.html#onboarding",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "save onboarding",
+          "method": "POST",
+          "path": "/cc001/career-profile/onboarding/save",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "CareerProfileOnboardingRequest -> UserProfileSnapshot",
+          "fallback": "Keep the local form values and show save failed state."
+        }
+      ]
+    },
+    {
+      "key": "today-action",
+      "title": "今日行动",
+      "ipdPaths": ["pages/agent/index"],
+      "compatibleTargets": [
+        "/pages/agent/index",
+        "pages/agent/index",
+        "/pages/assistant/index",
+        "pages/assistant/index",
+        "/pages/resume/index",
+        "pages/resume/index",
+        "/pages/resume-ai/index",
+        "pages/resume-ai/index",
+        "/pages/assessment/index",
+        "pages/assessment/index",
+        "/pages/interview/index",
+        "pages/interview/index"
+      ],
+      "target": "index.html#today-action",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "today action by user",
+          "method": "POST",
+          "path": "/cc001/career-agent/today/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerAgentTodayDto",
+          "fallback": "Show rule result unavailable and keep quick actions visible."
+        }
+      ]
+    },
+    {
+      "key": "assessment",
+      "title": "职业测评",
+      "ipdPaths": ["pages/assessment/index", "pages/assessment/quiz", "pages/assessment/result"],
+      "target": "index.html#assessment",
+      "status": "entry-only",
+      "webApis": [
+        {
+          "name": "submit assessment",
+          "method": "POST",
+          "path": "/cc001/assessment/submit",
+          "body": ["userId", "scale", "request"],
+          "userIdRequired": true,
+          "dto": "AssessmentSubmitRequest -> AssessmentScoreResult",
+          "fallback": "Show assessment entry and profile result summary only."
+        }
+      ]
+    },
+    {
+      "key": "resume",
+      "title": "简历",
+      "ipdPaths": ["pages/resume/index", "pages/resume/template"],
+      "target": "index.html#resume",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "list resumes",
+          "method": "POST",
+          "path": "/cc001/resume/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<ResumeRecordDto>",
+          "fallback": "Show no resume state."
+        },
+        {
+          "name": "create resume metadata",
+          "method": "POST",
+          "path": "/cc001/resume/create",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "ResumeCreateRequest -> ResumeRecordDto",
+          "fallback": "Show metadata save unavailable state."
+        }
+      ]
+    },
+    {
+      "key": "resume-diagnosis",
+      "title": "简历诊断",
+      "ipdPaths": ["pages/resume-ai/index"],
+      "target": "index.html#resume-diagnosis",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "analyze resume",
+          "method": "POST",
+          "path": "/cc001/resume-diagnosis/analyze",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "ResumeDiagnosisRequest -> ResumeDiagnosisResultDto",
+          "fallback": "Show diagnosis unavailable until resume content exists."
+        },
+        {
+          "name": "keyword status",
+          "method": "POST",
+          "path": "/cc001/resume-diagnosis/keywords/status",
+          "body": ["userId", "resumeId"],
+          "userIdRequired": true,
+          "dto": "ResumeKeywordStatusDto",
+          "fallback": "Show keyword status pending."
+        }
+      ]
+    },
+    {
+      "key": "career-plan",
+      "title": "职业计划",
+      "ipdPaths": ["pages/map/index"],
+      "target": "index.html#career-plan",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "career plan summary",
+          "method": "POST",
+          "path": "/cc001/career-plan/summary",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "Show plan summary pending."
+        },
+        {
+          "name": "ensure plan",
+          "method": "POST",
+          "path": "/cc001/career-plan/ensure",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "Show create-plan action."
+        }
+      ]
+    },
+    {
+      "key": "interview",
+      "title": "模拟面试",
+      "ipdPaths": [
+        "pages/interview/index",
+        "pages/interview/start",
+        "pages/interview/chat",
+        "pages/interview/history",
+        "pages/interview/report"
+      ],
+      "target": "index.html#interview",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "interview list",
+          "method": "POST",
+          "path": "/cc001/interview/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewSessionDto>",
+          "fallback": "Show no interview history state."
+        },
+        {
+          "name": "start interview",
+          "method": "POST",
+          "path": "/cc001/interview/start",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "InterviewStartRequest -> InterviewSessionDto",
+          "fallback": "Show start unavailable state."
+        }
+      ]
+    },
+    {
+      "key": "assistant",
+      "title": "求职助手",
+      "ipdPaths": ["pages/assistant/index", "pages/assistant/history"],
+      "target": "index.html#assistant",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "send assistant message",
+          "method": "POST",
+          "path": "/cc001/assistant-chat/send",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "AssistantChatRequest -> AssistantChatResponse",
+          "fallback": "Show AI unavailable response from migrated backend."
+        },
+        {
+          "name": "list assistant sessions",
+          "method": "POST",
+          "path": "/cc001/assistant-chat/session/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<AssistantChatSessionDto>",
+          "fallback": "Show no history state."
+        }
+      ]
+    }
+  ],
+  "pendingCapabilities": [
+    {
+      "name": "消息中心",
+      "ipdPaths": ["pages/messages/index"],
+      "reason": "通知/订阅迁移尚未开始。"
+    },
+    {
+      "name": "通知/订阅",
+      "ipdApis": ["api/notification.ts"],
+      "reason": "等待任务模型和生产消息渠道稳定。"
+    },
+    {
+      "name": "CDUT 就业内容详情",
+      "ipdPaths": ["pages/cdut-employment/index", "pages/cdut-employment/detail"],
+      "reason": "P2 内容资源能力未纳入首轮主循环入口。"
+    },
+    {
+      "name": "管理后台",
+      "ipdPaths": ["F:\\Project\\IPD\\admin-frontend"],
+      "reason": "需按 Cosmic 管理能力重新设计。"
+    },
+    {
+      "name": "文件上传预览",
+      "ipdApis": ["api/file.ts"],
+      "reason": "首轮只消费简历元数据和诊断语义，OSS/预览待平台适配。"
+    },
+    {
+      "name": "语音/数字人面试",
+      "ipdApis": ["api/bodyLanguage.ts"],
+      "reason": "ASR/TTS/身体语言和数字人能力不在本次迁移范围。"
+    },
+    {
+      "name": "生产登录态",
+      "reason": "等待 Cosmic 登录上下文或统一身份接入方案。"
+    }
+  ]
+}
