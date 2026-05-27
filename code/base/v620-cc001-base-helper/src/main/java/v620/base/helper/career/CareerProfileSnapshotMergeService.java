@@ -115,6 +115,27 @@ public class CareerProfileSnapshotMergeService {
         return touch(snapshot);
     }
 
+    public UserProfileSnapshot mergeInterview(UserProfileSnapshot current,
+                                              UserProfileSnapshot.InterviewBlock block) {
+        UserProfileSnapshot snapshot = ensureSnapshot(current);
+        if (block == null) {
+            return touch(snapshot);
+        }
+        UserProfileSnapshot.InterviewBlock interview = snapshot.getInterview();
+        if (interview == null) {
+            interview = new UserProfileSnapshot.InterviewBlock();
+        }
+        if (block.getLastInterviewId() != null) interview.setLastInterviewId(block.getLastInterviewId());
+        if (block.getPositionName() != null) interview.setPositionName(trimToNull(block.getPositionName()));
+        if (block.getDifficulty() != null) interview.setDifficulty(trimToNull(block.getDifficulty()));
+        if (block.getLastScore() != null) interview.setLastScore(block.getLastScore());
+        if (block.getWeakDimensions() != null) interview.setWeakDimensions(block.getWeakDimensions());
+        if (block.getStrongDimensions() != null) interview.setStrongDimensions(block.getStrongDimensions());
+        if (block.getCompletedAt() != null) interview.setCompletedAt(block.getCompletedAt());
+        snapshot.setInterview(interview);
+        return touch(snapshot);
+    }
+
     public UserProfileSnapshot ensureSnapshot(UserProfileSnapshot snapshot) {
         UserProfileSnapshot safe = snapshot == null ? new UserProfileSnapshot() : snapshot;
         if (safe.getVersion() == null) {

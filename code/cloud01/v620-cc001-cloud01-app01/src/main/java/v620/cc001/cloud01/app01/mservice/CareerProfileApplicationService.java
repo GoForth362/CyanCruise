@@ -86,6 +86,14 @@ public class CareerProfileApplicationService {
         return snapshot;
     }
 
+    public UserProfileSnapshot saveInterview(String userId, UserProfileSnapshot.InterviewBlock block) {
+        String safeUserId = requireUserId(userId);
+        UserProfileSnapshot snapshot = mergeService.mergeInterview(storage.loadSnapshot(safeUserId), block);
+        storage.saveSnapshot(safeUserId, snapshot);
+        refreshProfile(safeUserId);
+        return snapshot;
+    }
+
     public CareerUserProfileDto saveProfileInputs(String userId, CareerProfileInputsRequest request) {
         String safeUserId = requireUserId(userId);
         if (request != null) {
