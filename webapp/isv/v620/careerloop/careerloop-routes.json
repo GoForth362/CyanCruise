@@ -107,7 +107,7 @@
     {
       "key": "resume",
       "title": "简历",
-      "ipdPaths": ["pages/resume/index", "pages/resume/template"],
+      "ipdPaths": ["pages/resume/index", "pages/resume/template", "api/file.ts"],
       "target": "index.html#resume",
       "status": "available",
       "webApis": [
@@ -128,6 +128,83 @@
           "userIdRequired": true,
           "dto": "ResumeCreateRequest -> ResumeRecordDto",
           "fallback": "Show metadata save unavailable state."
+        },
+        {
+          "name": "upload resume file",
+          "method": "POST",
+          "path": "/cc001/files/upload",
+          "body": ["request"],
+          "userIdRequired": false,
+          "dto": "FileUploadRequest -> FileUploadResult",
+          "fallback": "Show upload unavailable and keep resume metadata form editable."
+        },
+        {
+          "name": "resume preview url",
+          "method": "POST",
+          "path": "/cc001/files/preview-url",
+          "body": ["fileUrlOrKey", "ttlSeconds"],
+          "userIdRequired": false,
+          "dto": "FilePreviewUrlResult",
+          "fallback": "Show preview unavailable without hiding the resume record."
+        }
+      ]
+    },
+    {
+      "key": "file-upload-preview",
+      "title": "文件上传预览",
+      "ipdPaths": [
+        "F:\\Project\\IPD\\backend\\src\\main\\java\\com\\group1\\career\\controller\\FileController.java",
+        "F:\\Project\\IPD\\backend\\src\\main\\java\\com\\group1\\career\\service\\FileService.java",
+        "F:\\Project\\IPD\\backend\\src\\main\\java\\com\\group1\\career\\utils\\PdfTextExtractor.java",
+        "F:\\Project\\IPD\\frontend\\src\\api\\file.ts"
+      ],
+      "target": "index.html#file-upload-preview",
+      "status": "entry-only",
+      "webApis": [
+        {
+          "name": "upload file",
+          "method": "POST",
+          "path": "/cc001/files/upload",
+          "body": ["request"],
+          "userIdRequired": false,
+          "dto": "FileUploadRequest -> FileUploadResult",
+          "fallback": "Show upload unavailable state."
+        },
+        {
+          "name": "preview file",
+          "method": "POST",
+          "path": "/cc001/files/preview-url",
+          "body": ["fileUrlOrKey", "ttlSeconds"],
+          "userIdRequired": false,
+          "dto": "FilePreviewUrlResult",
+          "fallback": "Show preview unavailable state."
+        },
+        {
+          "name": "download file",
+          "method": "POST",
+          "path": "/cc001/files/download",
+          "body": ["fileUrlOrKey"],
+          "userIdRequired": false,
+          "dto": "FileDownloadResult",
+          "fallback": "Show download unavailable state."
+        },
+        {
+          "name": "delete file",
+          "method": "POST",
+          "path": "/cc001/files/delete",
+          "body": ["fileUrlOrKey"],
+          "userIdRequired": false,
+          "dto": "FileDeleteResult",
+          "fallback": "Treat delete as best-effort cleanup."
+        },
+        {
+          "name": "extract file text",
+          "method": "POST",
+          "path": "/cc001/files/extract-text",
+          "body": ["fileUrlOrKey"],
+          "userIdRequired": false,
+          "dto": "FileTextExtractionResult",
+          "fallback": "Return empty text and keep diagnosis metadata flow available."
         }
       ]
     },
@@ -509,11 +586,6 @@
       "name": "外部就业内容抓取/全文详情",
       "ipdPaths": ["pages/cdut-employment/detail", "HomeContentRefreshJob", "CdutEmploymentInsightServiceImpl#refreshSources"],
       "reason": "本轮只迁移只读洞察和资源卡片契约；外部抓取、PDF/HTML 解析和全文内容详情待后续平台适配。"
-    },
-    {
-      "name": "文件上传预览",
-      "ipdApis": ["api/file.ts"],
-      "reason": "首轮只消费简历元数据和诊断语义，OSS/预览待平台适配。"
     },
     {
       "name": "语音/数字人面试",

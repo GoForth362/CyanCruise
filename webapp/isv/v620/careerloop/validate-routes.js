@@ -11,7 +11,8 @@ const requiredRoutes = [
   "employment-insight",
   "career-resources",
   "messages",
-  "admin-console"
+  "admin-console",
+  "file-upload-preview"
 ];
 
 const requiredApis = [
@@ -30,6 +31,11 @@ const requiredApis = [
   "/cc001/admin/content/list",
   "/cc001/admin/broadcast",
   "/cc001/admin/audit-log/list",
+  "/cc001/files/upload",
+  "/cc001/files/preview-url",
+  "/cc001/files/download",
+  "/cc001/files/delete",
+  "/cc001/files/extract-text",
   "/cc001/career-profile/snapshot/get",
   "/cc001/career-agent/today/get"
 ];

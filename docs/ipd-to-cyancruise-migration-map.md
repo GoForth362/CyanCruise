@@ -23,6 +23,7 @@
 | AI 今日任务 | `CareerAgentService`、`CareerAgentController`、`AgentTask`、`AgentState` | 根据目标岗位、简历、测评、面试状态生成今日下一步 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成纯 Java 今日规则、画像输入源、按用户 ID WebAPI 和聚焦测试；待 AgentTask 持久化、风险看板、长期计划联动、当前用户身份解析和 webapp 页面 | P0 | 今日行动推荐已实现：`migrate-today-action-recommendation` |
 | 职业测评 | `AssessmentController`、`AssessmentService`、`AssessmentScale/Question/Option/Record/Answer`、`V5/V8/V10` SQL | 量表启用、题目排序、提交答案、生成结果记录 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 DTO、纯 Java 评分内核、画像快照写入和 Cosmic WebAPI 提交入口，含 MBTI/非 MBTI 画像规则测试、应用服务持久化测试与 WebAPI 边界测试；待 datamodel、页面和 AI 解读适配 | P0 | 评分核心、画像集成和 WebAPI 接入已实现：`migrate-assessment-core`、`integrate-assessment-profile-snapshot`、`migrate-assessment-webapi` |
 | 简历基础 | `ResumeController`、`ResumeService`、`Resume`、`FileService` | 保存简历文件 key、用户简历列表、详情、删除 | `datamodel`、`filestorage`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 JDK 8 DTO、文件型/内存型存储边界、应用服务、Cosmic WebAPI、画像 resume block 同步和聚焦测试；待最终 Cosmic datamodel、文件上传/预览适配 | P0 | 后端基础已实现：`migrate-resume-core` |
+| 文件上传预览 | `FileController`、`FileService`、`FileServiceImpl`、`PdfTextExtractor`、`api/file.ts` | 上传返回 object key、短期预览 URL、认证下载、幂等删除、文本抽取限长 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移文件引用/上传/预览/下载/删除/文本抽取契约；真实 Cosmic 文件服务、OSS SDK、PDFBox/OCR 后续 adapter 适配 | P1 | 迁移中：`migrate-file-upload-preview` |
 | 简历诊断 | `ResumeDiagnosisController`、`ResumeKeywordService`、`PdfTextExtractor` | 简历文本 + JD 输出匹配和建议 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 诊断解析、关键词抽取规则、可替换诊断/关键词存储边界、应用服务、Cosmic WebAPI、诊断分数回写画像和聚焦测试；待真实 AI 调用、PDF/OSS 文本解析、通知推送、webapp 页面和最终 Cosmic datamodel | P1 | 简历诊断后端基础已实现：`migrate-resume-diagnosis` |
 | 职业计划 | `CareerPlanService`、`CareerController`、`UserCareerPlan` | 按目标岗位和用户状态生成计划摘要 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 摘要规则、默认计划、可替换存储边界、应用服务、Cosmic WebAPI、画像 `hasPlan` 和今日行动周重点接入；待 AI 生成、最终 Cosmic datamodel、计划页面和周复盘 | P1 | 职业计划摘要后端基础已实现：`migrate-career-plan-summary` |
 | 模拟面试 | `InterviewController`、`InterviewService`、`Interview/InterviewMessage/InterviewQuestion` | 开始面试、对话、结束、报告、历史 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 完成 JDK 8 DTO、纯 Java helper、会话/消息/报告摘要存储边界、应用服务、Cosmic WebAPI、画像 interview block 同步和聚焦测试；待题库管理、AI 追问/报告生成、语音/身体语言、通知、webapp 页面和最终 Cosmic datamodel | P1 | 模拟面试基础会话与报告已实现：`migrate-interview-core` |
@@ -126,4 +127,17 @@
 | 数据/接口映射 | IPD `ADMIN` 角色校验映射为 `AdminIdentityDto` 和 storage/platform adapter；组织、学生、用户、职业路径、职业节点、题库、内容、广播、统计和审计映射为 `Admin*Dto`；面试报告 radar JSON 映射为容错聚合的 `AdminOrgDashboardDto`；用户封禁/解封和广播复用通知 `ADMIN_BROADCAST` best-effort 投递；WebAPI 使用 `/cc001/admin/*` 路径覆盖 whoami、组织、学生、用户治理、题库审核、内容管理、广播、统计和审计日志 |
 | 迁移内容 | JDK 8 DTO、管理员身份校验结果、分页边界、封禁/解封规则、题库审核状态转换、用户贡献题内容安全/匿名 hash/难度归一、内容置顶/隐藏、组织看板雷达聚合、弱项排序、审计快照脱敏、管理应用服务、内存型可替换存储边界、Cosmic WebAPI、webapp route/API map 和管理入口挂载契约 |
 | 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、AOP 运行时、Lombok builder、旧 JWT 管线、Vue、Element Plus、Vite、Pinia、axios 拦截器、admin-frontend 页面布局、生产级 RBAC/SSO、苍穹菜单权限配置和真实 Cosmic 管理菜单发布 |
+| 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
+
+## 文件上传预览
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-file-upload-preview` |
+| branch | `codex/migrate-file-upload-preview` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\controller\FileController.java`、`service\FileService.java`、`service\impl\FileServiceImpl.java`、`config\OssConfigProperties.java`、`utils\PdfTextExtractor.java`、`backend\src\test\java\com\group1\career\controller\FileControllerTest.java`、`service\impl\FileServiceTest.java`、`F:\Project\IPD\frontend\src\api\file.ts`、`F:\Project\IPD\backend\sql\2026_04_oss_url_to_key.sql` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的文件 DTO/状态常量、`code/base/v620-cc001-base-helper` 的 key/url/TTL/text helper、`code/cloud01/v620-cc001-cloud01-app01` 的文件应用服务、存储 adapter、文本抽取 adapter 和 Cosmic WebAPI、`webapp/isv/v620/careerloop` 的文件 route/API 映射、`openspec/specs/file-upload-preview/spec.md` |
+| 数据/接口映射 | IPD 上传返回 bare object key 映射为 `FileReferenceDto.objectKey`；folder 空值映射为 `others`；旧 OSS URL 和 presigned URL 通过 helper 归一为 object key；预览 URL 映射为 `FilePreviewUrlResult` 并 clamp TTL 到 `[60, 86400]`；下载、删除和文本抽取映射为 `FileDownloadResult`、`FileDeleteResult`、`FileTextExtractionResult`；WebAPI 使用 `/cc001/files/upload`、`/preview-url`、`/download`、`/delete`、`/extract-text` |
+| 迁移内容 | JDK 8 DTO、folder/key/url 归一、扩展名保留、空文件拒绝、TTL clamp、文本限长 20000 字、内存型可替换文件存储边界、纯文本默认抽取 adapter、Cosmic WebAPI、webapp route/API map 和静态入口卡片 |
+| 暂不迁移 | Spring Multipart、Aliyun OSS SDK、PDFBox、Flyway SQL、Java 17 `readAllBytes`、真实生产密钥、CDN 策略、病毒扫描、OCR、Office 在线预览、Vue/uni-app 上传运行时和小程序文件选择 UI |
 | 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |

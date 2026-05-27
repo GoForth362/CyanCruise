@@ -14,9 +14,17 @@
       key: "resume",
       title: "简历",
       icon: "历",
-      summary: "维护最近简历记录，让今日行动知道你的准备状态。",
+      summary: "维护最近简历记录，并对接文件上传、预览和诊断文本来源。",
       state: "入口可用",
       route: "#resume"
+    },
+    {
+      key: "file-upload-preview",
+      title: "文件上传",
+      icon: "传",
+      summary: "上传简历文件，使用对象 key 保存，并按需生成短期预览链接。",
+      state: "入口可用",
+      route: "#file-upload-preview"
     },
     {
       key: "resume-diagnosis",
@@ -108,7 +116,10 @@
     subscriptionQuota: "/cc001/notifications/subscription/quota",
     adminWhoami: "/cc001/admin/whoami",
     adminDashboard: "/cc001/admin/organizations/dashboard",
-    adminAuditLog: "/cc001/admin/audit-log/list"
+    adminAuditLog: "/cc001/admin/audit-log/list",
+    fileUpload: "/cc001/files/upload",
+    filePreview: "/cc001/files/preview-url",
+    fileExtractText: "/cc001/files/extract-text"
   };
 
   var els = {};
@@ -372,7 +383,7 @@
   function scrollToRoute(route) {
     var id = route || "workbench";
     var node = id === "onboarding" ? $("onboarding") : $("today-action");
-    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources" || id === "messages" || id === "admin-console") {
+    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources" || id === "messages" || id === "admin-console" || id === "file-upload-preview") {
       showMessage("info", "入口已就绪", "请在苍穹挂载后对接 " + id + " 对应页面状态和 WebAPI。");
     }
     if (node && node.scrollIntoView) {
