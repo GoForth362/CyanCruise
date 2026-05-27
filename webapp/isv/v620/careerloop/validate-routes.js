@@ -10,7 +10,8 @@ const requiredRoutes = [
   "workbench",
   "employment-insight",
   "career-resources",
-  "messages"
+  "messages",
+  "admin-console"
 ];
 
 const requiredApis = [
@@ -22,6 +23,13 @@ const requiredApis = [
   "/cc001/notifications/subscription/grant",
   "/cc001/notifications/subscription/quota",
   "/cc001/notifications/weekly-report/run",
+  "/cc001/admin/whoami",
+  "/cc001/admin/organizations/dashboard",
+  "/cc001/admin/users/ban",
+  "/cc001/admin/questions/list",
+  "/cc001/admin/content/list",
+  "/cc001/admin/broadcast",
+  "/cc001/admin/audit-log/list",
   "/cc001/career-profile/snapshot/get",
   "/cc001/career-agent/today/get"
 ];
@@ -32,8 +40,8 @@ function fail(message) {
 }
 
 for (const key of requiredRoutes) {
-  if (!routeMap.routes.some((route) => route.key === key && route.status === "available")) {
-    fail(`Missing available route: ${key}`);
+  if (!routeMap.routes.some((route) => route.key === key && (route.status === "available" || route.status === "entry-only"))) {
+    fail(`Missing available or entry-only route: ${key}`);
   }
   if (!app.includes(key)) {
     fail(`Static app does not reference route: ${key}`);

@@ -75,6 +75,14 @@
       route: "#messages"
     },
     {
+      key: "admin-console",
+      title: "管理后台",
+      icon: "管",
+      summary: "对接管理员鉴权、组织看板、用户治理、题库审核、内容广播和审计日志。",
+      state: "平台挂载",
+      route: "#admin-console"
+    },
+    {
       key: "voice-interview",
       title: "语音面试",
       icon: "声",
@@ -97,7 +105,10 @@
     careerResources: "/cc001/career-employment/resources/list",
     notifications: "/cc001/notifications/list",
     notificationUnread: "/cc001/notifications/unread-count",
-    subscriptionQuota: "/cc001/notifications/subscription/quota"
+    subscriptionQuota: "/cc001/notifications/subscription/quota",
+    adminWhoami: "/cc001/admin/whoami",
+    adminDashboard: "/cc001/admin/organizations/dashboard",
+    adminAuditLog: "/cc001/admin/audit-log/list"
   };
 
   var els = {};
@@ -361,7 +372,7 @@
   function scrollToRoute(route) {
     var id = route || "workbench";
     var node = id === "onboarding" ? $("onboarding") : $("today-action");
-    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources" || id === "messages") {
+    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources" || id === "messages" || id === "admin-console") {
       showMessage("info", "入口已就绪", "请在苍穹挂载后对接 " + id + " 对应页面状态和 WebAPI。");
     }
     if (node && node.scrollIntoView) {

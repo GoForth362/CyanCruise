@@ -29,7 +29,7 @@
 | 助手聊天 | `ChatController`、`ChatHistoryController`、`AiPersonas`、`AssistantSession/Message` | 多角色提示词共用聊天基础设施、会话历史、消息持久化和上下文组装 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java persona/helper、聊天生成与上下文可替换边界、会话/消息存储边界、应用服务、Cosmic WebAPI 和聚焦测试；待真实 AI、function calling、SSE、长期记忆摘要生成、事实抽取、webapp 页面和最终 Cosmic datamodel | P1 | 助手聊天后端基础已实现：`migrate-assistant-chat` |
 | 就业洞察/资源 | `CdutEmploymentInsightService`、`HomepageController`、home 实体 | 提供文章、视频、就业记录和资源搜索 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移主循环需要的只读就业洞察、来源覆盖审计和资源卡片入口；外部抓取/全文详情/运营后台后续平台适配 | P2 | 后端契约与 webapp 入口迁移中：`migrate-employment-insights-resources` |
 | 通知/订阅 | `NotificationService`、`WechatSubscribeService`、`WeeklyReportJob` | 任务通知、周报、微信订阅 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移站内通知、未读/已读/删除、订阅授权配额和周报通知契约；真实微信发送/调度后续平台适配 | P2 | 迁移中：`migrate-notifications-subscriptions` |
-| 管理后台 | `AdminController`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `webapp`、Cosmic 管理能力 | 按平台能力重新设计 | P2 | 待迁移 |
+| 管理后台 | `AdminController`、`QuestionBankController`、`AdminAuthService`、`AdminAuditAspect`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp`、Cosmic 管理能力 | 迁移管理治理契约、JDK 8 DTO/helper、应用服务、Cosmic WebAPI、审计边界和 route/API 映射；旧 Vue/Spring 管线不直接迁移 | P2 | 迁移中：`migrate-admin-console-governance` |
 
 ## 推荐 change 顺序
 
@@ -113,4 +113,17 @@
 | 数据/接口映射 | `Notification` 映射为 `NotificationRecordDto`，保留 notificationId、userId、type、title、content、link、readFlag、createdAt，并补充分组/标签/iconKey；`WxSubscribeQuota` 映射为 `SubscriptionQuotaDto`；授权结果映射为 `SubscriptionGrantRequest`；发送边界映射为 `SubscriptionSendRequest/Result`；周报输出映射为 `WeeklyReportSummaryDto`；WebAPI 为 `/cc001/notifications/list`、`/unread-count`、`/push`、`/read`、`/read-all`、`/delete`、`/subscription/grant`、`/subscription/quota`、`/subscription/send`、`/weekly-report/run` |
 | 迁移内容 | JDK 8 DTO、通知类型归一、消息中心分组、未读聚合、所有权校验、best-effort push、订阅授权配额、发送前安全跳过、不可用外部 provider、周报 fallback 摘要、应用服务、内存型可替换存储边界、Cosmic WebAPI、webapp route/API map 和消息中心入口 |
 | 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、Redis token 缓存、Java 17 `HttpClient`、真实微信 access token/模板消息网络调用、生产 appid/secret、Spring `@Scheduled`、Vue/uni-app 消息页、小程序 tabbar、Pinia/store、`wx.requestSubscribeMessage` 运行时和生产调度 |
+| 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
+
+## 管理后台治理
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-admin-console-governance` |
+| branch | `codex/migrate-admin-console-governance` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\controller\AdminController.java`、`QuestionBankController.java`、`service\AdminAuthService.java`、`service\QuestionBankService.java`、`service\ContentSafetyService.java`、`service\impl\ContentSafetyServiceImpl.java`、`aspect\AdminAuditAspect.java`、`aspect\AuditLog.java`、`model\entity\AdminAuditLog.java`、`F:\Project\IPD\admin-frontend\src\router\index.ts`、`src\api\index.ts`、`src\views\Dashboard.vue`、`Students.vue`、`Users.vue`、`QuestionBank.vue`、`ContentManager.vue`、`Broadcast.vue`、`Analytics.vue`、`AuditLog.vue` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的管理 DTO/常量/分页契约、`code/base/v620-cc001-base-helper` 的权限/治理/看板/内容安全/审计 helper、`code/cloud01/v620-cc001-cloud01-app01` 的管理应用服务、存储边界、内存适配和 Cosmic WebAPI、`webapp/isv/v620/careerloop` 的 admin route/API 映射、`openspec/specs/admin-console-governance/spec.md` |
+| 数据/接口映射 | IPD `ADMIN` 角色校验映射为 `AdminIdentityDto` 和 storage/platform adapter；组织、学生、用户、职业路径、职业节点、题库、内容、广播、统计和审计映射为 `Admin*Dto`；面试报告 radar JSON 映射为容错聚合的 `AdminOrgDashboardDto`；用户封禁/解封和广播复用通知 `ADMIN_BROADCAST` best-effort 投递；WebAPI 使用 `/cc001/admin/*` 路径覆盖 whoami、组织、学生、用户治理、题库审核、内容管理、广播、统计和审计日志 |
+| 迁移内容 | JDK 8 DTO、管理员身份校验结果、分页边界、封禁/解封规则、题库审核状态转换、用户贡献题内容安全/匿名 hash/难度归一、内容置顶/隐藏、组织看板雷达聚合、弱项排序、审计快照脱敏、管理应用服务、内存型可替换存储边界、Cosmic WebAPI、webapp route/API map 和管理入口挂载契约 |
+| 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、AOP 运行时、Lombok builder、旧 JWT 管线、Vue、Element Plus、Vite、Pinia、axios 拦截器、admin-frontend 页面布局、生产级 RBAC/SSO、苍穹菜单权限配置和真实 Cosmic 管理菜单发布 |
 | 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |

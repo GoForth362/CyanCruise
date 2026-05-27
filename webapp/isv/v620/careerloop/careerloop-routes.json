@@ -330,6 +330,115 @@
       ]
     },
     {
+      "key": "admin-console",
+      "title": "管理后台",
+      "ipdPaths": [
+        "F:\\Project\\IPD\\backend\\src\\main\\java\\com\\group1\\career\\controller\\AdminController.java",
+        "F:\\Project\\IPD\\backend\\src\\main\\java\\com\\group1\\career\\controller\\QuestionBankController.java",
+        "F:\\Project\\IPD\\admin-frontend\\src\\router\\index.ts",
+        "F:\\Project\\IPD\\admin-frontend\\src\\api\\index.ts"
+      ],
+      "target": "index.html#admin-console",
+      "status": "entry-only",
+      "identity": {
+        "adminIdRequired": true,
+        "roleRequired": "ADMIN",
+        "production": "pending-cosmic-login-context-or-platform-admin-role"
+      },
+      "webApis": [
+        {
+          "name": "admin whoami",
+          "method": "POST",
+          "path": "/cc001/admin/whoami",
+          "body": ["adminId"],
+          "adminIdRequired": true,
+          "dto": "AdminIdentityDto",
+          "fallback": "Show identity-required or forbidden state without using a hardcoded admin."
+        },
+        {
+          "name": "organization dashboard",
+          "method": "POST",
+          "path": "/cc001/admin/organizations/dashboard",
+          "body": ["adminId", "orgId"],
+          "adminIdRequired": true,
+          "dto": "AdminOrgDashboardDto",
+          "fallback": "Show dashboard unavailable and keep user-facing workbench routes unaffected."
+        },
+        {
+          "name": "organization students",
+          "method": "POST",
+          "path": "/cc001/admin/organizations/students",
+          "body": ["adminId", "orgId"],
+          "adminIdRequired": true,
+          "dto": "List<AdminStudentRowDto>",
+          "fallback": "Show empty scoped student list."
+        },
+        {
+          "name": "user governance",
+          "method": "POST",
+          "path": "/cc001/admin/users/list",
+          "body": ["adminId", "page", "size", "keyword"],
+          "adminIdRequired": true,
+          "dto": "AdminPageResult<AdminUserDto>",
+          "fallback": "Show user list unavailable."
+        },
+        {
+          "name": "ban user",
+          "method": "POST",
+          "path": "/cc001/admin/users/ban",
+          "body": ["adminId", "userId", "reason"],
+          "adminIdRequired": true,
+          "dto": "AdminOperationResult",
+          "fallback": "Keep previous user state and show operation failed."
+        },
+        {
+          "name": "question moderation",
+          "method": "POST",
+          "path": "/cc001/admin/questions/list",
+          "body": ["adminId", "source", "reviewStatus"],
+          "adminIdRequired": true,
+          "dto": "List<AdminQuestionDto>",
+          "fallback": "Show moderation queue unavailable."
+        },
+        {
+          "name": "content management",
+          "method": "POST",
+          "path": "/cc001/admin/content/list",
+          "body": ["adminId", "type"],
+          "adminIdRequired": true,
+          "dto": "List<AdminContentItemDto>",
+          "fallback": "Show content management unavailable."
+        },
+        {
+          "name": "admin broadcast",
+          "method": "POST",
+          "path": "/cc001/admin/broadcast",
+          "body": ["adminId", "request"],
+          "adminIdRequired": true,
+          "dto": "AdminBroadcastRequest -> AdminBroadcastResult",
+          "fallback": "Report failed/skipped counts; never affect user-facing workbench."
+        },
+        {
+          "name": "admin analytics",
+          "method": "POST",
+          "path": "/cc001/admin/analytics/summary",
+          "body": ["adminId"],
+          "adminIdRequired": true,
+          "dto": "AdminAnalyticsSummaryDto",
+          "fallback": "Show analytics unavailable."
+        },
+        {
+          "name": "audit log",
+          "method": "POST",
+          "path": "/cc001/admin/audit-log/list",
+          "body": ["adminId", "page", "size"],
+          "adminIdRequired": true,
+          "dto": "AdminPageResult<AdminAuditLogDto>",
+          "fallback": "Show audit log unavailable."
+        }
+      ]
+    },
+    {
       "key": "interview",
       "title": "模拟面试",
       "ipdPaths": [
@@ -400,11 +509,6 @@
       "name": "外部就业内容抓取/全文详情",
       "ipdPaths": ["pages/cdut-employment/detail", "HomeContentRefreshJob", "CdutEmploymentInsightServiceImpl#refreshSources"],
       "reason": "本轮只迁移只读洞察和资源卡片契约；外部抓取、PDF/HTML 解析和全文内容详情待后续平台适配。"
-    },
-    {
-      "name": "管理后台",
-      "ipdPaths": ["F:\\Project\\IPD\\admin-frontend"],
-      "reason": "需按 Cosmic 管理能力重新设计。"
     },
     {
       "name": "文件上传预览",
