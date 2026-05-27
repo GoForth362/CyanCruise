@@ -70,10 +70,9 @@
       key: "messages",
       title: "消息提醒",
       icon: "信",
-      summary: "任务通知和订阅消息等待后续迁移。",
-      state: "后续迁移",
-      route: "#pending",
-      pending: true
+      summary: "查看站内通知、未读状态、周报和订阅授权提示。",
+      state: "入口可用",
+      route: "#messages"
     },
     {
       key: "voice-interview",
@@ -95,7 +94,10 @@
     interviews: "/cc001/interview/list",
     sessions: "/cc001/assistant-chat/session/list",
     employmentInsight: "/cc001/career-employment/insight/get",
-    careerResources: "/cc001/career-employment/resources/list"
+    careerResources: "/cc001/career-employment/resources/list",
+    notifications: "/cc001/notifications/list",
+    notificationUnread: "/cc001/notifications/unread-count",
+    subscriptionQuota: "/cc001/notifications/subscription/quota"
   };
 
   var els = {};
@@ -359,7 +361,7 @@
   function scrollToRoute(route) {
     var id = route || "workbench";
     var node = id === "onboarding" ? $("onboarding") : $("today-action");
-    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources") {
+    if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources" || id === "messages") {
       showMessage("info", "入口已就绪", "请在苍穹挂载后对接 " + id + " 对应页面状态和 WebAPI。");
     }
     if (node && node.scrollIntoView) {
