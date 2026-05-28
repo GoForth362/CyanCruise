@@ -9,7 +9,9 @@ import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService;
 import v620.cc001.cloud01.app01.mservice.CareerProfileApplicationService;
 import v620.cc001.cloud01.app01.mservice.CareerProfileRuleInputSource;
+import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
 import v620.cc001.cloud01.app01.mservice.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -30,7 +32,8 @@ class CareerAgentWebApiTest {
 
         CareerAgentWebApi webApi = new CareerAgentWebApi(new CareerAgentTodayApplicationService(
                 new CareerAgentTodayRuleService(),
-                new CareerProfileRuleInputSource(profileService)));
+                new CareerProfileRuleInputSource(profileService)),
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user")));
 
         CareerAgentTodayDto today = webApi.todayByUserId("api-user");
 

@@ -43,6 +43,8 @@
 
 所有 `/cc001/*` 调用继续以 `careerloop-routes.json.routes[*].webApis` 为契约来源。用户归属接口必须在解析到用户身份后调用；管理员接口必须在解析到管理员身份和 `ADMIN` 或平台管理员权限后调用。缺失身份时，页面显示 identity-required 或 forbidden 状态，不使用硬编码用户、旧 JWT、旧 admin token 或上一次 localStorage 作为生产身份。
 
+后端通过 `CareerLoopIdentityResolver` 和 `IdentityAwareCareerLoopWebApiBoundary` 承接平台身份。生产默认 adapter 在无法读取 Cosmic 登录上下文时返回 `IDENTITY_REQUIRED`，不会信任请求体中的 `userId/adminId` 作为生产身份；开发验证 adapter 必须显式标记为 `development-fallback`。当请求体 `userId/adminId` 与已解析平台身份冲突时，边界返回 `IDENTITY_MISMATCH` 或等价 forbidden 状态，并在调用业务应用服务前终止。
+
 ## 本地自动验证
 
 ```powershell
@@ -66,6 +68,7 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 | 管理菜单 | 指向 `index.html#admin-console`，仅面向 `ADMIN` 或平台管理员角色。 |
 | 登录上下文 | 页面可从平台上下文解析当前用户；缺失时显示 identity-required。 |
 | 管理权限 | 普通用户打开 admin route 时显示 forbidden/identity-required，不调用 `/cc001/admin/*`。 |
+| 后端身份 adapter | 代表性用户 WebAPI 和管理员 WebAPI 在进入应用服务前校验平台身份；缺失、权限不足和身份冲突均不写业务数据。 |
 | WebAPI | `/cc001/career-profile/*`、`/cc001/career-agent/*`、`/cc001/admin/*` 等路径在租户网关可达，并由后端执行身份/权限校验。 |
 | 回滚 | 禁用对应菜单/KDDT 挂载即可回退；保留 webapp 静态资源和 route map 不影响后端业务接口。 |
 

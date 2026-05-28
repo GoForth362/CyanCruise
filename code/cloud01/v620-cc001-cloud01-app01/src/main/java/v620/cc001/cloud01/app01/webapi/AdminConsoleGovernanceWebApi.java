@@ -22,6 +22,8 @@ import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AdminStudentRowDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.cloud01.app01.mservice.AdminConsoleGovernanceApplicationService;
+import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
+import v620.cc001.cloud01.app01.mservice.IdentityBoundaryException;
 
 import java.util.List;
 
@@ -30,19 +32,30 @@ import java.util.List;
 public class AdminConsoleGovernanceWebApi {
 
     private final AdminConsoleGovernanceApplicationService applicationService;
+    private final IdentityAwareCareerLoopWebApiBoundary identityBoundary;
 
     public AdminConsoleGovernanceWebApi() {
         this(new AdminConsoleGovernanceApplicationService());
     }
 
     AdminConsoleGovernanceWebApi(AdminConsoleGovernanceApplicationService applicationService) {
+        this(applicationService, new IdentityAwareCareerLoopWebApiBoundary());
+    }
+
+    AdminConsoleGovernanceWebApi(AdminConsoleGovernanceApplicationService applicationService,
+                                 IdentityAwareCareerLoopWebApiBoundary identityBoundary) {
         this.applicationService = applicationService;
+        this.identityBoundary = identityBoundary;
     }
 
     @ApiPostMapping(value = "/whoami", desc = "Check admin identity", methodParamNames = {"adminId"})
     public @ApiResponseBody(value = "Admin identity") AdminIdentityDto whoami(
             @ApiRequestBody(value = "adminId", required = true) String adminId) {
-        return applicationService.whoami(adminId);
+        try {
+            return applicationService.whoami(identityBoundary.requireAdmin(adminId));
+        } catch (IdentityBoundaryException ex) {
+            return identityBoundary.rejectAsAdminIdentity(ex);
+        }
     }
 
     @ApiPostMapping(value = "/organizations/list", desc = "List organizations", methodParamNames = {"adminId"})
@@ -93,7 +106,11 @@ public class AdminConsoleGovernanceWebApi {
             @ApiRequestBody(value = "adminId", required = true) String adminId,
             @ApiRequestBody(value = "userId", required = true) String userId,
             @ApiRequestBody(value = "reason", required = false) String reason) {
-        return applicationService.banUser(adminId, userId, reason);
+        try {
+            return applicationService.banUser(identityBoundary.requireAdmin(adminId), userId, reason);
+        } catch (IdentityBoundaryException ex) {
+            return identityBoundary.rejectAsAdminOperation(ex, userId);
+        }
     }
 
     @ApiPostMapping(value = "/users/unban", desc = "Unban user", methodParamNames = {"adminId", "userId"})

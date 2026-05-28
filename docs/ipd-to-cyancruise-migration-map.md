@@ -31,7 +31,8 @@
 | 就业洞察/资源 | `CdutEmploymentInsightService`、`HomepageController`、home 实体 | 提供文章、视频、就业记录和资源搜索 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移主循环需要的只读就业洞察、来源覆盖审计和资源卡片入口；外部抓取/全文详情/运营后台后续平台适配 | P2 | 后端契约与 webapp 入口迁移中：`migrate-employment-insights-resources` |
 | 通知/订阅 | `NotificationService`、`WechatSubscribeService`、`WeeklyReportJob` | 任务通知、周报、微信订阅 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移站内通知、未读/已读/删除、订阅授权配额和周报通知契约；真实微信发送/调度后续平台适配 | P2 | 迁移中：`migrate-notifications-subscriptions` |
 | 管理后台 | `AdminController`、`QuestionBankController`、`AdminAuthService`、`AdminAuditAspect`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp`、Cosmic 管理能力 | 已完成管理治理契约、JDK 8 DTO/helper、应用服务、Cosmic WebAPI、审计边界和 route/API 映射；旧 Vue/Spring 管线不直接迁移 | P2 | 管理后台治理基础已实现：`migrate-admin-console-governance` |
-| Cosmic 平台挂载 | `frontend/src/pages.json`、`App.vue`、`utils/auth.ts`、`utils/request.ts`、`api/user.ts`、`admin-frontend/src/router/index.ts`、`admin-frontend/src/api/index.ts` | 页面入口、登录守卫、请求身份、管理入口和权限意图 | `webapp/isv/v620/careerloop`、`docs`、`openspec/specs/cosmic-platform-mounting/spec.md` | 收拢 CareerLoop webapp 平台挂载清单、生产 Cosmic 登录上下文、开发 fallback、菜单/KDDT 发布、WebAPI 调用边界和部署核查；旧 uni-app/Vue/axios/JWT 不直接迁移 | P1 | 迁移中：`migrate-cosmic-platform-mounting` |
+| Cosmic 平台挂载 | `frontend/src/pages.json`、`App.vue`、`utils/auth.ts`、`utils/request.ts`、`api/user.ts`、`admin-frontend/src/router/index.ts`、`admin-frontend/src/api/index.ts` | 页面入口、登录守卫、请求身份、管理入口和权限意图 | `webapp/isv/v620/careerloop`、`docs`、`openspec/specs/cosmic-platform-mounting/spec.md` | 已收拢 CareerLoop webapp 平台挂载清单、生产 Cosmic 登录上下文、开发 fallback、菜单/KDDT 发布、WebAPI 调用边界和部署核查；旧 uni-app/Vue/axios/JWT 不直接迁移 | P1 | 平台挂载契约已实现：`migrate-cosmic-platform-mounting` |
+| Cosmic 身份上下文 | `frontend/src/utils/auth.ts`、`utils/request.ts`、`api/user.ts`、`App.vue`、`admin-frontend/src/api/index.ts`、后端 auth/admin 语义 | 登录态、guest/真实用户区分、请求身份、401 处理、管理员 whoami 和角色意图 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp/isv/v620/careerloop`、`docs` | 迁移 Cosmic 身份上下文 DTO/helper/resolver、开发 fallback 隔离、显式 userId/adminId 一致性校验、管理员角色归一和代表性 WebAPI 身份边界；旧 JWT/axios/uni-app storage/Spring Security 不直接迁移 | P1 | 迁移中：`migrate-cosmic-identity-context` |
 
 ## 推荐 change 顺序
 
@@ -103,6 +104,19 @@
 | 迁移内容 | 平台挂载清单、IPD 来源证据、production/development 身份模式、静态入口身份解析约束、管理员入口权限提示、route/mount 静态校验、Cosmic webapp/KDDT/菜单部署说明和租户手工核查清单 |
 | 暂不迁移 | IPD uni-app/Vue router/tabBar、Pinia/store、Vite/uView、axios/JWT 登录、微信登录、Spring Boot auth、JPA/Flyway、生产 SSO/RBAC 规则、客户环境 KDDT 发布脚本、真实 Cosmic 文件服务 adapter、最终 datamodel/权限接入和小程序原生能力 |
 | 验证方式 | `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
+
+## Cosmic 身份上下文
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-cosmic-identity-context` |
+| branch | `codex/migrate-cosmic-identity-context` |
+| IPD 来源 | `F:\Project\IPD\frontend\src\utils\auth.ts`、`utils\request.ts`、`api\user.ts`、`App.vue`、`F:\Project\IPD\admin-frontend\src\api\index.ts`，以及后端 auth/admin controller/service 语义 |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的 Cosmic 身份 DTO/常量、`code/base/v620-cc001-base-helper` 的身份 helper、`code/cloud01/v620-cc001-cloud01-app01` 的 `CareerLoopIdentityResolver` 和 `IdentityAwareCareerLoopWebApiBoundary`、`webapp/isv/v620/careerloop/careerloop-routes.json` 身份元数据、`openspec/specs/cosmic-identity-context/spec.md` |
+| 数据/接口映射 | IPD 真实用户/guest/token/admin whoami 语义映射为 `CosmicIdentityContextDto` 的 userId、adminId、roles、source、environment、status；生产态缺平台身份返回 `IDENTITY_REQUIRED`；开发态显式标记 `development-fallback`；请求体 userId/adminId 与平台身份冲突返回 `IDENTITY_MISMATCH` 或等价 forbidden；管理员角色归一为 `ADMIN`、`COSMIC_ADMIN`、`PLATFORM_ADMIN` |
+| 迁移内容 | JDK 8 身份 DTO/常量、身份 helper、helper 聚焦测试、默认不可用生产 resolver、开发/test resolver、WebAPI 身份边界 helper、代表性 profile/today/resume/admin WebAPI 身份校验和边界测试 |
+| 暂不迁移 | IPD JWT token 签发/校验、微信登录、注册/重置密码、uni-app storage、axios 拦截器、Spring Security、生产 SSO/RBAC、客户 Cosmic 登录 API 最终字段适配和全量 `/cc001/*` 接口改造 |
+| 验证方式 | 身份 helper/WebAPI 边界聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
 
 ## 就业洞察/资源
 

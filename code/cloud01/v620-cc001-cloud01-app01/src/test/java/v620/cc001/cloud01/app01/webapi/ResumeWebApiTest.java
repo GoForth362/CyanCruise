@@ -7,8 +7,10 @@ import v620.cc001.base.common.dto.career.ResumeCreateRequest;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.ResumeUpdateRequest;
 import v620.cc001.cloud01.app01.mservice.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
 import v620.cc001.cloud01.app01.mservice.InMemoryCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.InMemoryResumeStorage;
+import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 import v620.cc001.cloud01.app01.mservice.ResumeApplicationService;
 
 import java.util.List;
@@ -24,7 +26,8 @@ class ResumeWebApiTest {
                 new CareerProfileApplicationService(
                         new InMemoryCareerProfileStorage(),
                         new CareerProfileSnapshotMergeService(),
-                        new CareerProfileBuildService())));
+                        new CareerProfileBuildService())),
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user")));
 
         ResumeRecordDto created = webApi.create("api-user", request("API Resume", "Java Engineer"));
         ResumeRecordDto detail = webApi.get("api-user", created.getResumeId());

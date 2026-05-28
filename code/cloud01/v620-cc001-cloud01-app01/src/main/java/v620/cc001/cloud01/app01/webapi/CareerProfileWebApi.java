@@ -11,6 +11,7 @@ import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 
 /**
  * WebAPI boundary for migrated career profile and onboarding behavior.
@@ -20,11 +21,20 @@ import v620.cc001.cloud01.app01.mservice.CareerProfileApplicationService;
 public class CareerProfileWebApi {
 
     private final CareerProfileApplicationService applicationService = new CareerProfileApplicationService();
+    private final IdentityAwareCareerLoopWebApiBoundary identityBoundary;
+
+    public CareerProfileWebApi() {
+        this(new IdentityAwareCareerLoopWebApiBoundary());
+    }
+
+    CareerProfileWebApi(IdentityAwareCareerLoopWebApiBoundary identityBoundary) {
+        this.identityBoundary = identityBoundary;
+    }
 
     @ApiPostMapping(value = "/snapshot/get", desc = "获取职业画像快照", methodParamNames = {"userId"})
     public @ApiResponseBody(value = "职业画像快照") UserProfileSnapshot snapshot(
             @ApiRequestBody(value = "用户ID", required = true) String userId) {
-        return applicationService.getSnapshot(userId);
+        return applicationService.getSnapshot(identityBoundary.requireUser(userId));
     }
 
     @ApiPostMapping(value = "/preferences/save", desc = "保存职业偏好", methodParamNames = {"userId", "request"})
@@ -38,7 +48,7 @@ public class CareerProfileWebApi {
     public @ApiResponseBody(value = "职业画像快照") UserProfileSnapshot saveOnboarding(
             @ApiRequestBody(value = "用户ID", required = true) String userId,
             @ApiRequestBody(value = "新用户引导信息", required = true) CareerProfileOnboardingRequest request) {
-        return applicationService.saveOnboarding(userId, request);
+        return applicationService.saveOnboarding(identityBoundary.requireUser(userId), request);
     }
 
     @ApiPostMapping(value = "/inputs/save", desc = "保存用户补充画像输入", methodParamNames = {"userId", "request"})
