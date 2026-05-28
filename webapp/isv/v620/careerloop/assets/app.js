@@ -123,6 +123,7 @@
   };
 
   var els = {};
+  var currentIdentity = null;
 
   function $(id) {
     return document.getElementById(id);
@@ -131,13 +132,13 @@
   function init() {
     cacheElements();
     renderActions();
-    var userId = resolveUserId();
-    if (userId) {
-      els.userIdInput.value = userId;
-      loadWorkbench(userId);
+    currentIdentity = resolveIdentity();
+    if (currentIdentity.userId) {
+      els.userIdInput.value = currentIdentity.userId;
+      loadWorkbench(currentIdentity);
     } else {
-      showMessage("warning", "需要用户 ID", "请输入 userId 后再加载工作台。");
-      updateIdentityState(null);
+      showMessage("warning", "需要平台身份", "生产模式等待苍穹登录上下文；开发验证请使用 ?identityMode=development 后输入 userId。");
+      updateIdentityState(currentIdentity);
     }
     els.saveUserIdButton.addEventListener("click", onSaveUserId);
     els.userIdInput.addEventListener("keydown", function (event) {
@@ -176,14 +177,61 @@
     els.preferenceInput = $("preferenceInput");
   }
 
-  function resolveUserId() {
+  function resolveIdentity() {
+    var mode = resolveIdentityMode();
+    if (mode === "production") {
+      return resolveCosmicIdentity();
+    }
+    return resolveDevelopmentIdentity();
+  }
+
+  function resolveIdentityMode() {
+    var params = new URLSearchParams(window.location.search);
+    var mode = trim(params.get("identityMode")).toLowerCase();
+    if (mode === "development" || mode === "dev") {
+      return "development";
+    }
+    if (mode === "production" || mode === "prod") {
+      return "production";
+    }
+    return "production";
+  }
+
+  function resolveCosmicIdentity() {
+    var context = window.__CAREERLOOP_COSMIC_CONTEXT__ || window.__COSMIC_CONTEXT__ || window.cosmicContext || {};
+    var userId = firstText(context.userId, context.personId, context.operatorId, context.uid);
+    var adminId = firstText(context.adminId, context.userId, context.operatorId);
+    var roles = Array.isArray(context.roles) ? context.roles : [];
+    return {
+      mode: "production",
+      userId: userId,
+      adminId: adminId,
+      roles: roles,
+      source: userId ? "cosmic-platform-context" : "missing-cosmic-platform-context"
+    };
+  }
+
+  function resolveDevelopmentIdentity() {
     var params = new URLSearchParams(window.location.search);
     var fromQuery = trim(params.get("userId"));
     if (fromQuery) {
       localStorage.setItem("careerloop.userId", fromQuery);
-      return fromQuery;
+      return {
+        mode: "development",
+        userId: fromQuery,
+        adminId: trim(params.get("adminId")),
+        roles: parseRoles(params.get("roles")),
+        source: "query:userId"
+      };
     }
-    return trim(localStorage.getItem("careerloop.userId"));
+    var stored = trim(localStorage.getItem("careerloop.userId"));
+    return {
+      mode: "development",
+      userId: stored,
+      adminId: trim(localStorage.getItem("careerloop.adminId")),
+      roles: parseRoles(localStorage.getItem("careerloop.roles")),
+      source: stored ? "localStorage:careerloop.userId" : "development-missing-userId"
+    };
   }
 
   function resolveApiBase() {
@@ -201,16 +249,30 @@
     var userId = trim(els.userIdInput.value);
     if (!userId) {
       localStorage.removeItem("careerloop.userId");
-      updateIdentityState(null);
-      showMessage("warning", "需要用户 ID", "请输入 userId 后再加载工作台。");
+      currentIdentity = resolveIdentity();
+      updateIdentityState(currentIdentity);
+      showMessage("warning", "需要用户 ID", "开发验证模式请输入 userId 后再加载工作台。");
       return;
     }
     localStorage.setItem("careerloop.userId", userId);
-    loadWorkbench(userId);
+    currentIdentity = {
+      mode: "development",
+      userId: userId,
+      adminId: "",
+      roles: [],
+      source: "manual-input"
+    };
+    loadWorkbench(currentIdentity);
   }
 
-  function loadWorkbench(userId) {
-    updateIdentityState(userId);
+  function loadWorkbench(identity) {
+    var userId = identity && identity.userId;
+    updateIdentityState(identity);
+    if (!userId) {
+      showMessage("warning", "需要平台身份", "未解析到用户身份，已阻止用户归属 WebAPI 调用。");
+      renderOfflinePreview("");
+      return;
+    }
     if (window.location.protocol === "file:") {
       showMessage("info", "契约预览", "本地文件模式不会调用后端；部署到苍穹 webapp 或通过 Web 服务打开后可请求 WebAPI。");
       renderOfflinePreview(userId);
@@ -254,9 +316,10 @@
 
   function onSaveOnboarding(event) {
     event.preventDefault();
-    var userId = trim(els.userIdInput.value);
+    var identity = currentIdentity || resolveIdentity();
+    var userId = identity && identity.userId;
     if (!userId) {
-      showMessage("warning", "需要用户 ID", "保存引导信息前请输入 userId。");
+      showMessage("warning", "需要平台身份", "保存引导信息前需要苍穹登录上下文或显式开发身份。");
       return;
     }
     var request = {
@@ -371,8 +434,16 @@
     }
   }
 
-  function updateIdentityState(userId) {
-    els.identityHint.textContent = userId ? "当前验证用户：" + userId : "生产登录态等待苍穹平台接入；当前使用显式 userId 验证。";
+  function updateIdentityState(identity) {
+    if (!identity || !identity.userId) {
+      els.identityHint.textContent = "生产模式仅接受苍穹登录上下文；开发验证请使用 ?identityMode=development。";
+      return;
+    }
+    if (identity.mode === "production") {
+      els.identityHint.textContent = "生产身份来源：苍穹平台上下文，用户：" + identity.userId;
+      return;
+    }
+    els.identityHint.textContent = "开发验证身份：" + identity.userId + "（来源：" + identity.source + "，非生产身份）";
   }
 
   function showMessage(type, title, text) {
@@ -384,6 +455,10 @@
     var id = route || "workbench";
     var node = id === "onboarding" ? $("onboarding") : $("today-action");
     if (id === "assessment" || id === "resume" || id === "resume-diagnosis" || id === "interview" || id === "career-plan" || id === "assistant" || id === "employment-insight" || id === "career-resources" || id === "messages" || id === "admin-console" || id === "file-upload-preview") {
+      if (id === "admin-console" && !hasAdminRole(currentIdentity)) {
+        showMessage("warning", "需要管理员身份", "管理后台挂载要求苍穹管理员上下文或 ADMIN 角色，当前不会调用 /cc001/admin/*。");
+        return;
+      }
       showMessage("info", "入口已就绪", "请在苍穹挂载后对接 " + id + " 对应页面状态和 WebAPI。");
     }
     if (node && node.scrollIntoView) {
@@ -447,6 +522,21 @@
       }
     }
     return "";
+  }
+
+  function parseRoles(value) {
+    var text = trim(value);
+    return text ? text.split(",").map(function (role) { return trim(role); }).filter(Boolean) : [];
+  }
+
+  function hasAdminRole(identity) {
+    if (!identity) {
+      return false;
+    }
+    if (identity.adminId && identity.mode === "production") {
+      return true;
+    }
+    return identity.roles.indexOf("ADMIN") >= 0 || identity.roles.indexOf("COSMIC_ADMIN") >= 0;
   }
 
   function trim(value) {

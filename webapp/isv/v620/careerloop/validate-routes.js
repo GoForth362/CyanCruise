@@ -55,6 +55,50 @@ for (const key of requiredRoutes) {
 }
 
 const serialized = JSON.stringify(routeMap);
+const routeKeys = new Set(routeMap.routes.map((route) => route.key));
+const mountKeys = new Set();
+
+if (!routeMap.identity || !routeMap.identity.production || !routeMap.identity.development) {
+  fail("Route map missing production/development identity metadata");
+}
+if (routeMap.identity.production.mode !== "cosmic-platform-context") {
+  fail("Production identity mode must be cosmic-platform-context");
+}
+if (routeMap.identity.development.mode !== "explicit-fallback") {
+  fail("Development identity mode must be explicit-fallback");
+}
+if (!routeMap.sourceEvidence || !routeMap.sourceEvidence.runtimeRule) {
+  fail("Route map missing IPD source evidence or runtime rule");
+}
+if (!Array.isArray(routeMap.platformMounts) || routeMap.platformMounts.length === 0) {
+  fail("Route map missing platformMounts");
+}
+
+for (const mount of routeMap.platformMounts) {
+  if (!mount.mountKey || mountKeys.has(mount.mountKey)) {
+    fail(`Invalid or duplicate platform mount key: ${mount.mountKey}`);
+  }
+  mountKeys.add(mount.mountKey);
+  if (!routeKeys.has(mount.routeKey)) {
+    fail(`Platform mount references unknown route: ${mount.mountKey} -> ${mount.routeKey}`);
+  }
+  if (!mount.title || !mount.target || !mount.audience || !mount.requiredRole || !mount.publishability || !mount.identityMode || !mount.fallback || !mount.deploymentNotes) {
+    fail(`Platform mount missing required metadata: ${mount.mountKey}`);
+  }
+  if (mount.publishability === "admin-only" && mount.requiredRole !== "ADMIN") {
+    fail(`Admin platform mount must require ADMIN: ${mount.mountKey}`);
+  }
+  if (mount.publishability !== "admin-only" && mount.requiredRole === "ADMIN") {
+    fail(`User platform mount cannot require ADMIN: ${mount.mountKey}`);
+  }
+}
+
+for (const key of ["workbench", "onboarding", "today-action", "assessment", "resume", "resume-diagnosis", "interview", "career-plan", "assistant", "messages", "file-upload-preview", "employment-insight", "career-resources", "admin-console"]) {
+  if (!routeMap.platformMounts.some((mount) => mount.routeKey === key)) {
+    fail(`Missing platform mount for route: ${key}`);
+  }
+}
+
 for (const api of requiredApis) {
   if (!serialized.includes(api)) {
     fail(`Route map missing API: ${api}`);

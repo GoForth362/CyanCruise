@@ -1,12 +1,37 @@
 {
   "platform": "kingdee-cosmic-webapp",
-  "change": "migrate-webapp-careerloop-entry",
+  "change": "migrate-cosmic-platform-mounting",
   "sourceProject": "F:\\Project\\IPD",
   "targetRoot": "webapp/isv/v620/careerloop",
   "identity": {
-    "production": "pending-cosmic-login-context",
-    "development": ["query:userId", "localStorage:careerloop.userId", "manual-input"],
-    "rule": "Do not call user-owned WebAPI without an explicit userId."
+    "production": {
+      "mode": "cosmic-platform-context",
+      "user": "Cosmic login context user mapped to CareerLoop userId by platform adapter",
+      "admin": "Cosmic login context user with ADMIN or platform administrator authority mapped to adminId",
+      "status": "adapter-required"
+    },
+    "development": {
+      "mode": "explicit-fallback",
+      "sources": ["query:userId", "localStorage:careerloop.userId", "manual-input"],
+      "rule": "Development fallback must be explicit and must not be treated as production identity."
+    },
+    "rule": "Do not call user-owned or admin-owned WebAPI without an explicit platform or development identity."
+  },
+  "sourceEvidence": {
+    "pageAndMenuSemantics": [
+      "F:\\Project\\IPD\\frontend\\src\\pages.json",
+      "F:\\Project\\IPD\\frontend\\src\\App.vue"
+    ],
+    "userIdentityAndRequestSemantics": [
+      "F:\\Project\\IPD\\frontend\\src\\utils\\auth.ts",
+      "F:\\Project\\IPD\\frontend\\src\\utils\\request.ts",
+      "F:\\Project\\IPD\\frontend\\src\\api\\user.ts"
+    ],
+    "adminRouteAndRequestSemantics": [
+      "F:\\Project\\IPD\\admin-frontend\\src\\router\\index.ts",
+      "F:\\Project\\IPD\\admin-frontend\\src\\api\\index.ts"
+    ],
+    "runtimeRule": "CyanCruise webapp must not require IPD Vue, uni-app, axios, JWT, Spring Boot, JPA, Flyway, or Java 17 implementation files at runtime."
   },
   "routes": [
     {
@@ -574,6 +599,176 @@
           "fallback": "Show no history state."
         }
       ]
+    }
+  ],
+  "platformMounts": [
+    {
+      "mountKey": "careerloop-workbench",
+      "routeKey": "workbench",
+      "title": "CareerLoop 工作台",
+      "target": "index.html#workbench",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show identity-required state when Cosmic login context is unavailable.",
+      "deploymentNotes": "Mount as the primary CareerLoop user menu entry under Cosmic webapp resources."
+    },
+    {
+      "mountKey": "careerloop-onboarding",
+      "routeKey": "onboarding",
+      "title": "CareerLoop 新用户引导",
+      "target": "index.html#onboarding",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Keep form values and show save unavailable or identity-required state.",
+      "deploymentNotes": "May be linked from the workbench onboarding gate rather than a top-level menu."
+    },
+    {
+      "mountKey": "careerloop-today-action",
+      "routeKey": "today-action",
+      "title": "CareerLoop 今日行动",
+      "target": "index.html#today-action",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Keep workbench navigable and show today-action unavailable state.",
+      "deploymentNotes": "Usually reached from the workbench card."
+    },
+    {
+      "mountKey": "careerloop-assessment",
+      "routeKey": "assessment",
+      "title": "职业测评",
+      "target": "index.html#assessment",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "entry-only",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show assessment entry and profile result summary only.",
+      "deploymentNotes": "Publish only after the target Cosmic page state is connected."
+    },
+    {
+      "mountKey": "careerloop-resume",
+      "routeKey": "resume",
+      "title": "简历",
+      "target": "index.html#resume",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show no resume or metadata-save unavailable state.",
+      "deploymentNotes": "Requires file route availability for upload and preview actions."
+    },
+    {
+      "mountKey": "careerloop-file-upload-preview",
+      "routeKey": "file-upload-preview",
+      "title": "文件上传预览",
+      "target": "index.html#file-upload-preview",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "entry-only",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show upload, preview, download, delete, or extract-text unavailable state.",
+      "deploymentNotes": "Real Cosmic file service adapter remains a later platform integration item."
+    },
+    {
+      "mountKey": "careerloop-resume-diagnosis",
+      "routeKey": "resume-diagnosis",
+      "title": "简历诊断",
+      "target": "index.html#resume-diagnosis",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show diagnosis unavailable until resume content exists.",
+      "deploymentNotes": "Depends on resume and file text extraction contracts."
+    },
+    {
+      "mountKey": "careerloop-interview",
+      "routeKey": "interview",
+      "title": "模拟面试",
+      "target": "index.html#interview",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show no interview history or start unavailable state.",
+      "deploymentNotes": "Voice and digital-human interview are not part of this mount."
+    },
+    {
+      "mountKey": "careerloop-career-plan",
+      "routeKey": "career-plan",
+      "title": "职业计划",
+      "target": "index.html#career-plan",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show plan summary pending or create-plan action.",
+      "deploymentNotes": "May remain a workbench deep link until a dedicated page is available."
+    },
+    {
+      "mountKey": "careerloop-assistant",
+      "routeKey": "assistant",
+      "title": "求职助手",
+      "target": "index.html#assistant",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show AI unavailable response from migrated backend.",
+      "deploymentNotes": "Frontend streaming chat remains a later migration item."
+    },
+    {
+      "mountKey": "careerloop-messages",
+      "routeKey": "messages",
+      "title": "消息中心",
+      "target": "index.html#messages",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show message center unavailable or empty state.",
+      "deploymentNotes": "Real WeChat template sending remains excluded; in-app notification is canonical."
+    },
+    {
+      "mountKey": "careerloop-employment-insight",
+      "routeKey": "employment-insight",
+      "title": "就业洞察",
+      "target": "index.html#employment-insight",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show missing identity, unsupported school, no source, or pending verification state.",
+      "deploymentNotes": "External crawling and full detail pages remain later platform work."
+    },
+    {
+      "mountKey": "careerloop-resources",
+      "routeKey": "career-resources",
+      "title": "职业资源",
+      "target": "index.html#career-resources",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show empty resources state and keep the workbench navigable.",
+      "deploymentNotes": "Can be published as a secondary menu or workbench card."
+    },
+    {
+      "mountKey": "careerloop-admin-console",
+      "routeKey": "admin-console",
+      "title": "CareerLoop 管理后台",
+      "target": "index.html#admin-console",
+      "audience": "careerloop-admin",
+      "requiredRole": "ADMIN",
+      "publishability": "admin-only",
+      "identityMode": "production-cosmic-admin-context",
+      "fallback": "Show identity-required or forbidden state without using a hardcoded admin.",
+      "deploymentNotes": "Publish only in Cosmic administrator menu or equivalent KDDT admin navigation."
     }
   ],
   "pendingCapabilities": [
