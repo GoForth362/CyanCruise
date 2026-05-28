@@ -13,6 +13,7 @@ public class FilePreviewUrlResult implements Serializable {
     private String previewUrl;
     private Long ttlSeconds;
     private LocalDateTime expiresAt;
+    private String provider;
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -26,4 +27,6 @@ public class FilePreviewUrlResult implements Serializable {
     public void setTtlSeconds(Long ttlSeconds) { this.ttlSeconds = ttlSeconds; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
 }

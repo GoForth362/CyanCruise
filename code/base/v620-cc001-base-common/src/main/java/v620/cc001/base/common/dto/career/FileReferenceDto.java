@@ -11,6 +11,7 @@ public class FileReferenceDto implements Serializable {
     private String originalFilename;
     private String extension;
     private Long sizeBytes;
+    private String provider;
 
     public String getObjectKey() { return objectKey; }
     public void setObjectKey(String objectKey) { this.objectKey = objectKey; }
@@ -22,4 +23,6 @@ public class FileReferenceDto implements Serializable {
     public void setExtension(String extension) { this.extension = extension; }
     public Long getSizeBytes() { return sizeBytes; }
     public void setSizeBytes(Long sizeBytes) { this.sizeBytes = sizeBytes; }
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
 }

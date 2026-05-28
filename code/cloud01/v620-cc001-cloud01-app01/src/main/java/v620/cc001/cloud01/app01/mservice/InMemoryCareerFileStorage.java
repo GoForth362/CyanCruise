@@ -1,5 +1,8 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.base.common.dto.career.FileConstants;
+import v620.cc001.base.common.dto.career.FileReferenceDto;
+
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,8 +16,10 @@ public class InMemoryCareerFileStorage implements CareerFileStorage {
         this.previewAvailable = previewAvailable;
     }
 
-    public void put(String objectKey, byte[] bytes, String originalFilename) {
-        objects.put(objectKey, Arrays.copyOf(bytes, bytes.length));
+    public FileReferenceDto put(FileReferenceDto reference, byte[] bytes) {
+        reference.setProvider(FileConstants.PROVIDER_LOCAL);
+        objects.put(reference.getObjectKey(), Arrays.copyOf(bytes, bytes.length));
+        return reference;
     }
 
     public byte[] get(String objectKey) {
@@ -35,5 +40,9 @@ public class InMemoryCareerFileStorage implements CareerFileStorage {
 
     public boolean previewAvailable() {
         return previewAvailable;
+    }
+
+    public String providerName() {
+        return FileConstants.PROVIDER_LOCAL;
     }
 }

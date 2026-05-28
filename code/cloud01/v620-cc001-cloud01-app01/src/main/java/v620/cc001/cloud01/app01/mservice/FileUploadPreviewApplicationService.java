@@ -22,7 +22,11 @@ public class FileUploadPreviewApplicationService {
     private final FileUploadPreviewService helper;
 
     public FileUploadPreviewApplicationService() {
-        this(new InMemoryCareerFileStorage(), new PlainTextFileTextExtractor(), new FileUploadPreviewService());
+        this(CareerLoopFileServiceAdapterFactory.production());
+    }
+
+    private FileUploadPreviewApplicationService(FileUploadPreviewApplicationService source) {
+        this(source.storage, source.textExtractor, source.helper);
     }
 
     public FileUploadPreviewApplicationService(CareerFileStorage storage,
@@ -39,7 +43,7 @@ public class FileUploadPreviewApplicationService {
         }
         try {
             FileReferenceDto reference = helper.buildReference(request.getFolder(), request.getOriginalFilename(), request.getBytes());
-            storage.put(reference.getObjectKey(), request.getBytes(), request.getOriginalFilename());
+            reference = storage.put(reference, request.getBytes());
             FileUploadResult result = new FileUploadResult();
             result.setStatus(FileConstants.STATUS_OK);
             result.setMessage("uploaded");
@@ -47,6 +51,8 @@ public class FileUploadPreviewApplicationService {
             return result;
         } catch (IllegalArgumentException ex) {
             return uploadFailure(ex.getMessage(), ex.getMessage());
+        } catch (FileAdapterUnavailableException ex) {
+            return uploadFailure(ex.getStatus(), ex.getMessage());
         } catch (Exception ex) {
             return uploadFailure(FileConstants.STATUS_FAILED, ex.toString());
         }
@@ -64,11 +70,7 @@ public class FileUploadPreviewApplicationService {
             long ttl = helper.clampTtl(ttlSeconds);
             result.setObjectKey(key);
             result.setTtlSeconds(Long.valueOf(ttl));
-            if (!storage.previewAvailable()) {
-                result.setStatus(FileConstants.STATUS_UNAVAILABLE);
-                result.setMessage("preview provider unavailable");
-                return result;
-            }
+            result.setProvider(storage.providerName());
             String url = storage.presign(key, ttl);
             if (url == null || url.trim().length() == 0) {
                 result.setStatus(FileConstants.STATUS_UNAVAILABLE);
@@ -83,6 +85,11 @@ public class FileUploadPreviewApplicationService {
         } catch (IllegalArgumentException ex) {
             result.setStatus(FileConstants.STATUS_MALFORMED_REFERENCE);
             result.setMessage(ex.getMessage());
+            return result;
+        } catch (FileAdapterUnavailableException ex) {
+            result.setStatus(ex.getStatus());
+            result.setMessage(ex.getMessage());
+            result.setProvider(storage.providerName());
             return result;
         }
     }
@@ -108,10 +115,16 @@ public class FileUploadPreviewApplicationService {
             result.setObjectKey(key);
             result.setBytes(bytes);
             result.setSizeBytes(Long.valueOf(bytes.length));
+            result.setProvider(storage.providerName());
             return result;
         } catch (IllegalArgumentException ex) {
             result.setStatus(FileConstants.STATUS_MALFORMED_REFERENCE);
             result.setMessage(ex.getMessage());
+            return result;
+        } catch (FileAdapterUnavailableException ex) {
+            result.setStatus(ex.getStatus());
+            result.setMessage(ex.getMessage());
+            result.setProvider(storage.providerName());
             return result;
         }
     }
@@ -131,11 +144,18 @@ public class FileUploadPreviewApplicationService {
             result.setMessage(deleted ? "deleted" : "already absent");
             result.setObjectKey(key);
             result.setDeleted(Boolean.valueOf(deleted));
+            result.setProvider(storage.providerName());
             return result;
         } catch (IllegalArgumentException ex) {
             result.setStatus(FileConstants.STATUS_MALFORMED_REFERENCE);
             result.setMessage(ex.getMessage());
             result.setDeleted(Boolean.FALSE);
+            return result;
+        } catch (FileAdapterUnavailableException ex) {
+            result.setStatus(ex.getStatus());
+            result.setMessage(ex.getMessage());
+            result.setDeleted(Boolean.FALSE);
+            result.setProvider(storage.providerName());
             return result;
         }
     }
@@ -150,7 +170,13 @@ public class FileUploadPreviewApplicationService {
         }
         try {
             String text = textExtractor.extract(download.getBytes(), download.getObjectKey());
-            return helper.textResult(download.getObjectKey(), text, FileConstants.STATUS_OK, "extracted");
+            FileTextExtractionResult result = helper.textResult(download.getObjectKey(), text, FileConstants.STATUS_OK, "extracted");
+            if (textExtractor instanceof CosmicFileTextExtractor) {
+                result.setProvider(((CosmicFileTextExtractor) textExtractor).providerName());
+            }
+            return result;
+        } catch (FileAdapterUnavailableException ex) {
+            return helper.textResult(download.getObjectKey(), "", ex.getStatus(), ex.getMessage());
         } catch (Exception ex) {
             return helper.textResult(download.getObjectKey(), "", FileConstants.STATUS_FAILED, ex.toString());
         }
