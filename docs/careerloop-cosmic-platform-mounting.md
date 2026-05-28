@@ -22,6 +22,24 @@
 
 生产态可由平台在页面初始化前注入 `window.__CAREERLOOP_COSMIC_CONTEXT__`、`window.__COSMIC_CONTEXT__` 或 `window.cosmicContext`。当前静态脚本读取 `userId`、`personId`、`operatorId` 或 `uid` 作为用户候选，并读取 `adminId`、`roles` 作为管理员候选；最终字段名需在客户 Cosmic 租户联调时确认。
 
+## 后端身份 adapter 配置
+
+生产后端通过 `CareerLoopIdentityResolverFactory.production()` 选择 resolver。默认未启用时 SHALL 返回 `IDENTITY_REQUIRED`，不会使用开发 fallback，也不会把请求体 `userId/adminId` 当作生产身份。租户联调确认平台上下文字段后，才通过 system property 启用可配置 adapter。
+
+| 配置项 | 默认值/说明 |
+| --- | --- |
+| `cc001.identity.adapter.enabled` | `false`；设置为 `true` 后启用 `ConfigurableCosmicIdentityResolver` |
+| `cc001.identity.adapter.user.fields` | `userId,personId,operatorId,uid` |
+| `cc001.identity.adapter.admin.fields` | `adminId,userId,operatorId` |
+| `cc001.identity.adapter.org.fields` | `orgId,organizationId,deptId` |
+| `cc001.identity.adapter.role.fields` | `roles,roleCodes,role,permissionCodes` |
+| `cc001.identity.adapter.admin.aliases` | `ADMIN,COSMIC_ADMIN,PLATFORM_ADMIN`，可补充租户管理员角色别名 |
+| `cc001.identity.adapter.diagnostics.enabled` | `true`；仅输出非敏感状态和原因，生产排查结束后可关闭 |
+
+`CosmicIdentityContextProvider` 是当前真实 Cosmic 登录上下文的替换边界：正式租户需要实现 provider，把平台当前用户、人员、操作员、组织、角色、IP 和 userAgent 转为安全 map。adapter SHALL 只记录 source/status/message 等非敏感诊断，不输出 token、手机号、邮箱或凭据。
+
+租户验证时建议分别调用一个用户归属 WebAPI 和一个管理员 WebAPI：禁用 adapter 应返回 identity-required；缺少平台上下文应返回 identity-required；普通用户访问 admin route 应返回 forbidden；平台身份与请求体 `userId/adminId` 冲突应返回 identity mismatch。回滚时清除 `cc001.identity.adapter.enabled` 或设为 `false`，后端即回到安全不可用状态。
+
 ## 菜单/KDDT 挂载
 
 挂载项以 `careerloop-routes.json.platformMounts` 为准。每个挂载项必须包含：
