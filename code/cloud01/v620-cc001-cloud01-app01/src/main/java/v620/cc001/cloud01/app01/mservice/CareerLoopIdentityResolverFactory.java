@@ -6,7 +6,8 @@ public final class CareerLoopIdentityResolverFactory {
     }
 
     public static CareerLoopIdentityResolver production() {
-        return production(new EmptyCosmicIdentityContextProvider(), CosmicIdentityAdapterConfig.fromSystemProperties());
+        CosmicIdentityAdapterConfig config = CosmicIdentityAdapterConfig.fromSystemProperties();
+        return production(CosmicLoginContextProviderFactory.production(), config);
     }
 
     public static CareerLoopIdentityResolver production(CosmicIdentityContextProvider provider,

@@ -35,7 +35,8 @@ public class ConfigurableCosmicIdentityResolver implements CareerLoopIdentityRes
         String userId = firstText(context, config.getUserIdFields());
         String adminId = firstText(context, config.getAdminIdFields());
         if (!hasText(userId) && !hasText(adminId)) {
-            return CosmicIdentityContextDto.identityRequired("Cosmic platform context has no configured identity fields");
+            return CosmicIdentityContextDto.identityRequired(diagnostic(context,
+                    "Cosmic platform context has no configured identity fields"));
         }
         CosmicIdentityContextDto identity = new CosmicIdentityContextDto();
         identity.setUserId(userId);
@@ -115,6 +116,12 @@ public class ConfigurableCosmicIdentityResolver implements CareerLoopIdentityRes
 
     private String text(Object value) {
         return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    private String diagnostic(Map<String, Object> context, String fallback) {
+        Object value = context.get(PlatformCosmicIdentityContextProvider.DIAGNOSTIC_FIELD);
+        String message = text(value);
+        return hasText(message) ? message : fallback;
     }
 
     private boolean hasText(String value) {
