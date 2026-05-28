@@ -35,11 +35,15 @@ public class DebugApplication {
                 buildConfigUrl(serverHost, intConfig("cosmic.zk.port", "COSMIC_ZK_PORT", 2181), zkUser, zkPassword));
         String mcUrl = config("cosmic.mc.url", "COSMIC_MC_URL",
                 "http://" + serverHost + ":" + intConfig("cosmic.mc.port", "COSMIC_MC_PORT", 8090) + "/");
+        String monitorEsUrl = config("cosmic.monitor.es.url", "COSMIC_MONITOR_ES_URL",
+                config("vector.es.url", "VECTOR_ES_URL", "http://" + serverHost + ":9200/"));
 
         cosmic.setClusterNumber(config("cosmic.cluster.number", "COSMIC_CLUSTER_NUMBER", "cosmic"));
         cosmic.setTenantNumber(config("cosmic.tenant.number", "COSMIC_TENANT_NUMBER", "ierp"));
         cosmic.setConfigUrl(configUrl);
         cosmic.setMcServerUrl(mcUrl);
+        cosmic.set("monitor.es.url", monitorEsUrl);
+        cosmic.set("gov.reporter.es.url", monitorEsUrl);
         
         // 自定义本地苍穹调试服务的端口
         cosmic.setCosmicWebPort(intConfig("cosmic.web.port", "COSMIC_WEB_PORT", 8881));
