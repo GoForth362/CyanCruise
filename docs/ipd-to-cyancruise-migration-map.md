@@ -158,6 +158,20 @@
 | 租户验证 | 在真实苍穹租户中启用 `cc001.file.adapter.enabled=true` 并绑定平台 provider 后，需手工核查上传、预览 URL、下载、删除、文本抽取、签名 URL 脱敏日志、adapter disabled 回滚和业务记录只保存 object key |
 | 验证方式 | `.\gradlew.bat :v620-cc001-cloud01-app01:test --tests "v620.cc001.cloud01.app01.mservice.*File*" --tests "v620.cc001.cloud01.app01.webapi.FileUploadPreviewWebApiTest"`、`node webapp\isv\v620\careerloop\validate-routes.js`、`openspec validate migrate-cosmic-file-service-adapter --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build` |
 
+## Cosmic 登录上下文 provider
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-cosmic-login-context-provider` |
+| branch | `codex/migrate-cosmic-login-context-provider` |
+| IPD 来源 | `F:\Project\IPD\frontend\src\utils\auth.ts`、`utils\request.ts`、`api\user.ts`、`App.vue`、`F:\Project\IPD\admin-frontend\src\api\index.ts`，以及后端 auth/admin controller/service 的真实用户、guest、401、admin whoami 和角色语义 |
+| CyanCruise 目标 | `code/cloud01/v620-cc001-cloud01-app01` 的 `CosmicLoginContextBridge`、`CosmicLoginContextProviderConfig`、`PlatformCosmicIdentityContextProvider`、`CosmicLoginContextProviderFactory`、`CareerLoopIdentityResolverFactory` 和身份边界测试；`openspec/specs/cosmic-login-context-provider/spec.md` |
+| 数据/接口映射 | Cosmic 登录上下文 map 的 `userId/personId/operatorId/uid` 映射 CareerLoop userId；`adminId/userId/operatorId` 映射 adminId；`orgId/organizationId/deptId` 映射组织范围；`roles/roleCodes/role/permissionCodes` 支持字符串、数组、集合和 role object code/name 提取；`ip/userAgent/ua` 作为审计诊断字段；请求体 userId/adminId 仅用于一致性校验，不作为生产身份来源 |
+| 迁移内容 | 新增 JDK 8 provider/bridge 边界、系统属性配置、默认不可用 bridge、反射加载桥、平台上下文安全归一、敏感字段过滤、桥接异常诊断、role object 提取、production factory 接入和 focused provider/resolver/WebAPI 测试 |
+| 暂不迁移 | IPD JWT、微信登录、注册/重置密码、Spring Security、axios/uni-app storage、JPA/Flyway、生产 RBAC 配置台、组织权限树、人员主数据同步、客户租户私有登录 API import 和真实菜单权限发布 |
+| 租户验证 | 启用 `cc001.identity.adapter.enabled=true` 和 `cc001.identity.login.provider.enabled=true`，必要时配置 `cc001.identity.login.provider.bridgeClass` 与字段候选；验证普通用户 WebAPI 使用当前 Cosmic 用户、admin WebAPI 需要管理员别名、请求体身份冲突被拒绝、禁用 provider 后回到 identity-required |
+| 验证方式 | `.\gradlew.bat :v620-cc001-cloud01-app01:test --tests "v620.cc001.cloud01.app01.mservice.*Cosmic*Identity*" --tests "v620.cc001.cloud01.app01.mservice.CosmicLoginContextProviderTest" --tests "v620.cc001.cloud01.app01.webapi.CosmicIdentityBoundaryWebApiTest"`、`node webapp\isv\v620\careerloop\validate-routes.js`、`openspec validate migrate-cosmic-login-context-provider --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build` |
+
 ## 通知/订阅
 
 | 维度 | 内容 |
