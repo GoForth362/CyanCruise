@@ -9,9 +9,11 @@ import v620.cc001.base.common.dto.career.AdminOrganizationDto;
 import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.cloud01.app01.mservice.AdminConsoleGovernanceApplicationService;
+import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
 import v620.cc001.cloud01.app01.mservice.InMemoryAdminGovernanceStorage;
 import v620.cc001.cloud01.app01.mservice.InMemoryNotificationStorage;
 import v620.cc001.cloud01.app01.mservice.InMemorySubscriptionQuotaStorage;
+import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 import v620.cc001.cloud01.app01.mservice.NotificationsSubscriptionsApplicationService;
 import v620.cc001.cloud01.app01.mservice.UnavailableSubscriptionSender;
 
@@ -30,7 +32,9 @@ class AdminConsoleGovernanceWebApiTest {
                                 new InMemorySubscriptionQuotaStorage(),
                                 new UnavailableSubscriptionSender(),
                                 new v620.base.helper.career.NotificationsSubscriptionsService()),
-                        new AdminConsoleGovernanceService()));
+                        new AdminConsoleGovernanceService()),
+                new IdentityAwareCareerLoopWebApiBoundary(
+                        new DevelopmentCareerLoopIdentityResolver("admin", "admin", AdminConstants.ROLE_ADMIN)));
         AdminOrganizationDto org = new AdminOrganizationDto();
         org.setCode("cdut");
         org.setName("CDUT");

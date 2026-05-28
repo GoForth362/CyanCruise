@@ -8,14 +8,17 @@
       "mode": "cosmic-platform-context",
       "user": "Cosmic login context user mapped to CareerLoop userId by platform adapter",
       "admin": "Cosmic login context user with ADMIN or platform administrator authority mapped to adminId",
-      "status": "adapter-required"
+      "status": "adapter-required",
+      "backendAdapter": "CareerLoopIdentityResolver -> IdentityAwareCareerLoopWebApiBoundary"
     },
     "development": {
       "mode": "explicit-fallback",
       "sources": ["query:userId", "localStorage:careerloop.userId", "manual-input"],
       "rule": "Development fallback must be explicit and must not be treated as production identity."
     },
-    "rule": "Do not call user-owned or admin-owned WebAPI without an explicit platform or development identity."
+    "rule": "Do not call user-owned or admin-owned WebAPI without an explicit platform or development identity.",
+    "backendStatuses": ["OK", "IDENTITY_REQUIRED", "FORBIDDEN", "IDENTITY_MISMATCH"],
+    "mismatchRule": "When request userId/adminId conflicts with resolved platform identity, the backend boundary rejects the call before invoking protected services."
   },
   "sourceEvidence": {
     "pageAndMenuSemantics": [

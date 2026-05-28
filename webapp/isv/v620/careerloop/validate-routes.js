@@ -64,8 +64,19 @@ if (!routeMap.identity || !routeMap.identity.production || !routeMap.identity.de
 if (routeMap.identity.production.mode !== "cosmic-platform-context") {
   fail("Production identity mode must be cosmic-platform-context");
 }
+if (!routeMap.identity.production.backendAdapter) {
+  fail("Production identity metadata must name backend adapter");
+}
 if (routeMap.identity.development.mode !== "explicit-fallback") {
   fail("Development identity mode must be explicit-fallback");
+}
+for (const status of ["OK", "IDENTITY_REQUIRED", "FORBIDDEN", "IDENTITY_MISMATCH"]) {
+  if (!routeMap.identity.backendStatuses || !routeMap.identity.backendStatuses.includes(status)) {
+    fail(`Route map missing backend identity status: ${status}`);
+  }
+}
+if (!routeMap.identity.mismatchRule || !routeMap.identity.mismatchRule.includes("conflicts")) {
+  fail("Route map missing backend identity mismatch rule");
 }
 if (!routeMap.sourceEvidence || !routeMap.sourceEvidence.runtimeRule) {
   fail("Route map missing IPD source evidence or runtime rule");

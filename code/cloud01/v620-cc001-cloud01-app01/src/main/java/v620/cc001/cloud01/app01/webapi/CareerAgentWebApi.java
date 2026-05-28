@@ -8,6 +8,7 @@ import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
 import v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService;
 import v620.cc001.base.common.dto.career.CareerAgentRuleInput;
 import v620.cc001.base.common.dto.career.CareerAgentTodayDto;
+import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 
 /**
  * WebAPI entry for the migrated career agent daily recommendation rule.
@@ -17,13 +18,20 @@ import v620.cc001.base.common.dto.career.CareerAgentTodayDto;
 public class CareerAgentWebApi {
 
     private final CareerAgentTodayApplicationService todayApplicationService;
+    private final IdentityAwareCareerLoopWebApiBoundary identityBoundary;
 
     public CareerAgentWebApi() {
         this(new CareerAgentTodayApplicationService());
     }
 
     CareerAgentWebApi(CareerAgentTodayApplicationService todayApplicationService) {
+        this(todayApplicationService, new IdentityAwareCareerLoopWebApiBoundary());
+    }
+
+    CareerAgentWebApi(CareerAgentTodayApplicationService todayApplicationService,
+                      IdentityAwareCareerLoopWebApiBoundary identityBoundary) {
         this.todayApplicationService = todayApplicationService;
+        this.identityBoundary = identityBoundary;
     }
 
     @ApiPostMapping(value = "/today", desc = "生成今日职业规划建议", methodParamNames = {"input"})
@@ -35,6 +43,6 @@ public class CareerAgentWebApi {
     @ApiPostMapping(value = "/today/get", desc = "按用户生成今日职业规划建议", methodParamNames = {"userId"})
     public @ApiResponseBody(value = "今日职业规划建议") CareerAgentTodayDto todayByUserId(
             @ApiRequestBody(value = "用户ID", required = true) String userId) {
-        return todayApplicationService.recommendByUserId(userId);
+        return todayApplicationService.recommendByUserId(identityBoundary.requireUser(userId));
     }
 }
