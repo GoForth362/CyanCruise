@@ -23,14 +23,15 @@
 | AI 今日任务 | `CareerAgentService`、`CareerAgentController`、`AgentTask`、`AgentState` | 根据目标岗位、简历、测评、面试状态生成今日下一步 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成纯 Java 今日规则、画像输入源、按用户 ID WebAPI 和聚焦测试；待 AgentTask 持久化、风险看板、长期计划联动、当前用户身份解析和 webapp 页面 | P0 | 今日行动推荐已实现：`migrate-today-action-recommendation` |
 | 职业测评 | `AssessmentController`、`AssessmentService`、`AssessmentScale/Question/Option/Record/Answer`、`V5/V8/V10` SQL | 量表启用、题目排序、提交答案、生成结果记录 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 DTO、纯 Java 评分内核、画像快照写入和 Cosmic WebAPI 提交入口，含 MBTI/非 MBTI 画像规则测试、应用服务持久化测试与 WebAPI 边界测试；待 datamodel、页面和 AI 解读适配 | P0 | 评分核心、画像集成和 WebAPI 接入已实现：`migrate-assessment-core`、`integrate-assessment-profile-snapshot`、`migrate-assessment-webapi` |
 | 简历基础 | `ResumeController`、`ResumeService`、`Resume`、`FileService` | 保存简历文件 key、用户简历列表、详情、删除 | `datamodel`、`filestorage`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 JDK 8 DTO、文件型/内存型存储边界、应用服务、Cosmic WebAPI、画像 resume block 同步和聚焦测试；待最终 Cosmic datamodel、文件上传/预览适配 | P0 | 后端基础已实现：`migrate-resume-core` |
-| 文件上传预览 | `FileController`、`FileService`、`FileServiceImpl`、`PdfTextExtractor`、`api/file.ts` | 上传返回 object key、短期预览 URL、认证下载、幂等删除、文本抽取限长 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移文件引用/上传/预览/下载/删除/文本抽取契约；真实 Cosmic 文件服务、OSS SDK、PDFBox/OCR 后续 adapter 适配 | P1 | 迁移中：`migrate-file-upload-preview` |
+| 文件上传预览 | `FileController`、`FileService`、`FileServiceImpl`、`PdfTextExtractor`、`api/file.ts` | 上传返回 object key、短期预览 URL、认证下载、幂等删除、文本抽取限长 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 已完成文件引用/上传/预览/下载/删除/文本抽取契约、WebAPI、webapp route/API map 和入口卡片；真实 Cosmic 文件服务、OSS SDK、PDFBox/OCR 后续 adapter 适配 | P1 | 文件上传预览基础已实现：`migrate-file-upload-preview` |
 | 简历诊断 | `ResumeDiagnosisController`、`ResumeKeywordService`、`PdfTextExtractor` | 简历文本 + JD 输出匹配和建议 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 诊断解析、关键词抽取规则、可替换诊断/关键词存储边界、应用服务、Cosmic WebAPI、诊断分数回写画像和聚焦测试；待真实 AI 调用、PDF/OSS 文本解析、通知推送、webapp 页面和最终 Cosmic datamodel | P1 | 简历诊断后端基础已实现：`migrate-resume-diagnosis` |
 | 职业计划 | `CareerPlanService`、`CareerController`、`UserCareerPlan` | 按目标岗位和用户状态生成计划摘要 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 摘要规则、默认计划、可替换存储边界、应用服务、Cosmic WebAPI、画像 `hasPlan` 和今日行动周重点接入；待 AI 生成、最终 Cosmic datamodel、计划页面和周复盘 | P1 | 职业计划摘要后端基础已实现：`migrate-career-plan-summary` |
 | 模拟面试 | `InterviewController`、`InterviewService`、`Interview/InterviewMessage/InterviewQuestion` | 开始面试、对话、结束、报告、历史 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 完成 JDK 8 DTO、纯 Java helper、会话/消息/报告摘要存储边界、应用服务、Cosmic WebAPI、画像 interview block 同步和聚焦测试；待题库管理、AI 追问/报告生成、语音/身体语言、通知、webapp 页面和最终 Cosmic datamodel | P1 | 模拟面试基础会话与报告已实现：`migrate-interview-core` |
 | 助手聊天 | `ChatController`、`ChatHistoryController`、`AiPersonas`、`AssistantSession/Message` | 多角色提示词共用聊天基础设施、会话历史、消息持久化和上下文组装 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java persona/helper、聊天生成与上下文可替换边界、会话/消息存储边界、应用服务、Cosmic WebAPI 和聚焦测试；待真实 AI、function calling、SSE、长期记忆摘要生成、事实抽取、webapp 页面和最终 Cosmic datamodel | P1 | 助手聊天后端基础已实现：`migrate-assistant-chat` |
 | 就业洞察/资源 | `CdutEmploymentInsightService`、`HomepageController`、home 实体 | 提供文章、视频、就业记录和资源搜索 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移主循环需要的只读就业洞察、来源覆盖审计和资源卡片入口；外部抓取/全文详情/运营后台后续平台适配 | P2 | 后端契约与 webapp 入口迁移中：`migrate-employment-insights-resources` |
 | 通知/订阅 | `NotificationService`、`WechatSubscribeService`、`WeeklyReportJob` | 任务通知、周报、微信订阅 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 迁移站内通知、未读/已读/删除、订阅授权配额和周报通知契约；真实微信发送/调度后续平台适配 | P2 | 迁移中：`migrate-notifications-subscriptions` |
-| 管理后台 | `AdminController`、`QuestionBankController`、`AdminAuthService`、`AdminAuditAspect`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp`、Cosmic 管理能力 | 迁移管理治理契约、JDK 8 DTO/helper、应用服务、Cosmic WebAPI、审计边界和 route/API 映射；旧 Vue/Spring 管线不直接迁移 | P2 | 迁移中：`migrate-admin-console-governance` |
+| 管理后台 | `AdminController`、`QuestionBankController`、`AdminAuthService`、`AdminAuditAspect`、`admin-frontend` | 用户、题库、内容、广播、统计、审计 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp`、Cosmic 管理能力 | 已完成管理治理契约、JDK 8 DTO/helper、应用服务、Cosmic WebAPI、审计边界和 route/API 映射；旧 Vue/Spring 管线不直接迁移 | P2 | 管理后台治理基础已实现：`migrate-admin-console-governance` |
+| Cosmic 平台挂载 | `frontend/src/pages.json`、`App.vue`、`utils/auth.ts`、`utils/request.ts`、`api/user.ts`、`admin-frontend/src/router/index.ts`、`admin-frontend/src/api/index.ts` | 页面入口、登录守卫、请求身份、管理入口和权限意图 | `webapp/isv/v620/careerloop`、`docs`、`openspec/specs/cosmic-platform-mounting/spec.md` | 收拢 CareerLoop webapp 平台挂载清单、生产 Cosmic 登录上下文、开发 fallback、菜单/KDDT 发布、WebAPI 调用边界和部署核查；旧 uni-app/Vue/axios/JWT 不直接迁移 | P1 | 迁移中：`migrate-cosmic-platform-mounting` |
 
 ## 推荐 change 顺序
 
@@ -89,6 +90,19 @@
 | 迁移内容 | 重建 CareerLoop 首个 webapp 工作台入口，提供目标岗位/画像状态、准备度、今日行动、onboarding gate、主循环入口、pending 能力提示、响应式布局和可检查 workflow 视觉资产 |
 | 暂不迁移 | IPD Vue/uni-app 源码、Pinia/store、Vite/uView、小程序 tabBar、消息中心、微信订阅、CDUT 就业详情、管理后台、文件上传预览、语音/数字人面试、生产登录态和前端流式聊天 |
 | 验证方式 | OpenSpec 严格校验、webapp 静态资源/route-map 检查、JDK 8 `.\gradlew.bat clean build` |
+
+## Cosmic 平台挂载
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-cosmic-platform-mounting` |
+| branch | `codex/migrate-cosmic-platform-mounting` |
+| IPD 来源 | `F:\Project\IPD\frontend\src\pages.json`、`App.vue`、`utils\auth.ts`、`utils\request.ts`、`api\user.ts`、`F:\Project\IPD\admin-frontend\src\router\index.ts`、`src\api\index.ts` |
+| CyanCruise 目标 | `webapp/isv/v620/careerloop/careerloop-routes.json` 的 `identity`、`sourceEvidence`、`platformMounts`，`webapp/isv/v620/careerloop/assets/app.js` 的平台身份模式，`docs/careerloop-cosmic-platform-mounting.md`，`openspec/specs/cosmic-platform-mounting/spec.md` |
+| 数据/接口映射 | 生产态用户身份映射为 Cosmic 登录上下文或平台 adapter 提供的 `userId`；管理员身份映射为 `adminId` 与 `ADMIN`/平台管理员角色；开发态 query/localStorage/manual userId 显式标记为 `identityMode=development`；菜单/KDDT 挂载通过 `platformMounts` 记录 route key、target、audience、requiredRole、publishability、fallback 和 deploymentNotes；WebAPI 仍以 `/cc001/*` route/API map 为准 |
+| 迁移内容 | 平台挂载清单、IPD 来源证据、production/development 身份模式、静态入口身份解析约束、管理员入口权限提示、route/mount 静态校验、Cosmic webapp/KDDT/菜单部署说明和租户手工核查清单 |
+| 暂不迁移 | IPD uni-app/Vue router/tabBar、Pinia/store、Vite/uView、axios/JWT 登录、微信登录、Spring Boot auth、JPA/Flyway、生产 SSO/RBAC 规则、客户环境 KDDT 发布脚本、真实 Cosmic 文件服务 adapter、最终 datamodel/权限接入和小程序原生能力 |
+| 验证方式 | `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
 
 ## 就业洞察/资源
 

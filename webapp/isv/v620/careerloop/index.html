@@ -19,7 +19,7 @@
             <input id="userIdInput" name="userId" autocomplete="off" placeholder="输入 userId 后加载工作台">
             <button id="saveUserIdButton" type="button">加载</button>
           </div>
-          <p id="identityHint" class="hint">生产登录态等待苍穹平台接入；当前使用显式 userId 验证。</p>
+          <p id="identityHint" class="hint">生产模式仅接受苍穹登录上下文；开发验证请使用 ?identityMode=development。</p>
         </div>
       </div>
       <img class="flow-image" src="assets/careerloop-flow.svg" alt="CareerLoop 主循环：目标岗位、画像测评、简历面试和今日行动">
@@ -50,7 +50,7 @@
 
     <section id="messagePanel" class="message-panel" aria-live="polite">
       <strong>等待加载</strong>
-      <span>请输入 userId，或使用 URL 参数 ?userId=。</span>
+      <span>等待苍穹登录上下文；开发验证可使用 ?identityMode=development&userId=。</span>
     </section>
 
     <section class="today-panel" id="today-action" aria-label="今日行动">
