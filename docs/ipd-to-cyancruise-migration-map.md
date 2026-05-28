@@ -144,6 +144,20 @@
 | 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、Java 17 `HttpClient`、PDFBox、Redis、Bilibili 抓取、外部刷新任务、图片代理、Vue/uni-app 页面、Pinia/store、小程序 web-view、全文内容详情、生产内容运营后台和真实外部抓取调度 |
 | 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
 
+## Cosmic 文件服务 adapter
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-cosmic-file-service-adapter` |
+| branch | `codex/migrate-cosmic-file-service-adapter` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\controller\FileController.java`、`service\FileService.java`、`service\impl\FileServiceImpl.java`、`config\OssConfigProperties.java`、`utils\PdfTextExtractor.java`、`F:\Project\IPD\frontend\src\api\file.ts` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的文件 DTO provider 字段与常量，`code/cloud01/v620-cc001-cloud01-app01` 的 `CosmicFileAdapterConfig`、`CosmicCareerFileServiceProvider`、`CosmicCareerFileStorage`、`CosmicFileTextExtractor`、`CareerLoopFileServiceAdapterFactory`，以及既有 `/cc001/files/*` WebAPI |
+| 数据/接口映射 | IPD bare object key 继续映射为 `FileReferenceDto.objectKey`；平台临时 URL 或绝对引用进入 adapter 后归一为稳定 object key；预览 URL 通过 `preview-url` 按需生成并保留 TTL clamp；下载返回服务端 bytes 与 content length；删除保持幂等；文本抽取继续 capped 到 20000 字并在 unsupported/unavailable 时返回空文本 |
+| 迁移内容 | 新增 JDK 8 可配置文件 adapter、显式 enablement、provider 边界、默认 unavailable provider、生产构造工厂、Cosmic storage/text extractor、provider 诊断字段、disabled 回滚行为和 focused adapter 测试；默认生产未启用时返回 `UNAVAILABLE`，不使用内存文件作为生产替代 |
+| 暂不迁移 | IPD Spring Multipart、Aliyun OSS SDK、OSS access key/secret、PDFBox、OCR、Office 在线预览、CDN、病毒扫描、Flyway、Java 17 `readAllBytes`、Vue/uni-app 上传运行时、真实租户文件服务 SDK import 和生产文件生命周期治理 |
+| 租户验证 | 在真实苍穹租户中启用 `cc001.file.adapter.enabled=true` 并绑定平台 provider 后，需手工核查上传、预览 URL、下载、删除、文本抽取、签名 URL 脱敏日志、adapter disabled 回滚和业务记录只保存 object key |
+| 验证方式 | `.\gradlew.bat :v620-cc001-cloud01-app01:test --tests "v620.cc001.cloud01.app01.mservice.*File*" --tests "v620.cc001.cloud01.app01.webapi.FileUploadPreviewWebApiTest"`、`node webapp\isv\v620\careerloop\validate-routes.js`、`openspec validate migrate-cosmic-file-service-adapter --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build` |
+
 ## 通知/订阅
 
 | 维度 | 内容 |

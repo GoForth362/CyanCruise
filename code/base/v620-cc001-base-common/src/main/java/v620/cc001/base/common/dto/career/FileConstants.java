@@ -12,6 +12,10 @@ public final class FileConstants {
     public static final String STATUS_FILE_EMPTY = "FILE_EMPTY";
     public static final String STATUS_MALFORMED_REFERENCE = "MALFORMED_REFERENCE";
 
+    public static final String PROVIDER_LOCAL = "local-memory";
+    public static final String PROVIDER_COSMIC = "cosmic-file-service";
+    public static final String PROVIDER_UNAVAILABLE = "unavailable";
+
     public static final String DEFAULT_FOLDER = "others";
     public static final long MIN_PREVIEW_TTL_SECONDS = 60L;
     public static final long MAX_PREVIEW_TTL_SECONDS = 86400L;

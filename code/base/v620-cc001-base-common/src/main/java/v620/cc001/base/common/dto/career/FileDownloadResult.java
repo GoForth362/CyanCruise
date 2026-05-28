@@ -11,6 +11,7 @@ public class FileDownloadResult implements Serializable {
     private String objectKey;
     private byte[] bytes;
     private Long sizeBytes;
+    private String provider;
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -22,4 +23,6 @@ public class FileDownloadResult implements Serializable {
     public void setBytes(byte[] bytes) { this.bytes = bytes; }
     public Long getSizeBytes() { return sizeBytes; }
     public void setSizeBytes(Long sizeBytes) { this.sizeBytes = sizeBytes; }
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
 }

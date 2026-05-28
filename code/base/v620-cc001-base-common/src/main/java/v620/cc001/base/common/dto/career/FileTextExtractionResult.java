@@ -12,6 +12,7 @@ public class FileTextExtractionResult implements Serializable {
     private String text;
     private Integer charCount;
     private Boolean truncated;
+    private String provider;
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -25,4 +26,6 @@ public class FileTextExtractionResult implements Serializable {
     public void setCharCount(Integer charCount) { this.charCount = charCount; }
     public Boolean getTruncated() { return truncated; }
     public void setTruncated(Boolean truncated) { this.truncated = truncated; }
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
 }

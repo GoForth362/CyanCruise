@@ -10,6 +10,7 @@ public class FileDeleteResult implements Serializable {
     private String message;
     private String objectKey;
     private Boolean deleted;
+    private String provider;
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -19,4 +20,6 @@ public class FileDeleteResult implements Serializable {
     public void setObjectKey(String objectKey) { this.objectKey = objectKey; }
     public Boolean getDeleted() { return deleted; }
     public void setDeleted(Boolean deleted) { this.deleted = deleted; }
+    public String getProvider() { return provider; }
+    public void setProvider(String provider) { this.provider = provider; }
 }

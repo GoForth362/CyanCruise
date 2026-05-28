@@ -1,8 +1,10 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.base.common.dto.career.FileReferenceDto;
+
 public interface CareerFileStorage {
 
-    void put(String objectKey, byte[] bytes, String originalFilename);
+    FileReferenceDto put(FileReferenceDto reference, byte[] bytes);
 
     byte[] get(String objectKey);
 
@@ -11,4 +13,6 @@ public interface CareerFileStorage {
     boolean delete(String objectKey);
 
     boolean previewAvailable();
+
+    String providerName();
 }
