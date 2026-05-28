@@ -16,7 +16,7 @@ public class IdentityAwareCareerLoopWebApiBoundary {
     private final CosmicIdentityContextHelper helper;
 
     public IdentityAwareCareerLoopWebApiBoundary() {
-        this(new UnavailableCosmicIdentityResolver(), new CosmicIdentityContextHelper());
+        this(CareerLoopIdentityResolverFactory.production(), new CosmicIdentityContextHelper());
     }
 
     public IdentityAwareCareerLoopWebApiBoundary(CareerLoopIdentityResolver resolver) {

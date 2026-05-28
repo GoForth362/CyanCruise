@@ -9,7 +9,24 @@
       "user": "Cosmic login context user mapped to CareerLoop userId by platform adapter",
       "admin": "Cosmic login context user with ADMIN or platform administrator authority mapped to adminId",
       "status": "adapter-required",
-      "backendAdapter": "CareerLoopIdentityResolver -> IdentityAwareCareerLoopWebApiBoundary"
+      "backendAdapter": "CareerLoopIdentityResolver -> IdentityAwareCareerLoopWebApiBoundary",
+      "adapterEnablement": {
+        "property": "cc001.identity.adapter.enabled",
+        "enabledValue": "true",
+        "diagnosticsProperty": "cc001.identity.adapter.diagnostics.enabled",
+        "defaultBehavior": "disabled-safe-identity-required",
+        "provider": "CosmicIdentityContextProvider"
+      },
+      "candidateFields": {
+        "userId": ["userId", "personId", "operatorId", "uid"],
+        "adminId": ["adminId", "userId", "operatorId"],
+        "orgId": ["orgId", "organizationId", "deptId"],
+        "roles": ["roles", "roleCodes", "role", "permissionCodes"],
+        "ip": ["ip"],
+        "userAgent": ["userAgent", "ua"]
+      },
+      "adminAliases": ["ADMIN", "COSMIC_ADMIN", "PLATFORM_ADMIN"],
+      "disabledBehavior": "Production WebAPI remains identity-required and never falls back to development identity."
     },
     "development": {
       "mode": "explicit-fallback",

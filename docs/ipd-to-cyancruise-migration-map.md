@@ -118,6 +118,19 @@
 | 暂不迁移 | IPD JWT token 签发/校验、微信登录、注册/重置密码、uni-app storage、axios 拦截器、Spring Security、生产 SSO/RBAC、客户 Cosmic 登录 API 最终字段适配和全量 `/cc001/*` 接口改造 |
 | 验证方式 | 身份 helper/WebAPI 边界聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
 
+## Cosmic 身份 adapter realization
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-cosmic-identity-adapter-realization` |
+| branch | `codex/migrate-cosmic-identity-adapter-realization` |
+| IPD 来源 | `F:\Project\IPD\frontend\src\utils\auth.ts`、`utils\request.ts`、`api\user.ts`、`App.vue`、`F:\Project\IPD\admin-frontend\src\api\index.ts`，以及后端 auth/admin 语义 |
+| CyanCruise 目标 | `code/cloud01/v620-cc001-cloud01-app01` 的 `CosmicIdentityAdapterConfig`、`CosmicIdentityContextProvider`、`ConfigurableCosmicIdentityResolver`、`CareerLoopIdentityResolverFactory`、`IdentityAwareCareerLoopWebApiBoundary`，以及 `webapp/isv/v620/careerloop/careerloop-routes.json` adapter 元数据和平台挂载文档 |
+| 数据/接口映射 | 平台上下文 map 的 `userId/personId/operatorId/uid` 映射为 CareerLoop `userId`；`adminId/userId/operatorId` 映射为 `adminId`；`orgId/organizationId/deptId` 映射为组织范围；`roles/roleCodes/role/permissionCodes` 支持集合、数组、逗号或分号文本，并通过 `ADMIN/COSMIC_ADMIN/PLATFORM_ADMIN` 或租户别名归一为管理员权限；IP 和 userAgent 作为审计诊断字段 |
+| 迁移内容 | JDK 8 可配置 adapter、provider 边界、字段候选解析、角色别名归一、factory 显式启用策略、默认生产安全不可用、开发 fallback 隔离、WebAPI 身份边界联动测试、route map adapter 元数据、租户验证/回滚文档 |
+| 暂不迁移 | IPD JWT/Spring Security/axios/uni-app storage、微信登录、生产 SSO/RBAC 配置台、客户租户真实 Cosmic 登录 API import、组织权限树和人员主数据同步 |
+| 验证方式 | adapter/helper/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
+
 ## 就业洞察/资源
 
 | 维度 | 内容 |

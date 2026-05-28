@@ -67,6 +67,31 @@ if (routeMap.identity.production.mode !== "cosmic-platform-context") {
 if (!routeMap.identity.production.backendAdapter) {
   fail("Production identity metadata must name backend adapter");
 }
+if (!routeMap.identity.production.adapterEnablement || routeMap.identity.production.adapterEnablement.property !== "cc001.identity.adapter.enabled") {
+  fail("Production identity metadata must document adapter enablement property");
+}
+if (routeMap.identity.production.adapterEnablement.enabledValue !== "true") {
+  fail("Production identity adapter enabled value must be true");
+}
+if (routeMap.identity.production.adapterEnablement.diagnosticsProperty !== "cc001.identity.adapter.diagnostics.enabled") {
+  fail("Production identity metadata must document adapter diagnostics property");
+}
+if (routeMap.identity.production.adapterEnablement.defaultBehavior !== "disabled-safe-identity-required") {
+  fail("Production identity adapter default behavior must remain disabled-safe-identity-required");
+}
+if (!routeMap.identity.production.disabledBehavior || !routeMap.identity.production.disabledBehavior.includes("identity-required")) {
+  fail("Production identity metadata must document disabled identity-required behavior");
+}
+for (const group of ["userId", "adminId", "orgId", "roles", "ip", "userAgent"]) {
+  if (!routeMap.identity.production.candidateFields || !Array.isArray(routeMap.identity.production.candidateFields[group]) || routeMap.identity.production.candidateFields[group].length === 0) {
+    fail(`Production identity metadata missing candidate fields: ${group}`);
+  }
+}
+for (const alias of ["ADMIN", "COSMIC_ADMIN", "PLATFORM_ADMIN"]) {
+  if (!routeMap.identity.production.adminAliases || !routeMap.identity.production.adminAliases.includes(alias)) {
+    fail(`Production identity metadata missing admin alias: ${alias}`);
+  }
+}
 if (routeMap.identity.development.mode !== "explicit-fallback") {
   fail("Development identity mode must be explicit-fallback");
 }
