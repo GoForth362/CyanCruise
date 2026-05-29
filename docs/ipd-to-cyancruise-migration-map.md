@@ -94,6 +94,21 @@
 | 暂不迁移 | Spring Boot Controller、Spring `SseEmitter`、Java 17 `HttpClient`、JPA/Flyway、DashScope SDK 专有对象、语音 ASR/TTS、Vue/uni-app 页面、生产密钥配置和真实 provider 网络调用 |
 | 验证方式 | AI helper 聚焦测试、gateway/provider 聚焦测试、function calling 安全测试、stream event 测试、OpenSpec 严格校验、JDK 8 Gradle 测试和完整构建 |
 
+## AI provider 生产 adapter
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-ai-provider-production-adapter` |
+| branch | `codex/migrate-ai-provider-production-adapter` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\service\AiService.java`、`service\impl\AiServiceImpl.java`、`service\ai\FunctionCallingService.java`、`service\ai\FunctionCallingServiceImpl.java`、`service\ai\tools\`、`F:\Project\IPD\frontend\src\api\ai.ts` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的 AI 错误/诊断字段，`code/base/v620-cc001-base-helper` 的 `OpenAiCompatibleProviderHelper`，`code/cloud01/v620-cc001-cloud01-app01` 的 `AiProviderConfig`、`AiProviderAdapterFactory`、`CompatibleEndpointAiProviderAdapter`、默认助手/简历诊断 AI gateway 接入点，`webapp/isv/v620/careerloop/careerloop-routes.json` 的 secret-free provider 元数据，`openspec/specs/ai-provider-production-adapter/spec.md` |
+| 数据/接口映射 | IPD DashScope compatible-mode `/chat/completions` 语义映射为 provider-neutral `AiChatRequestDto`/`AiChatResponseDto`；`model/messages/tools/tool_choice/stream` 映射到 OpenAI-compatible JSON；`choices[0].message.content` 映射为 `content`；`finish_reason=tool_calls` 和 `message.tool_calls` 映射为 `AiToolCallDto`；`usage.prompt_tokens/completion_tokens/total_tokens` 映射为 `AiUsageDto`；401/403、4xx、5xx、timeout、invalid response 和 network error 映射为统一 `AiConstants` 错误码 |
+| 迁移内容 | JDK 8 `HttpURLConnection` provider binding、显式 `cc001.ai.provider.*` 系统属性启用、默认 disabled-safe、缺 endpoint/apiKey/model 不发起网络调用、timeout、可选一次 5xx retry、4xx/认证失败不重试、stream chunk 到 `AiStreamEventDto`、密钥/Authorization 脱敏、最小诊断字段、focused helper/provider/function-calling/场景回退测试 |
+| 暂不迁移 | IPD Spring Controller、Spring `SseEmitter` 传输层、Java 17 `HttpClient`、DashScope SDK/OpenAI SDK、JPA/Flyway、生产密钥值、持久化调用审计、额度/成本告警、语音 ASR/TTS、数字人面试、Vue/uni-app 前端流式聊天和客户租户最终 provider 选择 |
+| 租户验证 | 在真实苍穹租户中设置 `cc001.ai.provider.enabled=true`、`cc001.ai.provider.endpoint`、`cc001.ai.provider.apiKey`、`cc001.ai.provider.model`、`cc001.ai.provider.timeoutSeconds`，必要时设置 `cc001.ai.provider.retryOn5xx` 与 `cc001.ai.provider.diagnostics.enabled`；验证助手聊天、简历诊断 fallback、tool calling userId 服务端注入、5xx retry、401 不重试、timeout、禁用回滚和日志/诊断不包含 apiKey 或 Authorization header |
+| 回滚方式 | 将 `cc001.ai.provider.enabled=false` 或移除 endpoint/apiKey/model 即可回到 unavailable provider；业务 WebAPI DTO 不变，规则兜底继续可用 |
+| 验证方式 | `.\gradlew.bat :v620-cc001-base-helper:test --tests "v620.base.helper.ai.AiInfrastructureHelperTest"`、`.\gradlew.bat :v620-cc001-cloud01-app01:test --tests "v620.cc001.cloud01.app01.mservice.AiInfrastructureApplicationTest"`、`openspec validate migrate-ai-provider-production-adapter --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build` |
+
 ## Webapp CareerLoop 入口
 
 | 维度 | 内容 |

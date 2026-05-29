@@ -14,6 +14,11 @@ public class AiChatResponseDto implements Serializable {
     private String errorCode;
     private String errorMessage;
     private boolean fallback;
+    private String providerName;
+    private Integer statusCode;
+    private Long elapsedMillis;
+    private Integer retryCount;
+    private String diagnostics;
     private AiUsageDto usage = new AiUsageDto();
     private List<AiToolCallDto> toolCalls = new ArrayList<AiToolCallDto>();
 
@@ -72,6 +77,46 @@ public class AiChatResponseDto implements Serializable {
 
     public void setFallback(boolean fallback) {
         this.fallback = fallback;
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public void setProviderName(String providerName) {
+        this.providerName = providerName;
+    }
+
+    public Integer getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(Integer statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public Long getElapsedMillis() {
+        return elapsedMillis;
+    }
+
+    public void setElapsedMillis(Long elapsedMillis) {
+        this.elapsedMillis = elapsedMillis == null ? Long.valueOf(0L) : elapsedMillis;
+    }
+
+    public Integer getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(Integer retryCount) {
+        this.retryCount = retryCount == null ? Integer.valueOf(0) : retryCount;
+    }
+
+    public String getDiagnostics() {
+        return diagnostics;
+    }
+
+    public void setDiagnostics(String diagnostics) {
+        this.diagnostics = diagnostics;
     }
 
     public AiUsageDto getUsage() {
