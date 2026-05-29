@@ -8,6 +8,14 @@ const app = fs.readFileSync(appPath, "utf8");
 
 const requiredRoutes = [
   "workbench",
+  "onboarding",
+  "today-action",
+  "assessment",
+  "resume",
+  "resume-diagnosis",
+  "interview",
+  "career-plan",
+  "assistant",
   "employment-insight",
   "career-resources",
   "messages",
@@ -37,7 +45,46 @@ const requiredApis = [
   "/cc001/files/delete",
   "/cc001/files/extract-text",
   "/cc001/career-profile/snapshot/get",
-  "/cc001/career-agent/today/get"
+  "/cc001/career-agent/today/get",
+  "/cc001/career-profile/onboarding/save",
+  "/cc001/assessment/submit",
+  "/cc001/resume/list",
+  "/cc001/resume/create",
+  "/cc001/resume-diagnosis/analyze",
+  "/cc001/resume-diagnosis/keywords/status",
+  "/cc001/career-plan/summary",
+  "/cc001/career-plan/ensure",
+  "/cc001/interview/list",
+  "/cc001/interview/start",
+  "/cc001/assistant-chat/send",
+  "/cc001/assistant-chat/session/list"
+];
+
+const requiredPageShellRoutes = [
+  "workbench",
+  "onboarding",
+  "today-action",
+  "assessment",
+  "resume",
+  "file-upload-preview",
+  "resume-diagnosis",
+  "career-plan",
+  "interview",
+  "assistant",
+  "messages",
+  "employment-insight",
+  "career-resources"
+];
+
+const requiredStateModel = [
+  "loading",
+  "empty",
+  "success",
+  "identity-required",
+  "forbidden",
+  "unavailable",
+  "backend-error",
+  "pending"
 ];
 
 function fail(message) {
@@ -105,6 +152,36 @@ if (!routeMap.identity.mismatchRule || !routeMap.identity.mismatchRule.includes(
 }
 if (!routeMap.sourceEvidence || !routeMap.sourceEvidence.runtimeRule) {
   fail("Route map missing IPD source evidence or runtime rule");
+}
+if (!routeMap.pageShell || routeMap.pageShell.change !== "migrate-webapp-careerloop-pages") {
+  fail("Route map missing migrate-webapp-careerloop-pages pageShell metadata");
+}
+if (routeMap.pageShell.implementation !== "static-hash-route-states") {
+  fail("Page shell implementation must be static-hash-route-states");
+}
+for (const key of requiredPageShellRoutes) {
+  if (!routeMap.pageShell.visibleUserRoutes || !routeMap.pageShell.visibleUserRoutes.includes(key)) {
+    fail(`Page shell missing visible route: ${key}`);
+  }
+  if (!routeKeys.has(key)) {
+    fail(`Page shell references unknown route: ${key}`);
+  }
+  if (!app.includes(`"${key}"`) && !app.includes(`'${key}'`)) {
+    fail(`Static app page registry missing route: ${key}`);
+  }
+}
+for (const key of ["admin-console"]) {
+  if (!routeMap.pageShell.adminRoutes || !routeMap.pageShell.adminRoutes.includes(key)) {
+    fail(`Page shell missing admin route: ${key}`);
+  }
+}
+for (const stateName of requiredStateModel) {
+  if (!routeMap.pageShell.stateModel || !routeMap.pageShell.stateModel.includes(stateName)) {
+    fail(`Page shell missing state model: ${stateName}`);
+  }
+}
+if (!routeMap.pageShell.runtimeRule || !routeMap.pageShell.runtimeRule.includes("Vue") || !routeMap.pageShell.runtimeRule.includes("Flyway")) {
+  fail("Page shell runtime rule must document excluded IPD runtimes");
 }
 if (!Array.isArray(routeMap.platformMounts) || routeMap.platformMounts.length === 0) {
   fail("Route map missing platformMounts");

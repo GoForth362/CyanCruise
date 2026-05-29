@@ -7,6 +7,8 @@ cosmic.web.port=8881
 cosmic.cluster.number=cosmic
 cosmic.tenant.number=ierp
 cosmic.monitor.es.url=http://10.0.0.8:9200/
+
+#本地向量数据
 #vector.es.url=http://127.0.0.1:9200/
 
 # Optional full overrides. Use these only when host/port fields are not enough.
