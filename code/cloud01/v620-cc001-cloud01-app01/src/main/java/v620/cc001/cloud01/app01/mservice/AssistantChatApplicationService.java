@@ -8,6 +8,8 @@ import v620.cc001.base.common.dto.career.AssistantChatMessageDto;
 import v620.cc001.base.common.dto.career.AssistantChatRequest;
 import v620.cc001.base.common.dto.career.AssistantChatResponse;
 import v620.cc001.base.common.dto.career.AssistantChatSessionDto;
+import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
+import v620.cc001.cloud01.app01.mservice.ai.DefaultAiGateway;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,7 +26,7 @@ public class AssistantChatApplicationService {
 
     public AssistantChatApplicationService() {
         this(new FileAssistantChatStorage(),
-                new UnavailableAssistantChatGenerator(),
+                new AiGatewayAssistantChatGenerator(new DefaultAiGateway(AiProviderAdapterFactory.fromSystemProperties())),
                 new EmptyAssistantChatContextProvider(),
                 new AssistantChatHelper());
     }

@@ -15,16 +15,21 @@ import v620.cc001.base.common.dto.career.CareerPlanRecordDto;
 import v620.cc001.base.common.dto.career.ResumeDiagnosisRequest;
 import v620.cc001.cloud01.app01.mservice.ai.AiFunctionCallingService;
 import v620.cc001.cloud01.app01.mservice.ai.AiGateway;
+import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
+import v620.cc001.cloud01.app01.mservice.ai.AiProviderConfig;
 import v620.cc001.cloud01.app01.mservice.ai.AiTool;
 import v620.cc001.cloud01.app01.mservice.ai.AiToolRegistry;
+import v620.cc001.cloud01.app01.mservice.ai.CompatibleEndpointAiProviderAdapter;
 import v620.cc001.cloud01.app01.mservice.ai.DefaultAiGateway;
 import v620.cc001.cloud01.app01.mservice.ai.FakeAiProviderAdapter;
 import v620.cc001.cloud01.app01.mservice.ai.UnavailableAiProviderAdapter;
 
+import java.net.SocketTimeoutException;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -145,6 +150,87 @@ class AiInfrastructureApplicationTest {
         assertEquals(AiConstants.STREAM_DONE, events.get(events.size() - 1).getType());
     }
 
+    @Test
+    void providerFactoryIsDisabledSafeByDefault() {
+        AiProviderConfig config = new AiProviderConfig();
+        config.setEnabled(true);
+        config.setEndpoint("https://example.test/v1/chat/completions");
+
+        AiChatResponseDto response = AiProviderAdapterFactory.fromConfig(config).chat(new AiChatRequestDto());
+
+        assertEquals(AiConstants.ERROR_UNAVAILABLE, response.getErrorCode());
+        assertTrue(response.isFallback());
+    }
+
+    @Test
+    void compatibleProviderMapsSuccessAndDiagnostics() {
+        AiProviderConfig config = enabledProvider();
+        config.setDiagnosticsEnabled(true);
+        RecordingTransport transport = new RecordingTransport(
+                new CompatibleEndpointAiProviderAdapter.HttpResult(200,
+                        "{\"model\":\"qwen-max\",\"choices\":[{\"finish_reason\":\"stop\",\"message\":{\"content\":\"ok\"}}],\"usage\":{\"prompt_tokens\":1,\"completion_tokens\":2,\"total_tokens\":3}}"));
+        CompatibleEndpointAiProviderAdapter adapter = new CompatibleEndpointAiProviderAdapter(config, null, transport);
+        AiChatRequestDto request = new AiChatRequestDto();
+        request.setMessages(Collections.singletonList(new AiMessageDto("user", "hello")));
+
+        AiChatResponseDto response = adapter.chat(request);
+
+        assertEquals("ok", response.getContent());
+        assertEquals("qwen-max", response.getModelName());
+        assertEquals(Integer.valueOf(3), response.getUsage().getTotalTokens());
+        assertEquals("Bearer sk-test", transport.authorization);
+        assertTrue(transport.body.contains("\"model\":\"qwen-max\""));
+        assertTrue(response.getDiagnostics().contains("messageCount=1"));
+        assertTrue(response.getDiagnostics().contains("retryCount=0"));
+    }
+
+    @Test
+    void compatibleProviderRetries5xxOnceAndDoesNotRetry401() {
+        AiProviderConfig config = enabledProvider();
+        RecordingTransport serverError = new RecordingTransport(
+                new CompatibleEndpointAiProviderAdapter.HttpResult(500, "{\"error\":{\"message\":\"temporary\"}}"),
+                new CompatibleEndpointAiProviderAdapter.HttpResult(200, "{\"choices\":[{\"message\":{\"content\":\"after retry\"}}]}"));
+        AiChatResponseDto retried = new CompatibleEndpointAiProviderAdapter(config, null, serverError).chat(new AiChatRequestDto());
+
+        assertEquals("after retry", retried.getContent());
+        assertEquals(Integer.valueOf(1), retried.getRetryCount());
+        assertEquals(2, serverError.calls);
+
+        RecordingTransport auth = new RecordingTransport(
+                new CompatibleEndpointAiProviderAdapter.HttpResult(401, "{\"error\":{\"message\":\"bad key\"}}"));
+        AiChatResponseDto rejected = new CompatibleEndpointAiProviderAdapter(config, null, auth).chat(new AiChatRequestDto());
+
+        assertEquals(AiConstants.ERROR_AUTHENTICATION, rejected.getErrorCode());
+        assertEquals(1, auth.calls);
+    }
+
+    @Test
+    void compatibleProviderClassifiesTimeoutAndRedactsSecret() {
+        AiProviderConfig config = enabledProvider();
+        RecordingTransport timeout = new RecordingTransport(new SocketTimeoutException("Bearer sk-test timed out"));
+
+        AiChatResponseDto response = new CompatibleEndpointAiProviderAdapter(config, null, timeout).chat(new AiChatRequestDto());
+
+        assertEquals(AiConstants.ERROR_TIMEOUT, response.getErrorCode());
+        assertFalse(response.getErrorMessage().contains("sk-test"));
+        assertFalse(response.getDiagnostics().contains("sk-test"));
+    }
+
+    @Test
+    void compatibleProviderNormalizesStreamChunks() {
+        AiProviderConfig config = enabledProvider();
+        RecordingTransport stream = new RecordingTransport(new CompatibleEndpointAiProviderAdapter.HttpResult(200,
+                "data: {\"choices\":[{\"delta\":{\"content\":\"A\"}}]}\n"
+                        + "data: {\"choices\":[{\"delta\":{\"content\":\"I\"}}]}\n"
+                        + "data: [DONE]"));
+
+        List<AiStreamEventDto> events = new CompatibleEndpointAiProviderAdapter(config, null, stream).stream(new AiChatRequestDto());
+
+        assertEquals(AiConstants.STREAM_TOKEN, events.get(0).getType());
+        assertEquals("A", events.get(0).getData());
+        assertEquals(AiConstants.STREAM_DONE, events.get(2).getType());
+    }
+
     private static class ToolCallingGateway implements AiGateway {
         private int calls;
 
@@ -178,6 +264,46 @@ class AiInfrastructureApplicationTest {
 
         public void execute() {
             runnable.run();
+        }
+    }
+
+    private AiProviderConfig enabledProvider() {
+        AiProviderConfig config = new AiProviderConfig();
+        config.setEnabled(true);
+        config.setEndpoint("https://example.test/v1/chat/completions");
+        config.setApiKey("sk-test");
+        config.setModelName("qwen-max");
+        config.setTimeoutSeconds(3);
+        config.setRetryOn5xx(true);
+        return config;
+    }
+
+    private static class RecordingTransport implements CompatibleEndpointAiProviderAdapter.Transport {
+        private final CompatibleEndpointAiProviderAdapter.HttpResult[] results;
+        private final Exception failure;
+        private int calls;
+        private String body;
+        private String authorization;
+
+        RecordingTransport(CompatibleEndpointAiProviderAdapter.HttpResult... results) {
+            this.results = results;
+            this.failure = null;
+        }
+
+        RecordingTransport(Exception failure) {
+            this.results = new CompatibleEndpointAiProviderAdapter.HttpResult[0];
+            this.failure = failure;
+        }
+
+        public CompatibleEndpointAiProviderAdapter.HttpResult post(String endpoint, String apiKey, String body, int timeoutSeconds) throws Exception {
+            this.calls++;
+            this.body = body;
+            this.authorization = "Bearer " + apiKey;
+            if (failure != null) {
+                throw failure;
+            }
+            int index = Math.min(calls - 1, results.length - 1);
+            return results[index];
         }
     }
 }

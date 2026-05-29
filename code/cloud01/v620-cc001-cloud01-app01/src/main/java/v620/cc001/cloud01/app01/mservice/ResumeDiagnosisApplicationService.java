@@ -7,6 +7,8 @@ import v620.cc001.base.common.dto.career.ResumeDiagnosisResultDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordStatusDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.ResumeUpdateRequest;
+import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
+import v620.cc001.cloud01.app01.mservice.ai.DefaultAiGateway;
 
 /**
  * Application boundary for migrated resume diagnosis.
@@ -21,7 +23,9 @@ public class ResumeDiagnosisApplicationService {
     public ResumeDiagnosisApplicationService() {
         this(new ResumeApplicationService(),
                 new FileResumeDiagnosisStorage(),
-                new DefaultResumeDiagnosisAnalyzer(),
+                new AiGatewayResumeDiagnosisAnalyzer(
+                        new DefaultAiGateway(AiProviderAdapterFactory.fromSystemProperties()),
+                        new DefaultResumeDiagnosisAnalyzer()),
                 new ResumeDiagnosisService());
     }
 

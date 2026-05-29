@@ -60,6 +60,26 @@
     "backendStatuses": ["OK", "IDENTITY_REQUIRED", "FORBIDDEN", "IDENTITY_MISMATCH"],
     "mismatchRule": "When request userId/adminId conflicts with resolved platform identity, the backend boundary rejects the call before invoking protected services."
   },
+  "aiProvider": {
+    "change": "migrate-ai-provider-production-adapter",
+    "mode": "openai-compatible-production-adapter",
+    "backendAdapter": "AiProviderAdapterFactory -> CompatibleEndpointAiProviderAdapter -> DefaultAiGateway",
+    "adapterEnablement": {
+      "property": "cc001.ai.provider.enabled",
+      "enabledValue": "true",
+      "endpointProperty": "cc001.ai.provider.endpoint",
+      "apiKeyProperty": "cc001.ai.provider.apiKey",
+      "modelProperty": "cc001.ai.provider.model",
+      "timeoutProperty": "cc001.ai.provider.timeoutSeconds",
+      "retryProperty": "cc001.ai.provider.retryOn5xx",
+      "diagnosticsProperty": "cc001.ai.provider.diagnostics.enabled",
+      "defaultBehavior": "disabled-safe-ai-unavailable"
+    },
+    "requestMapping": ["model", "messages", "tools", "tool_choice", "stream"],
+    "responseMapping": ["content", "finishReason", "toolCalls", "usage", "modelName", "errorCode", "diagnostics"],
+    "secretRule": "Route metadata records property names and fallback behavior only; endpoint secrets, apiKey values, and Authorization headers must never be stored here.",
+    "fallback": "When provider is disabled, incomplete, timed out, or invalid, backend returns AI unavailable or scenario fallback without fake successful AI content."
+  },
   "sourceEvidence": {
     "pageAndMenuSemantics": [
       "F:\\Project\\IPD\\frontend\\src\\pages.json",
