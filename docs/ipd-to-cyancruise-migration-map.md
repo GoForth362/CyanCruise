@@ -62,7 +62,7 @@
 | change | `migrate-webapp-careerloop-pages` |
 | branch | `codex/migrate-webapp-careerloop-pages` |
 | archive | `027-2026-05-29-migrate-webapp-careerloop-pages` |
-| commit | 待提交后回填 |
+| commit | `01d902b` |
 | IPD 来源 | `F:\Project\IPD\frontend\src\pages.json`、`pages\home`、`pages\onboarding`、`pages\agent`、`pages\assessment`、`pages\resume`、`pages\resume-ai`、`pages\interview`、`pages\assistant`、`pages\messages`、`pages\cdut-employment`、`pages\map`，以及 `api\agent.ts`、`api\assessment.ts`、`api\career.ts`、`api\resume.ts`、`api\interview.ts`、`api\ai.ts`、`api\notification.ts`、`api\home.ts`、`api\cdutEmployment.ts`、`api\file.ts`、`api\user.ts` |
 | CyanCruise 目标 | `webapp/isv/v620/careerloop/index.html`、`assets/app.js`、`assets/styles.css`、`careerloop-routes.json`、`validate-routes.js`、`README.md`、`openspec/specs/webapp-careerloop-pages/spec.md` |
 | 数据/接口映射 | 页面 route-state 消费既有 `/cc001/*` WebAPI：画像、onboarding、今日行动、测评、简历、文件、简历诊断、职业计划、模拟面试、助手聊天、消息、订阅配额、就业洞察、职业资源和管理治理；生产用户身份来自 Cosmic 登录上下文或平台 adapter，开发 fallback 仅在显式 `identityMode=development` 时使用 |
