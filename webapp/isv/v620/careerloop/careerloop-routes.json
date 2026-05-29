@@ -80,6 +80,106 @@
     "secretRule": "Route metadata records property names and fallback behavior only; endpoint secrets, apiKey values, and Authorization headers must never be stored here.",
     "fallback": "When provider is disabled, incomplete, timed out, or invalid, backend returns AI unavailable or scenario fallback without fake successful AI content."
   },
+  "productionReadiness": {
+    "change": "migrate-production-readiness-checklist",
+    "status": "checklist-defined",
+    "document": "docs/careerloop-production-readiness-checklist.md",
+    "sourceSemantics": [
+      "production configuration must use property names and tenant-owned values, never checked-in secrets",
+      "health checks must be observable through Cosmic-compatible probes or representative WebAPI checks",
+      "backup, restore, monitoring, and rollback are release evidence, not migrated IPD bash or Docker runtime"
+    ],
+    "automatedChecks": [
+      {
+        "key": "openspec-current",
+        "command": "openspec validate migrate-production-readiness-checklist --strict",
+        "releaseGate": "blocking"
+      },
+      {
+        "key": "openspec-all",
+        "command": "openspec validate --all --strict",
+        "releaseGate": "blocking"
+      },
+      {
+        "key": "jdk8-build",
+        "command": "$env:JAVA_HOME='F:\\kingdee\\ENV\\jdk'; $env:Path=\"$env:JAVA_HOME\\bin;$env:Path\"; .\\gradlew.bat clean build",
+        "releaseGate": "blocking"
+      },
+      {
+        "key": "route-map",
+        "command": "node webapp\\isv\\v620\\careerloop\\validate-routes.js",
+        "releaseGate": "blocking"
+      },
+      {
+        "key": "webapp-js",
+        "command": "node --check webapp\\isv\\v620\\careerloop\\assets\\app.js",
+        "releaseGate": "blocking"
+      }
+    ],
+    "tenantManualChecks": [
+      {
+        "key": "cosmic-login-context",
+        "status": "manual-required",
+        "properties": [
+          "cc001.identity.adapter.enabled",
+          "cc001.identity.login.provider.enabled",
+          "cc001.identity.login.provider.bridgeClass"
+        ],
+        "fallback": "identity-required or forbidden; never development identity"
+      },
+      {
+        "key": "cosmic-file-service",
+        "status": "manual-required",
+        "properties": ["cc001.file.adapter.enabled"],
+        "fallback": "unavailable or skipped; never production use of local/in-memory file storage"
+      },
+      {
+        "key": "ai-provider",
+        "status": "manual-required",
+        "properties": [
+          "cc001.ai.provider.enabled",
+          "cc001.ai.provider.endpoint",
+          "cc001.ai.provider.apiKey",
+          "cc001.ai.provider.model",
+          "cc001.ai.provider.timeoutSeconds",
+          "cc001.ai.provider.retryOn5xx",
+          "cc001.ai.provider.diagnostics.enabled"
+        ],
+        "fallback": "AI unavailable or scenario rule fallback"
+      },
+      {
+        "key": "kddt-menu-mounts",
+        "status": "manual-required",
+        "fallback": "unpublish menu or route"
+      },
+      {
+        "key": "datamodel-storage",
+        "status": "manual-required",
+        "fallback": "block production until tenant storage and backup scope are confirmed"
+      },
+      {
+        "key": "health-monitoring-backup-restore",
+        "status": "manual-required",
+        "fallback": "block release until probe, monitoring, backup, restore, and rollback evidence are approved"
+      }
+    ],
+    "deferredCapabilities": [
+      "real WeChat subscription/template sending",
+      "external employment crawling and full-detail pages",
+      "voice ASR/TTS and digital-human interview",
+      "complete Vue/Element admin console",
+      "customer-specific datamodel, RBAC, and master-data adapters",
+      "customer monitoring channel automation"
+    ],
+    "secretRule": "Only property names, validation intent, fallback behavior, and non-sensitive command strings may be recorded; apiKey values, Authorization headers, endpoint secrets, customer-private values, server addresses, and production credentials are forbidden.",
+    "rollback": [
+      "disable cc001.ai.provider.enabled to return AI unavailable or scenario fallback",
+      "disable cc001.file.adapter.enabled to return file unavailable or skipped",
+      "disable identity adapter/provider to return identity-required or forbidden",
+      "unpublish KDDT menu or route mount",
+      "roll back to the previous Cosmic package using customer-approved release procedure"
+    ]
+  },
   "sourceEvidence": {
     "pageAndMenuSemantics": [
       "F:\\Project\\IPD\\frontend\\src\\pages.json",

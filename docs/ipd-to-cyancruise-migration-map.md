@@ -174,6 +174,21 @@
 | 暂不迁移 | Spring Boot Controller、JPA repository、Flyway SQL、Java 17 `HttpClient`、PDFBox、Redis、Bilibili 抓取、外部刷新任务、图片代理、Vue/uni-app 页面、Pinia/store、小程序 web-view、全文内容详情、生产内容运营后台和真实外部抓取调度 |
 | 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
 
+## CareerLoop 生产就绪清单
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `migrate-production-readiness-checklist` |
+| branch | `codex/migrate-production-readiness-checklist` |
+| IPD 来源 | `F:\Project\IPD\AI_PRODUCT_HANDOFF.md`、`F:\Project\IPD\backend\src\main\resources\application-prod.yml`、`F:\Project\IPD\backend\docker-compose.yml`、`F:\Project\IPD\backend\Dockerfile`、`F:\Project\IPD\backend\scripts\deploy-backend.sh`、`rollback.sh`、`backup-mysql.sh`、`restore-from-backup.sh`、`HealthController.java`、`AlertProperties.java`、`ServerChanAppender.java`、`WebConfig.java` |
+| CyanCruise 目标 | `docs/careerloop-production-readiness-checklist.md`、`webapp/isv/v620/careerloop/careerloop-routes.json` 的 `productionReadiness` 元数据、`openspec/specs/production-readiness-checklist/spec.md`、`openspec/specs/migration-governance/spec.md` |
+| 生产语义映射 | IPD 的 prod 配置必填、健康探针、发布后健康等待、失败回滚、备份恢复、告警限流和交付风险披露，迁移为 Cosmic/CyanCruise 发布清单、自动门禁、租户手工验收、延期能力披露和回滚证据。 |
+| 迁移内容 | 新增生产就绪清单；补充 route map 中 secret-free 的自动检查、租户手工检查、延期能力、密钥治理和回滚说明；扩展迁移治理规格，要求归档时保留生产就绪证据。 |
+| 暂不迁移 | Spring Boot prod profile、Docker Compose、Dockerfile、Flyway、JPA、Java 17、nginx、Uptime Kuma、ServerChan、bash 发布/回滚/备份脚本、服务器地址、生产凭据、客户私有配置值。 |
+| 租户验证 | 登录上下文、文件服务、AI provider、KDDT 菜单、datamodel/storage、通知、管理治理、健康监控、备份恢复和回滚均需在真实 Cosmic 租户或客户环境记录 `PASS`、`MANUAL_REQUIRED`、`DEFERRED` 或 `BLOCKED`。 |
+| 回滚方式 | 禁用 `cc001.ai.provider.enabled`、`cc001.file.adapter.enabled`、身份 adapter/provider；下架 KDDT 菜单或 route；按客户发布流程回退上一 Cosmic 包和数据备份，不依赖 IPD Docker 镜像或 bash 脚本。 |
+| 验证方式 | `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、`openspec validate migrate-production-readiness-checklist --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build`。 |
+
 ## Cosmic 文件服务 adapter
 
 | 维度 | 内容 |
