@@ -3,6 +3,29 @@
   "change": "migrate-cosmic-platform-mounting",
   "sourceProject": "F:\\Project\\IPD",
   "targetRoot": "webapp/isv/v620/careerloop",
+  "pageShell": {
+    "change": "migrate-webapp-careerloop-pages",
+    "implementation": "static-hash-route-states",
+    "visibleUserRoutes": [
+      "workbench",
+      "onboarding",
+      "today-action",
+      "assessment",
+      "resume",
+      "file-upload-preview",
+      "resume-diagnosis",
+      "career-plan",
+      "interview",
+      "assistant",
+      "messages",
+      "employment-insight",
+      "career-resources"
+    ],
+    "adminRoutes": ["admin-console"],
+    "entryOnlyRoutes": ["assessment", "file-upload-preview", "subscriptions", "weekly-report", "admin-console"],
+    "stateModel": ["loading", "empty", "success", "identity-required", "forbidden", "unavailable", "backend-error", "pending"],
+    "runtimeRule": "Page states are rebuilt as CyanCruise static webapp assets and do not require IPD Vue, uni-app, Pinia, Vite, uView, axios interceptors, Spring Boot, JPA, Flyway, or Java 17 runtime code."
+  },
   "identity": {
     "production": {
       "mode": "cosmic-platform-context",
