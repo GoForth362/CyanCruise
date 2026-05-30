@@ -22,8 +22,11 @@ public final class CosmicLoginContextProviderFactory {
     }
 
     private static CosmicLoginContextBridge loadBridge(CosmicLoginContextProviderConfig config) {
-        if (config == null || !config.isEnabled() || config.getBridgeClassName() == null) {
+        if (config == null || !config.isEnabled()) {
             return new UnavailableCosmicLoginContextBridge();
+        }
+        if (config.getBridgeClassName() == null) {
+            return new RequestContextCosmicLoginContextBridge();
         }
         try {
             Class<?> bridgeClass = Class.forName(config.getBridgeClassName());

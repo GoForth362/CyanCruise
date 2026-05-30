@@ -5,6 +5,7 @@ import v620.base.helper.career.CosmicIdentityContextHelper;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -72,6 +73,16 @@ class CosmicLoginContextProviderTest {
     void factoryKeepsAdapterDisabledUnavailable() {
         assertTrue(CareerLoopIdentityResolverFactory.production(provider(map("userId", "u1"), enabledProvider()),
                 CosmicIdentityAdapterConfig.disabled()) instanceof UnavailableCosmicIdentityResolver);
+    }
+
+    @Test
+    void factoryUsesRequestContextBridgeByDefaultWhenProviderEnabled() throws Exception {
+        CosmicIdentityContextProvider provider = CosmicLoginContextProviderFactory.production(enabledProvider());
+        Field bridgeField = PlatformCosmicIdentityContextProvider.class.getDeclaredField("bridge");
+        bridgeField.setAccessible(true);
+        Object bridge = bridgeField.get(provider);
+
+        assertTrue(bridge instanceof RequestContextCosmicLoginContextBridge);
     }
 
     @Test

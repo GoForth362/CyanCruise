@@ -28,6 +28,7 @@
     adminContent: "/cc001/admin/content/list",
     adminBroadcast: "/cc001/admin/broadcast",
     adminAuditLog: "/cc001/admin/audit-log/list",
+    identityCurrent: "/cc001/identity/current",
     fileUpload: "/cc001/files/upload",
     filePreview: "/cc001/files/preview-url",
     fileDownload: "/cc001/files/download",
@@ -88,6 +89,7 @@
     bindEvents();
     handleRouteChange();
     loadOverview();
+    loadPlatformIdentity();
   }
 
   function cacheElements() {
@@ -432,15 +434,138 @@
   }
 
   function resolveCosmicIdentity() {
-    var context = window.__CAREERLOOP_COSMIC_CONTEXT__ || window.__COSMIC_CONTEXT__ || window.cosmicContext || {};
-    var userId = firstText(context.userId, context.personId, context.operatorId, context.uid);
+    var resolved = resolveCosmicContext();
+    var context = resolved.context || {};
+    var userId = firstText(
+      context.userId,
+      context.personId,
+      context.operatorId,
+      context.uid,
+      context.id,
+      context.number,
+      getValue(context, "user.id"),
+      getValue(context, "user.userId"),
+      getValue(context, "user.personId"),
+      getValue(context, "user.number"),
+      getValue(context, "currentUser.id"),
+      getValue(context, "currentUser.userId"),
+      getValue(context, "currentUser.personId"),
+      getValue(context, "currentUser.number"),
+      getValue(context, "userInfo.id"),
+      getValue(context, "userInfo.userId"),
+      getValue(context, "userInfo.personId"),
+      getValue(context, "userInfo.number")
+    );
     return {
       mode: "production",
       userId: userId,
-      adminId: firstText(context.adminId, context.userId, context.operatorId),
-      roles: normalizeRoles(firstText(context.roles, context.roleCodes, context.role, context.permissionCodes)),
-      source: userId ? "cosmic-platform-context" : "missing-cosmic-platform-context"
+      adminId: firstText(context.adminId, context.userId, context.operatorId, getValue(context, "user.id"), getValue(context, "currentUser.id")),
+      roles: normalizeRoles(firstText(context.roles, context.roleCodes, context.role, context.permissionCodes, getValue(context, "user.roles"), getValue(context, "currentUser.roles"))),
+      source: userId ? resolved.source : "missing-cosmic-platform-context"
     };
+  }
+
+  function resolveCosmicContext() {
+    var windows = reachableWindows();
+    var names = ["__CAREERLOOP_COSMIC_CONTEXT__", "__COSMIC_CONTEXT__", "cosmicContext", "kdContext", "KDCONTEXT", "userInfo", "currentUser", "loginUser"];
+    for (var i = 0; i < windows.length; i += 1) {
+      for (var j = 0; j < names.length; j += 1) {
+        var value = safeReadWindow(windows[i], names[j]);
+        if (value && typeof value === "object") {
+          return { context: value, source: "window." + names[j] };
+        }
+      }
+    }
+    return readStoredCosmicContext() || { context: {}, source: "missing-cosmic-platform-context" };
+  }
+
+  function reachableWindows() {
+    var items = [window];
+    try {
+      if (window.parent && window.parent !== window) {
+        items.push(window.parent);
+      }
+    } catch (error) {
+      // Cross-origin parent windows are ignored.
+    }
+    try {
+      if (window.top && window.top !== window && window.top !== window.parent) {
+        items.push(window.top);
+      }
+    } catch (error) {
+      // Cross-origin top windows are ignored.
+    }
+    return items;
+  }
+
+  function safeReadWindow(sourceWindow, name) {
+    try {
+      return sourceWindow[name];
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function readStoredCosmicContext() {
+    var keys = [
+      "cosmicContext",
+      "kdContext",
+      "userInfo",
+      "currentUser",
+      "loginUser",
+      "operator",
+      "sessionUser",
+      "bosUser",
+      "mcUser"
+    ];
+    for (var i = 0; i < keys.length; i += 1) {
+      var fromSession = parseStorageJson(sessionStorage, keys[i]);
+      if (fromSession) {
+        return { context: fromSession, source: "sessionStorage:" + keys[i] };
+      }
+      var fromLocal = parseStorageJson(localStorage, keys[i]);
+      if (fromLocal) {
+        return { context: fromLocal, source: "localStorage:" + keys[i] };
+      }
+    }
+    var fromCookie = parseCookieContext();
+    return fromCookie ? { context: fromCookie, source: "cookie:platform-user" } : null;
+  }
+
+  function parseStorageJson(storage, key) {
+    try {
+      var raw = storage.getItem(key);
+      if (!raw || raw === "undefined" || raw === "null") {
+        return null;
+      }
+      if (raw.charAt(0) === "{" || raw.charAt(0) === "[") {
+        return JSON.parse(raw);
+      }
+    } catch (error) {
+      return null;
+    }
+    return null;
+  }
+
+  function parseCookieContext() {
+    var pairs = document.cookie ? document.cookie.split(";") : [];
+    var keys = ["userInfo", "currentUser", "loginUser", "cosmicContext", "kdContext"];
+    for (var i = 0; i < pairs.length; i += 1) {
+      var pair = pairs[i].split("=");
+      var name = trim(pair.shift());
+      if (keys.indexOf(name) < 0) {
+        continue;
+      }
+      try {
+        var value = decodeURIComponent(pair.join("="));
+        if (value && (value.charAt(0) === "{" || value.charAt(0) === "[")) {
+          return JSON.parse(value);
+        }
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
   }
 
   function resolveDevelopmentIdentity() {
@@ -466,6 +591,30 @@
     };
   }
 
+  function loadPlatformIdentity() {
+    if (!state.identity || state.identity.mode !== "production" || state.identity.userId) {
+      return;
+    }
+    post(endpoints.identityCurrent, {}).then(function (identity) {
+      var userId = firstText(identity.userId, identity.adminId);
+      if (!userId || identity.status !== "OK") {
+        return;
+      }
+      state.identity = {
+        mode: "production",
+        userId: userId,
+        adminId: firstText(identity.adminId, identity.userId),
+        roles: normalizeRoles(identity.roles),
+        source: firstText(identity.source, "cc001-identity-current")
+      };
+      updateIdentityState();
+      renderPage(pageByKey[state.route]);
+      loadOverview();
+    }).catch(function () {
+      // Older packages may not expose /cc001/identity/current yet; keep the guarded state.
+    });
+  }
+
   function post(path, body) {
     return fetch(resolveApiBase() + path, {
       method: "POST",
@@ -487,7 +636,15 @@
       return fromQuery.replace(/\/$/, "");
     }
     var stored = trim(localStorage.getItem("careerloop.apiBase"));
-    return stored ? stored.replace(/\/$/, "") : "";
+    if (stored) {
+      return stored.replace(/\/$/, "");
+    }
+    return defaultApiBase();
+  }
+
+  function defaultApiBase() {
+    var firstSegment = trim(window.location.pathname).split("/").filter(Boolean)[0];
+    return firstSegment === "ierp" ? "/ierp" : "";
   }
 
   function metricsPanel(title, rows) {
