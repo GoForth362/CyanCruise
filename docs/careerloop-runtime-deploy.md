@@ -20,6 +20,12 @@ F:\kingdee\ENV\static-file-service\isv\v620\careerloop
 
 When validating `http://10.0.0.8:8080/ierp/isv/v620/careerloop/index.htm#workbench`, deploy the three CyanCruise JARs and the static webapp resources into the `F:\kingdee\ENV` runtime directories above.
 
+The ENV startup script must include the CyanCruise cus packages in `CUSLIBS`, otherwise `kd-appstore-download-1.0.jar` will reset `lib\cus` to the packages listed by the script:
+
+```bat
+set CUSLIBS=kd-studio-login,v620-cc001-base-common,v620-cc001-base-helper,v620-cc001-cloud01-app01
+```
+
 ## Identity Flags
 
 Start the 8080 Cosmic process with these JVM system properties:
