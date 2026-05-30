@@ -26,6 +26,18 @@ The ENV startup script must include the CyanCruise cus packages in `CUSLIBS`, ot
 set CUSLIBS=kd-studio-login,v620-cc001-base-common,v620-cc001-base-helper,v620-cc001-cloud01-app01
 ```
 
+In the current 8.0.4 developer-tool runtime, the observed JVM classpath expands `lib\biz` but not `lib\cus`. For this local validation mode, also place the same package ZIPs under:
+
+```text
+F:\kingdee\ENV\apppackage-cosmic\biz
+```
+
+and prepend the package names to `BIZLIBS`:
+
+```bat
+set BIZLIBS=v620-cc001-base-common,v620-cc001-base-helper,v620-cc001-cloud01-app01,<existing biz packages>
+```
+
 ## Identity Flags
 
 Start the 8080 Cosmic process with these JVM system properties:
