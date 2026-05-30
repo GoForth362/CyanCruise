@@ -53,6 +53,36 @@ Start the 8080 Cosmic process with these JVM system properties:
 -Dcc001.identity.login.provider.bridgeClass=<fully.qualified.ClassName>
 ```
 
+## Custom Web API Entry
+
+Cosmic does not expose `@ApiController` classes directly as `POST /ierp/cc001/*` servlet routes in the local 8.0.4 runtime. The runtime-supported custom Web API model is `kd.bos.bill.IBillWebApiPlugin#doCustomService(Map)`.
+
+CyanCruise provides:
+
+```text
+v620.cc001.cloud01.app01.webapi.CareerLoopCustomWebApiPlugin
+```
+
+Register it in the Cosmic OpenAPI/custom service configuration with a service name such as `careerloop`, under app id `cc001`. The HTTP caller should then use:
+
+```text
+POST {cosmicUrl}/kapi/app/cc001/careerloop/?access_token={access_token}
+Content-Type: application/json
+
+{
+  "path": "/cc001/identity/current",
+  "body": {}
+}
+```
+
+The static webapp can call this mode by adding these query parameters once:
+
+```text
+apiMode=kapi&appId=cc001&serviceName=careerloop&access_token=<token>
+```
+
+The values are cached in browser localStorage for later page loads. Without `apiMode=kapi`, the page keeps the older direct `/ierp/cc001/*` contract mode for contract display and non-Cosmic harnesses.
+
 ## Restart Requirement
 
 Copying JARs into `lib\cus` is not enough for an already running 8080 process. Restart the process that owns port `8080`, then verify:
@@ -62,3 +92,9 @@ Invoke-WebRequest -Uri 'http://10.0.0.8:8080/ierp/cc001/identity/current' -Metho
 ```
 
 Before restart, this endpoint may still return `404` because the old JVM has not loaded the new WebAPI class.
+
+For the Cosmic custom Web API path, verify with the registered service name and a valid access token:
+
+```powershell
+Invoke-WebRequest -Uri 'http://10.0.0.8:8080/ierp/kapi/app/cc001/careerloop/?access_token=<token>' -Method Post -ContentType 'application/json' -Body '{"path":"/cc001/identity/current","body":{}}'
+```

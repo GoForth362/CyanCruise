@@ -616,16 +616,61 @@
   }
 
   function post(path, body) {
-    return fetch(resolveApiBase() + path, {
+    var request = resolveApiRequest(path, body);
+    return fetch(request.url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(request.body)
     }).then(function (response) {
       if (!response.ok) {
         throw new Error(path + " 返回 " + response.status);
       }
       return response.json();
+    }).then(function (payload) {
+      if (request.mode === "kapi" && payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
+        if (!payload.success) {
+          throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+        }
+        return payload.data;
+      }
+      return payload;
     });
+  }
+
+  function resolveApiRequest(path, body) {
+    var mode = resolveApiMode();
+    if (mode !== "kapi") {
+      return { mode: "direct", url: resolveApiBase() + path, body: body };
+    }
+    var appId = firstText(readQueryOrStorage("appId", "careerloop.kapi.appId"), "cc001");
+    var serviceName = firstText(readQueryOrStorage("serviceName", "careerloop.kapi.serviceName"), "careerloop");
+    var accessToken = readQueryOrStorage("access_token", "careerloop.kapi.accessToken");
+    var url = resolveApiBase() + "/kapi/app/" + encodeURIComponent(appId) + "/" + encodeURIComponent(serviceName) + "/";
+    if (accessToken) {
+      url += "?access_token=" + encodeURIComponent(accessToken);
+    }
+    return {
+      mode: "kapi",
+      url: url,
+      body: {
+        path: path,
+        body: body
+      }
+    };
+  }
+
+  function resolveApiMode() {
+    return firstText(readQueryOrStorage("apiMode", "careerloop.apiMode"), "direct").toLowerCase();
+  }
+
+  function readQueryOrStorage(queryKey, storageKey) {
+    var params = new URLSearchParams(window.location.search);
+    var fromQuery = trim(params.get(queryKey));
+    if (fromQuery) {
+      localStorage.setItem(storageKey, fromQuery);
+      return fromQuery;
+    }
+    return trim(localStorage.getItem(storageKey));
   }
 
   function resolveApiBase() {
