@@ -62,6 +62,11 @@
     snapshot: null,
     today: null,
     resumes: null,
+    resumeDraft: null,
+    resumeMessage: null,
+    resumeListError: null,
+    fileMessage: null,
+    previewUrls: {},
     plan: null,
     interviews: null,
     route: "workbench"
@@ -174,6 +179,8 @@
       renderWorkbench(item);
     } else if (item.key === "onboarding") {
       renderOnboarding(item);
+    } else if (item.key === "resume") {
+      renderResumePage(item);
     } else if (item.key === "today-action") {
       renderTodayPage(item);
     } else {
@@ -223,6 +230,296 @@
       ]) +
       actionPanel("继续执行", linkButton(target, "进入下一步", "按今日行动跳转到对应页面。"))
     );
+  }
+
+  function renderResumePage(item) {
+    var target = resumeTargetDefault();
+    var panels = [
+      resumeFormPanel(target),
+      resumeListPanel(),
+      resumeFilePanel(),
+      metricsPanel("接口契约", [
+        ["列表", endpoints.resumes],
+        ["创建", endpoints.resumeCreate],
+        ["文件上传", endpoints.fileUpload],
+        ["文件预览", endpoints.filePreview]
+      ])
+    ];
+    if (state.resumeMessage) {
+      panels.unshift(statePanel("简历状态", state.resumeMessage.text, state.resumeMessage.type));
+    }
+    renderShell(item, panels.join(""));
+    bindResumeEvents();
+  }
+
+  function resumeFormPanel(target) {
+    var draft = state.resumeDraft || {};
+    return '<section class="panel"><h3>创建简历记录</h3>' +
+      '<form class="form-grid" id="resumeForm">' +
+      field("resumeTitle", "简历标题", "text", firstText(draft.title, "后端开发简历")) +
+      field("resumeTargetJob", "目标岗位", "text", firstText(draft.targetJob, target)) +
+      field("resumeFileKey", "文件 key", "text", firstText(draft.fileKey, "")) +
+      '<label class="full">解析内容<textarea id="resumeParsedContent" placeholder="可粘贴简历摘要、技能、项目经历或留空。">' + escapeHtml(draft.parsedContent) + '</textarea></label>' +
+      '<div class="full actions-row">' +
+      '<button type="submit">创建简历</button>' +
+      '<button type="button" class="secondary" data-link="resume-diagnosis">去简历诊断</button>' +
+      '<button type="button" class="secondary" id="refreshResumesButton">刷新列表</button>' +
+      '</div></form></section>';
+  }
+
+  function resumeListPanel() {
+    var resumes = normalizeArray(state.resumes);
+    if (state.resumeListError) {
+      return statePanel("简历记录", state.resumeListError, "warning");
+    }
+    if (!resumes.length) {
+      return '<section class="state-card"><h3>简历记录</h3><p>暂无简历记录。可以先创建元数据，文件 key 和解析内容均可稍后补充。</p></section>';
+    }
+    return '<section class="panel"><h3>简历记录</h3><div class="item-list">' +
+      resumes.map(resumeItem).join("") + "</div></section>";
+  }
+
+  function resumeItem(item, index) {
+    var id = firstText(item.resumeId, item.id, "记录 " + (index + 1));
+    var fileKey = firstText(item.fileKey, item.objectKey, "未关联文件");
+    var target = firstText(item.targetJob, item.targetRole, "未设置目标岗位");
+    var updated = firstText(item.updatedAt, item.createdAt, "时间待同步");
+    var score = firstText(item.diagnosisScore, "未诊断");
+    var preview = state.previewUrls[fileKey];
+    return '<article class="item resume-item">' +
+      '<div><strong>' + escapeHtml(firstText(item.title, item.resumeName, "简历 " + id)) + '</strong>' +
+      '<p>目标岗位：' + escapeHtml(target) + '</p>' +
+      '<p>文件 key：' + escapeHtml(fileKey) + '</p>' +
+      '<p>诊断分：' + escapeHtml(score) + ' ｜ 更新时间：' + escapeHtml(updated) + '</p></div>' +
+      '<div class="actions-row compact">' +
+      (fileKey === "未关联文件" ? "" : '<button type="button" class="secondary" data-preview-file="' + escapeHtml(fileKey) + '">预览</button>') +
+      '<button type="button" data-link="resume-diagnosis">去诊断</button>' +
+      '</div>' +
+      (preview ? '<p class="panel-note">预览 URL：<a href="' + escapeHtml(preview) + '" target="_blank" rel="noreferrer">' + escapeHtml(preview) + "</a></p>" : "") +
+      "</article>";
+  }
+
+  function resumeFilePanel() {
+    var text = state.fileMessage ? state.fileMessage.text : "文件上传是可选增强；也可以手工填写 fileKey 后直接创建简历元数据。";
+    var type = state.fileMessage ? state.fileMessage.type : "empty";
+    return '<section class="panel"><h3>可选文件上传</h3>' +
+      '<div class="form-grid">' +
+      '<label class="full">选择小文件<input id="resumeFileInput" type="file"></label>' +
+      '<div class="full actions-row"><button type="button" class="secondary" id="uploadResumeFileButton">上传并填入 fileKey</button></div>' +
+      '</div>' +
+      '<p class="panel-note ' + escapeHtml(type) + '">' + escapeHtml(text) + '</p>' +
+      '</section>';
+  }
+
+  function bindResumeEvents() {
+    var form = $("resumeForm");
+    if (form) {
+      form.addEventListener("submit", submitResume);
+    }
+    var refresh = $("refreshResumesButton");
+    if (refresh) {
+      refresh.addEventListener("click", function () {
+        refreshResumeList(true);
+      });
+    }
+    var upload = $("uploadResumeFileButton");
+    if (upload) {
+      upload.addEventListener("click", uploadResumeFile);
+    }
+    var previews = els.pageHost.querySelectorAll("[data-preview-file]");
+    for (var i = 0; i < previews.length; i += 1) {
+      previews[i].addEventListener("click", function (event) {
+        previewResumeFile(event.currentTarget.getAttribute("data-preview-file"));
+      });
+    }
+  }
+
+  function submitResume(event) {
+    event.preventDefault();
+    if (!hasUserIdentity()) {
+      state.resumeMessage = { type: "warning", text: "创建简历前需要 Cosmic 身份或显式开发身份。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    var request = readResumeDraft();
+    state.resumeDraft = request;
+    if (!request.title && !request.targetJob && !request.fileKey && !request.parsedContent) {
+      state.resumeMessage = { type: "warning", text: "请至少填写标题、目标岗位、文件 key 或解析内容中的一项。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    if (isFilePreview()) {
+      state.resumes = [previewResumeRecord(request)];
+      state.resumeMessage = { type: "info", text: "file:// 预览模式已生成本地简历记录，不调用后端。" };
+      updateOverviewCards();
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    state.resumeMessage = { type: "info", text: "正在创建简历记录。" };
+    renderPage(pageByKey[state.route]);
+    post(endpoints.resumeCreate, { userId: state.identity.userId, request: request }).then(function () {
+      state.resumeMessage = { type: "info", text: "简历记录已创建，列表正在刷新。可继续去简历诊断。" };
+      return refreshResumeList(false);
+    }).then(function () {
+      return refreshSnapshotAfterResume();
+    }).then(function () {
+      showMessage("info", "简历已创建", "已刷新简历列表和工作台摘要。");
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      state.resumeMessage = { type: "warning", text: error.message || "简历创建或刷新失败，请检查 KAPI token 和后端状态。" };
+      showMessage("error", "简历操作失败", state.resumeMessage.text);
+      renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function refreshResumeList(showNotice) {
+    if (!hasUserIdentity()) {
+      state.resumeListError = "缺少 userId，已阻止简历列表调用。";
+      return Promise.resolve();
+    }
+    if (isFilePreview()) {
+      state.resumeListError = null;
+      state.resumes = normalizeArray(state.resumes);
+      return Promise.resolve();
+    }
+    return post(endpoints.resumes, state.identity.userId).then(function (resumes) {
+      state.resumes = normalizeArray(resumes);
+      state.resumeListError = null;
+      updateOverviewCards();
+      if (showNotice) {
+        state.resumeMessage = { type: "info", text: "简历列表已刷新。" };
+        renderPage(pageByKey[state.route]);
+      }
+    }).catch(function (error) {
+      state.resumeListError = error.message || "简历列表暂不可用。";
+      if (showNotice) {
+        state.resumeMessage = { type: "warning", text: state.resumeListError };
+        renderPage(pageByKey[state.route]);
+      }
+    });
+  }
+
+  function refreshSnapshotAfterResume() {
+    if (!hasUserIdentity() || isFilePreview()) {
+      updateOverviewCards();
+      return Promise.resolve();
+    }
+    return post(endpoints.snapshot, state.identity.userId).then(function (snapshot) {
+      state.snapshot = snapshot;
+      updateOverviewCards();
+    }).catch(function (error) {
+      state.resumeMessage = { type: "warning", text: "简历已创建，但画像摘要稍后刷新：" + (error.message || "snapshot unavailable") };
+      updateOverviewCards();
+    });
+  }
+
+  function uploadResumeFile() {
+    var input = $("resumeFileInput");
+    var file = input && input.files && input.files[0];
+    if (!file) {
+      state.resumeDraft = readResumeDraft();
+      state.fileMessage = { type: "warning", text: "请选择一个小文件，或直接手工填写 fileKey。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      state.resumeDraft = readResumeDraft();
+      state.fileMessage = { type: "warning", text: "当前 MVP 仅上传 1MB 以内小文件；大文件请先手工填写 fileKey。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    if (isFilePreview()) {
+      state.resumeDraft = readResumeDraft();
+      state.fileMessage = { type: "info", text: "file:// 预览模式不上传文件，可手工填写 fileKey。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    state.resumeDraft = readResumeDraft();
+    readFileAsBase64(file).then(function (base64) {
+      state.fileMessage = { type: "info", text: "正在上传文件。" };
+      renderPage(pageByKey[state.route]);
+      return post(endpoints.fileUpload, {
+        request: {
+          folder: "resumes",
+          originalFilename: file.name,
+          base64: base64
+        }
+      });
+    }).then(function (result) {
+      var uploadResult = result || {};
+      var fileDto = uploadResult.file || {};
+      var objectKey = firstText(fileDto.objectKey, uploadResult.objectKey, fileDto.fileKey, uploadResult.fileKey);
+      if (!objectKey || (uploadResult.status && uploadResult.status !== "OK")) {
+        state.fileMessage = { type: "warning", text: firstText(uploadResult.message, uploadResult.status, "文件上传不可用，可继续手工填写 fileKey。") };
+        renderPage(pageByKey[state.route]);
+        return;
+      }
+      state.fileMessage = { type: "info", text: "文件已上传，object key 已填入表单。" };
+      state.resumeDraft = state.resumeDraft || {};
+      state.resumeDraft.fileKey = objectKey;
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      state.fileMessage = { type: "warning", text: (error.message || "文件上传失败") + "；可继续手工填写 fileKey 或只创建元数据。" };
+      renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function previewResumeFile(fileKey) {
+    if (!fileKey) {
+      return;
+    }
+    if (isFilePreview()) {
+      state.previewUrls[fileKey] = fileKey;
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    post(endpoints.filePreview, { fileUrlOrKey: fileKey, ttlSeconds: 600 }).then(function (result) {
+      var url = firstText(result.previewUrl, result.url, result.fileUrl);
+      if (!url || (result.status && result.status !== "OK")) {
+        state.fileMessage = { type: "warning", text: firstText(result.message, result.status, "预览 URL 暂不可用。") };
+      } else {
+        state.previewUrls[fileKey] = url;
+        state.fileMessage = { type: "info", text: "预览 URL 已生成。" };
+      }
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      state.fileMessage = { type: "warning", text: error.message || "预览 URL 暂不可用。" };
+      renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function readFileAsBase64(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var result = String(reader.result || "");
+        resolve(result.indexOf(",") >= 0 ? result.split(",").pop() : result);
+      };
+      reader.onerror = function () {
+        reject(new Error("读取文件失败"));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function readResumeDraft() {
+    return {
+      title: valueOf("resumeTitle"),
+      targetJob: valueOf("resumeTargetJob"),
+      fileKey: valueOf("resumeFileKey"),
+      parsedContent: valueOf("resumeParsedContent")
+    };
+  }
+
+  function previewResumeRecord(request) {
+    return {
+      resumeId: "preview",
+      title: request.title || "本地预览简历",
+      targetJob: request.targetJob,
+      fileKey: request.fileKey,
+      parsedContent: request.parsedContent,
+      createdAt: "file-preview"
+    };
   }
 
   function renderContractPage(item) {
@@ -818,6 +1115,10 @@
     } catch (error) {
       return null;
     }
+  }
+
+  function resumeTargetDefault() {
+    return textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob") || "";
   }
 
   function textFromSnapshot() {

@@ -70,6 +70,20 @@
 | 暂不迁移 | IPD Vue/uni-app runtime、Pinia/store、Vite/uView、小程序生命周期、微信运行时、真实 AI provider、外部内容抓取、语音/数字人面试、完整 admin 页面、生产 datamodel adapter、KDDT 发布脚本 |
 | 验证方式 | 已通过：`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、`openspec validate migrate-webapp-careerloop-pages --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build`；归档后 `openspec validate --all --strict` 再次通过 |
 
+## 简历工作流启用
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `enable-resume-workflow` |
+| branch | `codex/careerloop-next-stage` |
+| IPD 来源 | `F:\Project\IPD\frontend\src\pages\resume\*`、`F:\Project\IPD\frontend\src\api\resume.ts`、`F:\Project\IPD\frontend\src\api\file.ts`、`F:\Project\IPD\backend\src\main\java\com\group1\career\controller\ResumeController.java`、`FileController.java` |
+| CyanCruise 目标 | `webapp/isv/v620/careerloop/assets/app.js`、`assets/styles.css`、既有 `careerloop-routes.json` 简历/文件 API 映射、`openspec/changes/enable-resume-workflow/` |
+| 数据/接口映射 | 简历页读取 `/cc001/resume/list`，创建时提交 `/cc001/resume/create` 的 `title`、`targetJob`、`fileKey`、`parsedContent`；目标岗位默认来自画像 `preferences.targetRole`、`onboarding.targetRole` 或 `resume.targetJob`，但允许单份简历覆盖；可选文件上传调用 `/cc001/files/upload` 并只把稳定 object key 填入 fileKey；已有 fileKey 可按需调用 `/cc001/files/preview-url` |
+| 迁移内容 | 将 `resume` route 从契约展示升级为可交互页面：简历列表、创建表单、手工 fileKey、可选小文件上传、创建成功后刷新列表和画像摘要、保留“去简历诊断”入口、文件/后端失败时局部可恢复 |
+| 暂不迁移 | IPD Vue/uni-app 页面、模板库、富文本简历编辑器、在线预览器、完整文件选择体验、大文件上传、PDF/Office/OCR 解析、真实客户 Cosmic 文件 provider 配置、简历版本比较和自动跳转诊断 |
+| 验收方式 | 使用 `index.htm?apiMode=kapi&access_token=<new-token>#resume`，在苍穹 8080 中创建一条简历记录，确认列表刷新后可见、返回工作台简历状态更新、刷新页面后记录仍在，并确认“去简历诊断”按钮只作为显式入口 |
+| 回滚方式 | 回退 `webapp/isv/v620/careerloop` 静态资源到上一版本；后端 `/cc001/resume/*` 和 `/cc001/files/*` 既有契约不变 |
+
 ## Cosmic datamodel 正式适配
 
 | 维度 | 内容 |
