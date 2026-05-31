@@ -3,11 +3,15 @@ package v620.cc001.cloud01.app01.webapi;
 import kd.bos.entity.api.ApiResult;
 import kd.bos.openapi.common.result.CustomApiResult;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
+import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.FileCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +52,39 @@ class CareerLoopCustomWebApiPluginTest {
         assertTrue(result.isStatus());
         CosmicIdentityContextDto identity = (CosmicIdentityContextDto) result.getData();
         assertEquals("api-user", identity.getUserId());
+    }
+
+    @Test
+    void routesOnboardingSaveThroughCustomWebApiContract(@TempDir Path tempDir) {
+        System.setProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY, tempDir.toString());
+        try {
+            IdentityAwareCareerLoopWebApiBoundary boundary =
+                    new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
+            CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
+                    new CareerLoopIdentityWebApi(boundary),
+                    new CareerProfileWebApi(boundary),
+                    new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
+            Map<String, Object> request = new HashMap<String, Object>();
+            request.put("identityType", "career_switcher");
+            request.put("targetRole", "Java Backend Engineer");
+            request.put("resumeStatus", "ready");
+            request.put("preference", "backend");
+            Map<String, Object> body = new HashMap<String, Object>();
+            body.put("userId", "api-user");
+            body.put("request", request);
+
+            ApiResult result = plugin.doCustomService(params("/cc001/career-profile/onboarding/save", body));
+
+            assertTrue(result.getSuccess());
+            UserProfileSnapshot snapshot = (UserProfileSnapshot) result.getData();
+            assertEquals("career_switcher", snapshot.getOnboarding().getIdentityType());
+            assertEquals("ready", snapshot.getOnboarding().getResumeStatus());
+            assertEquals("yes", snapshot.getOnboarding().getHasResume());
+            assertEquals("backend", snapshot.getOnboarding().getPainPoint());
+            assertEquals("Java Backend Engineer", snapshot.getPreferences().getTargetRole());
+        } finally {
+            System.clearProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY);
+        }
     }
 
     @Test
