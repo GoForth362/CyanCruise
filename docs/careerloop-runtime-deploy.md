@@ -63,10 +63,21 @@ CyanCruise provides:
 v620.cc001.cloud01.app01.webapi.CareerLoopCustomWebApiPlugin
 ```
 
-Register it in the Cosmic OpenAPI/custom service configuration with a service name such as `careerloop`, under app id `cc001`. The HTTP caller should then use:
+Register it in the Cosmic OpenAPI/custom service configuration as a custom Java-plugin API:
 
 ```text
-POST {cosmicUrl}/kapi/app/cc001/careerloop/?access_token={access_token}
+Third-party app: cc001 / CyanCruise
+API code: cc001/careerloop/route
+Class: v620.cc001.cloud01.app01.webapi.CareerLoopCustomWebApiPlugin
+Method: route
+Method: POST
+URL: /v2/v620/v620_cc001/cc001/careerloop/route
+```
+
+Authorize the `cc001` third-party application for this API, then call:
+
+```text
+POST {cosmicUrl}/kapi/v2/v620/v620_cc001/cc001/careerloop/route?access_token={access_token}
 Content-Type: application/json
 
 {
@@ -78,10 +89,10 @@ Content-Type: application/json
 The static webapp can call this mode by adding these query parameters once:
 
 ```text
-apiMode=kapi&appId=cc001&serviceName=careerloop&access_token=<token>
+apiMode=kapi&access_token=<token>
 ```
 
-The values are cached in browser localStorage for later page loads. Without `apiMode=kapi`, the page keeps the older direct `/ierp/cc001/*` contract mode for contract display and non-Cosmic harnesses.
+The webapp defaults to `cloudId=v620`, `appNumber=v620_cc001`, `apiCode=cc001/careerloop/route`, and `kapiRouteVersion=v2`. These can be overridden in the URL if a tenant uses different OpenAPI metadata. Use `kapiRouteVersion=legacy` only for the older `/kapi/app/{appId}/{serviceName}/` route. The values are cached in browser localStorage for later page loads. Without `apiMode=kapi`, the page keeps the older direct `/ierp/cc001/*` contract mode for contract display and non-Cosmic harnesses.
 
 ## Restart Requirement
 
@@ -96,5 +107,5 @@ Before restart, this endpoint may still return `404` because the old JVM has not
 For the Cosmic custom Web API path, verify with the registered service name and a valid access token:
 
 ```powershell
-Invoke-WebRequest -Uri 'http://10.0.0.8:8080/ierp/kapi/app/cc001/careerloop/?access_token=<token>' -Method Post -ContentType 'application/json' -Body '{"path":"/cc001/identity/current","body":{}}'
+Invoke-WebRequest -Uri 'http://10.0.0.8:8080/ierp/kapi/v2/v620/v620_cc001/cc001/careerloop/route?access_token=<token>' -Method Post -ContentType 'application/json' -Body '{"path":"/cc001/identity/current","body":{}}'
 ```

@@ -627,7 +627,7 @@
       }
       return response.json();
     }).then(function (payload) {
-      if (request.mode === "kapi" && payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
+      if ((request.mode === "kapi" || request.mode === "kapi-v2") && payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
         if (!payload.success) {
           throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
         }
@@ -641,6 +641,9 @@
     var mode = resolveApiMode();
     if (mode !== "kapi") {
       return { mode: "direct", url: resolveApiBase() + path, body: body };
+    }
+    if (resolveKapiRouteVersion() === "v2") {
+      return resolveKapiV2Request(path, body);
     }
     var appId = firstText(readQueryOrStorage("appId", "careerloop.kapi.appId"), "cc001");
     var serviceName = firstText(readQueryOrStorage("serviceName", "careerloop.kapi.serviceName"), "careerloop");
@@ -657,6 +660,33 @@
         body: body
       }
     };
+  }
+
+  function resolveKapiV2Request(path, body) {
+    var cloudId = firstText(readQueryOrStorage("cloudId", "careerloop.kapi.cloudId"), "v620");
+    var appNumber = firstText(readQueryOrStorage("appNumber", "careerloop.kapi.appNumber"), "v620_cc001");
+    var apiCode = firstText(readQueryOrStorage("apiCode", "careerloop.kapi.apiCode"), "cc001/careerloop/route");
+    var accessToken = readQueryOrStorage("access_token", "careerloop.kapi.accessToken");
+    var url = resolveApiBase() + "/kapi/v2/" + encodeURIComponent(cloudId) + "/" + encodeURIComponent(appNumber) + "/" + encodeApiCode(apiCode);
+    if (accessToken) {
+      url += "?access_token=" + encodeURIComponent(accessToken);
+    }
+    return {
+      mode: "kapi-v2",
+      url: url,
+      body: {
+        path: path,
+        body: body
+      }
+    };
+  }
+
+  function resolveKapiRouteVersion() {
+    return firstText(readQueryOrStorage("kapiRouteVersion", "careerloop.kapi.routeVersion"), "v2").toLowerCase();
+  }
+
+  function encodeApiCode(apiCode) {
+    return trim(apiCode).split("/").filter(Boolean).map(encodeURIComponent).join("/");
   }
 
   function resolveApiMode() {
