@@ -1,5 +1,6 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import kd.bos.context.RequestContext;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.CosmicIdentityContextHelper;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
@@ -83,6 +84,23 @@ class CosmicLoginContextProviderTest {
         Object bridge = bridgeField.get(provider);
 
         assertTrue(bridge instanceof RequestContextCosmicLoginContextBridge);
+    }
+
+    @Test
+    void requestContextBridgeUsesStringUserIdAndSkipsZeroCurrUserId() {
+        RequestContext previous = RequestContext.get();
+        RequestContext current = RequestContext.create();
+        current.setUserId("ID-000001");
+        try {
+            RequestContext.set(current);
+
+            Map<String, Object> context = new RequestContextCosmicLoginContextBridge().currentLoginContext();
+
+            assertEquals("ID-000001", context.get("userId"));
+            assertFalse(context.containsKey("operatorId"));
+        } finally {
+            RequestContext.set(previous);
+        }
     }
 
     @Test
