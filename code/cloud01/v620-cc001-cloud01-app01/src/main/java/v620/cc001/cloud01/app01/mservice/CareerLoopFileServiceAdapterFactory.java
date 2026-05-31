@@ -8,9 +8,11 @@ public final class CareerLoopFileServiceAdapterFactory {
     }
 
     public static FileUploadPreviewApplicationService production() {
-        return production(new UnavailableCosmicCareerFileServiceProvider(),
-                CosmicFileAdapterConfig.fromSystemProperties(),
-                new FileUploadPreviewService());
+        CosmicFileAdapterConfig config = CosmicFileAdapterConfig.fromSystemProperties();
+        CosmicCareerFileServiceProvider provider = config.isEnabled()
+                ? new BosAttachmentFileServiceProvider()
+                : new UnavailableCosmicCareerFileServiceProvider();
+        return production(provider, config, new FileUploadPreviewService());
     }
 
     public static FileUploadPreviewApplicationService production(CosmicCareerFileServiceProvider provider,
