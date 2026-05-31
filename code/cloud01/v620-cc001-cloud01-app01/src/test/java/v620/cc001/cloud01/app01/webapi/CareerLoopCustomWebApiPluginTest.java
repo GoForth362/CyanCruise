@@ -1,6 +1,7 @@
 package v620.cc001.cloud01.app01.webapi;
 
 import kd.bos.entity.api.ApiResult;
+import kd.bos.openapi.common.result.CustomApiResult;
 import org.junit.jupiter.api.Test;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
@@ -31,6 +32,22 @@ class CareerLoopCustomWebApiPluginTest {
         CosmicIdentityContextDto identity = (CosmicIdentityContextDto) result.getData();
         assertEquals("api-user", identity.getUserId());
         assertEquals(CosmicIdentityConstants.STATUS_OK, identity.getStatus());
+    }
+
+    @Test
+    void routeReturnsCustomApiResultForOpenApiJavaPlugin() {
+        IdentityAwareCareerLoopWebApiBoundary boundary =
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
+        CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
+                new CareerLoopIdentityWebApi(boundary),
+                new CareerProfileWebApi(boundary),
+                new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
+
+        CustomApiResult<Object> result = plugin.route(params("/cc001/identity/current", new HashMap<String, Object>()));
+
+        assertTrue(result.isStatus());
+        CosmicIdentityContextDto identity = (CosmicIdentityContextDto) result.getData();
+        assertEquals("api-user", identity.getUserId());
     }
 
     @Test

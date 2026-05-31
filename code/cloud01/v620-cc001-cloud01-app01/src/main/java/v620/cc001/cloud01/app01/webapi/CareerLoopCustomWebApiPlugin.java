@@ -7,6 +7,7 @@ import kd.bos.openapi.common.custom.annotation.ApiMapping;
 import kd.bos.openapi.common.custom.annotation.ApiPostMapping;
 import kd.bos.openapi.common.custom.annotation.ApiRequestBody;
 import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
+import kd.bos.openapi.common.result.CustomApiResult;
 import v620.cc001.cloud01.app01.mservice.IdentityBoundaryException;
 
 import java.util.Map;
@@ -38,9 +39,13 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
     }
 
     @ApiPostMapping(value = "/route", desc = "Route CareerLoop custom WebAPI call", methodParamNames = {"params"})
-    public @ApiResponseBody(value = "CareerLoop custom WebAPI result") ApiResult route(
+    public @ApiResponseBody(value = "CareerLoop custom WebAPI result") CustomApiResult<Object> route(
             @ApiRequestBody(value = "CareerLoop custom WebAPI params", required = true) Map<String, Object> params) {
-        return doCustomService(params);
+        ApiResult result = doCustomService(params);
+        if (result.getSuccess()) {
+            return CustomApiResult.success(result.getData());
+        }
+        return CustomApiResult.fail(result.getErrorCode(), result.getMessage());
     }
 
     @Override
