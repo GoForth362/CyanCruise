@@ -28,6 +28,7 @@
     adminContent: "/cc001/admin/content/list",
     adminBroadcast: "/cc001/admin/broadcast",
     adminAuditLog: "/cc001/admin/audit-log/list",
+    identityCurrent: "/cc001/identity/current",
     fileUpload: "/cc001/files/upload",
     filePreview: "/cc001/files/preview-url",
     fileDownload: "/cc001/files/download",
@@ -87,7 +88,9 @@
     updateIdentityState();
     bindEvents();
     handleRouteChange();
-    loadOverview();
+    loadPlatformIdentity().then(function () {
+      loadOverview();
+    });
   }
 
   function cacheElements() {
@@ -202,7 +205,7 @@
       '<section class="panel full"><h3>引导信息</h3>' +
       '<form class="form-grid" id="onboardingForm">' +
       field("identityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
-      field("targetRole", "目标岗位", "text", targetRole) +
+      field("onboardingTargetRole", "目标岗位", "text", targetRole) +
       field("resumeStatus", "简历状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"]]) +
       field("preference", "偏好方向", "text", firstText(onboarding.preference, "")) +
       '<div class="full actions-row"><button type="submit">保存引导信息</button><button type="button" class="secondary" data-link="workbench">返回工作台</button></div>' +
@@ -328,7 +331,7 @@
     }
     var request = {
       identityType: valueOf("identityType"),
-      targetRole: valueOf("targetRole"),
+      targetRole: valueOf("onboardingTargetRole"),
       resumeStatus: valueOf("resumeStatus"),
       preference: valueOf("preference")
     };
@@ -432,15 +435,138 @@
   }
 
   function resolveCosmicIdentity() {
-    var context = window.__CAREERLOOP_COSMIC_CONTEXT__ || window.__COSMIC_CONTEXT__ || window.cosmicContext || {};
-    var userId = firstText(context.userId, context.personId, context.operatorId, context.uid);
+    var resolved = resolveCosmicContext();
+    var context = resolved.context || {};
+    var userId = firstText(
+      context.userId,
+      context.personId,
+      context.operatorId,
+      context.uid,
+      context.id,
+      context.number,
+      getValue(context, "user.id"),
+      getValue(context, "user.userId"),
+      getValue(context, "user.personId"),
+      getValue(context, "user.number"),
+      getValue(context, "currentUser.id"),
+      getValue(context, "currentUser.userId"),
+      getValue(context, "currentUser.personId"),
+      getValue(context, "currentUser.number"),
+      getValue(context, "userInfo.id"),
+      getValue(context, "userInfo.userId"),
+      getValue(context, "userInfo.personId"),
+      getValue(context, "userInfo.number")
+    );
     return {
       mode: "production",
       userId: userId,
-      adminId: firstText(context.adminId, context.userId, context.operatorId),
-      roles: normalizeRoles(firstText(context.roles, context.roleCodes, context.role, context.permissionCodes)),
-      source: userId ? "cosmic-platform-context" : "missing-cosmic-platform-context"
+      adminId: firstText(context.adminId, context.userId, context.operatorId, getValue(context, "user.id"), getValue(context, "currentUser.id")),
+      roles: normalizeRoles(firstText(context.roles, context.roleCodes, context.role, context.permissionCodes, getValue(context, "user.roles"), getValue(context, "currentUser.roles"))),
+      source: userId ? resolved.source : "missing-cosmic-platform-context"
     };
+  }
+
+  function resolveCosmicContext() {
+    var windows = reachableWindows();
+    var names = ["__CAREERLOOP_COSMIC_CONTEXT__", "__COSMIC_CONTEXT__", "cosmicContext", "kdContext", "KDCONTEXT", "userInfo", "currentUser", "loginUser"];
+    for (var i = 0; i < windows.length; i += 1) {
+      for (var j = 0; j < names.length; j += 1) {
+        var value = safeReadWindow(windows[i], names[j]);
+        if (value && typeof value === "object") {
+          return { context: value, source: "window." + names[j] };
+        }
+      }
+    }
+    return readStoredCosmicContext() || { context: {}, source: "missing-cosmic-platform-context" };
+  }
+
+  function reachableWindows() {
+    var items = [window];
+    try {
+      if (window.parent && window.parent !== window) {
+        items.push(window.parent);
+      }
+    } catch (error) {
+      // Cross-origin parent windows are ignored.
+    }
+    try {
+      if (window.top && window.top !== window && window.top !== window.parent) {
+        items.push(window.top);
+      }
+    } catch (error) {
+      // Cross-origin top windows are ignored.
+    }
+    return items;
+  }
+
+  function safeReadWindow(sourceWindow, name) {
+    try {
+      return sourceWindow[name];
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function readStoredCosmicContext() {
+    var keys = [
+      "cosmicContext",
+      "kdContext",
+      "userInfo",
+      "currentUser",
+      "loginUser",
+      "operator",
+      "sessionUser",
+      "bosUser",
+      "mcUser"
+    ];
+    for (var i = 0; i < keys.length; i += 1) {
+      var fromSession = parseStorageJson(sessionStorage, keys[i]);
+      if (fromSession) {
+        return { context: fromSession, source: "sessionStorage:" + keys[i] };
+      }
+      var fromLocal = parseStorageJson(localStorage, keys[i]);
+      if (fromLocal) {
+        return { context: fromLocal, source: "localStorage:" + keys[i] };
+      }
+    }
+    var fromCookie = parseCookieContext();
+    return fromCookie ? { context: fromCookie, source: "cookie:platform-user" } : null;
+  }
+
+  function parseStorageJson(storage, key) {
+    try {
+      var raw = storage.getItem(key);
+      if (!raw || raw === "undefined" || raw === "null") {
+        return null;
+      }
+      if (raw.charAt(0) === "{" || raw.charAt(0) === "[") {
+        return JSON.parse(raw);
+      }
+    } catch (error) {
+      return null;
+    }
+    return null;
+  }
+
+  function parseCookieContext() {
+    var pairs = document.cookie ? document.cookie.split(";") : [];
+    var keys = ["userInfo", "currentUser", "loginUser", "cosmicContext", "kdContext"];
+    for (var i = 0; i < pairs.length; i += 1) {
+      var pair = pairs[i].split("=");
+      var name = trim(pair.shift());
+      if (keys.indexOf(name) < 0) {
+        continue;
+      }
+      try {
+        var value = decodeURIComponent(pair.join("="));
+        if (value && (value.charAt(0) === "{" || value.charAt(0) === "[")) {
+          return JSON.parse(value);
+        }
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
   }
 
   function resolveDevelopmentIdentity() {
@@ -466,17 +592,125 @@
     };
   }
 
+  function loadPlatformIdentity() {
+    if (!state.identity || state.identity.mode !== "production" || state.identity.userId) {
+      return Promise.resolve();
+    }
+    return post(endpoints.identityCurrent, {}).then(function (identity) {
+      var userId = firstText(identity.userId, identity.adminId);
+      if (!userId || identity.status !== "OK") {
+        showMessage("warning", "平台身份未就绪", firstText(identity.message, identity.status, "identity response has no userId"));
+        return;
+      }
+      state.identity = {
+        mode: "production",
+        userId: userId,
+        adminId: firstText(identity.adminId, identity.userId),
+        roles: normalizeRoles(identity.roles),
+        source: firstText(identity.source, "cc001-identity-current")
+      };
+      updateIdentityState();
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      showMessage("warning", "平台身份调用失败", error && error.message ? error.message : "identity request failed");
+    });
+  }
+
   function post(path, body) {
-    return fetch(resolveApiBase() + path, {
+    var request = resolveApiRequest(path, body);
+    return fetch(request.url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      body: JSON.stringify(request.body)
     }).then(function (response) {
       if (!response.ok) {
         throw new Error(path + " 返回 " + response.status);
       }
       return response.json();
+    }).then(function (payload) {
+      if (request.mode === "kapi" || request.mode === "kapi-v2") {
+        if (payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
+          if (!payload.success) {
+            throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+          }
+          return payload.data;
+        }
+        if (payload && Object.prototype.hasOwnProperty.call(payload, "status")
+            && Object.prototype.hasOwnProperty.call(payload, "data")) {
+          if (!payload.status) {
+            throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+          }
+          return payload.data;
+        }
+      }
+      return payload;
     });
+  }
+
+  function resolveApiRequest(path, body) {
+    var mode = resolveApiMode();
+    if (mode !== "kapi") {
+      return { mode: "direct", url: resolveApiBase() + path, body: body };
+    }
+    if (resolveKapiRouteVersion() === "v2") {
+      return resolveKapiV2Request(path, body);
+    }
+    var appId = firstText(readQueryOrStorage("appId", "careerloop.kapi.appId"), "cc001");
+    var serviceName = firstText(readQueryOrStorage("serviceName", "careerloop.kapi.serviceName"), "careerloop");
+    var accessToken = readQueryOrStorage("access_token", "careerloop.kapi.accessToken");
+    var url = resolveApiBase() + "/kapi/app/" + encodeURIComponent(appId) + "/" + encodeURIComponent(serviceName) + "/";
+    if (accessToken) {
+      url += "?access_token=" + encodeURIComponent(accessToken);
+    }
+    return {
+      mode: "kapi",
+      url: url,
+      body: {
+        path: path,
+        body: body
+      }
+    };
+  }
+
+  function resolveKapiV2Request(path, body) {
+    var cloudId = firstText(readQueryOrStorage("cloudId", "careerloop.kapi.cloudId"), "v620");
+    var appNumber = firstText(readQueryOrStorage("appNumber", "careerloop.kapi.appNumber"), "v620_cc001");
+    var apiCode = firstText(readQueryOrStorage("apiCode", "careerloop.kapi.apiCode"), "cc001/careerloop/route");
+    var accessToken = readQueryOrStorage("access_token", "careerloop.kapi.accessToken");
+    var url = resolveApiBase() + "/kapi/v2/" + encodeURIComponent(cloudId) + "/" + encodeURIComponent(appNumber) + "/" + encodeApiCode(apiCode);
+    if (accessToken) {
+      url += "?access_token=" + encodeURIComponent(accessToken);
+    }
+    return {
+      mode: "kapi-v2",
+      url: url,
+      body: {
+        path: path,
+        body: body
+      }
+    };
+  }
+
+  function resolveKapiRouteVersion() {
+    return firstText(readQueryOrStorage("kapiRouteVersion", "careerloop.kapi.routeVersion"), "v2").toLowerCase();
+  }
+
+  function encodeApiCode(apiCode) {
+    return trim(apiCode).split("/").filter(Boolean).map(encodeURIComponent).join("/");
+  }
+
+  function resolveApiMode() {
+    return firstText(readQueryOrStorage("apiMode", "careerloop.apiMode"), "direct").toLowerCase();
+  }
+
+  function readQueryOrStorage(queryKey, storageKey) {
+    var params = new URLSearchParams(window.location.search);
+    var fromQuery = trim(params.get(queryKey));
+    if (fromQuery) {
+      localStorage.setItem(storageKey, fromQuery);
+      return fromQuery;
+    }
+    return trim(localStorage.getItem(storageKey));
   }
 
   function resolveApiBase() {
@@ -487,7 +721,15 @@
       return fromQuery.replace(/\/$/, "");
     }
     var stored = trim(localStorage.getItem("careerloop.apiBase"));
-    return stored ? stored.replace(/\/$/, "") : "";
+    if (stored) {
+      return stored.replace(/\/$/, "");
+    }
+    return defaultApiBase();
+  }
+
+  function defaultApiBase() {
+    var firstSegment = trim(window.location.pathname).split("/").filter(Boolean)[0];
+    return firstSegment === "ierp" ? "/ierp" : "";
   }
 
   function metricsPanel(title, rows) {

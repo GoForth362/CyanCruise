@@ -47,6 +47,10 @@ public class IdentityAwareCareerLoopWebApiBoundary {
         return helper.resolvedAdminId(context);
     }
 
+    public CosmicIdentityContextDto currentIdentity() {
+        return resolver.resolve();
+    }
+
     public AdminIdentityDto rejectAsAdminIdentity(IdentityBoundaryException ex) {
         AdminIdentityDto identity = new AdminIdentityDto();
         identity.setAdmin(Boolean.FALSE);
