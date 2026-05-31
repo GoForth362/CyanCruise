@@ -300,7 +300,6 @@
       '<button type="button" data-link="resume-diagnosis">去诊断</button>' +
       '<button type="button" class="secondary danger" data-delete-resume="' + escapeHtml(id) + '">删除</button>' +
       '</div>' +
-      (preview ? '<p class="panel-note">预览已就绪：<a href="' + escapeHtml(preview) + '" target="_blank" rel="noreferrer">打开 PDF 预览</a></p>' : "") +
       "</article>";
   }
 
@@ -488,11 +487,15 @@
     var previewWindow = null;
     if (isFilePreview()) {
       state.previewUrls[fileKey] = fileKey;
-      window.open(fileKey, "_blank", "noopener");
+      window.open(fileKey, "_blank");
       renderPage(pageByKey[state.route]);
       return;
     }
-    previewWindow = window.open("about:blank", "_blank", "noopener");
+    previewWindow = window.open("about:blank", "_blank");
+    if (previewWindow) {
+      previewWindow.document.title = "PDF 预览加载中";
+      previewWindow.document.body.innerHTML = '<p style="font:16px sans-serif;padding:24px;">PDF 预览加载中...</p>';
+    }
     state.fileMessage = { type: "info", text: "正在读取文件并生成浏览器预览。" };
     renderPage(pageByKey[state.route]);
     post(endpoints.fileDownload, { fileUrlOrKey: fileKey }).then(function (result) {
@@ -522,10 +525,11 @@
 
   function openPreviewUrl(previewWindow, url) {
     if (previewWindow && !previewWindow.closed) {
+      previewWindow.opener = null;
       previewWindow.location.href = url;
       return;
     }
-    window.open(url, "_blank", "noopener");
+    window.open(url, "_blank");
   }
 
   function closePreviewWindow(previewWindow) {
