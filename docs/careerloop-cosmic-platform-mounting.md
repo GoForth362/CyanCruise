@@ -57,6 +57,23 @@
 
 建议先发布 `careerloop-workbench` 作为用户主入口；`careerloop-admin-console` 只能挂载到管理员菜单或等效 KDDT 管理入口，不得作为普通用户菜单暴露。
 
+### 首页快速发起快捷方式
+
+苍穹首页的“快速发起”快捷方式必须绑定到真实门户菜单或应用菜单记录，并由平台携带有效 `menuId` 打开。仅在开发平台里看到 `CyanCruise` 应用，或只配置了第三方应用/开发商标识，不等于已经发布了可被首页快捷方式引用的门户菜单。
+
+如果点击首页快捷方式提示“菜单ID为空，请前往开发平台检查应用菜单配置”，优先按平台菜单配置排查：
+
+- 确认系统管理、菜单维护、门户菜单或应用菜单中存在指向 `index.htm#workbench` 的 CyanCruise 菜单。
+- 确认该菜单已发布到当前门户/角色/用户可见范围。
+- 从已发布菜单入口重新添加首页快捷方式，不要复用未绑定菜单的旧快捷方式。
+- 继续联调时可直接使用验收 URL，不要把该错误当作 `/cc001/*` 或 KAPI route 后端失败处理。
+
+当前可用验收入口为：
+
+```text
+http://10.0.0.8:8080/ierp/isv/v620/careerloop/index.htm?apiMode=kapi&access_token=<new-token>#workbench
+```
+
 ## WebAPI 调用边界
 
 所有 `/cc001/*` 调用继续以 `careerloop-routes.json.routes[*].webApis` 为契约来源。用户归属接口必须在解析到用户身份后调用；管理员接口必须在解析到管理员身份和 `ADMIN` 或平台管理员权限后调用。缺失身份时，页面显示 identity-required 或 forbidden 状态，不使用硬编码用户、旧 JWT、旧 admin token 或上一次 localStorage 作为生产身份。

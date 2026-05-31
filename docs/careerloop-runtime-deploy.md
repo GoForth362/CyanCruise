@@ -18,7 +18,13 @@ F:\kingdee\ENV\mservice-cosmic\lib\cus
 F:\kingdee\ENV\static-file-service\isv\v620\careerloop
 ```
 
-When validating `http://10.0.0.8:8080/ierp/isv/v620/careerloop/index.htm#workbench`, deploy the three CyanCruise JARs and the static webapp resources into the `F:\kingdee\ENV` runtime directories above.
+When validating `http://10.0.0.8:8080/ierp/isv/v620/careerloop/index.htm#workbench`, deploy the three CyanCruise JARs and the static webapp resources into the `F:\kingdee\ENV` runtime directories above. The static files validated in the local portal are:
+
+```text
+F:\kingdee\ENV\static-file-service\isv\v620\careerloop\index.htm
+F:\kingdee\ENV\static-file-service\isv\v620\careerloop\index.html
+F:\kingdee\ENV\static-file-service\isv\v620\careerloop\assets\app.js
+```
 
 The ENV startup script must include the CyanCruise cus packages in `CUSLIBS`, otherwise `kd-appstore-download-1.0.jar` will reset `lib\cus` to the packages listed by the script:
 
@@ -92,7 +98,32 @@ The static webapp can call this mode by adding these query parameters once:
 apiMode=kapi&access_token=<token>
 ```
 
+The current accepted local portal URL shape is:
+
+```text
+http://10.0.0.8:8080/ierp/isv/v620/careerloop/index.htm?apiMode=kapi&access_token=<new-token>#workbench
+```
+
 The webapp defaults to `cloudId=v620`, `appNumber=v620_cc001`, `apiCode=cc001/careerloop/route`, and `kapiRouteVersion=v2`. These can be overridden in the URL if a tenant uses different OpenAPI metadata. Use `kapiRouteVersion=legacy` only for the older `/kapi/app/{appId}/{serviceName}/` route. The values are cached in browser localStorage for later page loads. Without `apiMode=kapi`, the page keeps the older direct `/ierp/cc001/*` contract mode for contract display and non-Cosmic harnesses.
+
+For the local validation API details, the successful configuration disabled "third-party application authorization" on the API itself and instead relied on the configured third-party application `CyanCruise` access token plus business object and permission item authorization. If the API keeps rejecting a valid token, recheck the OpenAPI API detail page, the bound business object, and the permission item before changing CyanCruise code.
+
+## Accepted Local Identity And Storage
+
+The validated Cosmic RequestContext bridge resolves the current platform user as:
+
+```text
+userId/adminId: 2477190919195983874
+source: cosmic-platform-context
+```
+
+When the datamodel/database storage is unavailable in the local 8080 runtime, CareerLoop falls back to local file storage under the running Cosmic process. The current accepted user data is stored at:
+
+```text
+F:\kingdee\ENV\mservice-cosmic\bin\filestorage\career-profile\2477190919195983874\
+```
+
+Expected files after saving onboarding/profile data include `snapshot.ser` and `profile.ser`. This path is an observed runtime artifact for local validation only; business code must continue to read runtime paths from configuration and must not hard-code this local directory.
 
 ## Restart Requirement
 
