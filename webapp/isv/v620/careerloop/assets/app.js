@@ -88,8 +88,8 @@
     updateIdentityState();
     bindEvents();
     handleRouteChange();
-    loadOverview();
     loadPlatformIdentity();
+    loadOverview();
   }
 
   function cacheElements() {
