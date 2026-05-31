@@ -205,7 +205,7 @@
       '<section class="panel full"><h3>引导信息</h3>' +
       '<form class="form-grid" id="onboardingForm">' +
       field("identityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
-      field("targetRole", "目标岗位", "text", targetRole) +
+      field("onboardingTargetRole", "目标岗位", "text", targetRole) +
       field("resumeStatus", "简历状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"]]) +
       field("preference", "偏好方向", "text", firstText(onboarding.preference, "")) +
       '<div class="full actions-row"><button type="submit">保存引导信息</button><button type="button" class="secondary" data-link="workbench">返回工作台</button></div>' +
@@ -331,7 +331,7 @@
     }
     var request = {
       identityType: valueOf("identityType"),
-      targetRole: valueOf("targetRole"),
+      targetRole: valueOf("onboardingTargetRole"),
       resumeStatus: valueOf("resumeStatus"),
       preference: valueOf("preference")
     };
