@@ -12,10 +12,16 @@ import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
 import v620.cc001.cloud01.app01.mservice.FileCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -116,6 +122,20 @@ class CareerLoopCustomWebApiPluginTest {
     }
 
     @Test
+    void routeMapWebApisAreDeclaredInCustomRouter() throws Exception {
+        String routeMap = new String(Files.readAllBytes(workspaceFile(
+                "webapp/isv/v620/careerloop/careerloop-routes.json")), "UTF-8");
+        String router = new String(Files.readAllBytes(workspaceFile(
+                "code/cloud01/v620-cc001-cloud01-app01/src/main/java/v620/cc001/cloud01/app01/webapi/CareerLoopCustomWebApiPlugin.java")), "UTF-8");
+
+        Set<String> declared = extractPaths(routeMap);
+        Set<String> routed = extractPaths(router);
+        declared.removeAll(routed);
+
+        assertTrue(declared.isEmpty(), "custom router missing route map paths: " + declared);
+    }
+
+    @Test
     void rejectsUnsupportedPath() {
         CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin();
 
@@ -130,5 +150,26 @@ class CareerLoopCustomWebApiPluginTest {
         params.put(CareerLoopCustomWebApiPlugin.PARAM_PATH, path);
         params.put(CareerLoopCustomWebApiPlugin.PARAM_BODY, body);
         return params;
+    }
+
+    private Set<String> extractPaths(String text) {
+        Set<String> paths = new LinkedHashSet<String>();
+        Matcher matcher = Pattern.compile("\"(/cc001/[^\"]+)\"").matcher(text);
+        while (matcher.find()) {
+            paths.add(matcher.group(1));
+        }
+        return paths;
+    }
+
+    private Path workspaceFile(String relativePath) {
+        Path current = Paths.get("").toAbsolutePath();
+        while (current != null) {
+            Path candidate = current.resolve(relativePath);
+            if (Files.exists(candidate)) {
+                return candidate;
+            }
+            current = current.getParent();
+        }
+        throw new IllegalStateException("workspace file not found: " + relativePath);
     }
 }

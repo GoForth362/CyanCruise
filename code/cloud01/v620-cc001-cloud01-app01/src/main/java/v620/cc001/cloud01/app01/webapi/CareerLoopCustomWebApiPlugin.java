@@ -8,10 +8,22 @@ import kd.bos.openapi.common.custom.annotation.ApiPostMapping;
 import kd.bos.openapi.common.custom.annotation.ApiRequestBody;
 import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
 import kd.bos.openapi.common.result.CustomApiResult;
+import v620.cc001.base.common.dto.career.AdminBroadcastRequest;
+import v620.cc001.base.common.dto.career.AssessmentScaleDto;
+import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
+import v620.cc001.base.common.dto.career.AssistantChatRequest;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
+import v620.cc001.base.common.dto.career.FileUploadRequest;
+import v620.cc001.base.common.dto.career.InterviewStartRequest;
+import v620.cc001.base.common.dto.career.ResumeCreateRequest;
+import v620.cc001.base.common.dto.career.ResumeDiagnosisRequest;
+import v620.cc001.base.common.dto.career.SubscriptionGrantRequest;
+import v620.cc001.base.common.dto.career.SubscriptionSendRequest;
 import v620.cc001.cloud01.app01.mservice.IdentityBoundaryException;
 
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,13 +49,14 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
     private final AdminConsoleGovernanceWebApi adminWebApi;
     private final FileUploadPreviewWebApi fileWebApi;
     private final ResumeDiagnosisWebApi resumeDiagnosisWebApi;
+    private final AssessmentWebApi assessmentWebApi;
 
     public CareerLoopCustomWebApiPlugin() {
         this(new CareerLoopIdentityWebApi(), new CareerProfileWebApi(), new CareerAgentWebApi(),
                 new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi(),
                 new AssistantChatWebApi(), new EmploymentInsightsResourcesWebApi(),
                 new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
-                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi());
+                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi());
     }
 
     CareerLoopCustomWebApiPlugin(CareerLoopIdentityWebApi identityWebApi,
@@ -53,7 +66,7 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi(),
                 new AssistantChatWebApi(), new EmploymentInsightsResourcesWebApi(),
                 new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
-                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi());
+                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi());
     }
 
     CareerLoopCustomWebApiPlugin(CareerLoopIdentityWebApi identityWebApi,
@@ -67,7 +80,8 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                                  NotificationsSubscriptionsWebApi notificationsWebApi,
                                  AdminConsoleGovernanceWebApi adminWebApi,
                                  FileUploadPreviewWebApi fileWebApi,
-                                 ResumeDiagnosisWebApi resumeDiagnosisWebApi) {
+                                 ResumeDiagnosisWebApi resumeDiagnosisWebApi,
+                                 AssessmentWebApi assessmentWebApi) {
         this.identityWebApi = identityWebApi;
         this.profileWebApi = profileWebApi;
         this.agentWebApi = agentWebApi;
@@ -80,6 +94,7 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
         this.adminWebApi = adminWebApi;
         this.fileWebApi = fileWebApi;
         this.resumeDiagnosisWebApi = resumeDiagnosisWebApi;
+        this.assessmentWebApi = assessmentWebApi;
     }
 
     @ApiPostMapping(value = "/route", desc = "Route CareerLoop custom WebAPI call", methodParamNames = {"params"})
@@ -113,8 +128,15 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             if ("/cc001/career-agent/today/get".equals(path)) {
                 return ApiResult.success(agentWebApi.todayByUserId(extractUserId(body)));
             }
+            if ("/cc001/assessment/submit".equals(path)) {
+                return ApiResult.success(assessmentWebApi.submit(
+                        extractUserId(body), extractAssessmentScale(body), extractAssessmentSubmitRequest(body)));
+            }
             if ("/cc001/resume/list".equals(path)) {
                 return ApiResult.success(resumeWebApi.list(extractUserId(body)));
+            }
+            if ("/cc001/resume/create".equals(path)) {
+                return ApiResult.success(resumeWebApi.create(extractUserId(body), extractResumeCreateRequest(body)));
             }
             if ("/cc001/career-plan/summary".equals(path)) {
                 return ApiResult.success(planWebApi.summary(extractUserId(body)));
@@ -124,6 +146,12 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/interview/list".equals(path)) {
                 return ApiResult.success(interviewWebApi.list(extractUserId(body)));
+            }
+            if ("/cc001/interview/start".equals(path)) {
+                return ApiResult.success(interviewWebApi.start(extractUserId(body), extractInterviewStartRequest(body)));
+            }
+            if ("/cc001/assistant-chat/send".equals(path)) {
+                return ApiResult.success(assistantWebApi.send(extractUserId(body), extractAssistantChatRequest(body)));
             }
             if ("/cc001/assistant-chat/session/list".equals(path)) {
                 return ApiResult.success(assistantWebApi.listSessions(extractUserId(body)));
@@ -144,8 +172,21 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(notificationsWebApi.read(
                         extractUserId(body), textOrNull(value(body, "notificationId"))));
             }
+            if ("/cc001/notifications/read-all".equals(path)) {
+                return ApiResult.success(notificationsWebApi.readAll(extractUserId(body)));
+            }
+            if ("/cc001/notifications/delete".equals(path)) {
+                return ApiResult.success(notificationsWebApi.delete(
+                        extractUserId(body), textOrNull(value(body, "notificationId"))));
+            }
+            if ("/cc001/notifications/subscription/grant".equals(path)) {
+                return ApiResult.success(notificationsWebApi.grant(extractSubscriptionGrantRequest(body)));
+            }
             if ("/cc001/notifications/subscription/quota".equals(path)) {
                 return ApiResult.success(notificationsWebApi.quota(extractUserId(body)));
+            }
+            if ("/cc001/notifications/subscription/send".equals(path)) {
+                return ApiResult.success(notificationsWebApi.send(extractSubscriptionSendRequest(body)));
             }
             if ("/cc001/notifications/weekly-report/run".equals(path)) {
                 return ApiResult.success(notificationsWebApi.weeklyReport(
@@ -158,6 +199,20 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(adminWebApi.dashboard(
                         extractAdminId(body), textOrNull(value(body, "orgId"))));
             }
+            if ("/cc001/admin/organizations/students".equals(path)) {
+                return ApiResult.success(adminWebApi.students(
+                        extractAdminId(body), textOrNull(value(body, "orgId"))));
+            }
+            if ("/cc001/admin/users/list".equals(path)) {
+                return ApiResult.success(adminWebApi.users(
+                        extractAdminId(body), intValue(value(body, "page"), 1),
+                        intValue(value(body, "size"), 20), textOrNull(value(body, "keyword"))));
+            }
+            if ("/cc001/admin/users/ban".equals(path)) {
+                return ApiResult.success(adminWebApi.ban(
+                        extractAdminId(body), textOrNull(value(body, "userId")),
+                        textOrNull(value(body, "reason"))));
+            }
             if ("/cc001/admin/questions/list".equals(path)) {
                 return ApiResult.success(adminWebApi.questions(
                         extractAdminId(body), textOrNull(value(body, "source")),
@@ -167,10 +222,20 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(adminWebApi.content(
                         extractAdminId(body), textOrNull(value(body, "type"))));
             }
+            if ("/cc001/admin/broadcast".equals(path)) {
+                return ApiResult.success(adminWebApi.broadcast(
+                        extractAdminId(body), extractAdminBroadcastRequest(body)));
+            }
+            if ("/cc001/admin/analytics/summary".equals(path)) {
+                return ApiResult.success(adminWebApi.analytics(extractAdminId(body)));
+            }
             if ("/cc001/admin/audit-log/list".equals(path)) {
                 return ApiResult.success(adminWebApi.auditLogs(
                         extractAdminId(body), intValue(value(body, "page"), 1),
                         intValue(value(body, "size"), 20)));
+            }
+            if ("/cc001/files/upload".equals(path)) {
+                return ApiResult.success(fileWebApi.upload(extractFileUploadRequest(body)));
             }
             if ("/cc001/files/preview-url".equals(path)) {
                 return ApiResult.success(fileWebApi.previewUrl(
@@ -184,6 +249,10 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/files/extract-text".equals(path)) {
                 return ApiResult.success(fileWebApi.extractText(textOrNull(value(body, "fileUrlOrKey"))));
+            }
+            if ("/cc001/resume-diagnosis/analyze".equals(path)) {
+                return ApiResult.success(resumeDiagnosisWebApi.analyze(
+                        extractUserId(body), extractResumeDiagnosisRequest(body)));
             }
             if ("/cc001/resume-diagnosis/keywords/status".equals(path)) {
                 return ApiResult.success(resumeDiagnosisWebApi.keywordStatus(
@@ -216,6 +285,19 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             }
         }
         return text(body);
+    }
+
+    private Object requestObject(Object body) {
+        if (body instanceof Map) {
+            Object request = ((Map<?, ?>) body).get("request");
+            return request == null ? body : request;
+        }
+        return body;
+    }
+
+    private Map<?, ?> requestMap(Object body) {
+        Object request = requestObject(body);
+        return request instanceof Map ? (Map<?, ?>) request : null;
     }
 
     private String extractOptionalUserId(Object body) {
@@ -270,6 +352,172 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
         return onboarding;
     }
 
+    private ResumeCreateRequest extractResumeCreateRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof ResumeCreateRequest) {
+            return (ResumeCreateRequest) request;
+        }
+        ResumeCreateRequest out = new ResumeCreateRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setTitle(textOrNull(values.get("title")));
+            out.setTargetJob(textOrNull(firstPresent(values, "targetJob", "targetRole")));
+            out.setFileKey(textOrNull(firstPresent(values, "fileKey", "objectKey")));
+            out.setParsedContent(textOrNull(firstPresent(values, "parsedContent", "content")));
+        }
+        return out;
+    }
+
+    private ResumeDiagnosisRequest extractResumeDiagnosisRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof ResumeDiagnosisRequest) {
+            return (ResumeDiagnosisRequest) request;
+        }
+        ResumeDiagnosisRequest out = new ResumeDiagnosisRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setResumeId(longObject(values.get("resumeId")));
+            out.setResumeText(textOrNull(values.get("resumeText")));
+            out.setJobDescription(textOrNull(values.get("jobDescription")));
+            out.setProfileContext(textOrNull(values.get("profileContext")));
+        }
+        return out;
+    }
+
+    private InterviewStartRequest extractInterviewStartRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof InterviewStartRequest) {
+            return (InterviewStartRequest) request;
+        }
+        InterviewStartRequest out = new InterviewStartRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setResumeId(longObject(values.get("resumeId")));
+            out.setPositionName(textOrNull(firstPresent(values, "positionName", "targetRole", "jobTitle")));
+            out.setDifficulty(textOrNull(values.get("difficulty")));
+            out.setMode(textOrNull(values.get("mode")));
+        }
+        return out;
+    }
+
+    private AssistantChatRequest extractAssistantChatRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof AssistantChatRequest) {
+            return (AssistantChatRequest) request;
+        }
+        AssistantChatRequest out = new AssistantChatRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setMessage(textOrNull(values.get("message")));
+            out.setPersona(textOrNull(values.get("persona")));
+            out.setSessionId(longObject(values.get("sessionId")));
+        }
+        return out;
+    }
+
+    private FileUploadRequest extractFileUploadRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof FileUploadRequest) {
+            return (FileUploadRequest) request;
+        }
+        FileUploadRequest out = new FileUploadRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setFolder(textOrNull(values.get("folder")));
+            out.setOriginalFilename(textOrNull(firstPresent(values, "originalFilename", "filename", "name")));
+            out.setBytes(byteArray(firstPresent(values, "bytes", "base64", "contentBase64")));
+        }
+        return out;
+    }
+
+    private AssessmentScaleDto extractAssessmentScale(Object body) {
+        Object scale = value(body, "scale");
+        if (scale instanceof AssessmentScaleDto) {
+            return (AssessmentScaleDto) scale;
+        }
+        AssessmentScaleDto out = new AssessmentScaleDto();
+        if (scale instanceof Map) {
+            Map<?, ?> values = (Map<?, ?>) scale;
+            out.setScaleId(longObject(values.get("scaleId")));
+            out.setTitle(textOrNull(values.get("title")));
+            out.setDescription(textOrNull(values.get("description")));
+            out.setVersion(textOrNull(values.get("version")));
+        }
+        return out;
+    }
+
+    private AssessmentSubmitRequest extractAssessmentSubmitRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof AssessmentSubmitRequest) {
+            return (AssessmentSubmitRequest) request;
+        }
+        AssessmentSubmitRequest out = new AssessmentSubmitRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setScaleId(longObject(values.get("scaleId")));
+            Object answers = values.get("answers");
+            if (answers instanceof Map) {
+                Map<Long, Long> mapped = new LinkedHashMap<Long, Long>();
+                for (Map.Entry<?, ?> entry : ((Map<?, ?>) answers).entrySet()) {
+                    Long key = longObject(entry.getKey());
+                    Long answer = longObject(entry.getValue());
+                    if (key != null && answer != null) {
+                        mapped.put(key, answer);
+                    }
+                }
+                out.setAnswers(mapped);
+            }
+        }
+        return out;
+    }
+
+    private SubscriptionGrantRequest extractSubscriptionGrantRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof SubscriptionGrantRequest) {
+            return (SubscriptionGrantRequest) request;
+        }
+        SubscriptionGrantRequest out = new SubscriptionGrantRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setUserId(textOrNull(firstPresent(values, "userId", "openid")));
+            out.setResults(stringMap(values.get("results")));
+        }
+        return out;
+    }
+
+    private SubscriptionSendRequest extractSubscriptionSendRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof SubscriptionSendRequest) {
+            return (SubscriptionSendRequest) request;
+        }
+        SubscriptionSendRequest out = new SubscriptionSendRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setUserId(textOrNull(values.get("userId")));
+            out.setTemplateId(textOrNull(values.get("templateId")));
+            out.setRecipientId(textOrNull(values.get("recipientId")));
+            out.setPage(textOrNull(values.get("page")));
+            out.setData(stringMap(values.get("data")));
+        }
+        return out;
+    }
+
+    private AdminBroadcastRequest extractAdminBroadcastRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof AdminBroadcastRequest) {
+            return (AdminBroadcastRequest) request;
+        }
+        AdminBroadcastRequest out = new AdminBroadcastRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setUserId(textOrNull(values.get("userId")));
+            out.setTitle(textOrNull(values.get("title")));
+            out.setContent(textOrNull(values.get("content")));
+            out.setLink(textOrNull(values.get("link")));
+        }
+        return out;
+    }
+
     private Object value(Object body, String key) {
         if (body instanceof Map) {
             return ((Map<?, ?>) body).get(key);
@@ -310,6 +558,48 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private byte[] byteArray(Object value) {
+        if (value instanceof byte[]) {
+            return (byte[]) value;
+        }
+        if (value instanceof Iterable) {
+            List<Byte> bytes = new ArrayList<Byte>();
+            for (Object item : (Iterable<?>) value) {
+                if (item instanceof Number) {
+                    bytes.add(Byte.valueOf(((Number) item).byteValue()));
+                }
+            }
+            byte[] out = new byte[bytes.size()];
+            for (int i = 0; i < bytes.size(); i++) {
+                out[i] = bytes.get(i).byteValue();
+            }
+            return out;
+        }
+        String text = textOrNull(value);
+        if (text == null) {
+            return null;
+        }
+        try {
+            return Base64.getDecoder().decode(text);
+        } catch (IllegalArgumentException ex) {
+            return text.getBytes();
+        }
+    }
+
+    private Map<String, String> stringMap(Object value) {
+        Map<String, String> out = new LinkedHashMap<String, String>();
+        if (value instanceof Map) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+                String key = textOrNull(entry.getKey());
+                String item = textOrNull(entry.getValue());
+                if (key != null && item != null) {
+                    out.put(key, item);
+                }
+            }
+        }
+        return out;
     }
 
     private List<String> stringList(Object value) {
