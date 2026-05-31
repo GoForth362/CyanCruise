@@ -485,17 +485,21 @@
     if (!fileKey) {
       return;
     }
+    var previewWindow = null;
     if (isFilePreview()) {
       state.previewUrls[fileKey] = fileKey;
+      window.open(fileKey, "_blank", "noopener");
       renderPage(pageByKey[state.route]);
       return;
     }
+    previewWindow = window.open("about:blank", "_blank", "noopener");
     state.fileMessage = { type: "info", text: "正在读取文件并生成浏览器预览。" };
     renderPage(pageByKey[state.route]);
     post(endpoints.fileDownload, { fileUrlOrKey: fileKey }).then(function (result) {
       var bytes = bytesFromDownloadResult(result && result.bytes);
       if (!bytes || (result.status && result.status !== "OK")) {
         state.fileMessage = { type: "warning", text: firstText(result && result.message, result && result.status, "文件下载暂不可用，无法生成预览。") };
+        closePreviewWindow(previewWindow);
         renderPage(pageByKey[state.route]);
         return;
       }
@@ -506,12 +510,28 @@
       var blob = new Blob([bytes], { type: mimeTypeFromKey(fileKey) });
       var url = URL.createObjectURL(blob);
       state.previewUrls[fileKey] = url;
-      state.fileMessage = { type: "info", text: "PDF 预览已生成，请点击“打开 PDF 预览”。" };
+      state.fileMessage = { type: "info", text: "PDF 预览已打开。" };
+      openPreviewUrl(previewWindow, url);
       renderPage(pageByKey[state.route]);
     }).catch(function (error) {
       state.fileMessage = { type: "warning", text: error.message || "文件预览暂不可用。" };
+      closePreviewWindow(previewWindow);
       renderPage(pageByKey[state.route]);
     });
+  }
+
+  function openPreviewUrl(previewWindow, url) {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.location.href = url;
+      return;
+    }
+    window.open(url, "_blank", "noopener");
+  }
+
+  function closePreviewWindow(previewWindow) {
+    if (previewWindow && !previewWindow.closed) {
+      previewWindow.close();
+    }
   }
 
   function deleteResumeRecord(resumeId) {
