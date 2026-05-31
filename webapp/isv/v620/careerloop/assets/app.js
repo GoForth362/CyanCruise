@@ -627,11 +627,20 @@
       }
       return response.json();
     }).then(function (payload) {
-      if ((request.mode === "kapi" || request.mode === "kapi-v2") && payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
-        if (!payload.success) {
-          throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+      if (request.mode === "kapi" || request.mode === "kapi-v2") {
+        if (payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
+          if (!payload.success) {
+            throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+          }
+          return payload.data;
         }
-        return payload.data;
+        if (payload && Object.prototype.hasOwnProperty.call(payload, "status")
+            && Object.prototype.hasOwnProperty.call(payload, "data")) {
+          if (!payload.status) {
+            throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+          }
+          return payload.data;
+        }
       }
       return payload;
     });
