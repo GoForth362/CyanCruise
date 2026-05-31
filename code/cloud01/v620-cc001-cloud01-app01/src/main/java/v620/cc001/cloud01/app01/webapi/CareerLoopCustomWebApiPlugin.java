@@ -2,6 +2,11 @@ package v620.cc001.cloud01.app01.webapi;
 
 import kd.bos.bill.IBillWebApiPlugin;
 import kd.bos.entity.api.ApiResult;
+import kd.bos.openapi.common.custom.annotation.ApiController;
+import kd.bos.openapi.common.custom.annotation.ApiMapping;
+import kd.bos.openapi.common.custom.annotation.ApiPostMapping;
+import kd.bos.openapi.common.custom.annotation.ApiRequestBody;
+import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
 import v620.cc001.cloud01.app01.mservice.IdentityBoundaryException;
 
 import java.util.Map;
@@ -9,6 +14,8 @@ import java.util.Map;
 /**
  * Cosmic Custom Web API entry that routes platform kapi calls to CareerLoop WebAPI contracts.
  */
+@ApiController(value = "careerLoopCustomWebApiPlugin", desc = "CareerLoop custom WebAPI router")
+@ApiMapping("/cc001/careerloop")
 public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
 
     public static final String PARAM_PATH = "path";
@@ -28,6 +35,12 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
         this.identityWebApi = identityWebApi;
         this.profileWebApi = profileWebApi;
         this.agentWebApi = agentWebApi;
+    }
+
+    @ApiPostMapping(value = "/route", desc = "Route CareerLoop custom WebAPI call", methodParamNames = {"params"})
+    public @ApiResponseBody(value = "CareerLoop custom WebAPI result") ApiResult route(
+            @ApiRequestBody(value = "CareerLoop custom WebAPI params", required = true) Map<String, Object> params) {
+        return doCustomService(params);
     }
 
     @Override
