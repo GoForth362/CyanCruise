@@ -63,26 +63,24 @@ public class BosAttachmentFileServiceProvider implements CosmicCareerFileService
         result.setObjectKey(objectKey);
         result.setTtlSeconds(Long.valueOf(ttlSeconds));
         result.setProvider(providerName());
+        String fallbackMessage = null;
         try {
             Map<String, Object> preview = client.preview(fileNameOf(objectKey), objectKey);
-            String url = firstUrl(preview);
-            if (!hasText(url)) {
-                url = downloadUrl(objectKey);
-            }
-            if (!hasText(url)) {
-                result.setStatus(FileConstants.STATUS_UNAVAILABLE);
-                result.setMessage("bos preview url unavailable");
-                return result;
-            }
-            result.setStatus(FileConstants.STATUS_OK);
-            result.setMessage("preview ready");
-            result.setPreviewUrl(url);
-            return result;
+            result.setPreviewUrl(firstUrl(preview));
         } catch (Exception ex) {
+            fallbackMessage = sanitize(ex.toString());
+        }
+        if (!hasText(result.getPreviewUrl())) {
+            result.setPreviewUrl(downloadUrl(objectKey));
+        }
+        if (!hasText(result.getPreviewUrl())) {
             result.setStatus(FileConstants.STATUS_UNAVAILABLE);
-            result.setMessage(sanitize(ex.toString()));
+            result.setMessage(hasText(fallbackMessage) ? fallbackMessage : "bos preview url unavailable");
             return result;
         }
+        result.setStatus(FileConstants.STATUS_OK);
+        result.setMessage(hasText(fallbackMessage) ? "download url ready after preview fallback" : "preview ready");
+        return result;
     }
 
     public FileDownloadResult download(String objectKey) {

@@ -31,5 +31,10 @@
 - [x] 4.3 运行 `node --check webapp\isv\v620\careerloop\assets\app.js`。
 - [x] 4.4 如修改 Java 后端或 KAPI router，运行相关 Gradle 聚焦测试；否则记录本 change 仅改静态 webapp。
 - [x] 4.5 使用 JDK 8 运行 `.\gradlew.bat clean build`。
-- [ ] 4.6 本地通过 `index.htm?apiMode=kapi&access_token=<new-token>#resume` 验证创建、刷新、返回工作台和去诊断入口。
+- [x] 4.6 本地通过 `index.htm?apiMode=kapi&access_token=<new-token>#resume` 验证创建、刷新、返回工作台和去诊断入口。
 - [x] 4.7 更新迁移地图或运行时文档，记录简历工作流验收方式、暂不迁移项和回滚方式。
+
+## 5. 验收问题修复
+
+- [x] 5.1 防止简历重复创建：前端提交中禁用创建按钮，后端对同一用户同一 `fileKey` 的创建保持幂等更新。
+- [x] 5.2 增加同一 `fileKey` 连续创建只保留一条记录的聚焦测试。

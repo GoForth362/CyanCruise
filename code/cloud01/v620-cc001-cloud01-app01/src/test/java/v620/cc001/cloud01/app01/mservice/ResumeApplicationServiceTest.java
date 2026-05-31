@@ -93,6 +93,23 @@ class ResumeApplicationServiceTest {
     }
 
     @Test
+    void creatingSameFileKeyUpdatesExistingResumeInsteadOfDuplicating() {
+        CareerProfileStorage profileStorage = new InMemoryCareerProfileStorage();
+        ResumeApplicationService service = service(new InMemoryResumeStorage(), profileStorage);
+        CareerProfileApplicationService profileService = profileService(profileStorage);
+
+        ResumeRecordDto first = service.create("user-dedup", request("Backend Resume", "Backend Engineer", "resumes/same.pdf"));
+        ResumeRecordDto second = service.create("user-dedup", request("Backend Resume Updated", "Java Engineer", "resumes/same.pdf"));
+        List<ResumeRecordDto> records = service.listByUser("user-dedup");
+
+        assertEquals(first.getResumeId(), second.getResumeId());
+        assertEquals(1, records.size());
+        assertEquals("Backend Resume Updated", records.get(0).getTitle());
+        assertEquals("Java Engineer", records.get(0).getTargetJob());
+        assertEquals(second.getResumeId(), profileService.getSnapshot("user-dedup").getResume().getLastResumeId());
+    }
+
+    @Test
     void deletingCurrentResumeSwitchesToRemainingLatestThenClearsWhenEmpty() {
         CareerProfileStorage profileStorage = new InMemoryCareerProfileStorage();
         ResumeApplicationService service = service(new InMemoryResumeStorage(), profileStorage);

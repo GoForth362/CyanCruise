@@ -30,11 +30,23 @@ public class ResumeApplicationService {
         String safeUserId = requireUserId(userId);
         ResumeCreateRequest safeRequest = request == null ? new ResumeCreateRequest() : request;
         LocalDateTime now = LocalDateTime.now();
+        String fileKey = trimToNull(safeRequest.getFileKey());
+        ResumeRecordDto existing = findExistingByFileKey(safeUserId, fileKey);
+        if (existing != null) {
+            existing.setTitle(trimToNull(safeRequest.getTitle()));
+            existing.setTargetJob(trimToNull(safeRequest.getTargetJob()));
+            existing.setFileKey(fileKey);
+            existing.setParsedContent(trimToNull(safeRequest.getParsedContent()));
+            existing.setUpdatedAt(now);
+            ResumeRecordDto saved = resumeStorage.save(existing);
+            syncResumeBlock(safeUserId, saved);
+            return saved;
+        }
         ResumeRecordDto record = new ResumeRecordDto();
         record.setUserId(safeUserId);
         record.setTitle(trimToNull(safeRequest.getTitle()));
         record.setTargetJob(trimToNull(safeRequest.getTargetJob()));
-        record.setFileKey(trimToNull(safeRequest.getFileKey()));
+        record.setFileKey(fileKey);
         record.setParsedContent(trimToNull(safeRequest.getParsedContent()));
         record.setVersion("v1.0");
         record.setStatus("UPLOADED");
@@ -115,6 +127,19 @@ public class ResumeApplicationService {
         block.setDiagnosisScore(record.getDiagnosisScore());
         block.setUpdatedAt(record.getUpdatedAt());
         profileApplicationService.saveResume(userId, block);
+    }
+
+    private ResumeRecordDto findExistingByFileKey(String userId, String fileKey) {
+        if (fileKey == null) {
+            return null;
+        }
+        List<ResumeRecordDto> records = resumeStorage.listByUser(userId);
+        for (ResumeRecordDto record : records) {
+            if (record != null && fileKey.equals(trimToNull(record.getFileKey()))) {
+                return record;
+            }
+        }
+        return null;
     }
 
     private String requireUserId(String userId) {

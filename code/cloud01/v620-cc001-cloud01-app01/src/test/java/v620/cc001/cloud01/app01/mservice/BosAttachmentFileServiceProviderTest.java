@@ -55,9 +55,24 @@ class BosAttachmentFileServiceProviderTest {
     }
 
     @Test
+    void previewFallsBackToDownloadUrlWhenPreviewThrows() {
+        RecordingBosFileServiceClient client = new RecordingBosFileServiceClient();
+        client.previewFails = true;
+        BosAttachmentFileServiceProvider provider = new BosAttachmentFileServiceProvider(
+                client, FileConstants.PROVIDER_COSMIC);
+
+        FilePreviewUrlResult preview = provider.previewUrl("resumes/a.pdf", 60);
+
+        assertEquals(FileConstants.STATUS_OK, preview.getStatus());
+        assertEquals("http://files.example/file/download.do?path=resumes%2Fa.pdf", preview.getPreviewUrl());
+        assertFalse(preview.getMessage().contains("signature"));
+    }
+
+    @Test
     void providerErrorsBecomeRecoverableResultsAndSanitizedMessages() {
         RecordingBosFileServiceClient client = new RecordingBosFileServiceClient();
         client.failOperations = true;
+        client.httpPrefix = "";
         BosAttachmentFileServiceProvider provider = new BosAttachmentFileServiceProvider(
                 client, FileConstants.PROVIDER_COSMIC);
 
@@ -110,7 +125,9 @@ class BosAttachmentFileServiceProviderTest {
     private static class RecordingBosFileServiceClient implements BosFileServiceClient {
         private final Map<String, byte[]> objects = new LinkedHashMap<String, byte[]>();
         private boolean previewHasUrl = true;
+        private boolean previewFails = false;
         private boolean failOperations = false;
+        private String httpPrefix = "http://files.example/";
 
         public boolean available() {
             return !failOperations;
@@ -126,6 +143,9 @@ class BosAttachmentFileServiceProviderTest {
         }
 
         public Map<String, Object> preview(String originalFilename, String objectKey) {
+            if (previewFails) {
+                throw new IllegalStateException("preview failed?signature=secret");
+            }
             if (failOperations) {
                 throw new IllegalStateException("preview failed?signature=secret");
             }
@@ -152,7 +172,7 @@ class BosAttachmentFileServiceProviderTest {
         }
 
         public String httpUrlPrefix() {
-            return "http://files.example/";
+            return httpPrefix;
         }
     }
 }

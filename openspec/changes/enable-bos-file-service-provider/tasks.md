@@ -23,3 +23,4 @@
 - [x] 4.2 运行 `.\gradlew.bat clean build`。
 - [x] 4.3 同步 JAR/zip 到本地 8080 苍穹运行目录。
 - [ ] 4.4 本地启用 `cc001.file.adapter.enabled=true` 后，通过 `#resume` 页面验证 PDF 上传、fileKey 填入、创建简历和预览入口。
+- [x] 4.5 修复 BOS preview map 无 URL 或 preview API 异常时的下载 URL 回退，并增加聚焦测试。

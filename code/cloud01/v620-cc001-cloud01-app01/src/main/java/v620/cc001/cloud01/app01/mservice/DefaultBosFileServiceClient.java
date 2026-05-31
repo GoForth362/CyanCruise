@@ -55,7 +55,18 @@ class DefaultBosFileServiceClient implements BosFileServiceClient {
     }
 
     public String httpUrlPrefix() {
-        return fileService().getHttpUrlPrefix();
+        String prefix = null;
+        try {
+            prefix = fileService().getHttpUrlPrefix();
+        } catch (Exception ignored) {
+        }
+        if (!hasText(prefix)) {
+            prefix = System.getProperty("attachmentServer.url");
+        }
+        if (!hasText(prefix)) {
+            prefix = System.getProperty("attachmentServer.inner.url");
+        }
+        return prefix;
     }
 
     private FileService fileService() {

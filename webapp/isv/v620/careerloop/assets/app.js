@@ -63,6 +63,7 @@
     today: null,
     resumes: null,
     resumeDraft: null,
+    resumeSubmitting: false,
     resumeMessage: null,
     resumeListError: null,
     fileMessage: null,
@@ -254,6 +255,8 @@
 
   function resumeFormPanel(target) {
     var draft = state.resumeDraft || {};
+    var submitLabel = state.resumeSubmitting ? "创建中..." : "创建简历";
+    var submitDisabled = state.resumeSubmitting ? " disabled" : "";
     return '<section class="panel"><h3>创建简历记录</h3>' +
       '<form class="form-grid" id="resumeForm">' +
       field("resumeTitle", "简历标题", "text", firstText(draft.title, "后端开发简历")) +
@@ -261,7 +264,7 @@
       field("resumeFileKey", "文件 key", "text", firstText(draft.fileKey, "")) +
       '<label class="full">解析内容<textarea id="resumeParsedContent" placeholder="可粘贴简历摘要、技能、项目经历或留空。">' + escapeHtml(draft.parsedContent) + '</textarea></label>' +
       '<div class="full actions-row">' +
-      '<button type="submit">创建简历</button>' +
+      '<button type="submit"' + submitDisabled + ">" + submitLabel + "</button>" +
       '<button type="button" class="secondary" data-link="resume-diagnosis">去简历诊断</button>' +
       '<button type="button" class="secondary" id="refreshResumesButton">刷新列表</button>' +
       '</div></form></section>';
@@ -336,6 +339,9 @@
 
   function submitResume(event) {
     event.preventDefault();
+    if (state.resumeSubmitting) {
+      return;
+    }
     if (!hasUserIdentity()) {
       state.resumeMessage = { type: "warning", text: "创建简历前需要 Cosmic 身份或显式开发身份。" };
       renderPage(pageByKey[state.route]);
@@ -355,6 +361,7 @@
       renderPage(pageByKey[state.route]);
       return;
     }
+    state.resumeSubmitting = true;
     state.resumeMessage = { type: "info", text: "正在创建简历记录。" };
     renderPage(pageByKey[state.route]);
     post(endpoints.resumeCreate, { userId: state.identity.userId, request: request }).then(function () {
@@ -363,9 +370,11 @@
     }).then(function () {
       return refreshSnapshotAfterResume();
     }).then(function () {
+      state.resumeSubmitting = false;
       showMessage("info", "简历已创建", "已刷新简历列表和工作台摘要。");
       renderPage(pageByKey[state.route]);
     }).catch(function (error) {
+      state.resumeSubmitting = false;
       state.resumeMessage = { type: "warning", text: error.message || "简历创建或刷新失败，请检查 KAPI token 和后端状态。" };
       showMessage("error", "简历操作失败", state.resumeMessage.text);
       renderPage(pageByKey[state.route]);
