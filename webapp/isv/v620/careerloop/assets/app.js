@@ -88,8 +88,9 @@
     updateIdentityState();
     bindEvents();
     handleRouteChange();
-    loadPlatformIdentity();
-    loadOverview();
+    loadPlatformIdentity().then(function () {
+      loadOverview();
+    });
   }
 
   function cacheElements() {
@@ -593,11 +594,12 @@
 
   function loadPlatformIdentity() {
     if (!state.identity || state.identity.mode !== "production" || state.identity.userId) {
-      return;
+      return Promise.resolve();
     }
-    post(endpoints.identityCurrent, {}).then(function (identity) {
+    return post(endpoints.identityCurrent, {}).then(function (identity) {
       var userId = firstText(identity.userId, identity.adminId);
       if (!userId || identity.status !== "OK") {
+        showMessage("warning", "平台身份未就绪", firstText(identity.message, identity.status, "identity response has no userId"));
         return;
       }
       state.identity = {
@@ -609,9 +611,8 @@
       };
       updateIdentityState();
       renderPage(pageByKey[state.route]);
-      loadOverview();
-    }).catch(function () {
-      // Older packages may not expose /cc001/identity/current yet; keep the guarded state.
+    }).catch(function (error) {
+      showMessage("warning", "平台身份调用失败", error && error.message ? error.message : "identity request failed");
     });
   }
 
