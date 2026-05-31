@@ -6,12 +6,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
+import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
 import v620.cc001.cloud01.app01.mservice.FileCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -85,6 +87,32 @@ class CareerLoopCustomWebApiPluginTest {
         } finally {
             System.clearProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY);
         }
+    }
+
+    @Test
+    void routesSecondaryReadEndpointsThroughCustomWebApiContract() {
+        IdentityAwareCareerLoopWebApiBoundary boundary =
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
+        CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
+                new CareerLoopIdentityWebApi(boundary),
+                new CareerProfileWebApi(boundary),
+                new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
+
+        ApiResult notifications = plugin.doCustomService(params("/cc001/notifications/unread-count", "api-user"));
+        ApiResult resources = plugin.doCustomService(params("/cc001/career-employment/resources/list", new HashMap<String, Object>()));
+        Map<String, Object> fileBody = new HashMap<String, Object>();
+        fileBody.put("fileUrlOrKey", "");
+        ApiResult fileDelete = plugin.doCustomService(params("/cc001/files/delete", fileBody));
+        Map<String, Object> weeklyBody = new HashMap<String, Object>();
+        weeklyBody.put("userId", "api-user");
+        weeklyBody.put("highlights", new ArrayList<String>());
+        ApiResult weeklyReport = plugin.doCustomService(params("/cc001/notifications/weekly-report/run", weeklyBody));
+
+        assertTrue(notifications.getSuccess());
+        assertEquals(Integer.valueOf(0), ((NotificationUnreadCountDto) notifications.getData()).getCount());
+        assertTrue(resources.getSuccess());
+        assertTrue(fileDelete.getSuccess());
+        assertTrue(weeklyReport.getSuccess());
     }
 
     @Test

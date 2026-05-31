@@ -11,6 +11,8 @@ import kd.bos.openapi.common.result.CustomApiResult;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
 import v620.cc001.cloud01.app01.mservice.IdentityBoundaryException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,17 +31,29 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
     private final ResumeWebApi resumeWebApi;
     private final CareerPlanWebApi planWebApi;
     private final InterviewWebApi interviewWebApi;
+    private final AssistantChatWebApi assistantWebApi;
+    private final EmploymentInsightsResourcesWebApi employmentWebApi;
+    private final NotificationsSubscriptionsWebApi notificationsWebApi;
+    private final AdminConsoleGovernanceWebApi adminWebApi;
+    private final FileUploadPreviewWebApi fileWebApi;
+    private final ResumeDiagnosisWebApi resumeDiagnosisWebApi;
 
     public CareerLoopCustomWebApiPlugin() {
         this(new CareerLoopIdentityWebApi(), new CareerProfileWebApi(), new CareerAgentWebApi(),
-                new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi());
+                new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi(),
+                new AssistantChatWebApi(), new EmploymentInsightsResourcesWebApi(),
+                new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
+                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi());
     }
 
     CareerLoopCustomWebApiPlugin(CareerLoopIdentityWebApi identityWebApi,
                                  CareerProfileWebApi profileWebApi,
                                  CareerAgentWebApi agentWebApi) {
         this(identityWebApi, profileWebApi, agentWebApi,
-                new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi());
+                new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi(),
+                new AssistantChatWebApi(), new EmploymentInsightsResourcesWebApi(),
+                new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
+                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi());
     }
 
     CareerLoopCustomWebApiPlugin(CareerLoopIdentityWebApi identityWebApi,
@@ -47,13 +61,25 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                                  CareerAgentWebApi agentWebApi,
                                  ResumeWebApi resumeWebApi,
                                  CareerPlanWebApi planWebApi,
-                                 InterviewWebApi interviewWebApi) {
+                                 InterviewWebApi interviewWebApi,
+                                 AssistantChatWebApi assistantWebApi,
+                                 EmploymentInsightsResourcesWebApi employmentWebApi,
+                                 NotificationsSubscriptionsWebApi notificationsWebApi,
+                                 AdminConsoleGovernanceWebApi adminWebApi,
+                                 FileUploadPreviewWebApi fileWebApi,
+                                 ResumeDiagnosisWebApi resumeDiagnosisWebApi) {
         this.identityWebApi = identityWebApi;
         this.profileWebApi = profileWebApi;
         this.agentWebApi = agentWebApi;
         this.resumeWebApi = resumeWebApi;
         this.planWebApi = planWebApi;
         this.interviewWebApi = interviewWebApi;
+        this.assistantWebApi = assistantWebApi;
+        this.employmentWebApi = employmentWebApi;
+        this.notificationsWebApi = notificationsWebApi;
+        this.adminWebApi = adminWebApi;
+        this.fileWebApi = fileWebApi;
+        this.resumeDiagnosisWebApi = resumeDiagnosisWebApi;
     }
 
     @ApiPostMapping(value = "/route", desc = "Route CareerLoop custom WebAPI call", methodParamNames = {"params"})
@@ -93,8 +119,75 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             if ("/cc001/career-plan/summary".equals(path)) {
                 return ApiResult.success(planWebApi.summary(extractUserId(body)));
             }
+            if ("/cc001/career-plan/ensure".equals(path)) {
+                return ApiResult.success(planWebApi.ensure(extractUserId(body)));
+            }
             if ("/cc001/interview/list".equals(path)) {
                 return ApiResult.success(interviewWebApi.list(extractUserId(body)));
+            }
+            if ("/cc001/assistant-chat/session/list".equals(path)) {
+                return ApiResult.success(assistantWebApi.listSessions(extractUserId(body)));
+            }
+            if ("/cc001/career-employment/insight/get".equals(path)) {
+                return ApiResult.success(employmentWebApi.insight(extractUserId(body)));
+            }
+            if ("/cc001/career-employment/resources/list".equals(path)) {
+                return ApiResult.success(employmentWebApi.resources(extractOptionalUserId(body)));
+            }
+            if ("/cc001/notifications/list".equals(path)) {
+                return ApiResult.success(notificationsWebApi.list(extractUserId(body)));
+            }
+            if ("/cc001/notifications/unread-count".equals(path)) {
+                return ApiResult.success(notificationsWebApi.unreadCount(extractUserId(body)));
+            }
+            if ("/cc001/notifications/read".equals(path)) {
+                return ApiResult.success(notificationsWebApi.read(
+                        extractUserId(body), textOrNull(value(body, "notificationId"))));
+            }
+            if ("/cc001/notifications/subscription/quota".equals(path)) {
+                return ApiResult.success(notificationsWebApi.quota(extractUserId(body)));
+            }
+            if ("/cc001/notifications/weekly-report/run".equals(path)) {
+                return ApiResult.success(notificationsWebApi.weeklyReport(
+                        extractUserId(body), stringList(value(body, "highlights"))));
+            }
+            if ("/cc001/admin/whoami".equals(path)) {
+                return ApiResult.success(adminWebApi.whoami(extractAdminId(body)));
+            }
+            if ("/cc001/admin/organizations/dashboard".equals(path)) {
+                return ApiResult.success(adminWebApi.dashboard(
+                        extractAdminId(body), textOrNull(value(body, "orgId"))));
+            }
+            if ("/cc001/admin/questions/list".equals(path)) {
+                return ApiResult.success(adminWebApi.questions(
+                        extractAdminId(body), textOrNull(value(body, "source")),
+                        textOrNull(value(body, "reviewStatus"))));
+            }
+            if ("/cc001/admin/content/list".equals(path)) {
+                return ApiResult.success(adminWebApi.content(
+                        extractAdminId(body), textOrNull(value(body, "type"))));
+            }
+            if ("/cc001/admin/audit-log/list".equals(path)) {
+                return ApiResult.success(adminWebApi.auditLogs(
+                        extractAdminId(body), intValue(value(body, "page"), 1),
+                        intValue(value(body, "size"), 20)));
+            }
+            if ("/cc001/files/preview-url".equals(path)) {
+                return ApiResult.success(fileWebApi.previewUrl(
+                        textOrNull(value(body, "fileUrlOrKey")), longValue(value(body, "ttlSeconds"), 0L)));
+            }
+            if ("/cc001/files/download".equals(path)) {
+                return ApiResult.success(fileWebApi.download(textOrNull(value(body, "fileUrlOrKey"))));
+            }
+            if ("/cc001/files/delete".equals(path)) {
+                return ApiResult.success(fileWebApi.delete(textOrNull(value(body, "fileUrlOrKey"))));
+            }
+            if ("/cc001/files/extract-text".equals(path)) {
+                return ApiResult.success(fileWebApi.extractText(textOrNull(value(body, "fileUrlOrKey"))));
+            }
+            if ("/cc001/resume-diagnosis/keywords/status".equals(path)) {
+                return ApiResult.success(resumeDiagnosisWebApi.keywordStatus(
+                        extractUserId(body), longObject(value(body, "resumeId"))));
             }
             return ApiResult.fail("Unsupported CareerLoop custom WebAPI path: " + path);
         } catch (IdentityBoundaryException ex) {
@@ -117,6 +210,27 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
 
     private String extractUserId(Object body) {
         if (body instanceof Map) {
+            Object userId = ((Map<?, ?>) body).get("userId");
+            if (userId != null) {
+                return text(userId);
+            }
+        }
+        return text(body);
+    }
+
+    private String extractOptionalUserId(Object body) {
+        if (body instanceof Map) {
+            return textOrNull(((Map<?, ?>) body).get("userId"));
+        }
+        return textOrNull(body);
+    }
+
+    private String extractAdminId(Object body) {
+        if (body instanceof Map) {
+            Object adminId = ((Map<?, ?>) body).get("adminId");
+            if (adminId != null) {
+                return text(adminId);
+            }
             Object userId = ((Map<?, ?>) body).get("userId");
             if (userId != null) {
                 return text(userId);
@@ -154,6 +268,66 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             onboarding.setHasResume(hasResumeFromStatus(onboarding.getResumeStatus()));
         }
         return onboarding;
+    }
+
+    private Object value(Object body, String key) {
+        if (body instanceof Map) {
+            return ((Map<?, ?>) body).get(key);
+        }
+        return null;
+    }
+
+    private int intValue(Object value, int defaultValue) {
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
+        }
+        String text = textOrNull(value);
+        if (text == null) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
+    }
+
+    private long longValue(Object value, long defaultValue) {
+        Long converted = longObject(value);
+        return converted == null ? defaultValue : converted.longValue();
+    }
+
+    private Long longObject(Object value) {
+        if (value instanceof Number) {
+            return Long.valueOf(((Number) value).longValue());
+        }
+        String text = textOrNull(value);
+        if (text == null) {
+            return null;
+        }
+        try {
+            return Long.valueOf(text);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private List<String> stringList(Object value) {
+        List<String> out = new ArrayList<String>();
+        if (value instanceof Iterable) {
+            for (Object item : (Iterable<?>) value) {
+                String text = textOrNull(item);
+                if (text != null) {
+                    out.add(text);
+                }
+            }
+            return out;
+        }
+        String text = textOrNull(value);
+        if (text != null) {
+            out.add(text);
+        }
+        return out;
     }
 
     private Object firstPresent(Map<?, ?> values, String... keys) {
