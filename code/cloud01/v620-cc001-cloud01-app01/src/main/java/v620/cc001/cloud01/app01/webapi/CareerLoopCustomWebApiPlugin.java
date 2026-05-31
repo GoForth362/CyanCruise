@@ -138,6 +138,9 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             if ("/cc001/resume/create".equals(path)) {
                 return ApiResult.success(resumeWebApi.create(extractUserId(body), extractResumeCreateRequest(body)));
             }
+            if ("/cc001/resume/delete".equals(path)) {
+                return ApiResult.success(resumeWebApi.delete(extractUserId(body), longObject(value(body, "resumeId"))));
+            }
             if ("/cc001/career-plan/summary".equals(path)) {
                 return ApiResult.success(planWebApi.summary(extractUserId(body)));
             }

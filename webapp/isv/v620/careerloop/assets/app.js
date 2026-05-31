@@ -8,6 +8,7 @@
     assessmentSubmit: "/cc001/assessment/submit",
     resumes: "/cc001/resume/list",
     resumeCreate: "/cc001/resume/create",
+    resumeDelete: "/cc001/resume/delete",
     plan: "/cc001/career-plan/summary",
     ensurePlan: "/cc001/career-plan/ensure",
     interviews: "/cc001/interview/list",
@@ -43,7 +44,7 @@
     page("onboarding", "新用户引导", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
     page("today-action", "今日行动", "available", "user", "展示下一步建议，并跳转到对应页面。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "测评提交契约已就绪，完整题组页面后续细化。", ["assessmentSubmit"]),
-    page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate"]),
+    page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"]),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
     page("career-plan", "职业计划", "available", "user", "查看长期计划摘要和本周重点。", ["plan", "ensurePlan"]),
@@ -297,8 +298,9 @@
       '<div class="actions-row compact">' +
       (fileKey === "未关联文件" ? "" : '<button type="button" class="secondary" data-preview-file="' + escapeHtml(fileKey) + '">预览</button>') +
       '<button type="button" data-link="resume-diagnosis">去诊断</button>' +
+      '<button type="button" class="secondary danger" data-delete-resume="' + escapeHtml(id) + '">删除</button>' +
       '</div>' +
-      (preview ? '<p class="panel-note">预览 URL：<a href="' + escapeHtml(preview) + '" target="_blank" rel="noreferrer">' + escapeHtml(preview) + "</a></p>" : "") +
+      (preview ? '<p class="panel-note">预览已就绪：<a href="' + escapeHtml(preview) + '" target="_blank" rel="noreferrer">打开 PDF 预览</a></p>' : "") +
       "</article>";
   }
 
@@ -333,6 +335,12 @@
     for (var i = 0; i < previews.length; i += 1) {
       previews[i].addEventListener("click", function (event) {
         previewResumeFile(event.currentTarget.getAttribute("data-preview-file"));
+      });
+    }
+    var deletes = els.pageHost.querySelectorAll("[data-delete-resume]");
+    for (var j = 0; j < deletes.length; j += 1) {
+      deletes[j].addEventListener("click", function (event) {
+        deleteResumeRecord(event.currentTarget.getAttribute("data-delete-resume"));
       });
     }
   }
@@ -482,19 +490,99 @@
       renderPage(pageByKey[state.route]);
       return;
     }
-    post(endpoints.filePreview, { fileUrlOrKey: fileKey, ttlSeconds: 600 }).then(function (result) {
-      var url = firstText(result.previewUrl, result.url, result.fileUrl);
-      if (!url || (result.status && result.status !== "OK")) {
-        state.fileMessage = { type: "warning", text: firstText(result.message, result.status, "预览 URL 暂不可用。") };
-      } else {
-        state.previewUrls[fileKey] = url;
-        state.fileMessage = { type: "info", text: "预览 URL 已生成。" };
+    state.fileMessage = { type: "info", text: "正在读取文件并生成浏览器预览。" };
+    renderPage(pageByKey[state.route]);
+    post(endpoints.fileDownload, { fileUrlOrKey: fileKey }).then(function (result) {
+      var bytes = bytesFromDownloadResult(result && result.bytes);
+      if (!bytes || (result.status && result.status !== "OK")) {
+        state.fileMessage = { type: "warning", text: firstText(result && result.message, result && result.status, "文件下载暂不可用，无法生成预览。") };
+        renderPage(pageByKey[state.route]);
+        return;
       }
+      var previous = state.previewUrls[fileKey];
+      if (previous && previous.indexOf("blob:") === 0 && window.URL && URL.revokeObjectURL) {
+        URL.revokeObjectURL(previous);
+      }
+      var blob = new Blob([bytes], { type: mimeTypeFromKey(fileKey) });
+      var url = URL.createObjectURL(blob);
+      state.previewUrls[fileKey] = url;
+      state.fileMessage = { type: "info", text: "PDF 预览已生成，请点击“打开 PDF 预览”。" };
       renderPage(pageByKey[state.route]);
     }).catch(function (error) {
-      state.fileMessage = { type: "warning", text: error.message || "预览 URL 暂不可用。" };
+      state.fileMessage = { type: "warning", text: error.message || "文件预览暂不可用。" };
       renderPage(pageByKey[state.route]);
     });
+  }
+
+  function deleteResumeRecord(resumeId) {
+    if (!resumeId) {
+      return;
+    }
+    if (!window.confirm("确定删除这条简历记录吗？")) {
+      return;
+    }
+    if (isFilePreview()) {
+      state.resumes = normalizeArray(state.resumes).filter(function (item) {
+        return String(firstText(item.resumeId, item.id, "")) !== String(resumeId);
+      });
+      state.resumeMessage = { type: "info", text: "本地预览记录已删除。" };
+      updateOverviewCards();
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    state.resumeMessage = { type: "info", text: "正在删除简历记录。" };
+    renderPage(pageByKey[state.route]);
+    post(endpoints.resumeDelete, { userId: state.identity.userId, resumeId: resumeId }).then(function () {
+      state.resumeMessage = { type: "info", text: "简历记录已删除，列表正在刷新。" };
+      return refreshResumeList(false);
+    }).then(function () {
+      return refreshSnapshotAfterResume();
+    }).then(function () {
+      showMessage("info", "简历已删除", "已刷新简历列表和工作台摘要。");
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      state.resumeMessage = { type: "warning", text: error.message || "简历删除失败，请检查 KAPI token 和后端状态。" };
+      showMessage("error", "简历删除失败", state.resumeMessage.text);
+      renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function bytesFromDownloadResult(bytes) {
+    if (!bytes) {
+      return null;
+    }
+    if (typeof bytes === "string") {
+      return uint8ArrayFromBase64(bytes);
+    }
+    if (Array.isArray(bytes)) {
+      return uint8ArrayFromNumbers(bytes);
+    }
+    if (bytes.data && Array.isArray(bytes.data)) {
+      return uint8ArrayFromNumbers(bytes.data);
+    }
+    return null;
+  }
+
+  function uint8ArrayFromBase64(value) {
+    var binary = window.atob(value);
+    var out = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i += 1) {
+      out[i] = binary.charCodeAt(i);
+    }
+    return out;
+  }
+
+  function uint8ArrayFromNumbers(values) {
+    var out = new Uint8Array(values.length);
+    for (var i = 0; i < values.length; i += 1) {
+      var value = Number(values[i]) || 0;
+      out[i] = value < 0 ? value + 256 : value;
+    }
+    return out;
+  }
+
+  function mimeTypeFromKey(fileKey) {
+    return String(fileKey || "").toLowerCase().indexOf(".pdf") >= 0 ? "application/pdf" : "application/octet-stream";
   }
 
   function readFileAsBase64(file) {

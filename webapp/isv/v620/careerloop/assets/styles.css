@@ -55,6 +55,17 @@ button.secondary {
   background: var(--surface-soft);
 }
 
+button.danger {
+  color: #a83232;
+  background: #fff0f0;
+}
+
+button.danger:hover,
+button.danger:focus {
+  color: #fff;
+  background: #a83232;
+}
+
 input,
 select,
 textarea {

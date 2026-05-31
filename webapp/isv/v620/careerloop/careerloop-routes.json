@@ -318,6 +318,15 @@
           "fallback": "Show metadata save unavailable state."
         },
         {
+          "name": "delete resume metadata",
+          "method": "POST",
+          "path": "/cc001/resume/delete",
+          "body": ["userId", "resumeId"],
+          "userIdRequired": true,
+          "dto": "String",
+          "fallback": "Show delete unavailable state and keep record visible until refresh."
+        },
+        {
           "name": "upload resume file",
           "method": "POST",
           "path": "/cc001/files/upload",
