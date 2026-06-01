@@ -68,6 +68,7 @@
     resumeMessage: null,
     resumeListError: null,
     fileMessage: null,
+    messageTimer: null,
     previewUrls: {},
     plan: null,
     interviews: null,
@@ -1410,8 +1411,30 @@
   }
 
   function showMessage(type, title, text) {
+    if (state.messageTimer) {
+      window.clearTimeout(state.messageTimer);
+      state.messageTimer = null;
+    }
     els.messagePanel.className = "message-panel " + type;
-    els.messagePanel.innerHTML = "<strong>" + escapeHtml(title) + "</strong><span>" + escapeHtml(text) + "</span>";
+    els.messagePanel.innerHTML =
+      '<div class="message-copy"><strong>' + escapeHtml(title) + "</strong><span>" + escapeHtml(text) + "</span></div>" +
+      '<button type="button" class="message-close" aria-label="关闭提示">×</button>';
+    var close = els.messagePanel.querySelector(".message-close");
+    if (close) {
+      close.addEventListener("click", hideMessage);
+    }
+    if (type === "info") {
+      state.messageTimer = window.setTimeout(hideMessage, 5000);
+    }
+  }
+
+  function hideMessage() {
+    if (state.messageTimer) {
+      window.clearTimeout(state.messageTimer);
+      state.messageTimer = null;
+    }
+    els.messagePanel.className = "message-panel hidden";
+    els.messagePanel.innerHTML = "";
   }
 
   function isFilePreview() {
