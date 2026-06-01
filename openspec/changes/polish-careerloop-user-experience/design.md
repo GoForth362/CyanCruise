@@ -54,15 +54,22 @@ CyanCruise 页面右侧展示当前外部链接对应的功能页：页面标题
 
 替代方案是在 CyanCruise 页面内部继续做一套左侧分组导航。该方案可控性高，但会和金蝶平台自带侧边栏重复，因此不采用。
 
-建议的金蝶应用菜单与外部链接设计：
+建议的金蝶应用菜单与外部链接设计：当前信息架构按“就业 / 深造”分组。就业先承载 IPD 已有核心流程；深造先作为后续规划分组，不在本 change 创建可点击页面。
 
 | 平台侧边栏菜单 | 外部链接 | CyanCruise 页面设计 |
 | --- | --- | --- |
 | CyanCruise 工作台 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 总览页，展示目标岗位、准备度、最近简历、今日行动和推荐入口。 |
-| 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 简历功能页，展示 AI简历制作和 AI简历修改卡片。 |
-| 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 简历诊断页，突出诊断、关键词、优化建议和返回简历入口。 |
-| 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 面试功能页，展示全景仿真面试和 AI模拟面试卡片。 |
-| 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入模拟面试页，展示面试历史和开始练习入口。 |
+| 就业 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 父级/分组；若平台要求链接，可指向工作台。 |
+| 就业 / 简历 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 父级/分组；展示 AI简历制作和 AI简历修改卡片。 |
+| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 简历功能页，进入 AI简历制作流程。 |
+| 就业 / 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 简历诊断页，突出诊断、关键词、优化建议和返回简历入口。 |
+| 就业 / 面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 父级/分组；展示全景仿真面试和 AI模拟面试卡片。 |
+| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 面试功能页，进入全景仿真面试入口。 |
+| 就业 / 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入模拟面试页，展示面试历史和开始练习入口。 |
+| 深造 | 暂不配置外部链接 | 后续规划分组。 |
+| 深造 / 考研 | 暂不配置外部链接 | 后续规划。 |
+| 深造 / 保研 | 暂不配置外部链接 | 后续规划。 |
+| 深造 / 留学 | 暂不配置外部链接 | 后续规划。 |
 
 乔布简历、简历微课、数字人面试、公务员真题、事业编、大厂真题、面试微课等能力不在当前 IPD 核心流程中，本 change 不创建菜单、不创建占位 hash 页面，后续真实能力明确后再追加。
 
