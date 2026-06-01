@@ -23,7 +23,7 @@
 | AI 今日任务 | `CareerAgentService`、`CareerAgentController`、`AgentTask`、`AgentState` | 根据目标岗位、简历、测评、面试状态生成今日下一步 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成纯 Java 今日规则、画像输入源、按用户 ID WebAPI 和聚焦测试；待 AgentTask 持久化、风险看板、长期计划联动、当前用户身份解析和 webapp 页面 | P0 | 今日行动推荐已实现：`migrate-today-action-recommendation` |
 | 职业测评 | `AssessmentController`、`AssessmentService`、`AssessmentScale/Question/Option/Record/Answer`、`V5/V8/V10` SQL | 量表启用、题目排序、提交答案、生成结果记录 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 DTO、纯 Java 评分内核、画像快照写入和 Cosmic WebAPI 提交入口，含 MBTI/非 MBTI 画像规则测试、应用服务持久化测试与 WebAPI 边界测试；待 datamodel、页面和 AI 解读适配 | P0 | 评分核心、画像集成和 WebAPI 接入已实现：`migrate-assessment-core`、`integrate-assessment-profile-snapshot`、`migrate-assessment-webapi` |
 | 简历基础 | `ResumeController`、`ResumeService`、`Resume`、`FileService` | 保存简历文件 key、用户简历列表、详情、删除 | `datamodel`、`filestorage`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 JDK 8 DTO、文件型/内存型存储边界、应用服务、Cosmic WebAPI、画像 resume block 同步和聚焦测试；待最终 Cosmic datamodel、文件上传/预览适配 | P0 | 后端基础已实现：`migrate-resume-core` |
-| 文件上传预览 | `FileController`、`FileService`、`FileServiceImpl`、`PdfTextExtractor`、`api/file.ts` | 上传返回 object key、短期预览 URL、认证下载、幂等删除、文本抽取限长 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 已完成文件引用/上传/预览/下载/删除/文本抽取契约、WebAPI、webapp route/API map 和入口卡片；真实 Cosmic 文件服务、OSS SDK、PDFBox/OCR 后续 adapter 适配 | P1 | 文件上传预览基础已实现：`migrate-file-upload-preview` |
+| 文件上传预览 | `FileController`、`FileService`、`FileServiceImpl`、`PdfTextExtractor`、`api/file.ts` | 上传返回 object key、短期预览 URL、认证下载、幂等删除、文本抽取限长 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 已完成文件引用/上传/预览/下载/删除/文本抽取契约、WebAPI、webapp route/API map、入口卡片和 BOS 附件文件服务 provider；PDF/OCR 文本抽取仍后续适配 | P1 | 文件上传预览基础已实现：`migrate-file-upload-preview`；BOS provider follow-up：`enable-bos-file-service-provider` |
 | 简历诊断 | `ResumeDiagnosisController`、`ResumeKeywordService`、`PdfTextExtractor` | 简历文本 + JD 输出匹配和建议 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 诊断解析、关键词抽取规则、可替换诊断/关键词存储边界、应用服务、Cosmic WebAPI、诊断分数回写画像和聚焦测试；待真实 AI 调用、PDF/OSS 文本解析、通知推送、webapp 页面和最终 Cosmic datamodel | P1 | 简历诊断后端基础已实现：`migrate-resume-diagnosis` |
 | 职业计划 | `CareerPlanService`、`CareerController`、`UserCareerPlan` | 按目标岗位和用户状态生成计划摘要 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 摘要规则、默认计划、可替换存储边界、应用服务、Cosmic WebAPI、画像 `hasPlan` 和今日行动周重点接入；待 AI 生成、最终 Cosmic datamodel、计划页面和周复盘 | P1 | 职业计划摘要后端基础已实现：`migrate-career-plan-summary` |
 | 模拟面试 | `InterviewController`、`InterviewService`、`Interview/InterviewMessage/InterviewQuestion` | 开始面试、对话、结束、报告、历史 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 完成 JDK 8 DTO、纯 Java helper、会话/消息/报告摘要存储边界、应用服务、Cosmic WebAPI、画像 interview block 同步和聚焦测试；待题库管理、AI 追问/报告生成、语音/身体语言、通知、webapp 页面和最终 Cosmic datamodel | P1 | 模拟面试基础会话与报告已实现：`migrate-interview-core` |
@@ -69,6 +69,20 @@
 | 迁移内容 | 新增静态多页面 shell、hash route 导航、页面状态 registry、route metadata 校验、工作台状态卡片、页面级 loading/empty/success/identity-required/forbidden/unavailable/backend-error/pending 降级、README 和验证说明 |
 | 暂不迁移 | IPD Vue/uni-app runtime、Pinia/store、Vite/uView、小程序生命周期、微信运行时、真实 AI provider、外部内容抓取、语音/数字人面试、完整 admin 页面、生产 datamodel adapter、KDDT 发布脚本 |
 | 验证方式 | 已通过：`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、`openspec validate migrate-webapp-careerloop-pages --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build`；归档后 `openspec validate --all --strict` 再次通过 |
+
+## 简历工作流启用
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `enable-resume-workflow` |
+| branch | `codex/careerloop-next-stage` |
+| IPD 来源 | `F:\Project\IPD\frontend\src\pages\resume\*`、`F:\Project\IPD\frontend\src\api\resume.ts`、`F:\Project\IPD\frontend\src\api\file.ts`、`F:\Project\IPD\backend\src\main\java\com\group1\career\controller\ResumeController.java`、`FileController.java` |
+| CyanCruise 目标 | `webapp/isv/v620/careerloop/assets/app.js`、`assets/styles.css`、既有 `careerloop-routes.json` 简历/文件 API 映射、`openspec/changes/enable-resume-workflow/` |
+| 数据/接口映射 | 简历页读取 `/cc001/resume/list`，创建时提交 `/cc001/resume/create` 的 `title`、`targetJob`、`fileKey`、`parsedContent`；目标岗位默认来自画像 `preferences.targetRole`、`onboarding.targetRole` 或 `resume.targetJob`，但允许单份简历覆盖；可选文件上传调用 `/cc001/files/upload` 并只把稳定 object key 填入 fileKey；已有 fileKey 可按需调用 `/cc001/files/preview-url` |
+| 迁移内容 | 将 `resume` route 从契约展示升级为可交互页面：简历列表、创建表单、手工 fileKey、可选小文件上传、创建成功后刷新列表和画像摘要、保留“去简历诊断”入口、文件/后端失败时局部可恢复 |
+| 暂不迁移 | IPD Vue/uni-app 页面、模板库、富文本简历编辑器、在线预览器、完整文件选择体验、大文件上传、PDF/Office/OCR 解析、真实客户 Cosmic 文件 provider 配置、简历版本比较和自动跳转诊断 |
+| 验收方式 | 使用 `index.htm?apiMode=kapi&access_token=<new-token>#resume`，在苍穹 8080 中创建一条简历记录，确认列表刷新后可见、返回工作台简历状态更新、刷新页面后记录仍在，并确认“去简历诊断”按钮只作为显式入口 |
+| 回滚方式 | 回退 `webapp/isv/v620/careerloop` 静态资源到上一版本；后端 `/cc001/resume/*` 和 `/cc001/files/*` 既有契约不变 |
 
 ## Cosmic datamodel 正式适配
 
@@ -193,15 +207,16 @@
 
 | 维度 | 内容 |
 | --- | --- |
-| change | `migrate-cosmic-file-service-adapter` |
-| branch | `codex/migrate-cosmic-file-service-adapter` |
+| change | `migrate-cosmic-file-service-adapter`；follow-up `enable-bos-file-service-provider` |
+| branch | `codex/migrate-cosmic-file-service-adapter`；当前实现分支 `codex/careerloop-next-stage` |
 | IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\controller\FileController.java`、`service\FileService.java`、`service\impl\FileServiceImpl.java`、`config\OssConfigProperties.java`、`utils\PdfTextExtractor.java`、`F:\Project\IPD\frontend\src\api\file.ts` |
-| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的文件 DTO provider 字段与常量，`code/cloud01/v620-cc001-cloud01-app01` 的 `CosmicFileAdapterConfig`、`CosmicCareerFileServiceProvider`、`CosmicCareerFileStorage`、`CosmicFileTextExtractor`、`CareerLoopFileServiceAdapterFactory`，以及既有 `/cc001/files/*` WebAPI |
-| 数据/接口映射 | IPD bare object key 继续映射为 `FileReferenceDto.objectKey`；平台临时 URL 或绝对引用进入 adapter 后归一为稳定 object key；预览 URL 通过 `preview-url` 按需生成并保留 TTL clamp；下载返回服务端 bytes 与 content length；删除保持幂等；文本抽取继续 capped 到 20000 字并在 unsupported/unavailable 时返回空文本 |
-| 迁移内容 | 新增 JDK 8 可配置文件 adapter、显式 enablement、provider 边界、默认 unavailable provider、生产构造工厂、Cosmic storage/text extractor、provider 诊断字段、disabled 回滚行为和 focused adapter 测试；默认生产未启用时返回 `UNAVAILABLE`，不使用内存文件作为生产替代 |
-| 暂不迁移 | IPD Spring Multipart、Aliyun OSS SDK、OSS access key/secret、PDFBox、OCR、Office 在线预览、CDN、病毒扫描、Flyway、Java 17 `readAllBytes`、Vue/uni-app 上传运行时、真实租户文件服务 SDK import 和生产文件生命周期治理 |
-| 租户验证 | 在真实苍穹租户中启用 `cc001.file.adapter.enabled=true` 并绑定平台 provider 后，需手工核查上传、预览 URL、下载、删除、文本抽取、签名 URL 脱敏日志、adapter disabled 回滚和业务记录只保存 object key |
-| 验证方式 | `.\gradlew.bat :v620-cc001-cloud01-app01:test --tests "v620.cc001.cloud01.app01.mservice.*File*" --tests "v620.cc001.cloud01.app01.webapi.FileUploadPreviewWebApiTest"`、`node webapp\isv\v620\careerloop\validate-routes.js`、`openspec validate migrate-cosmic-file-service-adapter --strict`、`openspec validate --all --strict`、JDK 8 `.\gradlew.bat clean build` |
+| CyanCruise 目标 | `code/base/v620-cc001-base-common` 的文件 DTO provider 字段与常量，`code/cloud01/v620-cc001-cloud01-app01` 的 `CosmicFileAdapterConfig`、`CosmicCareerFileServiceProvider`、`CosmicCareerFileStorage`、`CosmicFileTextExtractor`、`BosAttachmentFileServiceProvider`、`DefaultBosFileServiceClient`、`CareerLoopFileServiceAdapterFactory`，以及既有 `/cc001/files/*` WebAPI |
+| 数据/接口映射 | IPD bare object key 继续映射为 `FileReferenceDto.objectKey`；BOS `FileService.upload(FileItem)` 返回值作为稳定 object key；平台临时 URL 或绝对引用进入 adapter 后归一为稳定 object key；预览 URL 通过 `preview-url` 按需生成并保留 TTL clamp；下载返回服务端 bytes 与 content length；删除保持幂等；文本抽取继续 capped 到 20000 字并在 unsupported/unavailable 时返回空文本 |
+| 迁移内容 | 新增 JDK 8 可配置文件 adapter、显式 enablement、provider 边界、默认 unavailable provider、BOS 附件文件服务 provider、BOS 上传/预览/下载/删除委托、生产构造工厂、Cosmic storage/text extractor、provider 诊断字段、disabled 回滚行为和 focused adapter 测试；默认生产未启用时返回 `UNAVAILABLE`，不使用内存文件作为生产替代 |
+| 暂不迁移 | IPD Spring Multipart、Aliyun OSS SDK、OSS access key/secret、PDFBox、OCR、Office 在线文本抽取、CDN、病毒扫描、Flyway、Java 17 `readAllBytes`、Vue/uni-app 上传运行时和生产文件生命周期治理 |
+| 租户验证 | 在 8080 星瀚服务启动参数中启用 `-Dcc001.file.adapter.enabled=true`，并确认苍穹已设置 `attachmentServer.url`；在简历页选择 PDF，点击“上传并填入 fileKey”，确认返回 BOS object key、创建简历后记录只保存 object key、预览入口可打开平台文件服务 URL；关闭 `cc001.file.adapter.enabled` 后文件动作应回到 unavailable/skipped |
+| 回滚方式 | 移除或置 false `cc001.file.adapter.enabled`，重启 8080；`/cc001/files/*` 保持可恢复 unavailable，不回退到生产内存文件，也不影响已保存简历元数据。 |
+| 验证方式 | `.\gradlew.bat :v620-cc001-cloud01-app01:test --tests v620.cc001.cloud01.app01.mservice.BosAttachmentFileServiceProviderTest`、`.\gradlew.bat :v620-cc001-cloud01-app01:test --tests "v620.cc001.cloud01.app01.mservice.*File*" --tests "v620.cc001.cloud01.app01.webapi.FileUploadPreviewWebApiTest"`、`node webapp\isv\v620\careerloop\validate-routes.js`、`openspec validate enable-bos-file-service-provider --strict`、JDK 8 `.\gradlew.bat clean build` |
 
 ## Cosmic 登录上下文 provider
 

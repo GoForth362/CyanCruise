@@ -55,6 +55,17 @@ button.secondary {
   background: var(--surface-soft);
 }
 
+button.danger {
+  color: #a83232;
+  background: #fff0f0;
+}
+
+button.danger:hover,
+button.danger:focus {
+  color: #fff;
+  background: #a83232;
+}
+
 input,
 select,
 textarea {
@@ -344,6 +355,20 @@ h3 {
   background: #fff;
 }
 
+.resume-item {
+  display: grid;
+  gap: 10px;
+}
+
+.resume-item p {
+  margin-top: 6px;
+}
+
+.resume-item a {
+  color: var(--blue);
+  overflow-wrap: anywhere;
+}
+
 .form-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -364,6 +389,18 @@ h3 {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
+}
+
+.actions-row.compact {
+  margin-top: 0;
+}
+
+.panel-note.warning {
+  color: var(--warning);
+}
+
+.panel-note.info {
+  color: var(--blue);
 }
 
 @media (max-width: 920px) {

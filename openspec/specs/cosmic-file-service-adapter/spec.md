@@ -7,8 +7,8 @@ TBD - created by archiving change migrate-cosmic-file-service-adapter. Update Pu
 CyanCruise SHALL provide a configurable Cosmic file service adapter for CareerLoop file upload, preview URL, download, delete, and text extraction, and SHALL NOT depend on IPD Spring Multipart, Aliyun OSS SDK, PDFBox, Flyway, Java 17 APIs, Vue, uni-app, or production secrets.
 
 #### Scenario: Adapter is explicitly enabled
-- **WHEN** file adapter configuration enables the Cosmic file service adapter
-- **THEN** file WebAPI operations SHALL use the configured Cosmic provider boundary for upload, preview URL, download, delete, and text extraction
+- **WHEN** `cc001.file.adapter.enabled=true` and BOS attachment file service is available
+- **THEN** file WebAPI operations SHALL use BOS attachment file service through `CosmicCareerFileServiceProvider` for upload, preview URL, download, and delete
 
 #### Scenario: Adapter is not enabled
 - **WHEN** no explicit file adapter enablement is configured
@@ -17,9 +17,9 @@ CyanCruise SHALL provide a configurable Cosmic file service adapter for CareerLo
 ### Requirement: Stable object key contract
 The Cosmic file service adapter SHALL preserve the existing CareerLoop object key contract. Business records SHALL persist stable object keys or file reference DTOs and SHALL request preview/download URLs just-in-time.
 
-#### Scenario: Upload succeeds through Cosmic provider
-- **WHEN** a non-empty file upload request is accepted by the Cosmic provider
-- **THEN** the system SHALL return objectKey, originalFilename, size, folder, extension, provider, status, and message without requiring a long-lived absolute URL
+#### Scenario: Upload succeeds through BOS provider
+- **WHEN** a non-empty file upload request is accepted by BOS attachment file service
+- **THEN** the system SHALL return the BOS stable object key with originalFilename, size, folder, extension, provider, status, and message
 
 #### Scenario: Platform returns an absolute file reference
 - **WHEN** the platform provider returns a temporary URL or absolute file reference
@@ -30,21 +30,17 @@ The adapter SHALL generate short-lived preview URLs and authenticated downloads 
 
 #### Scenario: Preview URL is requested
 - **WHEN** a valid object key is provided with ttlSeconds
-- **THEN** the adapter SHALL clamp ttlSeconds to the allowed window and return a provider-generated temporary URL or an unavailable status with reason
+- **THEN** the adapter SHALL request BOS preview metadata first and SHALL return a temporary preview/download URL or unavailable status with reason
 
 #### Scenario: Download is requested
 - **WHEN** a valid object key is requested by an authorized application service
 - **THEN** the adapter SHALL return bytes, objectKey, content length, provider, status, and message without exposing platform credentials
 
-#### Scenario: Reference is malformed
-- **WHEN** preview or download receives a malformed absolute URL or blank reference
-- **THEN** the adapter SHALL return malformed/skipped status and SHALL NOT call the platform provider with guessed keys
-
 ### Requirement: Delete is idempotent
 The Cosmic file service adapter SHALL treat delete as best-effort cleanup. Missing, blank, or already-deleted objects SHALL NOT roll back the originating business operation.
 
-#### Scenario: Delete succeeds
-- **WHEN** the provider deletes a valid object key
+#### Scenario: Delete succeeds through BOS provider
+- **WHEN** the provider deletes a valid BOS object key
 - **THEN** the adapter SHALL return ok status with objectKey and provider diagnostics
 
 #### Scenario: Delete provider is unavailable
