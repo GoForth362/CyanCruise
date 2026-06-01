@@ -21,6 +21,24 @@
       "employment-insight",
       "career-resources"
     ],
+    "defaultUserRoutes": [
+      "workbench",
+      "onboarding",
+      "today-action",
+      "assessment",
+      "resume",
+      "resume-diagnosis",
+      "career-plan",
+      "interview",
+      "assistant",
+      "messages",
+      "employment-insight"
+    ],
+    "debugRoutes": [
+      "file-upload-preview",
+      "career-resources",
+      "admin-console"
+    ],
     "adminRoutes": ["admin-console"],
     "entryOnlyRoutes": ["assessment", "file-upload-preview", "subscriptions", "weekly-report", "admin-console"],
     "stateModel": ["loading", "empty", "success", "identity-required", "forbidden", "unavailable", "backend-error", "pending"],
@@ -357,6 +375,11 @@
       ],
       "target": "index.html#file-upload-preview",
       "status": "entry-only",
+      "visibility": {
+        "defaultNav": false,
+        "debugNav": true,
+        "hashDirect": true
+      },
       "webApis": [
         {
           "name": "upload file",
@@ -483,6 +506,11 @@
       "ipdPaths": ["pages/home/index", "api/home.ts"],
       "target": "index.html#career-resources",
       "status": "available",
+      "visibility": {
+        "defaultNav": false,
+        "debugNav": true,
+        "hashDirect": true
+      },
       "webApis": [
         {
           "name": "career resource feed",
@@ -614,6 +642,11 @@
       ],
       "target": "index.html#admin-console",
       "status": "entry-only",
+      "visibility": {
+        "defaultNav": false,
+        "debugNav": true,
+        "hashDirect": true
+      },
       "identity": {
         "adminIdRequired": true,
         "roleRequired": "ADMIN",
