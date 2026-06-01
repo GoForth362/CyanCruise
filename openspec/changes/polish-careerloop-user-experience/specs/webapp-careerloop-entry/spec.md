@@ -25,3 +25,21 @@ CareerLoop webapp 入口 SHALL 支持显式调试模式，用于展示 route met
 #### Scenario: 不带 debug 参数
 - **WHEN** 普通用户不带 `ccDebug=1` 打开页面
 - **THEN** 页面 SHALL 隐藏调试导航项和工程状态信息
+
+### Requirement: 默认入口采用功能中心布局
+CareerLoop webapp 默认入口 SHALL 采用面向用户任务的功能中心布局，而不是工程验收型 route 工作台。页面 SHALL 使用稳定分组导航和功能卡片矩阵承载主要入口。
+
+#### Scenario: 默认打开功能中心
+- **WHEN** 普通用户打开 `/ierp/isv/v620/careerloop/index.htm#workbench`
+- **THEN** 页面 SHALL 在首屏展示左侧业务分组导航和右侧功能卡片矩阵
+- **AND** 页面 SHALL NOT 以大面积 hero、接口路线、route chip、横向滚动 route 清单或工程状态面板作为首屏主要内容
+
+#### Scenario: 切换功能分组
+- **WHEN** 用户点击“简历”“面试”等分组
+- **THEN** 右侧功能区 SHALL 展示该分组下的功能卡片
+- **AND** 当前分组 SHALL 有清晰的选中状态
+
+#### Scenario: 点击功能卡片
+- **WHEN** 用户点击一个已接入功能卡片
+- **THEN** 页面 SHALL 跳转到对应业务 route 或执行对应操作
+- **AND** 未接入功能 SHALL 显示禁用态或“即将接入”提示，不应暴露接口契约

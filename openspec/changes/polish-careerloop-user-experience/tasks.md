@@ -32,3 +32,13 @@
 - [x] 5.3 运行 `node --check webapp\isv\v620\careerloop\assets\app.js`。
 - [x] 5.4 如仅改静态资源，记录无需 Gradle；如触及 Java，使用 JDK 8 运行相关 Gradle 测试或 `.\gradlew.bat clean build`。
 - [x] 5.5 同步静态文件到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\` 并本地验证默认模式与 `?ccDebug=1` 模式。
+
+## 6. 功能中心首页重规划
+
+- [ ] 6.1 定义默认工作台的业务分组和功能卡片清单，至少包含“简历”“面试”，并为每张卡片标注目标 route、图标、标题、说明和是否已接入。
+- [ ] 6.2 将默认 `#workbench` 从大 hero + 横向 route 导航 + 状态卡布局，调整为左侧分组导航 + 右侧功能卡片矩阵。
+- [ ] 6.3 默认模式隐藏顶部大块身份卡、横向滚动 route 清单、Route/status chip 和接口契约；`?ccDebug=1` 模式保留调试入口。
+- [ ] 6.4 为功能卡片增加稳定响应式样式：桌面 3 至 4 列，窄屏折叠为单列或顶部分组条，避免文字溢出和横向滚动。
+- [ ] 6.5 已接入卡片跳转到现有 route；未接入卡片展示禁用态或“即将接入”提示，不暴露接口路径。
+- [ ] 6.6 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\`。
+- [ ] 6.7 运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。
