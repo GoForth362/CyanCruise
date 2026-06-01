@@ -15,6 +15,11 @@
 用户侧页面包括：
 
 - `#workbench`
+- `#employment-home`
+- `#further-study-home`
+- `#postgraduate-exam`
+- `#postgraduate-recommendation`
+- `#study-abroad`
 - `#resume-home`
 - `#onboarding`
 - `#today-action`
@@ -34,24 +39,24 @@
 
 ## 金蝶平台侧边栏外部链接
 
-正式菜单建议由金蝶“应用菜单”配置，CyanCruise 页面不再重复绘制页面内左侧栏。当前阶段按“就业 / 深造”规划信息架构，其中就业先发布 IPD 已有核心入口，深造只保留为后续分组规划。
+正式菜单建议由金蝶“应用菜单”配置，CyanCruise 页面不再重复绘制页面内左侧栏。首页负责填写基础信息和选择路线；就业、深造分别使用独立 hash 落地页，不能和首页共用同一个地址。
 
 | 菜单 | 外部链接 | 状态 |
 | --- | --- | --- |
-| CyanCruise 工作台 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 已接入 |
-| 就业 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 父级/分组 |
+| CyanCruise 首页 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 已接入 |
+| 就业 | `/ierp/isv/v620/careerloop/index.htm#employment-home` | 已接入 |
 | 就业 / 简历 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 父级/分组 |
-| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 已接入 |
+| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume` | 已接入 |
 | 就业 / 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 已接入 |
 | 就业 / 面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 父级/分组 |
-| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 已接入 |
+| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入 |
 | 就业 / 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入 |
-| 深造 | 暂不配置外部链接 | 后续规划 |
-| 深造 / 考研 | 暂不配置外部链接 | 后续规划 |
-| 深造 / 保研 | 暂不配置外部链接 | 后续规划 |
-| 深造 / 留学 | 暂不配置外部链接 | 后续规划 |
+| 深造 | `/ierp/isv/v620/careerloop/index.htm#further-study-home` | 规划入口 |
+| 深造 / 考研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-exam` | 规划入口 |
+| 深造 / 保研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-recommendation` | 规划入口 |
+| 深造 / 留学 | `/ierp/isv/v620/careerloop/index.htm#study-abroad` | 规划入口 |
 
-当前阶段只发布 IPD 已有主流程对应的四个核心入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试。乔布简历、简历微课、数字人面试、真题库和面试微课等能力暂不配置到平台菜单，待后续真实能力接入后再新增。
+当前阶段就业只发布 IPD 已有主流程对应的四个核心入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试。深造只提供考研、保研、留学方向入口，后续接 Agent 后再补全真实规划能力。乔布简历、简历微课、数字人面试、真题库和面试微课等能力暂不配置到平台菜单，待后续真实能力接入后再新增。
 
 ## 调试模式
 

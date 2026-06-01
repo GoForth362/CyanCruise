@@ -8,6 +8,11 @@
     "implementation": "static-hash-route-states",
     "visibleUserRoutes": [
       "workbench",
+      "employment-home",
+      "further-study-home",
+      "postgraduate-exam",
+      "postgraduate-recommendation",
+      "study-abroad",
       "onboarding",
       "today-action",
       "assessment",
@@ -23,6 +28,8 @@
     ],
     "defaultUserRoutes": [
       "workbench",
+      "employment-home",
+      "further-study-home",
       "onboarding",
       "today-action",
       "assessment",
@@ -217,7 +224,7 @@
   "routes": [
     {
       "key": "workbench",
-      "title": "CareerLoop 工作台",
+      "title": "CyanCruise 首页",
       "ipdPaths": ["pages/home/index"],
       "target": "index.html#workbench",
       "status": "available",
@@ -239,6 +246,105 @@
           "userIdRequired": true,
           "dto": "CareerAgentTodayDto",
           "fallback": "Show recoverable today-action unavailable state."
+        }
+      ]
+    },
+    {
+      "key": "employment-home",
+      "title": "就业",
+      "ipdPaths": ["pages/home/index", "pages/resume/index", "pages/interview/index"],
+      "target": "index.html#employment-home",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "resume list",
+          "method": "POST",
+          "path": "/cc001/resume/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<ResumeDto>",
+          "fallback": "Show employment feature cards and empty resume state."
+        },
+        {
+          "name": "interview list",
+          "method": "POST",
+          "path": "/cc001/interview/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewSessionDto>",
+          "fallback": "Show employment feature cards and empty interview state."
+        }
+      ]
+    },
+    {
+      "key": "further-study-home",
+      "title": "深造",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html#further-study-home",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "career plan summary",
+          "method": "POST",
+          "path": "/cc001/career-plan/summary",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "Show further-study route cards and planned Agent entry state."
+        }
+      ]
+    },
+    {
+      "key": "postgraduate-exam",
+      "title": "考研",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html#postgraduate-exam",
+      "status": "entry-only",
+      "webApis": [
+        {
+          "name": "career plan summary",
+          "method": "POST",
+          "path": "/cc001/career-plan/summary",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "Show postgraduate exam planning placeholder."
+        }
+      ]
+    },
+    {
+      "key": "postgraduate-recommendation",
+      "title": "保研",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html#postgraduate-recommendation",
+      "status": "entry-only",
+      "webApis": [
+        {
+          "name": "career plan summary",
+          "method": "POST",
+          "path": "/cc001/career-plan/summary",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "Show postgraduate recommendation planning placeholder."
+        }
+      ]
+    },
+    {
+      "key": "study-abroad",
+      "title": "留学",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html#study-abroad",
+      "status": "entry-only",
+      "webApis": [
+        {
+          "name": "career plan summary",
+          "method": "POST",
+          "path": "/cc001/career-plan/summary",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "Show study abroad planning placeholder."
         }
       ]
     },
@@ -818,6 +924,66 @@
       "identityMode": "production-cosmic-context",
       "fallback": "Show identity-required state when Cosmic login context is unavailable.",
       "deploymentNotes": "Mount as the primary CareerLoop user menu entry under Cosmic webapp resources."
+    },
+    {
+      "mountKey": "careerloop-employment-home",
+      "routeKey": "employment-home",
+      "title": "就业",
+      "target": "index.html#employment-home",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show employment feature cards and keep homepage reachable.",
+      "deploymentNotes": "Mount as the platform sidebar parent page for employment features."
+    },
+    {
+      "mountKey": "careerloop-further-study-home",
+      "routeKey": "further-study-home",
+      "title": "深造",
+      "target": "index.html#further-study-home",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show planned study route cards and keep homepage reachable.",
+      "deploymentNotes": "Mount as the platform sidebar parent page for postgraduate, recommendation, and study-abroad planning."
+    },
+    {
+      "mountKey": "careerloop-postgraduate-exam",
+      "routeKey": "postgraduate-exam",
+      "title": "考研",
+      "target": "index.html#postgraduate-exam",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "entry-only",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show postgraduate exam placeholder and return-to-study action.",
+      "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
+    },
+    {
+      "mountKey": "careerloop-postgraduate-recommendation",
+      "routeKey": "postgraduate-recommendation",
+      "title": "保研",
+      "target": "index.html#postgraduate-recommendation",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "entry-only",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show recommendation placeholder and return-to-study action.",
+      "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
+    },
+    {
+      "mountKey": "careerloop-study-abroad",
+      "routeKey": "study-abroad",
+      "title": "留学",
+      "target": "index.html#study-abroad",
+      "audience": "careerloop-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "entry-only",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show study-abroad placeholder and return-to-study action.",
+      "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
     },
     {
       "mountKey": "careerloop-onboarding",

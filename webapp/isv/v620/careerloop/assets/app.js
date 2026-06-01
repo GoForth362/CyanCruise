@@ -40,7 +40,12 @@
   };
 
   var pages = [
-    page("workbench", "工作台", "available", "user", "从目标岗位、画像和今日行动进入主循环。", ["snapshot", "today", "resumes", "plan", "interviews"]),
+    page("workbench", "CyanCruise 首页", "available", "user", "填写基础信息，选择就业或深造路线。", ["snapshot", "onboarding"]),
+    page("employment-home", "就业", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
+    page("further-study-home", "深造", "available", "user", "考研、保研和留学方向规划入口。", ["snapshot", "plan"]),
+    page("postgraduate-exam", "考研", "entry-only", "user", "考研规划入口，后续接入规划 Agent。", ["plan"]),
+    page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划 Agent。", ["plan"]),
+    page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划 Agent。", ["plan"]),
     page("onboarding", "新用户引导", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
     page("today-action", "今日行动", "available", "user", "展示下一步建议，并跳转到对应页面。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "测评提交契约已就绪，完整题组页面后续细化。", ["assessmentSubmit"]),
@@ -60,13 +65,24 @@
 
   var pageByKey = {};
   var platformMenuLinks = [
-    ["CyanCruise 工作台", "#workbench", "已接入"],
+    ["CyanCruise 首页", "#workbench", "已接入"],
+    ["就业", "#employment-home", "已接入"],
     ["简历 / AI简历制作", "#resume-home", "已接入"],
     ["简历 / AI简历修改", "#resume-diagnosis", "已接入"],
     ["面试 / 全景仿真面试", "#interview-home", "已接入"],
-    ["面试 / AI模拟面试", "#interview", "已接入"]
+    ["面试 / AI模拟面试", "#interview", "已接入"],
+    ["深造", "#further-study-home", "规划中"],
+    ["深造 / 考研", "#postgraduate-exam", "规划中"],
+    ["深造 / 保研", "#postgraduate-recommendation", "规划中"],
+    ["深造 / 留学", "#study-abroad", "规划中"]
   ];
   var featureGroups = {
+    "employment-home": [
+      feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
+      feature("AI简历修改", "改", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
+      feature("全景仿真面试", "仿", "按目标岗位进入真实面试流程练习", "interview", "已接入"),
+      feature("AI模拟面试", "AI", "查看面试历史并开始 AI 模拟练习", "interview", "已接入")
+    ],
     "resume-home": [
       feature("AI简历制作", "AI", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
       feature("AI简历修改", "改", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
@@ -74,6 +90,11 @@
     "interview-home": [
       feature("全景仿真面试", "仿", "沿用 IPD 模拟面试流程，按目标岗位进入练习", "interview", "已接入"),
       feature("AI模拟面试", "AI", "沿用 IPD AI 追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
+    ],
+    "further-study-home": [
+      feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划 Agent", "postgraduate-exam", "规划中"),
+      feature("保研", "保", "记录排名、加分项和目标院校，后续接入保研规划 Agent", "postgraduate-recommendation", "规划中"),
+      feature("留学", "留", "记录语言、GPA 和背景提升计划，后续接入留学规划 Agent", "study-abroad", "规划中")
     ]
   };
   var els = {};
@@ -257,8 +278,10 @@
     }
     if (item.key === "workbench") {
       renderWorkbench(item);
-    } else if (item.key === "resume-home" || item.key === "interview-home") {
+    } else if (item.key === "employment-home" || item.key === "resume-home" || item.key === "interview-home" || item.key === "further-study-home") {
       renderFeatureHome(item);
+    } else if (item.key === "postgraduate-exam" || item.key === "postgraduate-recommendation" || item.key === "study-abroad") {
+      renderPlannedStudyPage(item);
     } else if (item.key === "onboarding") {
       renderOnboarding(item);
     } else if (item.key === "resume") {
@@ -283,15 +306,38 @@
       renderShell(item, panels.join(""));
       return;
     }
-    renderFeatureShell(item, "工作台", "查看当前求职主循环状态，并进入简历、面试和今日行动。",
+    renderHomeIntentPage(item);
+  }
+
+  function renderHomeIntentPage(item) {
+    var onboarding = getValue(state.snapshot, "onboarding") || {};
+    var targetRole = firstText(onboarding.targetRole, textFromSnapshot("preferences.targetRole"));
+    renderFeatureShell(item, "选择你的路线", "先补充一点基础信息，再选择进入就业或深造方向。",
+      '<section class="panel full home-intent-panel">' +
+      '<h3>基础信息</h3>' +
+      '<form class="form-grid" id="homeIntentForm">' +
+      field("homeGoal", "当前路线", "select", firstText(readHomeIntent().goal, "employment"), [["employment", "就业"], ["study", "深造"], ["explore", "先了解一下"]]) +
+      field("homeTargetRole", "目标岗位或方向", "text", targetRole) +
+      field("homePreference", "想用 CyanCruise 做什么", "text", firstText(readHomeIntent().preference, firstText(onboarding.preference, ""))) +
+      '<div class="full actions-row"><button type="submit">保存路线信息</button><button type="button" class="secondary" data-link="employment-home">进入就业</button><button type="button" class="secondary" data-link="further-study-home">进入深造</button></div>' +
+      '</form></section>' +
       overviewStrip() +
+      '<section class="feature-section"><h3>路线入口</h3><div class="feature-grid">' +
+      featureCards([
+        feature("就业", "就", "进入 AI 简历制作、AI 简历修改、全景仿真面试和 AI 模拟面试", "employment-home", "已接入"),
+        feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划 Agent", "further-study-home", "规划中")
+      ]) + '</div></section>' +
       '<section class="feature-section"><h3>推荐入口</h3><div class="feature-grid">' +
       featureCards([
-        feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护记录", "resume-home", "已接入"),
+        feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
         feature("AI简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
         feature("今日行动", "今", "查看下一步建议并继续执行", "today-action", "已接入"),
-        feature("AI模拟面试", "AI", "从岗位目标开始面试练习", "interview-home", "已接入")
+        feature("AI模拟面试", "AI", "从岗位目标开始面试练习", "interview", "已接入")
       ]) + '</div></section>');
+    var form = $("homeIntentForm");
+    if (form) {
+      form.addEventListener("submit", submitHomeIntent);
+    }
   }
 
   function renderFeatureHome(item) {
@@ -299,6 +345,15 @@
     renderFeatureShell(item, item.title, item.summary,
       '<section class="feature-section"><h3>' + escapeHtml(item.title) + '工具</h3><div class="feature-grid">' +
       featureCards(cards) + '</div></section>');
+  }
+
+  function renderPlannedStudyPage(item) {
+    renderFeatureShell(item, item.title, item.summary,
+      '<section class="panel full">' +
+      '<h3>' + escapeHtml(item.title) + '规划</h3>' +
+      '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度 Agent、用户画像 Agent 和对应规划 Agent；当前可以先回到深造页选择方向，或回到首页调整路线信息。</p>' +
+      '<div class="actions-row"><button type="button" data-link="further-study-home">返回深造</button><button type="button" class="secondary" data-link="workbench">返回首页</button></div>' +
+      '</section>');
   }
 
   function renderOnboarding(item) {
@@ -787,7 +842,7 @@
     els.pageHost.innerHTML =
       '<header class="feature-page-header">' +
       '<div><p class="eyebrow">CyanCruise</p><h2>' + escapeHtml(title) + '</h2><p class="lead">' + escapeHtml(summary) + '</p></div>' +
-      '<button type="button" class="secondary" data-link="workbench">工作台</button>' +
+      '<button type="button" class="secondary" data-link="workbench">首页</button>' +
       '</header>' +
       '<div class="feature-content">' + innerHtml + '</div>';
     bindPageLinks();
@@ -809,7 +864,7 @@
       '<header class="page-header">' +
       '<div>' + debugMeta + '<h2>' + escapeHtml(item.title) + '</h2>' +
       '<p class="lead">' + escapeHtml(item.summary) + '</p></div>' +
-      '<button type="button" class="secondary" data-link="workbench">工作台</button>' +
+      '<button type="button" class="secondary" data-link="workbench">首页</button>' +
       '</header><div class="panel-grid">' + innerHtml + '</div>';
     bindPageLinks();
   }
@@ -921,6 +976,54 @@
     }).catch(function (error) {
       showMessage("error", "保存失败", error.message || "onboarding WebAPI 暂不可用。");
     });
+  }
+
+  function readHomeIntent() {
+    return parseStorageJson(localStorage, "careerloop.homeIntent") || {};
+  }
+
+  function submitHomeIntent(event) {
+    event.preventDefault();
+    var intent = {
+      goal: valueOf("homeGoal"),
+      targetRole: valueOf("homeTargetRole"),
+      preference: valueOf("homePreference")
+    };
+    localStorage.setItem("careerloop.homeIntent", JSON.stringify(intent));
+    var request = {
+      identityType: "student",
+      targetRole: intent.targetRole,
+      resumeStatus: Array.isArray(state.resumes) && state.resumes.length > 0 ? "draft" : "none",
+      preference: ["路线：" + labelForGoal(intent.goal), intent.preference].filter(Boolean).join("；")
+    };
+    state.snapshot = state.snapshot || {};
+    state.snapshot.onboarding = request;
+    state.snapshot.preferences = state.snapshot.preferences || {};
+    state.snapshot.preferences.targetRole = intent.targetRole;
+    updateOverviewCards();
+    if (!hasUserIdentity() || isFilePreview()) {
+      localStorage.setItem("careerloop.previewProfile", JSON.stringify(request));
+      showMessage("info", "已保存", "路线信息已保存到当前浏览器。");
+      return;
+    }
+    post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
+      state.snapshot = snapshot;
+      updateOverviewCards();
+      renderPage(pageByKey[state.route]);
+      showMessage("info", "已保存", "路线信息已写入职业画像。");
+    }).catch(function () {
+      showMessage("warning", "已本地保存", "平台暂未写入成功，但路线信息已保存在当前浏览器。");
+    });
+  }
+
+  function labelForGoal(goal) {
+    if (goal === "study") {
+      return "深造";
+    }
+    if (goal === "explore") {
+      return "先了解一下";
+    }
+    return "就业";
   }
 
   function renderPreview() {

@@ -46,3 +46,11 @@
 - [x] 6.9 更新 README，记录金蝶平台侧边栏菜单和每个外部链接配置建议。
 - [x] 6.10 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\`。
 - [x] 6.11 运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。
+
+## 7. 首页、就业、深造独立落地页
+
+- [x] 7.1 将 `#workbench` 调整为 CyanCruise 首页：收集基础路线信息，提供就业/深造选择入口。
+- [x] 7.2 新增 `#employment-home` 就业落地页：展示 AI简历制作、AI简历修改、全景仿真面试、AI模拟面试四个核心跳转按钮。
+- [x] 7.3 新增 `#further-study-home` 深造落地页，并预留 `#postgraduate-exam`、`#postgraduate-recommendation`、`#study-abroad` 三个规划入口。
+- [x] 7.4 更新金蝶平台菜单建议，使“就业”不再指向首页，而是指向独立就业页。
+- [x] 7.5 保持深造方向只做规划入口，不新增真实 Agent、真题库或课程能力。
