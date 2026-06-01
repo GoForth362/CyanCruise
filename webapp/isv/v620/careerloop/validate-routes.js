@@ -76,6 +76,26 @@ const requiredPageShellRoutes = [
   "career-resources"
 ];
 
+const requiredDefaultUserRoutes = [
+  "workbench",
+  "onboarding",
+  "today-action",
+  "assessment",
+  "resume",
+  "resume-diagnosis",
+  "career-plan",
+  "interview",
+  "assistant",
+  "messages",
+  "employment-insight"
+];
+
+const requiredDebugRoutes = [
+  "file-upload-preview",
+  "career-resources",
+  "admin-console"
+];
+
 const requiredStateModel = [
   "loading",
   "empty",
@@ -168,6 +188,22 @@ for (const key of requiredPageShellRoutes) {
   }
   if (!app.includes(`"${key}"`) && !app.includes(`'${key}'`)) {
     fail(`Static app page registry missing route: ${key}`);
+  }
+}
+for (const key of requiredDefaultUserRoutes) {
+  if (!routeMap.pageShell.defaultUserRoutes || !routeMap.pageShell.defaultUserRoutes.includes(key)) {
+    fail(`Page shell missing default user route: ${key}`);
+  }
+}
+for (const key of requiredDebugRoutes) {
+  if (!routeMap.pageShell.debugRoutes || !routeMap.pageShell.debugRoutes.includes(key)) {
+    fail(`Page shell missing debug route: ${key}`);
+  }
+}
+for (const key of ["file-upload-preview", "career-resources"]) {
+  const route = routeMap.routes.find((item) => item.key === key);
+  if (!route || !route.visibility || route.visibility.defaultNav !== false || route.visibility.debugNav !== true || route.visibility.hashDirect !== true) {
+    fail(`Route visibility metadata must hide by default and show in debug: ${key}`);
   }
 }
 for (const key of ["admin-console"]) {

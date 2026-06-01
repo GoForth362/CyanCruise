@@ -26,9 +26,21 @@
 - `#assistant`
 - `#messages`
 - `#employment-insight`
-- `#career-resources`
+- `#career-resources`（默认导航隐藏，调试或后续内容接入时使用）
 
 管理侧入口为 `#admin-console`，只在生产管理员身份或开发角色显式包含 `ADMIN`、`COSMIC_ADMIN`、`PLATFORM_ADMIN` 时展示可访问状态。
+
+## 调试模式
+
+默认用户模式会隐藏迁移验收和工程调试信息，包括接口契约面板、`Route:` 标识、`available/entry-only/user` 状态 chip，以及独立的 `#file-upload-preview` 文件服务调试页。普通用户应从“简历”页完成 PDF 上传、预览、删除和去诊断流程。
+
+开发排查时可以显式使用：
+
+```text
+index.html?ccDebug=1#file-upload-preview
+```
+
+调试模式会恢复隐藏 route、接口契约、route/status metadata 和文件上传预览入口，用于检查 KAPI 路由、BOS 文件服务和 route map。该模式只用于开发与验收，不作为生产菜单发布入口。
 
 ## 身份模式
 

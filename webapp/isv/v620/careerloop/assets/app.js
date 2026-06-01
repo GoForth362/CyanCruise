@@ -45,15 +45,15 @@
     page("today-action", "今日行动", "available", "user", "展示下一步建议，并跳转到对应页面。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "测评提交契约已就绪，完整题组页面后续细化。", ["assessmentSubmit"]),
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
-    page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"]),
+    page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
     page("career-plan", "职业计划", "available", "user", "查看长期计划摘要和本周重点。", ["plan", "ensurePlan"]),
     page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
     page("employment-insight", "就业洞察", "available", "user", "按学校、专业和目标岗位查看就业洞察。", ["employmentInsight"]),
-    page("career-resources", "职业资源", "available", "public", "查看文章、视频、咨询和职业路径资源。", ["careerResources"]),
-    page("admin-console", "管理后台", "entry-only", "admin", "管理员治理入口，仅对 ADMIN 或平台管理员开放。", ["adminWhoami", "adminDashboard", "adminUsersBan", "adminQuestions", "adminContent", "adminBroadcast", "adminAuditLog"])
+    page("career-resources", "职业资源", "available", "public", "查看文章、视频、咨询和职业路径资源。", ["careerResources"], { defaultNav: false, debugNav: true }),
+    page("admin-console", "管理后台", "entry-only", "admin", "管理员治理入口，仅对 ADMIN 或平台管理员开放。", ["adminWhoami", "adminDashboard", "adminUsersBan", "adminQuestions", "adminContent", "adminBroadcast", "adminAuditLog"], { defaultNav: false, debugNav: true })
   ];
 
   var pageByKey = {};
@@ -68,20 +68,24 @@
     resumeMessage: null,
     resumeListError: null,
     fileMessage: null,
+    messageTimer: null,
     previewUrls: {},
     plan: null,
     interviews: null,
     route: "workbench"
   };
 
-  function page(key, title, status, audience, summary, endpointKeys) {
+  function page(key, title, status, audience, summary, endpointKeys, options) {
+    var meta = options || {};
     return {
       key: key,
       title: title,
       status: status,
       audience: audience,
       summary: summary,
-      endpoints: endpointKeys || []
+      endpoints: endpointKeys || [],
+      defaultNav: meta.defaultNav !== false,
+      debugNav: meta.debugNav !== false
     };
   }
 
@@ -130,7 +134,7 @@
   }
 
   function renderNav() {
-    els.routeNav.innerHTML = pages.map(function (item) {
+    els.routeNav.innerHTML = pages.filter(shouldShowInNav).map(function (item) {
       var hidden = item.audience === "admin" ? ' data-admin="true"' : "";
       return '<button type="button" class="route-tab" data-route="' + item.key + '"' + hidden + ">" + escapeHtml(item.title) + "</button>";
     }).join("");
@@ -140,6 +144,16 @@
         window.location.hash = route;
       }
     });
+  }
+
+  function shouldShowInNav(item) {
+    if (isDebugMode()) {
+      return item.debugNav !== false;
+    }
+    if (item.audience === "admin") {
+      return false;
+    }
+    return item.defaultNav !== false;
   }
 
   function handleRouteChange() {
@@ -163,6 +177,16 @@
     for (var i = 0; i < buttons.length; i += 1) {
       buttons[i].className = buttons[i].getAttribute("data-route") === state.route ? "route-tab active" : "route-tab";
     }
+  }
+
+  function isDebugMode() {
+    var params = new URLSearchParams(window.location.search);
+    var value = String(params.get("ccDebug") || "").toLowerCase();
+    var legacyValue = String(params.get("debug") || "").toLowerCase();
+    if (legacyValue === "careerloop") {
+      return true;
+    }
+    return value === "1" || value === "true" || value === "yes";
   }
 
   function renderPage(item) {
@@ -199,7 +223,7 @@
         ["面试练习", Array.isArray(state.interviews) ? state.interviews.length + " 次" : "待加载"]
       ]),
       actionPanel("下一步入口", pages.filter(function (pageItem) {
-        return pageItem.audience !== "admin" && pageItem.key !== "workbench";
+        return pageItem.key !== "workbench" && shouldShowInNav(pageItem);
       }).map(function (pageItem) {
         return linkButton(pageItem.key, pageItem.title, pageItem.summary);
       }).join(""))
@@ -237,16 +261,19 @@
   function renderResumePage(item) {
     var target = resumeTargetDefault();
     var panels = [
-      resumeFormPanel(target),
       resumeListPanel(),
-      resumeFilePanel(),
-      metricsPanel("接口契约", [
+      resumeFormPanel(target),
+      resumeFilePanel()
+    ];
+    if (isDebugMode()) {
+      panels.push(metricsPanel("接口契约", [
         ["列表", endpoints.resumes],
         ["创建", endpoints.resumeCreate],
+        ["删除", endpoints.resumeDelete],
         ["文件上传", endpoints.fileUpload],
-        ["文件预览", endpoints.filePreview]
-      ])
-    ];
+        ["文件下载", endpoints.fileDownload]
+      ]));
+    }
     if (state.resumeMessage) {
       panels.unshift(statePanel("简历状态", state.resumeMessage.text, state.resumeMessage.type));
     }
@@ -258,11 +285,15 @@
     var draft = state.resumeDraft || {};
     var submitLabel = state.resumeSubmitting ? "创建中..." : "创建简历";
     var submitDisabled = state.resumeSubmitting ? " disabled" : "";
+    var fileKey = firstText(draft.fileKey, "");
+    var fileKeyControl = isDebugMode()
+      ? field("resumeFileKey", "文件 key", "text", fileKey)
+      : '<input id="resumeFileKey" type="hidden" value="' + escapeAttr(fileKey) + '"><p class="form-note full">文件状态：' + escapeHtml(fileKey ? "已关联 PDF" : "可先上传 PDF，也可只创建简历信息") + '</p>';
     return '<section class="panel"><h3>创建简历记录</h3>' +
       '<form class="form-grid" id="resumeForm">' +
       field("resumeTitle", "简历标题", "text", firstText(draft.title, "后端开发简历")) +
       field("resumeTargetJob", "目标岗位", "text", firstText(draft.targetJob, target)) +
-      field("resumeFileKey", "文件 key", "text", firstText(draft.fileKey, "")) +
+      fileKeyControl +
       '<label class="full">解析内容<textarea id="resumeParsedContent" placeholder="可粘贴简历摘要、技能、项目经历或留空。">' + escapeHtml(draft.parsedContent) + '</textarea></label>' +
       '<div class="full actions-row">' +
       '<button type="submit"' + submitDisabled + ">" + submitLabel + "</button>" +
@@ -293,7 +324,8 @@
     return '<article class="item resume-item">' +
       '<div><strong>' + escapeHtml(firstText(item.title, item.resumeName, "简历 " + id)) + '</strong>' +
       '<p>目标岗位：' + escapeHtml(target) + '</p>' +
-      '<p>文件 key：' + escapeHtml(fileKey) + '</p>' +
+      '<p>文件：' + escapeHtml(fileKey === "未关联文件" ? "未关联" : "已关联 PDF") + '</p>' +
+      (isDebugMode() ? '<p>文件 key：' + escapeHtml(fileKey) + '</p>' : "") +
       '<p>诊断分：' + escapeHtml(score) + ' ｜ 更新时间：' + escapeHtml(updated) + '</p></div>' +
       '<div class="actions-row compact">' +
       (fileKey === "未关联文件" ? "" : '<button type="button" class="secondary" data-preview-file="' + escapeHtml(fileKey) + '">预览</button>') +
@@ -304,7 +336,10 @@
   }
 
   function resumeFilePanel() {
-    var text = state.fileMessage ? state.fileMessage.text : "文件上传是可选增强；也可以手工填写 fileKey 后直接创建简历元数据。";
+    var defaultText = isDebugMode()
+      ? "文件上传是可选增强；也可以手工填写 fileKey 后直接创建简历元数据。"
+      : "可以先选择 PDF 上传，系统会自动关联到本次简历。";
+    var text = state.fileMessage ? state.fileMessage.text : defaultText;
     var type = state.fileMessage ? state.fileMessage.type : "empty";
     return '<section class="panel"><h3>可选文件上传</h3>' +
       '<div class="form-grid">' +
@@ -501,7 +536,7 @@
     post(endpoints.fileDownload, { fileUrlOrKey: fileKey }).then(function (result) {
       var bytes = bytesFromDownloadResult(result && result.bytes);
       if (!bytes || (result.status && result.status !== "OK")) {
-        state.fileMessage = { type: "warning", text: firstText(result && result.message, result && result.status, "文件下载暂不可用，无法生成预览。") };
+        state.fileMessage = { type: "warning", text: isDebugMode() ? firstText(result && result.message, result && result.status, "文件下载暂不可用，无法生成预览。") : "文件预览暂不可用，请稍后重试或重新上传 PDF。" };
         closePreviewWindow(previewWindow);
         renderPage(pageByKey[state.route]);
         return;
@@ -517,7 +552,7 @@
       openPreviewUrl(previewWindow, url);
       renderPage(pageByKey[state.route]);
     }).catch(function (error) {
-      state.fileMessage = { type: "warning", text: error.message || "文件预览暂不可用。" };
+      state.fileMessage = { type: "warning", text: isDebugMode() ? (error.message || "文件预览暂不可用。") : "文件预览暂不可用，请稍后重试或重新上传 PDF。" };
       closePreviewWindow(previewWindow);
       renderPage(pageByKey[state.route]);
     });
@@ -647,11 +682,14 @@
     var endpointRows = item.endpoints.map(function (name) {
       return ["WebAPI", endpoints[name] || name];
     });
-    var body = metricsPanel("接口契约", endpointRows.concat([
-      ["页面状态", item.status],
-      ["身份要求", item.audience === "public" ? "不要求 userId" : item.audience === "admin" ? "ADMIN" : "Cosmic userId"],
-      ["降级策略", fallbackText(item)]
-    ]));
+    var body = "";
+    if (isDebugMode()) {
+      body = metricsPanel("接口契约", endpointRows.concat([
+        ["页面状态", item.status],
+        ["身份要求", item.audience === "public" ? "不要求 userId" : item.audience === "admin" ? "ADMIN" : "Cosmic userId"],
+        ["降级策略", fallbackText(item)]
+      ]));
+    }
 
     if (item.key === "resume") {
       body += listPanel("简历记录", state.resumes, "暂无简历记录，仍可保留创建和文件入口。");
@@ -664,27 +702,33 @@
     } else if (item.key === "messages") {
       body += statePanel("站内消息", "消息列表、未读数、已读和订阅配额契约已映射；微信真实发送暂不迁移。", "pending");
     } else if (item.key === "file-upload-preview") {
-      body += statePanel("文件服务", "上传、预览、下载、删除和文本抽取走 Cosmic 文件 adapter；disabled 时显示 unavailable。", "pending");
+      body += statePanel("文件服务调试", isDebugMode() ? "上传、预览、下载、删除和文本抽取走 Cosmic 文件 adapter；disabled 时显示 unavailable。" : "这是文件服务调试页。普通用户请在简历页上传和预览 PDF；开发排查请使用 ?ccDebug=1。", isDebugMode() ? "pending" : "warning");
     } else if (item.key === "admin-console") {
       body += statePanel("管理员边界", "仅 ADMIN 或平台管理员身份可访问，不使用硬编码 adminId。", "warning");
     } else if (item.status === "entry-only") {
       body += statePanel("入口状态", "当前展示契约入口和安全降级，完整交互由后续页面细化。", "warning");
+    } else if (!body) {
+      body += statePanel(item.title, item.summary, "empty");
     }
     renderShell(item, body);
   }
 
   function renderShell(item, innerHtml) {
-    var chips = [
-      '<span class="chip">' + escapeHtml(item.status) + "</span>",
-      '<span class="chip">' + escapeHtml(item.audience) + "</span>"
-    ];
-    if (item.status === "entry-only") {
-      chips.push('<span class="chip warning">entry-only</span>');
+    var debugMeta = "";
+    if (isDebugMode()) {
+      var chips = [
+        '<span class="chip">' + escapeHtml(item.status) + "</span>",
+        '<span class="chip">' + escapeHtml(item.audience) + "</span>"
+      ];
+      if (item.status === "entry-only") {
+        chips.push('<span class="chip warning">entry-only</span>');
+      }
+      debugMeta = '<p class="eyebrow">Route: ' + escapeHtml(item.key) + '</p><div class="route-meta">' + chips.join("") + '</div>';
     }
     els.pageHost.innerHTML =
       '<header class="page-header">' +
-      '<div><p class="eyebrow">Route: ' + escapeHtml(item.key) + '</p><h2>' + escapeHtml(item.title) + '</h2>' +
-      '<p class="lead">' + escapeHtml(item.summary) + '</p><div class="route-meta">' + chips.join("") + '</div></div>' +
+      '<div>' + debugMeta + '<h2>' + escapeHtml(item.title) + '</h2>' +
+      '<p class="lead">' + escapeHtml(item.summary) + '</p></div>' +
       '<button type="button" class="secondary" data-link="workbench">工作台</button>' +
       '</header><div class="panel-grid">' + innerHtml + '</div>';
     bindPageLinks();
@@ -1362,9 +1406,35 @@
       .replace(/"/g, "&quot;");
   }
 
+  function escapeAttr(value) {
+    return escapeHtml(value);
+  }
+
   function showMessage(type, title, text) {
+    if (state.messageTimer) {
+      window.clearTimeout(state.messageTimer);
+      state.messageTimer = null;
+    }
     els.messagePanel.className = "message-panel " + type;
-    els.messagePanel.innerHTML = "<strong>" + escapeHtml(title) + "</strong><span>" + escapeHtml(text) + "</span>";
+    els.messagePanel.innerHTML =
+      '<div class="message-copy"><strong>' + escapeHtml(title) + "</strong><span>" + escapeHtml(text) + "</span></div>" +
+      '<button type="button" class="message-close" aria-label="关闭提示">×</button>';
+    var close = els.messagePanel.querySelector(".message-close");
+    if (close) {
+      close.addEventListener("click", hideMessage);
+    }
+    if (type === "info") {
+      state.messageTimer = window.setTimeout(hideMessage, 5000);
+    }
+  }
+
+  function hideMessage() {
+    if (state.messageTimer) {
+      window.clearTimeout(state.messageTimer);
+      state.messageTimer = null;
+    }
+    els.messagePanel.className = "message-panel hidden";
+    els.messagePanel.innerHTML = "";
   }
 
   function isFilePreview() {
