@@ -33,12 +33,16 @@
 - [x] 5.4 如仅改静态资源，记录无需 Gradle；如触及 Java，使用 JDK 8 运行相关 Gradle 测试或 `.\gradlew.bat clean build`。
 - [x] 5.5 同步静态文件到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\` 并本地验证默认模式与 `?ccDebug=1` 模式。
 
-## 6. 功能中心首页重规划
+## 6. 平台侧边栏外部链接页面设计
 
-- [ ] 6.1 定义默认工作台的业务分组和功能卡片清单，至少包含“简历”“面试”，并为每张卡片标注目标 route、图标、标题、说明和是否已接入。
-- [ ] 6.2 将默认 `#workbench` 从大 hero + 横向 route 导航 + 状态卡布局，调整为左侧分组导航 + 右侧功能卡片矩阵。
-- [ ] 6.3 默认模式隐藏顶部大块身份卡、横向滚动 route 清单、Route/status chip 和接口契约；`?ccDebug=1` 模式保留调试入口。
-- [ ] 6.4 为功能卡片增加稳定响应式样式：桌面 3 至 4 列，窄屏折叠为单列或顶部分组条，避免文字溢出和横向滚动。
-- [ ] 6.5 已接入卡片跳转到现有 route；未接入卡片展示禁用态或“即将接入”提示，不暴露接口路径。
-- [ ] 6.6 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\`。
-- [ ] 6.7 运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。
+- [ ] 6.1 定义金蝶平台应用菜单建议清单，包含菜单名称、外部链接 URL/hash、目标 CyanCruise 页面和是否已接入。
+- [ ] 6.2 设计 `#workbench` 工作台总览页：展示目标岗位、准备度、最近简历、今日行动和推荐入口，但不再显示大 hero、横向 route 清单、Route/status chip 和接口契约。
+- [ ] 6.3 设计 `#resume-home` 简历功能页：展示 AI简历制作、AI简历修改、乔布简历、简历微课卡片，并分别映射到已接入 route 或“即将接入”占位页。
+- [ ] 6.4 设计 `#interview-home` 面试功能页：展示全景仿真面试、AI模拟面试、数字人面试、公务员真题、选调生真题、事业编、大厂真题、面试微课卡片。
+- [ ] 6.5 设计细分外部链接落地页：`#resume-templates`、`#resume-course`、`#digital-interview`、`#exam-civil-service`、`#exam-selected-graduate`、`#exam-public-institution`、`#exam-big-tech`、`#interview-course`。
+- [ ] 6.6 移除默认模式下 CyanCruise 页面内重复的左侧/横向导航依赖；导航由金蝶平台侧边栏承担，页面内只保留必要的返回工作台或相关操作。
+- [ ] 6.7 为外部链接页面增加稳定响应式卡片样式：桌面 3 至 4 列，窄屏单列，避免文字溢出和横向滚动。
+- [ ] 6.8 已接入卡片跳转到现有 route；未接入卡片展示禁用态或“即将接入”提示，不暴露接口路径。
+- [ ] 6.9 更新 README，记录金蝶平台侧边栏菜单和每个外部链接配置建议。
+- [ ] 6.10 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\`。
+- [ ] 6.11 运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。

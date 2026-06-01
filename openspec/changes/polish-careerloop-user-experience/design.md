@@ -11,7 +11,7 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 - 默认用户模式下只展示真实可用或可继续操作的主循环入口。
 - 将调试信息统一收敛到 `?ccDebug=1` 或等价开关，不在默认页面展示。
 - 简历页保留上传、创建、预览、删除、去诊断闭环，并减少 fileKey、接口路径等工程字段的视觉噪音。
-- 默认首页采用“功能中心”布局：左侧分组导航，右侧按模块展示功能卡片，减少大 hero、横向滚动导航和工程状态面板对用户注意力的占用。
+- 默认首页采用“平台菜单外部链接 + 右侧功能页”布局：金蝶平台侧边栏负责导航，CyanCruise 页面只负责当前菜单对应的内容卡片，减少大 hero、横向滚动导航和工程状态面板对用户注意力的占用。
 - 保持 `careerloop-routes.json`、`validate-routes.js`、OpenSpec 和现有 `/cc001/*` API 契约可审计。
 - 仅修改静态 webapp 和 route metadata，除非验证发现必须补后端映射。
 
@@ -44,15 +44,33 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 
 `file-upload-preview` route 不作为普通用户主导航入口，但 hash 直达或 debug 模式仍可打开。这样保留底层文件能力验证，同时避免把用户导向非业务流程页面。
 
-### 5. 默认首页改为功能中心，而不是工程工作台
+### 5. 默认入口改为平台菜单驱动的功能页，而不是页面内自造侧边栏
 
-普通用户首次进入 `#workbench` 时，应看到类似“求职工具箱”的功能中心：左侧是稳定的业务分组导航，例如“简历”“面试”“职业规划”“消息与洞察”；右侧是当前分组的功能卡片矩阵。卡片包含图标、功能名称和一句短说明，例如“AI简历制作”“AI简历修改”“乔布简历”“全景仿真面试”“AI模拟面试”“公务员真题”等。
+普通用户从金蝶平台侧边栏进入 CyanCruise 时，侧边栏应由金蝶“应用菜单”配置承载。CyanCruise 静态页不再重复绘制页面内左侧分组导航，避免和平台侧栏叠加、挤压内容区。每个菜单项使用外部链接打开同一个静态入口的不同 hash，例如 `/ierp/isv/v620/careerloop/index.htm#resume-home` 或 `/ierp/isv/v620/careerloop/index.htm#interview-home`。
 
-顶部的大标题、身份卡、状态卡和横向 route 导航应被收敛：身份信息只保留在必要位置或调试模式，状态摘要可以变成右侧功能区上方的轻量指标，不应占据首屏主体。默认页面不再把“工作台”作为唯一内容容器，而是把它作为功能分组首页。
+CyanCruise 页面右侧展示当前外部链接对应的功能页：页面标题、短说明和功能卡片矩阵。卡片包含图标、功能名称和一句短说明，例如“AI简历制作”“AI简历修改”“乔布简历”“全景仿真面试”“AI模拟面试”“公务员真题”等。
 
-替代方案是继续保留现有顶部工作台，只在下方追加功能卡片。该方案改动小，但首屏仍被工程结构占据，用户仍需滚动才能看到真正功能，因此不采用。
+顶部的大标题、身份卡、状态卡和横向 route 导航应被收敛：身份信息只保留在必要位置或调试模式，状态摘要可以变成右侧页面中的轻量信息，不应占据首屏主体。默认页面不再把“工作台”作为唯一内容容器，而是把不同 hash 视为金蝶平台菜单的落地页。
 
-移动端或窄屏下，左侧分组导航可以折叠为顶部横向分组条，但仍应避免出现冗长 route 清单。
+替代方案是在 CyanCruise 页面内部继续做一套左侧分组导航。该方案可控性高，但会和金蝶平台自带侧边栏重复，因此不采用。
+
+建议的金蝶应用菜单与外部链接设计：
+
+| 平台侧边栏菜单 | 外部链接 | CyanCruise 页面设计 |
+| --- | --- | --- |
+| CyanCruise 工作台 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 总览页，展示目标岗位、准备度、最近简历、今日行动和推荐入口。 |
+| 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 简历功能页，展示 AI简历制作、AI简历修改、乔布简历、简历微课卡片。 |
+| 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 简历诊断页，突出诊断、关键词、优化建议和返回简历入口。 |
+| 简历 / 乔布简历 | `/ierp/isv/v620/careerloop/index.htm#resume-templates` | 模板占位页，展示模板能力卡片和“即将接入”状态。 |
+| 简历 / 简历微课 | `/ierp/isv/v620/careerloop/index.htm#resume-course` | 微课占位页，展示课程卡片和“即将接入”状态。 |
+| 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 面试功能页，展示全景仿真面试、AI模拟面试、数字人面试和真题入口。 |
+| 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入模拟面试页，展示面试历史和开始练习入口。 |
+| 面试 / 数字人面试 | `/ierp/isv/v620/careerloop/index.htm#digital-interview` | 数字人面试占位页，展示能力说明和“即将接入”状态。 |
+| 面试 / 公务员真题 | `/ierp/isv/v620/careerloop/index.htm#exam-civil-service` | 真题占位页，展示题库说明和“即将接入”状态。 |
+| 面试 / 选调生真题 | `/ierp/isv/v620/careerloop/index.htm#exam-selected-graduate` | 真题占位页，展示题库说明和“即将接入”状态。 |
+| 面试 / 事业编 | `/ierp/isv/v620/careerloop/index.htm#exam-public-institution` | 真题占位页，展示题库说明和“即将接入”状态。 |
+| 面试 / 大厂真题 | `/ierp/isv/v620/careerloop/index.htm#exam-big-tech` | 真题占位页，展示题库说明和“即将接入”状态。 |
+| 面试 / 面试微课 | `/ierp/isv/v620/careerloop/index.htm#interview-course` | 微课占位页，展示课程卡片和“即将接入”状态。 |
 
 ## Risks / Trade-offs
 
@@ -61,15 +79,15 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 - **用户模式与 debug 模式分支造成遗漏** -> 重点验证 `#workbench`、`#resume`、`#resume-diagnosis` 以及 `?ccDebug=1#file-upload-preview`。
 - **简历页隐藏 fileKey 后排错信息减少** -> debug 模式下显示完整 fileKey 和接口契约；默认模式保留必要的“已关联文件”状态。
 - **功能中心卡片多但真实能力未完全闭环** -> 卡片 SHALL 优先映射已有 route 或可恢复占位；未接入的能力用明确的“即将接入”或禁用状态，避免用户误以为已完成。
-- **左侧导航与苍穹门户左栏叠加造成拥挤** -> CyanCruise 内部左侧导航宽度应克制，内容区优先保证卡片可读；窄屏自动折叠。
+- **平台菜单与页面 hash 需要保持一致** -> 在 README 或部署说明中维护菜单外部链接表；页面对未识别 hash 给出可恢复提示并返回工作台。
 
 ## Migration Plan
 
 1. 更新 route metadata，区分默认导航可见和 debug 可见。
 2. 更新 `app.js`：新增 debug mode 判断，默认隐藏开发信息和调试页。
 3. 调整简历页渲染顺序、文案和 fileKey 展示策略。
-4. 重构默认工作台布局：新增分组导航、功能卡片数据结构和卡片矩阵渲染。
-5. 更新样式，确保功能中心在苍穹门户内不横向溢出、不与平台侧栏重叠。
+4. 重构默认工作台和功能页布局：新增平台菜单 hash 映射、功能卡片数据结构和卡片矩阵渲染。
+5. 更新样式，确保右侧内容区在苍穹门户内不横向溢出、不依赖页面内二级侧边栏。
 6. 运行静态校验、OpenSpec 校验，并同步静态文件到苍穹本地运行目录。
 
 回滚方式：回退本 change 的静态资源提交，或在 URL 添加 `?ccDebug=1` 临时恢复调试信息用于排查。
