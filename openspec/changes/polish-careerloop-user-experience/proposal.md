@@ -25,5 +25,5 @@
 ## Impact
 
 - 主要影响 `webapp/isv/v620/careerloop/assets/app.js`、`assets/styles.css` 和 `careerloop-routes.json`。
-- 可能更新 `webapp/isv/v620/careerloop/README.md` 或迁移地图，记录 `?debug=1` 调试模式和隐藏入口策略。
+- 可能更新 `webapp/isv/v620/careerloop/README.md` 或迁移地图，记录 `?ccDebug=1` 调试模式和隐藏入口策略。
 - 需要运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 校验；若仅改静态资源，可不跑完整 Gradle，若触及 Java 则使用 JDK 8 `.\gradlew.bat clean build`。

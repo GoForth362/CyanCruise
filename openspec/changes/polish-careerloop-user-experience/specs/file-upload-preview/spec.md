@@ -12,5 +12,5 @@
 - **THEN** 页面 SHALL 通过 `/cc001/files/upload`、`/cc001/files/download`、`/cc001/files/delete` 或等价文件服务契约完成操作
 
 #### Scenario: 调试模式访问文件页
-- **WHEN** 开发者使用 `?debug=1#file-upload-preview` 或 hash 直达方式打开文件上传预览页面
+- **WHEN** 开发者使用 `?ccDebug=1#file-upload-preview` 或 hash 直达方式打开文件上传预览页面
 - **THEN** 页面 SHALL 保留文件上传、预览、下载、删除和文本抽取契约信息，用于排查 BOS 文件服务接入

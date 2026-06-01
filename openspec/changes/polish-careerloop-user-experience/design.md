@@ -9,7 +9,7 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 **Goals:**
 
 - 默认用户模式下只展示真实可用或可继续操作的主循环入口。
-- 将调试信息统一收敛到 `?debug=1` 或等价开关，不在默认页面展示。
+- 将调试信息统一收敛到 `?ccDebug=1` 或等价开关，不在默认页面展示。
 - 简历页保留上传、创建、预览、删除、去诊断闭环，并减少 fileKey、接口路径等工程字段的视觉噪音。
 - 保持 `careerloop-routes.json`、`validate-routes.js`、OpenSpec 和现有 `/cc001/*` API 契约可审计。
 - 仅修改静态 webapp 和 route metadata，除非验证发现必须补后端映射。
@@ -25,7 +25,7 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 
 ### 1. 默认隐藏调试信息，而不是删除
 
-默认页面隐藏接口契约、route/status chip、entry-only 标签、调试入口和文件上传预览独立导航。通过 `?debug=1` 打开时仍可显示这些面板，便于继续排查苍穹 KAPI、BOS 文件服务和 route map。
+默认页面隐藏接口契约、route/status chip、entry-only 标签、调试入口和文件上传预览独立导航。通过 `?ccDebug=1` 打开时仍可显示这些面板，便于继续排查苍穹 KAPI、BOS 文件服务和 route map。
 
 替代方案是直接删除调试信息。该方案会让用户界面更干净，但会削弱当前本地部署和苍穹集成排错能力，因此不采用。
 
@@ -45,9 +45,9 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 
 ## Risks / Trade-offs
 
-- **调试入口隐藏后排查路径不明显** -> 在 README 或迁移文档记录 `?debug=1`，并保留 route hash 直达。
+- **调试入口隐藏后排查路径不明显** -> 在 README 或迁移文档记录 `?ccDebug=1`，并保留 route hash 直达。
 - **route metadata 调整可能影响校验脚本** -> 同步更新 `careerloop-routes.json` 与 `validate-routes.js`，运行 route 校验。
-- **用户模式与 debug 模式分支造成遗漏** -> 重点验证 `#workbench`、`#resume`、`#resume-diagnosis` 以及 `?debug=1#file-upload-preview`。
+- **用户模式与 debug 模式分支造成遗漏** -> 重点验证 `#workbench`、`#resume`、`#resume-diagnosis` 以及 `?ccDebug=1#file-upload-preview`。
 - **简历页隐藏 fileKey 后排错信息减少** -> debug 模式下显示完整 fileKey 和接口契约；默认模式保留必要的“已关联文件”状态。
 
 ## Migration Plan
@@ -58,7 +58,7 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 4. 更新样式，确保隐藏调试信息后布局不塌陷、不重叠。
 5. 运行静态校验、OpenSpec 校验，并同步静态文件到苍穹本地运行目录。
 
-回滚方式：回退本 change 的静态资源提交，或在 URL 添加 `?debug=1` 临时恢复调试信息用于排查。
+回滚方式：回退本 change 的静态资源提交，或在 URL 添加 `?ccDebug=1` 临时恢复调试信息用于排查。
 
 ## Open Questions
 

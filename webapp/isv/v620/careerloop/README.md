@@ -37,7 +37,7 @@
 开发排查时可以显式使用：
 
 ```text
-index.html?debug=1#file-upload-preview
+index.html?ccDebug=1#file-upload-preview
 ```
 
 调试模式会恢复隐藏 route、接口契约、route/status metadata 和文件上传预览入口，用于检查 KAPI 路由、BOS 文件服务和 route map。该模式只用于开发与验收，不作为生产菜单发布入口。

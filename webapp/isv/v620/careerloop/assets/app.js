@@ -180,7 +180,11 @@
 
   function isDebugMode() {
     var params = new URLSearchParams(window.location.search);
-    var value = String(params.get("debug") || params.get("devInfo") || "").toLowerCase();
+    var value = String(params.get("ccDebug") || "").toLowerCase();
+    var legacyValue = String(params.get("debug") || "").toLowerCase();
+    if (legacyValue === "careerloop") {
+      return true;
+    }
     return value === "1" || value === "true" || value === "yes";
   }
 
@@ -694,7 +698,7 @@
     } else if (item.key === "messages") {
       body += statePanel("站内消息", "消息列表、未读数、已读和订阅配额契约已映射；微信真实发送暂不迁移。", "pending");
     } else if (item.key === "file-upload-preview") {
-      body += statePanel("文件服务调试", isDebugMode() ? "上传、预览、下载、删除和文本抽取走 Cosmic 文件 adapter；disabled 时显示 unavailable。" : "这是文件服务调试页。普通用户请在简历页上传和预览 PDF；开发排查请使用 ?debug=1。", isDebugMode() ? "pending" : "warning");
+      body += statePanel("文件服务调试", isDebugMode() ? "上传、预览、下载、删除和文本抽取走 Cosmic 文件 adapter；disabled 时显示 unavailable。" : "这是文件服务调试页。普通用户请在简历页上传和预览 PDF；开发排查请使用 ?ccDebug=1。", isDebugMode() ? "pending" : "warning");
     } else if (item.key === "admin-console") {
       body += statePanel("管理员边界", "仅 ADMIN 或平台管理员身份可访问，不使用硬编码 adminId。", "warning");
     } else if (item.status === "entry-only") {
