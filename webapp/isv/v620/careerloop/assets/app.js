@@ -335,7 +335,10 @@
   }
 
   function resumeFilePanel() {
-    var text = state.fileMessage ? state.fileMessage.text : "文件上传是可选增强；也可以手工填写 fileKey 后直接创建简历元数据。";
+    var defaultText = isDebugMode()
+      ? "文件上传是可选增强；也可以手工填写 fileKey 后直接创建简历元数据。"
+      : "可以先选择 PDF 上传，系统会自动关联到本次简历。";
+    var text = state.fileMessage ? state.fileMessage.text : defaultText;
     var type = state.fileMessage ? state.fileMessage.type : "empty";
     return '<section class="panel"><h3>可选文件上传</h3>' +
       '<div class="form-grid">' +
