@@ -44,21 +44,13 @@
     page("onboarding", "新用户引导", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
     page("today-action", "今日行动", "available", "user", "展示下一步建议，并跳转到对应页面。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "测评提交契约已就绪，完整题组页面后续细化。", ["assessmentSubmit"]),
-    page("resume-home", "简历", "available", "user", "制作、修改、模板和课程入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+    page("resume-home", "简历", "available", "user", "AI 简历制作和 AI 简历修改入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
-    page("resume-templates", "乔布简历", "coming-soon", "user", "模板库和快速套用能力。", [], { defaultNav: false }),
-    page("resume-course", "简历微课", "coming-soon", "user", "拆解简历写作方法和 HR 筛选标准。", [], { defaultNav: false }),
     page("career-plan", "职业计划", "available", "user", "查看长期计划摘要和本周重点。", ["plan", "ensurePlan"]),
-    page("interview-home", "面试", "available", "user", "仿真面试、AI 练习、数字人和真题入口。", ["interviews", "startInterview"]),
+    page("interview-home", "面试", "available", "user", "全景仿真面试和 AI 模拟面试入口。", ["interviews", "startInterview"]),
     page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
-    page("digital-interview", "数字人面试", "coming-soon", "user", "数字人陪练和表达反馈能力。", [], { defaultNav: false }),
-    page("exam-civil-service", "公务员真题", "coming-soon", "user", "省考国考结构化真题练习。", [], { defaultNav: false }),
-    page("exam-selected-graduate", "选调生真题", "coming-soon", "user", "地方与中央选调结构化真题。", [], { defaultNav: false }),
-    page("exam-public-institution", "事业编", "coming-soon", "user", "事业单位面试真题与答题训练。", [], { defaultNav: false }),
-    page("exam-big-tech", "大厂真题", "coming-soon", "user", "互联网与技术岗面试题库。", [], { defaultNav: false }),
-    page("interview-course", "面试微课", "coming-soon", "user", "拆解面试标准与常见题型。", [], { defaultNav: false }),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
     page("employment-insight", "就业洞察", "available", "user", "按学校、专业和目标岗位查看就业洞察。", ["employmentInsight"]),
@@ -71,44 +63,18 @@
     ["CyanCruise 工作台", "#workbench", "已接入"],
     ["简历 / AI简历制作", "#resume-home", "已接入"],
     ["简历 / AI简历修改", "#resume-diagnosis", "已接入"],
-    ["简历 / 乔布简历", "#resume-templates", "占位"],
-    ["简历 / 简历微课", "#resume-course", "占位"],
     ["面试 / 全景仿真面试", "#interview-home", "已接入"],
-    ["面试 / AI模拟面试", "#interview", "已接入"],
-    ["面试 / 数字人面试", "#digital-interview", "占位"],
-    ["面试 / 公务员真题", "#exam-civil-service", "占位"],
-    ["面试 / 选调生真题", "#exam-selected-graduate", "占位"],
-    ["面试 / 事业编", "#exam-public-institution", "占位"],
-    ["面试 / 大厂真题", "#exam-big-tech", "占位"],
-    ["面试 / 面试微课", "#interview-course", "占位"]
+    ["面试 / AI模拟面试", "#interview", "已接入"]
   ];
   var featureGroups = {
     "resume-home": [
-      feature("AI简历制作", "AI", "从目标岗位生成高质量简历草稿", "resume", "已接入"),
-      feature("AI简历修改", "改", "对标岗位胜任力模型优化表达", "resume-diagnosis", "已接入"),
-      feature("乔布简历", "模", "模板库和快速套用即将接入", "resume-templates", "即将接入"),
-      feature("简历微课", "课", "拆解 HR 筛选标准与写作方法", "resume-course", "即将接入")
+      feature("AI简历制作", "AI", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
+      feature("AI简历修改", "改", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
     ],
     "interview-home": [
-      feature("全景仿真面试", "仿", "真实面试环境模拟", "interview", "已接入"),
-      feature("AI模拟面试", "AI", "多场景还原真实面试", "interview", "已接入"),
-      feature("数字人面试", "数", "数字人陪练和表达反馈", "digital-interview", "即将接入"),
-      feature("公务员真题", "公", "省考国考结构化真题", "exam-civil-service", "即将接入"),
-      feature("选调生真题", "选", "地方、中央结构化真题", "exam-selected-graduate", "即将接入"),
-      feature("事业编", "事", "事业单位面试真题", "exam-public-institution", "即将接入"),
-      feature("大厂真题", "厂", "互联网与技术岗题库", "exam-big-tech", "即将接入"),
-      feature("面试微课", "课", "拆解面试标准与常见题型", "interview-course", "即将接入")
+      feature("全景仿真面试", "仿", "沿用 IPD 模拟面试流程，按目标岗位进入练习", "interview", "已接入"),
+      feature("AI模拟面试", "AI", "沿用 IPD AI 追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
     ]
-  };
-  var placeholderPages = {
-    "resume-templates": feature("乔布简历", "模", "模板库、版式选择和快速套用能力后续接入。", "", "即将接入"),
-    "resume-course": feature("简历微课", "课", "围绕简历结构、项目表达和 HR 筛选标准提供课程入口。", "", "即将接入"),
-    "digital-interview": feature("数字人面试", "数", "数字人陪练、语音表达和镜头反馈后续接入。", "", "即将接入"),
-    "exam-civil-service": feature("公务员真题", "公", "省考国考结构化面试题库后续接入。", "", "即将接入"),
-    "exam-selected-graduate": feature("选调生真题", "选", "选调生面试真题和答题训练后续接入。", "", "即将接入"),
-    "exam-public-institution": feature("事业编", "事", "事业单位面试真题和专项训练后续接入。", "", "即将接入"),
-    "exam-big-tech": feature("大厂真题", "厂", "互联网和技术岗真题题库后续接入。", "", "即将接入"),
-    "interview-course": feature("面试微课", "课", "面试标准、常见题型和表达训练课程后续接入。", "", "即将接入")
   };
   var els = {};
   var state = {
@@ -293,8 +259,6 @@
       renderWorkbench(item);
     } else if (item.key === "resume-home" || item.key === "interview-home") {
       renderFeatureHome(item);
-    } else if (placeholderPages[item.key]) {
-      renderPlaceholderPage(item);
     } else if (item.key === "onboarding") {
       renderOnboarding(item);
     } else if (item.key === "resume") {
@@ -335,14 +299,6 @@
     renderFeatureShell(item, item.title, item.summary,
       '<section class="feature-section"><h3>' + escapeHtml(item.title) + '工具</h3><div class="feature-grid">' +
       featureCards(cards) + '</div></section>');
-  }
-
-  function renderPlaceholderPage(item) {
-    var card = placeholderPages[item.key];
-    renderFeatureShell(item, item.title, item.summary,
-      '<section class="feature-section"><h3>' + escapeHtml(item.title) + '</h3><div class="feature-grid single">' +
-      featureCards([card]) + '</div></section>' +
-      statePanel("即将接入", card.summary, "pending"));
   }
 
   function renderOnboarding(item) {

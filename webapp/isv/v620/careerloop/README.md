@@ -22,17 +22,9 @@
 - `#resume`
 - `#file-upload-preview`
 - `#resume-diagnosis`
-- `#resume-templates`
-- `#resume-course`
 - `#career-plan`
 - `#interview-home`
 - `#interview`
-- `#digital-interview`
-- `#exam-civil-service`
-- `#exam-selected-graduate`
-- `#exam-public-institution`
-- `#exam-big-tech`
-- `#interview-course`
 - `#assistant`
 - `#messages`
 - `#employment-insight`
@@ -49,16 +41,10 @@
 | CyanCruise 工作台 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 已接入 |
 | 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 已接入 |
 | 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 已接入 |
-| 简历 / 乔布简历 | `/ierp/isv/v620/careerloop/index.htm#resume-templates` | 占位 |
-| 简历 / 简历微课 | `/ierp/isv/v620/careerloop/index.htm#resume-course` | 占位 |
 | 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 已接入 |
 | 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入 |
-| 面试 / 数字人面试 | `/ierp/isv/v620/careerloop/index.htm#digital-interview` | 占位 |
-| 面试 / 公务员真题 | `/ierp/isv/v620/careerloop/index.htm#exam-civil-service` | 占位 |
-| 面试 / 选调生真题 | `/ierp/isv/v620/careerloop/index.htm#exam-selected-graduate` | 占位 |
-| 面试 / 事业编 | `/ierp/isv/v620/careerloop/index.htm#exam-public-institution` | 占位 |
-| 面试 / 大厂真题 | `/ierp/isv/v620/careerloop/index.htm#exam-big-tech` | 占位 |
-| 面试 / 面试微课 | `/ierp/isv/v620/careerloop/index.htm#interview-course` | 占位 |
+
+当前阶段只发布 IPD 已有主流程对应的四个核心入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试。乔布简历、简历微课、数字人面试、真题库和面试微课等能力暂不配置到平台菜单，待后续真实能力接入后再新增。
 
 ## 调试模式
 
