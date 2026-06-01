@@ -4,7 +4,7 @@
 
 ## 入口文件
 
-- `index.html`：CareerLoop webapp 壳，包含身份区、页面导航、状态卡片和页面容器。
+- `index.html`：CareerLoop webapp 壳，默认由金蝶平台侧边栏外部链接驱动，`?ccDebug=1` 时显示调试身份区、页面导航和状态卡片。
 - `assets/app.js`：轻量 page registry、hash navigation、身份解析、WebAPI 调用和页面状态渲染。
 - `assets/styles.css`：桌面和移动 webview 的响应式布局。
 - `careerloop-routes.json`：IPD 来源、CyanCruise route key、Cosmic WebAPI、平台挂载、身份要求和 fallback 契约。
@@ -15,20 +15,50 @@
 用户侧页面包括：
 
 - `#workbench`
+- `#resume-home`
 - `#onboarding`
 - `#today-action`
 - `#assessment`
 - `#resume`
 - `#file-upload-preview`
 - `#resume-diagnosis`
+- `#resume-templates`
+- `#resume-course`
 - `#career-plan`
+- `#interview-home`
 - `#interview`
+- `#digital-interview`
+- `#exam-civil-service`
+- `#exam-selected-graduate`
+- `#exam-public-institution`
+- `#exam-big-tech`
+- `#interview-course`
 - `#assistant`
 - `#messages`
 - `#employment-insight`
 - `#career-resources`（默认导航隐藏，调试或后续内容接入时使用）
 
 管理侧入口为 `#admin-console`，只在生产管理员身份或开发角色显式包含 `ADMIN`、`COSMIC_ADMIN`、`PLATFORM_ADMIN` 时展示可访问状态。
+
+## 金蝶平台侧边栏外部链接
+
+正式菜单建议由金蝶“应用菜单”配置，CyanCruise 页面不再重复绘制页面内左侧栏。每个菜单项使用外部链接打开同一个静态入口的不同 hash：
+
+| 菜单 | 外部链接 | 状态 |
+| --- | --- | --- |
+| CyanCruise 工作台 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 已接入 |
+| 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 已接入 |
+| 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 已接入 |
+| 简历 / 乔布简历 | `/ierp/isv/v620/careerloop/index.htm#resume-templates` | 占位 |
+| 简历 / 简历微课 | `/ierp/isv/v620/careerloop/index.htm#resume-course` | 占位 |
+| 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 已接入 |
+| 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入 |
+| 面试 / 数字人面试 | `/ierp/isv/v620/careerloop/index.htm#digital-interview` | 占位 |
+| 面试 / 公务员真题 | `/ierp/isv/v620/careerloop/index.htm#exam-civil-service` | 占位 |
+| 面试 / 选调生真题 | `/ierp/isv/v620/careerloop/index.htm#exam-selected-graduate` | 占位 |
+| 面试 / 事业编 | `/ierp/isv/v620/careerloop/index.htm#exam-public-institution` | 占位 |
+| 面试 / 大厂真题 | `/ierp/isv/v620/careerloop/index.htm#exam-big-tech` | 占位 |
+| 面试 / 面试微课 | `/ierp/isv/v620/careerloop/index.htm#interview-course` | 占位 |
 
 ## 调试模式
 
@@ -70,4 +100,5 @@ index.html?identityMode=development&userId=<id>
 node webapp\isv\v620\careerloop\validate-routes.js
 node --check webapp\isv\v620\careerloop\assets\app.js
 openspec validate migrate-webapp-careerloop-pages --strict
+openspec validate polish-careerloop-user-experience --strict
 ```
