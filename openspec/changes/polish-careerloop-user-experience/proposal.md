@@ -1,6 +1,6 @@
 ## Why
 
-当前 CareerLoop 页面已经跑通苍穹身份、简历上传、预览、删除和主要页面入口，但普通用户界面仍混入接口契约、route/status chip、entry-only 等工程验收信息。现在需要把“可验证的工程页面”收口成“可自然使用的求职主循环体验”，避免用户被调试信息和非核心入口干扰。
+当前 CyanCruise 页面已经跑通苍穹身份、简历上传、预览、删除和主要页面入口，但普通用户界面仍混入接口契约、route/status chip、entry-only 等工程验收信息。现在需要把“可验证的工程页面”收口成“可自然使用的求职主循环体验”，避免用户被调试信息和非核心入口干扰。
 
 ## What Changes
 
@@ -28,6 +28,6 @@
 
 ## Impact
 
-- 主要影响 `webapp/isv/v620/careerloop/assets/app.js`、`assets/styles.css` 和 `careerloop-routes.json`。
-- 可能更新 `webapp/isv/v620/careerloop/README.md` 或迁移地图，记录 `?ccDebug=1` 调试模式和隐藏入口策略。
-- 需要运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 校验；若仅改静态资源，可不跑完整 Gradle，若触及 Java 则使用 JDK 8 `.\gradlew.bat clean build`。
+- 主要影响 `webapp/isv/v620/cyancruise/assets/app.js`、`assets/styles.css` 和 `cyancruise-routes.json`。
+- 可能更新 `webapp/isv/v620/cyancruise/README.md` 或迁移地图，记录 `?ccDebug=1` 调试模式和隐藏入口策略。
+- 需要运行 `node webapp\isv\v620\cyancruise\validate-routes.js`、`node --check webapp\isv\v620\cyancruise\assets\app.js`、OpenSpec 校验；若仅改静态资源，可不跑完整 Gradle，若触及 Java 则使用 JDK 8 `.\gradlew.bat clean build`。

@@ -1,7 +1,7 @@
 ## 1. 规格与范围确认
 
 - [x] 1.1 运行 `openspec validate polish-careerloop-user-experience --strict`，确认 proposal/design/specs/tasks 合法。
-- [x] 1.2 审阅 `careerloop-routes.json` 当前 route 列表，标记默认用户可见、debug 可见和 hash 直达可见的页面。
+- [x] 1.2 审阅 `cyancruise-routes.json` 当前 route 列表，标记默认用户可见、debug 可见和 hash 直达可见的页面。
 - [x] 1.3 确认本 change 仅做静态 webapp 体验收口，不新增后端 API、不新增依赖、不改变 `/cc001/*` 契约。
 
 ## 2. 导航与调试模式
@@ -9,7 +9,7 @@
 - [x] 2.1 在 `assets/app.js` 中新增 `isDebugMode()` 或等价判断，支持 `?ccDebug=1`。
 - [x] 2.2 调整导航渲染：默认隐藏 `file-upload-preview` 等调试或 entry-only 页面，debug 模式展示。
 - [x] 2.3 保留 hash 直达隐藏 route 的能力，默认模式下给出可恢复提示或直接渲染但不加入导航。
-- [x] 2.4 更新 `careerloop-routes.json` 的可见性 metadata，使 route map 能表达默认可见与 debug 可见。
+- [x] 2.4 更新 `cyancruise-routes.json` 的可见性 metadata，使 route map 能表达默认可见与 debug 可见。
 
 ## 3. 页面展示收口
 
@@ -28,10 +28,10 @@
 ## 5. 文档、同步与验证
 
 - [x] 5.1 更新 README 或迁移文档，记录 `?ccDebug=1` 调试模式和隐藏文件上传预览入口的原因。
-- [x] 5.2 运行 `node webapp\isv\v620\careerloop\validate-routes.js`。
-- [x] 5.3 运行 `node --check webapp\isv\v620\careerloop\assets\app.js`。
+- [x] 5.2 运行 `node webapp\isv\v620\cyancruise\validate-routes.js`。
+- [x] 5.3 运行 `node --check webapp\isv\v620\cyancruise\assets\app.js`。
 - [x] 5.4 如仅改静态资源，记录无需 Gradle；如触及 Java，使用 JDK 8 运行相关 Gradle 测试或 `.\gradlew.bat clean build`。
-- [x] 5.5 同步静态文件到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\` 并本地验证默认模式与 `?ccDebug=1` 模式。
+- [x] 5.5 同步静态文件到 `F:\kingdee\ENV\static-file-service\isv\v620\cyancruise\` 并本地验证默认模式与 `?ccDebug=1` 模式。
 
 ## 6. 平台侧边栏外部链接页面设计
 
@@ -44,8 +44,8 @@
 - [x] 6.7 为外部链接页面增加稳定响应式卡片样式：桌面 3 至 4 列，窄屏单列，避免文字溢出和横向滚动。
 - [x] 6.8 已接入卡片跳转到现有 route；未接入卡片展示禁用态或“即将接入”提示，不暴露接口路径。
 - [x] 6.9 更新 README，记录金蝶平台侧边栏菜单和每个外部链接配置建议。
-- [x] 6.10 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\`。
-- [x] 6.11 运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。
+- [x] 6.10 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\cyancruise\`。
+- [x] 6.11 运行 `node webapp\isv\v620\cyancruise\validate-routes.js`、`node --check webapp\isv\v620\cyancruise\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。
 
 ## 7. 首页、就业、深造独立落地页
 

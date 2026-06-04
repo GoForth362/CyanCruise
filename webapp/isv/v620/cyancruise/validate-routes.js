@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const routePath = path.join(__dirname, "careerloop-routes.json");
+const routePath = path.join(__dirname, "cyancruise-routes.json");
 const appPath = path.join(__dirname, "assets", "app.js");
 const routeMap = JSON.parse(fs.readFileSync(routePath, "utf8"));
 const app = fs.readFileSync(appPath, "utf8");
@@ -266,4 +266,4 @@ for (const api of requiredApis) {
   }
 }
 
-console.log("careerloop route map ok");
+console.log("cyancruise route map ok");

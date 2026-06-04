@@ -2,7 +2,7 @@
   "platform": "kingdee-cosmic-webapp",
   "change": "migrate-cosmic-platform-mounting",
   "sourceProject": "F:\\Project\\IPD",
-  "targetRoot": "webapp/isv/v620/careerloop",
+  "targetRoot": "webapp/isv/v620/cyancruise",
   "pageShell": {
     "change": "migrate-webapp-careerloop-pages",
     "implementation": "static-hash-route-states",
@@ -78,7 +78,7 @@
     },
     "development": {
       "mode": "explicit-fallback",
-      "sources": ["query:userId", "localStorage:careerloop.userId", "manual-input"],
+      "sources": ["query:userId", "localStorage:cyancruise.userId", "manual-input"],
       "rule": "Development fallback must be explicit and must not be treated as production identity."
     },
     "rule": "Do not call user-owned or admin-owned WebAPI without an explicit platform or development identity.",
@@ -132,12 +132,12 @@
       },
       {
         "key": "route-map",
-        "command": "node webapp\\isv\\v620\\careerloop\\validate-routes.js",
+        "command": "node webapp\\isv\\v620\\cyancruise\\validate-routes.js",
         "releaseGate": "blocking"
       },
       {
         "key": "webapp-js",
-        "command": "node --check webapp\\isv\\v620\\careerloop\\assets\\app.js",
+        "command": "node --check webapp\\isv\\v620\\cyancruise\\assets\\app.js",
         "releaseGate": "blocking"
       }
     ],
@@ -226,8 +226,8 @@
       "key": "workbench",
       "title": "CyanCruise 首页",
       "ipdPaths": ["pages/home/index"],
-      "target": "index.html#workbench",
-      "status": "available",
+      "target": "index.html?ccRoute=workbench",
+      "status": "entry-only",
       "webApis": [
         {
           "name": "career profile snapshot",
@@ -253,7 +253,7 @@
       "key": "employment-home",
       "title": "就业",
       "ipdPaths": ["pages/home/index", "pages/resume/index", "pages/interview/index"],
-      "target": "index.html#employment-home",
+      "target": "index.html?ccRoute=employment-home",
       "status": "available",
       "webApis": [
         {
@@ -280,7 +280,7 @@
       "key": "further-study-home",
       "title": "深造",
       "ipdPaths": ["pages/home/index"],
-      "target": "index.html#further-study-home",
+      "target": "index.html?ccRoute=further-study-home",
       "status": "available",
       "webApis": [
         {
@@ -298,7 +298,7 @@
       "key": "postgraduate-exam",
       "title": "考研",
       "ipdPaths": ["pages/home/index"],
-      "target": "index.html#postgraduate-exam",
+      "target": "index.html?ccRoute=postgraduate-exam",
       "status": "entry-only",
       "webApis": [
         {
@@ -316,7 +316,7 @@
       "key": "postgraduate-recommendation",
       "title": "保研",
       "ipdPaths": ["pages/home/index"],
-      "target": "index.html#postgraduate-recommendation",
+      "target": "index.html?ccRoute=postgraduate-recommendation",
       "status": "entry-only",
       "webApis": [
         {
@@ -334,7 +334,7 @@
       "key": "study-abroad",
       "title": "留学",
       "ipdPaths": ["pages/home/index"],
-      "target": "index.html#study-abroad",
+      "target": "index.html?ccRoute=study-abroad",
       "status": "entry-only",
       "webApis": [
         {
@@ -350,9 +350,9 @@
     },
     {
       "key": "onboarding",
-      "title": "新用户引导",
+      "title": "个人情况",
       "ipdPaths": ["pages/onboarding/index"],
-      "target": "index.html#onboarding",
+      "target": "index.html?ccRoute=onboarding",
       "status": "available",
       "webApis": [
         {
@@ -384,7 +384,7 @@
         "/pages/interview/index",
         "pages/interview/index"
       ],
-      "target": "index.html#today-action",
+      "target": "index.html?ccRoute=today-action",
       "status": "available",
       "webApis": [
         {
@@ -394,7 +394,7 @@
           "body": ["userId"],
           "userIdRequired": true,
           "dto": "CareerAgentTodayDto",
-          "fallback": "Show rule result unavailable and keep quick actions visible."
+          "fallback": "Show waiting-for-complete-profile state without quick actions."
         }
       ]
     },
@@ -402,7 +402,7 @@
       "key": "assessment",
       "title": "职业测评",
       "ipdPaths": ["pages/assessment/index", "pages/assessment/quiz", "pages/assessment/result"],
-      "target": "index.html#assessment",
+      "target": "index.html?ccRoute=assessment",
       "status": "entry-only",
       "webApis": [
         {
@@ -412,7 +412,7 @@
           "body": ["userId", "scale", "request"],
           "userIdRequired": true,
           "dto": "AssessmentSubmitRequest -> AssessmentScoreResult",
-          "fallback": "Show assessment entry and profile result summary only."
+          "fallback": "Show personality and preference assessment placeholder only."
         }
       ]
     },
@@ -420,7 +420,7 @@
       "key": "resume",
       "title": "简历",
       "ipdPaths": ["pages/resume/index", "pages/resume/template", "api/file.ts"],
-      "target": "index.html#resume",
+      "target": "index.html?ccRoute=resume",
       "status": "available",
       "webApis": [
         {
@@ -479,7 +479,7 @@
         "F:\\Project\\IPD\\backend\\src\\main\\java\\com\\group1\\career\\utils\\PdfTextExtractor.java",
         "F:\\Project\\IPD\\frontend\\src\\api\\file.ts"
       ],
-      "target": "index.html#file-upload-preview",
+      "target": "index.html?ccRoute=file-upload-preview",
       "status": "entry-only",
       "visibility": {
         "defaultNav": false,
@@ -538,7 +538,7 @@
       "key": "resume-diagnosis",
       "title": "简历诊断",
       "ipdPaths": ["pages/resume-ai/index"],
-      "target": "index.html#resume-diagnosis",
+      "target": "index.html?ccRoute=resume-diagnosis",
       "status": "available",
       "webApis": [
         {
@@ -563,10 +563,10 @@
     },
     {
       "key": "career-plan",
-      "title": "职业计划",
+      "title": "AI路径规划",
       "ipdPaths": ["pages/map/index"],
-      "target": "index.html#career-plan",
-      "status": "available",
+      "target": "index.html?ccRoute=career-plan",
+      "status": "entry-only",
       "webApis": [
         {
           "name": "career plan summary",
@@ -575,7 +575,7 @@
           "body": ["userId"],
           "userIdRequired": true,
           "dto": "CareerPlanSummaryDto",
-          "fallback": "Show plan summary pending."
+          "fallback": "Show AI path planning placeholder."
         },
         {
           "name": "ensure plan",
@@ -584,7 +584,7 @@
           "body": ["userId"],
           "userIdRequired": true,
           "dto": "CareerPlanSummaryDto",
-          "fallback": "Show create-plan action."
+          "fallback": "Show planning Agent pending state."
         }
       ]
     },
@@ -592,7 +592,7 @@
       "key": "employment-insight",
       "title": "就业洞察",
       "ipdPaths": ["pages/cdut-employment/index", "pages/cdut-employment/detail"],
-      "target": "index.html#employment-insight",
+      "target": "index.html?ccRoute=employment-insight",
       "status": "available",
       "webApis": [
         {
@@ -610,7 +610,7 @@
       "key": "career-resources",
       "title": "资源入口",
       "ipdPaths": ["pages/home/index", "api/home.ts"],
-      "target": "index.html#career-resources",
+      "target": "index.html?ccRoute=career-resources",
       "status": "available",
       "visibility": {
         "defaultNav": false,
@@ -633,7 +633,7 @@
       "key": "messages",
       "title": "消息中心",
       "ipdPaths": ["pages/messages/index", "api/notification.ts", "utils/wxSubscribe.ts"],
-      "target": "index.html#messages",
+      "target": "index.html?ccRoute=messages",
       "status": "available",
       "webApis": [
         {
@@ -687,7 +687,7 @@
       "key": "subscriptions",
       "title": "订阅授权",
       "ipdPaths": ["utils/wxSubscribe.ts", "WechatSubscribeController", "WechatSubscribeService"],
-      "target": "index.html#subscriptions",
+      "target": "index.html?ccRoute=subscriptions",
       "status": "entry-only",
       "webApis": [
         {
@@ -723,7 +723,7 @@
       "key": "weekly-report",
       "title": "周报通知",
       "ipdPaths": ["WeeklyReportService", "WeeklyReportJob"],
-      "target": "index.html#weekly-report",
+      "target": "index.html?ccRoute=weekly-report",
       "status": "entry-only",
       "webApis": [
         {
@@ -746,7 +746,7 @@
         "F:\\Project\\IPD\\admin-frontend\\src\\router\\index.ts",
         "F:\\Project\\IPD\\admin-frontend\\src\\api\\index.ts"
       ],
-      "target": "index.html#admin-console",
+      "target": "index.html?ccRoute=admin-console",
       "status": "entry-only",
       "visibility": {
         "defaultNav": false,
@@ -861,7 +861,7 @@
         "pages/interview/history",
         "pages/interview/report"
       ],
-      "target": "index.html#interview",
+      "target": "index.html?ccRoute=interview",
       "status": "available",
       "webApis": [
         {
@@ -888,7 +888,7 @@
       "key": "assistant",
       "title": "求职助手",
       "ipdPaths": ["pages/assistant/index", "pages/assistant/history"],
-      "target": "index.html#assistant",
+      "target": "index.html?ccRoute=assistant",
       "status": "available",
       "webApis": [
         {
@@ -914,23 +914,23 @@
   ],
   "platformMounts": [
     {
-      "mountKey": "careerloop-workbench",
+      "mountKey": "cyancruise-workbench",
       "routeKey": "workbench",
-      "title": "CareerLoop 工作台",
-      "target": "index.html#workbench",
-      "audience": "careerloop-user",
+      "title": "CyanCruise 工作台",
+      "target": "index.html?ccRoute=workbench",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
       "fallback": "Show identity-required state when Cosmic login context is unavailable.",
-      "deploymentNotes": "Mount as the primary CareerLoop user menu entry under Cosmic webapp resources."
+      "deploymentNotes": "Mount as the primary CyanCruise user menu entry under Cosmic webapp resources."
     },
     {
-      "mountKey": "careerloop-employment-home",
+      "mountKey": "cyancruise-employment-home",
       "routeKey": "employment-home",
       "title": "就业",
-      "target": "index.html#employment-home",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=employment-home",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -938,11 +938,11 @@
       "deploymentNotes": "Mount as the platform sidebar parent page for employment features."
     },
     {
-      "mountKey": "careerloop-further-study-home",
+      "mountKey": "cyancruise-further-study-home",
       "routeKey": "further-study-home",
       "title": "深造",
-      "target": "index.html#further-study-home",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=further-study-home",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -950,11 +950,11 @@
       "deploymentNotes": "Mount as the platform sidebar parent page for postgraduate, recommendation, and study-abroad planning."
     },
     {
-      "mountKey": "careerloop-postgraduate-exam",
+      "mountKey": "cyancruise-postgraduate-exam",
       "routeKey": "postgraduate-exam",
       "title": "考研",
-      "target": "index.html#postgraduate-exam",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=postgraduate-exam",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "entry-only",
       "identityMode": "production-cosmic-context",
@@ -962,11 +962,11 @@
       "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
     },
     {
-      "mountKey": "careerloop-postgraduate-recommendation",
+      "mountKey": "cyancruise-postgraduate-recommendation",
       "routeKey": "postgraduate-recommendation",
       "title": "保研",
-      "target": "index.html#postgraduate-recommendation",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=postgraduate-recommendation",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "entry-only",
       "identityMode": "production-cosmic-context",
@@ -974,11 +974,11 @@
       "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
     },
     {
-      "mountKey": "careerloop-study-abroad",
+      "mountKey": "cyancruise-study-abroad",
       "routeKey": "study-abroad",
       "title": "留学",
-      "target": "index.html#study-abroad",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=study-abroad",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "entry-only",
       "identityMode": "production-cosmic-context",
@@ -986,11 +986,11 @@
       "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
     },
     {
-      "mountKey": "careerloop-onboarding",
+      "mountKey": "cyancruise-onboarding",
       "routeKey": "onboarding",
-      "title": "CareerLoop 新用户引导",
-      "target": "index.html#onboarding",
-      "audience": "careerloop-user",
+      "title": "CyanCruise 个人情况",
+      "target": "index.html?ccRoute=onboarding",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -998,11 +998,11 @@
       "deploymentNotes": "May be linked from the workbench onboarding gate rather than a top-level menu."
     },
     {
-      "mountKey": "careerloop-today-action",
+      "mountKey": "cyancruise-today-action",
       "routeKey": "today-action",
-      "title": "CareerLoop 今日行动",
-      "target": "index.html#today-action",
-      "audience": "careerloop-user",
+      "title": "CyanCruise 今日行动",
+      "target": "index.html?ccRoute=today-action",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1010,11 +1010,11 @@
       "deploymentNotes": "Usually reached from the workbench card."
     },
     {
-      "mountKey": "careerloop-assessment",
+      "mountKey": "cyancruise-assessment",
       "routeKey": "assessment",
       "title": "职业测评",
-      "target": "index.html#assessment",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=assessment",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "entry-only",
       "identityMode": "production-cosmic-context",
@@ -1022,11 +1022,11 @@
       "deploymentNotes": "Publish only after the target Cosmic page state is connected."
     },
     {
-      "mountKey": "careerloop-resume",
+      "mountKey": "cyancruise-resume",
       "routeKey": "resume",
       "title": "简历",
-      "target": "index.html#resume",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=resume",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1034,11 +1034,11 @@
       "deploymentNotes": "Requires file route availability for upload and preview actions."
     },
     {
-      "mountKey": "careerloop-file-upload-preview",
+      "mountKey": "cyancruise-file-upload-preview",
       "routeKey": "file-upload-preview",
       "title": "文件上传预览",
-      "target": "index.html#file-upload-preview",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=file-upload-preview",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "entry-only",
       "identityMode": "production-cosmic-context",
@@ -1046,11 +1046,11 @@
       "deploymentNotes": "Real Cosmic file service adapter remains a later platform integration item."
     },
     {
-      "mountKey": "careerloop-resume-diagnosis",
+      "mountKey": "cyancruise-resume-diagnosis",
       "routeKey": "resume-diagnosis",
       "title": "简历诊断",
-      "target": "index.html#resume-diagnosis",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=resume-diagnosis",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1058,11 +1058,11 @@
       "deploymentNotes": "Depends on resume and file text extraction contracts."
     },
     {
-      "mountKey": "careerloop-interview",
+      "mountKey": "cyancruise-interview",
       "routeKey": "interview",
       "title": "模拟面试",
-      "target": "index.html#interview",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=interview",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1070,23 +1070,23 @@
       "deploymentNotes": "Voice and digital-human interview are not part of this mount."
     },
     {
-      "mountKey": "careerloop-career-plan",
+      "mountKey": "cyancruise-career-plan",
       "routeKey": "career-plan",
-      "title": "职业计划",
-      "target": "index.html#career-plan",
-      "audience": "careerloop-user",
+      "title": "AI路径规划",
+      "target": "index.html?ccRoute=career-plan",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "Show plan summary pending or create-plan action.",
+      "fallback": "Show AI path planning placeholder.",
       "deploymentNotes": "May remain a workbench deep link until a dedicated page is available."
     },
     {
-      "mountKey": "careerloop-assistant",
+      "mountKey": "cyancruise-assistant",
       "routeKey": "assistant",
       "title": "求职助手",
-      "target": "index.html#assistant",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=assistant",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1094,11 +1094,11 @@
       "deploymentNotes": "Frontend streaming chat remains a later migration item."
     },
     {
-      "mountKey": "careerloop-messages",
+      "mountKey": "cyancruise-messages",
       "routeKey": "messages",
       "title": "消息中心",
-      "target": "index.html#messages",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=messages",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1106,11 +1106,11 @@
       "deploymentNotes": "Real WeChat template sending remains excluded; in-app notification is canonical."
     },
     {
-      "mountKey": "careerloop-employment-insight",
+      "mountKey": "cyancruise-employment-insight",
       "routeKey": "employment-insight",
       "title": "就业洞察",
-      "target": "index.html#employment-insight",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=employment-insight",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1118,11 +1118,11 @@
       "deploymentNotes": "External crawling and full detail pages remain later platform work."
     },
     {
-      "mountKey": "careerloop-resources",
+      "mountKey": "cyancruise-resources",
       "routeKey": "career-resources",
       "title": "职业资源",
-      "target": "index.html#career-resources",
-      "audience": "careerloop-user",
+      "target": "index.html?ccRoute=career-resources",
+      "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
@@ -1130,11 +1130,11 @@
       "deploymentNotes": "Can be published as a secondary menu or workbench card."
     },
     {
-      "mountKey": "careerloop-admin-console",
+      "mountKey": "cyancruise-admin-console",
       "routeKey": "admin-console",
-      "title": "CareerLoop 管理后台",
-      "target": "index.html#admin-console",
-      "audience": "careerloop-admin",
+      "title": "CyanCruise 管理后台",
+      "target": "index.html?ccRoute=admin-console",
+      "audience": "cyancruise-admin",
       "requiredRole": "ADMIN",
       "publishability": "admin-only",
       "identityMode": "production-cosmic-admin-context",
