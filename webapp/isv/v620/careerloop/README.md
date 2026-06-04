@@ -4,7 +4,7 @@
 
 ## 入口文件
 
-- `index.html`：CareerLoop webapp 壳，包含身份区、页面导航、状态卡片和页面容器。
+- `index.html`：CareerLoop webapp 壳，默认由金蝶平台侧边栏外部链接驱动，`?ccDebug=1` 时显示调试身份区、页面导航和状态卡片。
 - `assets/app.js`：轻量 page registry、hash navigation、身份解析、WebAPI 调用和页面状态渲染。
 - `assets/styles.css`：桌面和移动 webview 的响应式布局。
 - `careerloop-routes.json`：IPD 来源、CyanCruise route key、Cosmic WebAPI、平台挂载、身份要求和 fallback 契约。
@@ -15,6 +15,12 @@
 用户侧页面包括：
 
 - `#workbench`
+- `#employment-home`
+- `#further-study-home`
+- `#postgraduate-exam`
+- `#postgraduate-recommendation`
+- `#study-abroad`
+- `#resume-home`
 - `#onboarding`
 - `#today-action`
 - `#assessment`
@@ -22,6 +28,7 @@
 - `#file-upload-preview`
 - `#resume-diagnosis`
 - `#career-plan`
+- `#interview-home`
 - `#interview`
 - `#assistant`
 - `#messages`
@@ -29,6 +36,27 @@
 - `#career-resources`（默认导航隐藏，调试或后续内容接入时使用）
 
 管理侧入口为 `#admin-console`，只在生产管理员身份或开发角色显式包含 `ADMIN`、`COSMIC_ADMIN`、`PLATFORM_ADMIN` 时展示可访问状态。
+
+## 金蝶平台侧边栏外部链接
+
+正式菜单建议由金蝶“应用菜单”配置，CyanCruise 页面不再重复绘制页面内左侧栏。首页负责填写基础信息和选择路线；就业、深造分别使用独立 hash 落地页，不能和首页共用同一个地址。
+
+| 菜单 | 外部链接 | 状态 |
+| --- | --- | --- |
+| CyanCruise 首页 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 已接入 |
+| 就业 | `/ierp/isv/v620/careerloop/index.htm#employment-home` | 已接入 |
+| 就业 / 简历 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 父级/分组 |
+| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume` | 已接入 |
+| 就业 / 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 已接入 |
+| 就业 / 面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 父级/分组 |
+| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入 |
+| 就业 / 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入 |
+| 深造 | `/ierp/isv/v620/careerloop/index.htm#further-study-home` | 规划入口 |
+| 深造 / 考研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-exam` | 规划入口 |
+| 深造 / 保研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-recommendation` | 规划入口 |
+| 深造 / 留学 | `/ierp/isv/v620/careerloop/index.htm#study-abroad` | 规划入口 |
+
+当前阶段就业只发布 IPD 已有主流程对应的四个核心入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试。深造只提供考研、保研、留学方向入口，后续接 Agent 后再补全真实规划能力。乔布简历、简历微课、数字人面试、真题库和面试微课等能力暂不配置到平台菜单，待后续真实能力接入后再新增。
 
 ## 调试模式
 
@@ -70,4 +98,5 @@ index.html?identityMode=development&userId=<id>
 node webapp\isv\v620\careerloop\validate-routes.js
 node --check webapp\isv\v620\careerloop\assets\app.js
 openspec validate migrate-webapp-careerloop-pages --strict
+openspec validate polish-careerloop-user-experience --strict
 ```

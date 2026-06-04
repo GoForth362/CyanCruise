@@ -8,6 +8,11 @@ const app = fs.readFileSync(appPath, "utf8");
 
 const requiredRoutes = [
   "workbench",
+  "employment-home",
+  "further-study-home",
+  "postgraduate-exam",
+  "postgraduate-recommendation",
+  "study-abroad",
   "onboarding",
   "today-action",
   "assessment",
@@ -62,6 +67,11 @@ const requiredApis = [
 
 const requiredPageShellRoutes = [
   "workbench",
+  "employment-home",
+  "further-study-home",
+  "postgraduate-exam",
+  "postgraduate-recommendation",
+  "study-abroad",
   "onboarding",
   "today-action",
   "assessment",
@@ -78,6 +88,8 @@ const requiredPageShellRoutes = [
 
 const requiredDefaultUserRoutes = [
   "workbench",
+  "employment-home",
+  "further-study-home",
   "onboarding",
   "today-action",
   "assessment",
@@ -242,7 +254,7 @@ for (const mount of routeMap.platformMounts) {
   }
 }
 
-for (const key of ["workbench", "onboarding", "today-action", "assessment", "resume", "resume-diagnosis", "interview", "career-plan", "assistant", "messages", "file-upload-preview", "employment-insight", "career-resources", "admin-console"]) {
+for (const key of ["workbench", "employment-home", "further-study-home", "postgraduate-exam", "postgraduate-recommendation", "study-abroad", "onboarding", "today-action", "assessment", "resume", "resume-diagnosis", "interview", "career-plan", "assistant", "messages", "file-upload-preview", "employment-insight", "career-resources", "admin-console"]) {
   if (!routeMap.platformMounts.some((mount) => mount.routeKey === key)) {
     fail(`Missing platform mount for route: ${key}`);
   }

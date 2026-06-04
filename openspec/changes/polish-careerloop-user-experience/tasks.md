@@ -35,14 +35,22 @@
 
 ## 6. 平台侧边栏外部链接页面设计
 
-- [ ] 6.1 定义金蝶平台应用菜单建议清单，包含菜单名称、外部链接 URL/hash、目标 CyanCruise 页面和是否已接入。
-- [ ] 6.2 设计 `#workbench` 工作台总览页：展示目标岗位、准备度、最近简历、今日行动和推荐入口，但不再显示大 hero、横向 route 清单、Route/status chip 和接口契约。
-- [ ] 6.3 设计 `#resume-home` 简历功能页：展示 AI简历制作、AI简历修改、乔布简历、简历微课卡片，并分别映射到已接入 route 或“即将接入”占位页。
-- [ ] 6.4 设计 `#interview-home` 面试功能页：展示全景仿真面试、AI模拟面试、数字人面试、公务员真题、选调生真题、事业编、大厂真题、面试微课卡片。
-- [ ] 6.5 设计细分外部链接落地页：`#resume-templates`、`#resume-course`、`#digital-interview`、`#exam-civil-service`、`#exam-selected-graduate`、`#exam-public-institution`、`#exam-big-tech`、`#interview-course`。
-- [ ] 6.6 移除默认模式下 CyanCruise 页面内重复的左侧/横向导航依赖；导航由金蝶平台侧边栏承担，页面内只保留必要的返回工作台或相关操作。
-- [ ] 6.7 为外部链接页面增加稳定响应式卡片样式：桌面 3 至 4 列，窄屏单列，避免文字溢出和横向滚动。
-- [ ] 6.8 已接入卡片跳转到现有 route；未接入卡片展示禁用态或“即将接入”提示，不暴露接口路径。
-- [ ] 6.9 更新 README，记录金蝶平台侧边栏菜单和每个外部链接配置建议。
-- [ ] 6.10 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\`。
-- [ ] 6.11 运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。
+- [x] 6.1 定义金蝶平台应用菜单建议清单，当前按“就业 / 深造”分组；就业只包含 IPD 核心入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试；深造仅作为后续规划分组。
+- [x] 6.2 设计 `#workbench` 工作台总览页：展示目标岗位、准备度、最近简历、今日行动和推荐入口，但不再显示大 hero、横向 route 清单、Route/status chip 和接口契约。
+- [x] 6.3 设计 `#resume-home` 简历功能页：只展示 AI简历制作、AI简历修改卡片，并分别映射到现有简历 route 和简历诊断 route。
+- [x] 6.4 设计 `#interview-home` 面试功能页：只展示全景仿真面试、AI模拟面试卡片，并映射到现有模拟面试 route。
+- [x] 6.5 移除非 IPD 核心占位页：不创建 `#resume-templates`、`#resume-course`、`#digital-interview`、`#exam-*`、`#interview-course` 等外部链接落地页。
+- [x] 6.6 移除默认模式下 CyanCruise 页面内重复的左侧/横向导航依赖；导航由金蝶平台侧边栏承担，页面内只保留必要的返回工作台或相关操作。
+- [x] 6.7 为外部链接页面增加稳定响应式卡片样式：桌面 3 至 4 列，窄屏单列，避免文字溢出和横向滚动。
+- [x] 6.8 已接入卡片跳转到现有 route；未接入卡片展示禁用态或“即将接入”提示，不暴露接口路径。
+- [x] 6.9 更新 README，记录金蝶平台侧边栏菜单和每个外部链接配置建议。
+- [x] 6.10 更新静态资源版本号并同步到 `F:\kingdee\ENV\static-file-service\isv\v620\careerloop\`。
+- [x] 6.11 运行 `node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js` 和 `openspec validate polish-careerloop-user-experience --strict`。
+
+## 7. 首页、就业、深造独立落地页
+
+- [x] 7.1 将 `#workbench` 调整为 CyanCruise 首页：收集基础路线信息，提供就业/深造选择入口。
+- [x] 7.2 新增 `#employment-home` 就业落地页：展示 AI简历制作、AI简历修改、全景仿真面试、AI模拟面试四个核心跳转按钮。
+- [x] 7.3 新增 `#further-study-home` 深造落地页，并预留 `#postgraduate-exam`、`#postgraduate-recommendation`、`#study-abroad` 三个规划入口。
+- [x] 7.4 更新金蝶平台菜单建议，使“就业”不再指向首页，而是指向独立就业页。
+- [x] 7.5 保持深造方向只做规划入口，不新增真实 Agent、真题库或课程能力。

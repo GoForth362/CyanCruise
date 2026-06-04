@@ -48,29 +48,30 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 
 普通用户从金蝶平台侧边栏进入 CyanCruise 时，侧边栏应由金蝶“应用菜单”配置承载。CyanCruise 静态页不再重复绘制页面内左侧分组导航，避免和平台侧栏叠加、挤压内容区。每个菜单项使用外部链接打开同一个静态入口的不同 hash，例如 `/ierp/isv/v620/careerloop/index.htm#resume-home` 或 `/ierp/isv/v620/careerloop/index.htm#interview-home`。
 
-CyanCruise 页面右侧展示当前外部链接对应的功能页：页面标题、短说明和功能卡片矩阵。卡片包含图标、功能名称和一句短说明，例如“AI简历制作”“AI简历修改”“乔布简历”“全景仿真面试”“AI模拟面试”“公务员真题”等。
+CyanCruise 页面右侧展示当前外部链接对应的功能页：页面标题、短说明和功能卡片矩阵。当前阶段只发布 IPD 已有核心逻辑对应的四个入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试。
 
 顶部的大标题、身份卡、状态卡和横向 route 导航应被收敛：身份信息只保留在必要位置或调试模式，状态摘要可以变成右侧页面中的轻量信息，不应占据首屏主体。默认页面不再把“工作台”作为唯一内容容器，而是把不同 hash 视为金蝶平台菜单的落地页。
 
 替代方案是在 CyanCruise 页面内部继续做一套左侧分组导航。该方案可控性高，但会和金蝶平台自带侧边栏重复，因此不采用。
 
-建议的金蝶应用菜单与外部链接设计：
+建议的金蝶应用菜单与外部链接设计：当前信息架构按“就业 / 深造”分组。就业先承载 IPD 已有核心流程；深造先作为后续规划分组，不在本 change 创建可点击页面。
 
 | 平台侧边栏菜单 | 外部链接 | CyanCruise 页面设计 |
 | --- | --- | --- |
-| CyanCruise 工作台 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 总览页，展示目标岗位、准备度、最近简历、今日行动和推荐入口。 |
-| 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 简历功能页，展示 AI简历制作、AI简历修改、乔布简历、简历微课卡片。 |
-| 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 简历诊断页，突出诊断、关键词、优化建议和返回简历入口。 |
-| 简历 / 乔布简历 | `/ierp/isv/v620/careerloop/index.htm#resume-templates` | 模板占位页，展示模板能力卡片和“即将接入”状态。 |
-| 简历 / 简历微课 | `/ierp/isv/v620/careerloop/index.htm#resume-course` | 微课占位页，展示课程卡片和“即将接入”状态。 |
-| 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 面试功能页，展示全景仿真面试、AI模拟面试、数字人面试和真题入口。 |
-| 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入模拟面试页，展示面试历史和开始练习入口。 |
-| 面试 / 数字人面试 | `/ierp/isv/v620/careerloop/index.htm#digital-interview` | 数字人面试占位页，展示能力说明和“即将接入”状态。 |
-| 面试 / 公务员真题 | `/ierp/isv/v620/careerloop/index.htm#exam-civil-service` | 真题占位页，展示题库说明和“即将接入”状态。 |
-| 面试 / 选调生真题 | `/ierp/isv/v620/careerloop/index.htm#exam-selected-graduate` | 真题占位页，展示题库说明和“即将接入”状态。 |
-| 面试 / 事业编 | `/ierp/isv/v620/careerloop/index.htm#exam-public-institution` | 真题占位页，展示题库说明和“即将接入”状态。 |
-| 面试 / 大厂真题 | `/ierp/isv/v620/careerloop/index.htm#exam-big-tech` | 真题占位页，展示题库说明和“即将接入”状态。 |
-| 面试 / 面试微课 | `/ierp/isv/v620/careerloop/index.htm#interview-course` | 微课占位页，展示课程卡片和“即将接入”状态。 |
+| CyanCruise 首页 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 首页，填写基础信息并选择就业或深造路线。 |
+| 就业 | `/ierp/isv/v620/careerloop/index.htm#employment-home` | 就业落地页，展示简历和面试四个核心入口。 |
+| 就业 / 简历 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 父级/分组；展示 AI简历制作和 AI简历修改卡片。 |
+| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume` | 简历功能页，进入 AI简历制作流程。 |
+| 就业 / 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 简历诊断页，突出诊断、关键词、优化建议和返回简历入口。 |
+| 就业 / 面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 父级/分组；展示全景仿真面试和 AI模拟面试卡片。 |
+| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 面试功能页，进入全景仿真面试入口。 |
+| 就业 / 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入模拟面试页，展示面试历史和开始练习入口。 |
+| 深造 | `/ierp/isv/v620/careerloop/index.htm#further-study-home` | 深造落地页，展示考研、保研、留学规划入口。 |
+| 深造 / 考研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-exam` | 规划入口，后续接入考研规划 Agent。 |
+| 深造 / 保研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-recommendation` | 规划入口，后续接入保研规划 Agent。 |
+| 深造 / 留学 | `/ierp/isv/v620/careerloop/index.htm#study-abroad` | 规划入口，后续接入留学规划 Agent。 |
+
+乔布简历、简历微课、数字人面试、公务员真题、事业编、大厂真题、面试微课等能力不在当前 IPD 核心流程中，本 change 不创建菜单、不创建占位 hash 页面，后续真实能力明确后再追加。
 
 ## Risks / Trade-offs
 
@@ -78,7 +79,7 @@ CyanCruise 页面右侧展示当前外部链接对应的功能页：页面标题
 - **route metadata 调整可能影响校验脚本** -> 同步更新 `careerloop-routes.json` 与 `validate-routes.js`，运行 route 校验。
 - **用户模式与 debug 模式分支造成遗漏** -> 重点验证 `#workbench`、`#resume`、`#resume-diagnosis` 以及 `?ccDebug=1#file-upload-preview`。
 - **简历页隐藏 fileKey 后排错信息减少** -> debug 模式下显示完整 fileKey 和接口契约；默认模式保留必要的“已关联文件”状态。
-- **功能中心卡片多但真实能力未完全闭环** -> 卡片 SHALL 优先映射已有 route 或可恢复占位；未接入的能力用明确的“即将接入”或禁用状态，避免用户误以为已完成。
+- **功能中心卡片多但真实能力未完全闭环** -> 当前阶段只保留 IPD 已有核心入口；新增想象功能不进入菜单和页面卡片，避免用户误以为已完成。
 - **平台菜单与页面 hash 需要保持一致** -> 在 README 或部署说明中维护菜单外部链接表；页面对未识别 hash 给出可恢复提示并返回工作台。
 
 ## Migration Plan
