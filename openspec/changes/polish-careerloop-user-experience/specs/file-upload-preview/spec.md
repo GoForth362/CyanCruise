@@ -4,7 +4,7 @@
 文件上传预览能力 SHALL 继续保留 `/cc001/files/*` 底层契约、route map 和验证入口，但独立文件上传预览页面 SHALL NOT 作为普通用户默认主导航入口。真实用户 SHALL 通过简历页等业务页面间接使用文件能力。
 
 #### Scenario: 普通用户导航
-- **WHEN** 普通用户打开 CareerLoop 默认导航
+- **WHEN** 普通用户打开 CyanCruise 默认导航
 - **THEN** `file-upload-preview` SHALL NOT 作为普通业务入口展示
 
 #### Scenario: 简历页使用文件能力

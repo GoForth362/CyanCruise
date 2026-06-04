@@ -40,20 +40,20 @@
   };
 
   var pages = [
-    page("workbench", "CyanCruise 首页", "available", "user", "填写基础信息，选择就业或深造路线。", ["snapshot", "onboarding"]),
+    page("workbench", "CyanCruise 首页", "available", "user", "填写用户画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
     page("employment-home", "就业", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
     page("further-study-home", "深造", "available", "user", "考研、保研和留学方向规划入口。", ["snapshot", "plan"]),
     page("postgraduate-exam", "考研", "entry-only", "user", "考研规划入口，后续接入规划 Agent。", ["plan"]),
     page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划 Agent。", ["plan"]),
     page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划 Agent。", ["plan"]),
-    page("onboarding", "新用户引导", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
-    page("today-action", "今日行动", "available", "user", "展示下一步建议，并跳转到对应页面。", ["today"]),
-    page("assessment", "职业测评", "entry-only", "user", "测评提交契约已就绪，完整题组页面后续细化。", ["assessmentSubmit"]),
+    page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
+    page("today-action", "今日行动", "entry-only", "user", "等待完整用户画像生成后，由 AI 给出下一步建议。", ["today"]),
+    page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
     page("resume-home", "简历", "available", "user", "AI 简历制作和 AI 简历修改入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
-    page("career-plan", "职业计划", "available", "user", "查看长期计划摘要和本周重点。", ["plan", "ensurePlan"]),
+    page("career-plan", "AI路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划 Agent。", ["plan", "ensurePlan"]),
     page("interview-home", "面试", "available", "user", "全景仿真面试和 AI 模拟面试入口。", ["interviews", "startInterview"]),
     page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
@@ -112,7 +112,8 @@
     previewUrls: {},
     plan: null,
     interviews: null,
-    route: "workbench"
+    route: "workbench",
+    previousRoute: ""
   };
 
   function page(key, title, status, audience, summary, endpointKeys, options) {
@@ -176,6 +177,7 @@
 
   function bindEvents() {
     window.addEventListener("hashchange", handleRouteChange);
+    els.pageHost.addEventListener("click", handlePageHostClick);
     els.saveUserIdButton.addEventListener("click", saveDevelopmentUser);
     els.userIdInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
@@ -311,33 +313,170 @@
 
   function renderHomeIntentPage(item) {
     var onboarding = getValue(state.snapshot, "onboarding") || {};
-    var targetRole = firstText(onboarding.targetRole, textFromSnapshot("preferences.targetRole"));
-    renderFeatureShell(item, "选择你的路线", "先补充一点基础信息，再选择进入就业或深造方向。",
-      '<section class="panel full home-intent-panel">' +
-      '<h3>基础信息</h3>' +
-      '<form class="form-grid" id="homeIntentForm">' +
-      field("homeGoal", "当前路线", "select", firstText(readHomeIntent().goal, "employment"), [["employment", "就业"], ["study", "深造"], ["explore", "先了解一下"]]) +
-      field("homeTargetRole", "目标岗位或方向", "text", targetRole) +
-      field("homePreference", "想用 CyanCruise 做什么", "text", firstText(readHomeIntent().preference, firstText(onboarding.preference, ""))) +
-      '<div class="full actions-row"><button type="submit">保存路线信息</button><button type="button" class="secondary" data-link="employment-home">进入就业</button><button type="button" class="secondary" data-link="further-study-home">进入深造</button></div>' +
-      '</form></section>' +
-      overviewStrip() +
+    var intent = readHomeIntent();
+    var profile = {
+      identityType: firstText(intent.identityType, onboarding.identityType),
+      educationStage: firstText(intent.educationStage, onboarding.educationStage),
+      schoolMajor: firstText(intent.schoolMajor, onboarding.schoolMajor),
+      resumeStatus: firstText(intent.resumeStatus, onboarding.resumeStatus),
+      experience: firstText(intent.experience, onboarding.experience, onboarding.strengths)
+    };
+    var targetRole = firstText(intent.targetRole, onboarding.targetRole, textFromSnapshot("preferences.targetRole"));
+    var preference = firstText(intent.preference, onboarding.preference);
+    var selectedGoal = resolveHomeGoal(intent.goal, targetRole, preference);
+    var intentPanel = isHomeIntentCollapsed(intent)
+      ? homeIntentSummaryPanel(selectedGoal, profile, targetRole, preference)
+      : homeIntentFormPanel(selectedGoal, profile, targetRole, preference);
+    renderFeatureShell(item, "用户画像", "先一次性填写大概画像和路线选择，后续结合资料、简历与 AI 分析生成完整用户画像。",
+      intentPanel +
+      overviewStrip(selectedGoal) +
       '<section class="feature-section"><h3>路线入口</h3><div class="feature-grid">' +
-      featureCards([
-        feature("就业", "就", "进入 AI 简历制作、AI 简历修改、全景仿真面试和 AI 模拟面试", "employment-home", "已接入"),
-        feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划 Agent", "further-study-home", "规划中")
-      ]) + '</div></section>' +
-      '<section class="feature-section"><h3>推荐入口</h3><div class="feature-grid">' +
-      featureCards([
-        feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
-        feature("AI简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
-        feature("今日行动", "今", "查看下一步建议并继续执行", "today-action", "已接入"),
-        feature("AI模拟面试", "AI", "从岗位目标开始面试练习", "interview", "已接入")
-      ]) + '</div></section>');
+      featureCards(homeRouteFeatures(selectedGoal)) + '</div></section>' +
+      '<section class="feature-section"><h3>推荐工具</h3><div class="feature-grid">' +
+      featureCards(homeRecommendedFeatures(selectedGoal)) + '</div></section>');
     var form = $("homeIntentForm");
     if (form) {
       form.addEventListener("submit", submitHomeIntent);
     }
+    var goal = $("homeGoal");
+    if (goal) {
+      goal.addEventListener("change", changeHomeGoal);
+    }
+    var edit = $("editHomeIntentButton");
+    if (edit) {
+      edit.addEventListener("click", editHomeIntent);
+    }
+    var toggle = $("toggleHomeProfileButton");
+    if (toggle) {
+      toggle.addEventListener("click", toggleHomeProfile);
+    }
+  }
+
+  function isHomeIntentCollapsed(intent) {
+    return localStorage.getItem("cyancruise.homeIntentSaved") === "true" && localStorage.getItem("cyancruise.homeIntentEditing") !== "true" && !!intent.goal;
+  }
+
+  function homeIntentFormPanel(selectedGoal, onboarding, targetRole, preference) {
+    return '<section class="panel full home-intent-panel">' +
+      '<h3>用户画像</h3>' +
+      '<form class="form-grid" id="homeIntentForm">' +
+      '<h4 class="form-section-title full">个人情况</h4>' +
+      field("profileIdentityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
+      field("profileEducationStage", "当前阶段", "select", firstText(onboarding.educationStage, "undergraduate"), [["undergraduate", "本科"], ["postgraduate", "研究生"], ["vocational", "高职/专科"], ["working", "已工作"], ["other", "其他"]]) +
+      field("profileSchoolMajor", "学校/专业", "text", firstText(onboarding.schoolMajor, "")) +
+      field("resumeStatus", "简历/材料状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"], ["materials", "已有升学材料"]]) +
+      '<label class="full">经历与优势<textarea id="profileExperience" placeholder="可以写课程、项目、实习、竞赛、语言、技能、研究方向等。">' + escapeHtml(firstText(onboarding.experience, onboarding.strengths, "")) + '</textarea></label>' +
+      '<h4 class="form-section-title full">路线选择</h4>' +
+      field("homeGoal", "当前路线", "select", selectedGoal, [["employment", "就业"], ["study", "深造"], ["explore", "先了解一下"]]) +
+      field("homeTargetRole", "目标岗位或方向", "text", targetRole) +
+      field("homePreference", "路线偏好说明", "text", preference) +
+      '<div class="full actions-row"><button type="submit">保存用户画像</button>' + homeDirectionButtons(selectedGoal) + '</div>' +
+      '</form></section>';
+  }
+
+  function homeIntentSummaryPanel(selectedGoal, onboarding, targetRole, preference) {
+    var expanded = localStorage.getItem("cyancruise.homeProfileExpanded") === "true";
+    var summaryRows = [
+      ["当前路线", labelForGoal(selectedGoal)],
+      ["目标岗位或方向", firstText(targetRole, "待确认")],
+      ["身份类型", labelForIdentity(firstText(onboarding.identityType, "student"))],
+      ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))]
+    ];
+    var detailRows = [
+      ["身份类型", labelForIdentity(firstText(onboarding.identityType, "student"))],
+      ["当前阶段", labelForEducationStage(firstText(onboarding.educationStage, "undergraduate"))],
+      ["学校/专业", firstText(onboarding.schoolMajor, "未填写")],
+      ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))],
+      ["经历与优势", firstText(onboarding.experience, "未填写")],
+      ["当前路线", labelForGoal(selectedGoal)],
+      ["目标岗位或方向", firstText(targetRole, "待确认")],
+      ["路线偏好说明", firstText(preference, "未填写")]
+    ];
+    var rows = expanded ? detailRows : summaryRows;
+    return '<section class="panel full home-intent-panel">' +
+      '<h3>用户画像已保存</h3>' +
+      '<div class="metric-list profile-summary-grid">' + rows.map(function (row) {
+        return '<div class="metric"><span class="label">' + escapeHtml(row[0]) + '</span><strong>' + escapeHtml(row[1]) + '</strong></div>';
+      }).join("") + '</div>' +
+      '<div class="actions-row"><button type="button" class="secondary" id="toggleHomeProfileButton">' + (expanded ? "收起画像" : "展开画像") + '</button><button type="button" class="secondary" id="editHomeIntentButton">修改用户画像</button></div>' +
+      '</section>';
+  }
+
+  function editHomeIntent() {
+    localStorage.setItem("cyancruise.homeIntentEditing", "true");
+    renderPage(pageByKey.workbench);
+  }
+
+  function toggleHomeProfile() {
+    var expanded = localStorage.getItem("cyancruise.homeProfileExpanded") === "true";
+    localStorage.setItem("cyancruise.homeProfileExpanded", expanded ? "false" : "true");
+    renderPage(pageByKey.workbench);
+  }
+
+  function homeDirectionButtons(goal) {
+    var buttons = [];
+    if (goal === "employment" || goal === "explore") {
+      buttons.push('<button type="button" class="secondary" data-link="employment-home" data-platform-link="true">进入就业</button>');
+    }
+    if (goal === "study" || goal === "explore") {
+      buttons.push('<button type="button" class="secondary" data-link="further-study-home" data-platform-link="true">进入深造</button>');
+    }
+    return buttons.join("");
+  }
+
+  function homeRouteFeatures(goal) {
+    var employment = feature("就业", "就", "进入 AI 简历制作、AI 简历修改、全景仿真面试和 AI 模拟面试", "employment-home", "已接入");
+    var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划 Agent", "further-study-home", "规划中");
+    var plan = feature("AI路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划 Agent", "career-plan", "规划中");
+    var assessment = feature("职业测评", "测", "通过答题分析人格、性格和偏好，补全用户画像", "assessment", "规划中");
+    var today = feature("今日行动", "今", "完整用户画像生成后，由 AI 给出每日建议", "today-action", "即将接入");
+    employment.platformLink = true;
+    study.platformLink = true;
+    if (goal === "employment") {
+      return [employment, plan, assessment, today];
+    }
+    if (goal === "study") {
+      return [study, plan, assessment, today];
+    }
+    return [employment, study, plan, assessment, today];
+  }
+
+  function homeRecommendedFeatures(goal) {
+    if (goal === "study") {
+      return featureGroups["further-study-home"];
+    }
+    return [
+      feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
+      feature("AI简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
+      feature("AI模拟面试", "AI", "从岗位目标开始面试练习", "interview", "已接入")
+    ];
+  }
+
+  function changeHomeGoal() {
+    localStorage.setItem("cyancruise.homeIntent", JSON.stringify({
+      goal: valueOf("homeGoal"),
+      targetRole: valueOf("homeTargetRole"),
+      preference: valueOf("homePreference"),
+      identityType: valueOf("profileIdentityType"),
+      educationStage: valueOf("profileEducationStage"),
+      schoolMajor: valueOf("profileSchoolMajor"),
+      resumeStatus: valueOf("resumeStatus"),
+      experience: valueOf("profileExperience")
+    }));
+    localStorage.setItem("cyancruise.homeIntentEditing", "true");
+    renderPage(pageByKey.workbench);
+  }
+
+  function resolveHomeGoal(goal, target, preference) {
+    var normalized = trim(goal);
+    if (normalized === "employment" || normalized === "study" || normalized === "explore") {
+      return normalized;
+    }
+    var text = firstText(target, preference);
+    if (/考研|保研|留学|升学|深造|研究生|院校|GPA|雅思|托福|申请/.test(text)) {
+      return "study";
+    }
+    return "employment";
   }
 
   function renderFeatureHome(item) {
@@ -360,49 +499,41 @@
     var onboarding = getValue(state.snapshot, "onboarding") || {};
     var targetRole = firstText(onboarding.targetRole, textFromSnapshot("preferences.targetRole"));
     renderShell(item,
-      '<section class="panel full"><h3>引导信息</h3>' +
+      '<section class="panel full"><h3>个人情况</h3>' +
       '<form class="form-grid" id="onboardingForm">' +
       field("identityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
       field("onboardingTargetRole", "目标岗位", "text", targetRole) +
       field("resumeStatus", "简历状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"]]) +
       field("preference", "偏好方向", "text", firstText(onboarding.preference, "")) +
-      '<div class="full actions-row"><button type="submit">保存引导信息</button><button type="button" class="secondary" data-link="workbench">返回工作台</button></div>' +
+      '<div class="full actions-row"><button type="submit">保存个人情况</button><button type="button" class="secondary" data-link="workbench">返回首页</button></div>' +
       '</form></section>');
     $("onboardingForm").addEventListener("submit", submitOnboarding);
   }
 
   function renderTodayPage(item) {
-    var target = mapTargetToRoute(firstText(getValue(state.today, "target"), getValue(state.today, "route"), getValue(state.today, "targetPath")));
     renderShell(item,
-      metricsPanel("推荐动作", [
-        ["标题", firstText(getValue(state.today, "title"), getValue(state.today, "actionTitle"), getValue(state.today, "nextAction"), "补齐求职画像")],
-        ["原因", firstText(getValue(state.today, "reason"), getValue(state.today, "summary"), "完成画像、简历和面试信号后会给出更精确建议")],
-        ["目标页面", target]
-      ]) +
-      actionPanel("继续执行", linkButton(target, "进入下一步", "按今日行动跳转到对应页面。"))
+      statePanel("等待完整用户画像", "今日行动需要先由首页大概画像、后续上传资料、简历和其他材料，经 AI 大模型分析生成完整用户画像后，再结合最初路线规划给出。当前阶段不提供跳转或执行动作。", "pending")
     );
   }
 
   function renderResumePage(item) {
     var target = resumeTargetDefault();
-    var panels = [
-      resumeListPanel(),
-      resumeFormPanel(target),
-      resumeFilePanel()
-    ];
+    var leftPanels = [resumeFormPanel(target), resumeFilePanel()].join("");
+    var rightPanels = resumeListPanel();
+    var body = '<div class="resume-layout"><div class="resume-main">' + leftPanels + '</div><aside class="resume-records">' + rightPanels + '</aside></div>';
     if (isDebugMode()) {
-      panels.push(metricsPanel("接口契约", [
+      body += metricsPanel("接口契约", [
         ["列表", endpoints.resumes],
         ["创建", endpoints.resumeCreate],
         ["删除", endpoints.resumeDelete],
         ["文件上传", endpoints.fileUpload],
         ["文件下载", endpoints.fileDownload]
-      ]));
+      ]);
     }
     if (state.resumeMessage) {
-      panels.unshift(statePanel("简历状态", state.resumeMessage.text, state.resumeMessage.type));
+      body = statePanel("简历状态", state.resumeMessage.text, state.resumeMessage.type) + body;
     }
-    renderShell(item, panels.join(""));
+    renderShell(item, body);
     bindResumeEvents();
   }
 
@@ -821,7 +952,9 @@
     } else if (item.key === "interview") {
       body += listPanel("面试历史", state.interviews, "暂无面试历史。");
     } else if (item.key === "career-plan") {
-      body += objectPanel("计划摘要", state.plan, "职业计划摘要待生成。");
+      body += statePanel("AI路径规划", "后续由 AI 根据首页路线选择、完整用户画像、简历/材料和阶段目标生成实现路径。当前先保留入口，不展开规划 Agent。", "pending");
+    } else if (item.key === "assessment") {
+      body += statePanel("职业测评", "后续通过答题分析人格、性格、偏好和行动风格，并把结果补入完整用户画像，用于指导路径规划和今日行动。当前先保留入口，不展开题组。", "pending");
     } else if (item.key === "assistant") {
       body += statePanel("助手会话", "可调用发送消息和会话列表契约；真实 AI provider 在后续 change 接入。", "pending");
     } else if (item.key === "messages") {
@@ -842,10 +975,9 @@
     els.pageHost.innerHTML =
       '<header class="feature-page-header">' +
       '<div><p class="eyebrow">CyanCruise</p><h2>' + escapeHtml(title) + '</h2><p class="lead">' + escapeHtml(summary) + '</p></div>' +
-      '<button type="button" class="secondary" data-link="workbench">首页</button>' +
+      pageHeaderActions(item) +
       '</header>' +
       '<div class="feature-content">' + innerHtml + '</div>';
-    bindPageLinks();
   }
 
   function renderShell(item, innerHtml) {
@@ -864,20 +996,78 @@
       '<header class="page-header">' +
       '<div>' + debugMeta + '<h2>' + escapeHtml(item.title) + '</h2>' +
       '<p class="lead">' + escapeHtml(item.summary) + '</p></div>' +
-      '<button type="button" class="secondary" data-link="workbench">首页</button>' +
+      pageHeaderActions(item) +
       '</header><div class="panel-grid">' + innerHtml + '</div>';
-    bindPageLinks();
   }
 
-  function bindPageLinks() {
-    var links = els.pageHost.querySelectorAll("[data-link]");
-    for (var i = 0; i < links.length; i += 1) {
-      links[i].addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        navigateToRoute(event.currentTarget.getAttribute("data-link"));
-      });
+  function pageHeaderActions(item) {
+    var back = backRouteFor(item.key);
+    var actions = [];
+    if (back) {
+      actions.push('<button type="button" class="secondary" data-back-route="' + escapeHtml(back) + '">返回</button>');
     }
+    if (item.key !== "workbench") {
+      actions.push('<button type="button" class="secondary" data-link="workbench">首页</button>');
+    }
+    return actions.length ? '<div class="page-actions">' + actions.join("") + '</div>' : "";
+  }
+
+  function backRouteFor(key) {
+    if (state.previousRoute && state.previousRoute !== key && pageByKey[state.previousRoute]) {
+      return state.previousRoute;
+    }
+    return parentRouteFor(key);
+  }
+
+  function parentRouteFor(key) {
+    var parents = {
+      "employment-home": "workbench",
+      "further-study-home": "workbench",
+      "resume-home": "employment-home",
+      "resume": "resume-home",
+      "resume-diagnosis": "resume-home",
+      "interview-home": "employment-home",
+      "interview": "interview-home",
+      "postgraduate-exam": "further-study-home",
+      "postgraduate-recommendation": "further-study-home",
+      "study-abroad": "further-study-home",
+      "today-action": "workbench",
+      "assessment": "workbench",
+      "career-plan": "workbench",
+      "assistant": "workbench",
+      "messages": "workbench",
+      "employment-insight": "employment-home",
+      "career-resources": "workbench",
+      "file-upload-preview": "resume-home",
+      "onboarding": "workbench",
+      "admin-console": "workbench"
+    };
+    return parents[key] || "";
+  }
+
+  function handlePageHostClick(event) {
+    var target = findPageLinkTarget(event.target);
+    if (!target) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    var backRoute = target.getAttribute("data-back-route");
+    if (backRoute) {
+      navigateBackToRoute(backRoute);
+      return;
+    }
+    navigateToRoute(target.getAttribute("data-link"));
+  }
+
+  function findPageLinkTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && (node.getAttribute("data-link") || node.getAttribute("data-back-route"))) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
   }
 
   function navigateToRoute(route) {
@@ -885,6 +1075,9 @@
     if (!pageByKey[key]) {
       showMessage("warning", "页面不可用", "未找到页面: " + key);
       return;
+    }
+    if (state.route && state.route !== key) {
+      state.previousRoute = state.route;
     }
     state.route = key;
     if (window.location.hash !== "#" + key) {
@@ -897,17 +1090,51 @@
     }, 0);
   }
 
-  function overviewRows() {
+  function navigateBackToRoute(route) {
+    var key = normalizeRoute(route);
+    if (!pageByKey[key]) {
+      showMessage("warning", "页面不可用", "未找到页面: " + key);
+      return;
+    }
+    state.previousRoute = "";
+    state.route = key;
+    if (window.location.hash !== "#" + key) {
+      window.location.hash = key;
+    }
+    markActiveNav();
+    renderPage(pageByKey[key]);
+    window.setTimeout(function () {
+      window.scrollTo(0, 0);
+    }, 0);
+  }
+
+  function overviewRows(goal) {
+    if (goal === "study") {
+      return [
+        ["目标方向", textFromSnapshot("preferences.targetRole", "onboarding.targetRole") || "待确认"],
+        ["规划状态", state.plan && !state.plan.unavailable ? firstText(state.plan.summary, state.plan.weekFocus, "已生成") : "规划中"],
+        ["方向入口", "考研 / 保研 / 留学"],
+        ["下一步", "选择深造方向"]
+      ];
+    }
+    if (goal === "explore") {
+      return [
+        ["当前路线", "先了解一下"],
+        ["就业入口", "可进入"],
+        ["深造入口", "可进入"],
+        ["下一步", "选择方向"]
+      ];
+    }
     return [
       ["目标岗位", textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob") || "待确认"],
-      ["今日行动", firstText(getValue(state.today, "title"), getValue(state.today, "actionTitle"), getValue(state.today, "nextAction"), "等待生成")],
+      ["今日行动", "等待完整用户画像"],
       ["简历记录", Array.isArray(state.resumes) ? state.resumes.length + " 份" : "待加载"],
       ["面试练习", Array.isArray(state.interviews) ? state.interviews.length + " 次" : "待加载"]
     ];
   }
 
-  function overviewStrip() {
-    return '<section class="overview-strip">' + overviewRows().map(function (row) {
+  function overviewStrip(goal) {
+    return '<section class="overview-strip">' + overviewRows(goal).map(function (row) {
       return '<article><span class="label">' + escapeHtml(row[0]) + '</span><strong>' + escapeHtml(row[1]) + '</strong></article>';
     }).join("") + '</section>';
   }
@@ -916,7 +1143,7 @@
     return cards.map(function (card) {
       var linked = !!card.route && pageByKey[card.route] && card.status !== "即将接入";
       var status = card.status || (linked ? "已接入" : "即将接入");
-      var attrs = linked ? ' data-link="' + escapeHtml(card.route) + '"' : ' disabled aria-disabled="true"';
+      var attrs = linked ? ' data-link="' + escapeHtml(card.route) + '"' + (card.platformLink ? ' data-platform-link="true"' : "") : ' disabled aria-disabled="true"';
       var cls = linked ? "feature-card" : "feature-card disabled";
       return '<button type="button" class="' + cls + '"' + attrs + '>' +
         '<span class="feature-icon">' + escapeHtml(card.icon) + '</span>' +
@@ -971,7 +1198,7 @@
   function submitOnboarding(event) {
     event.preventDefault();
     if (!hasUserIdentity()) {
-      showMessage("warning", "需要身份", "保存引导信息前需要 Cosmic 身份或显式开发身份。");
+      showMessage("warning", "需要身份", "保存个人情况前需要 Cosmic 身份或显式开发身份。");
       return;
     }
     var request = {
@@ -981,7 +1208,7 @@
       preference: valueOf("preference")
     };
     if (isFilePreview()) {
-      localStorage.setItem("careerloop.previewProfile", JSON.stringify(request));
+      localStorage.setItem("cyancruise.previewProfile", JSON.stringify(request));
       state.snapshot = { onboarding: request, preferences: { targetRole: request.targetRole } };
       updateOverviewCards();
       showMessage("info", "已保存到本地预览", "file:// 模式不调用后端。");
@@ -991,14 +1218,15 @@
       state.snapshot = snapshot;
       updateOverviewCards();
       renderPage(pageByKey[state.route]);
-      showMessage("info", "已保存", "引导信息已写入职业画像快照。");
+      showMessage("info", "已保存", "个人情况已写入职业画像快照。");
     }).catch(function (error) {
-      showMessage("error", "保存失败", error.message || "onboarding WebAPI 暂不可用。");
+      showMessage("error", "保存失败", error.message || "个人情况 WebAPI 暂不可用。");
     });
   }
 
   function readHomeIntent() {
-    return parseStorageJson(localStorage, "careerloop.homeIntent") || {};
+    migrateLegacyStorageKey("cyancruise.homeIntent", "careerloop.homeIntent");
+    return parseStorageJson(localStorage, "cyancruise.homeIntent") || {};
   }
 
   function submitHomeIntent(event) {
@@ -1006,13 +1234,24 @@
     var intent = {
       goal: valueOf("homeGoal"),
       targetRole: valueOf("homeTargetRole"),
-      preference: valueOf("homePreference")
+      preference: valueOf("homePreference"),
+      identityType: valueOf("profileIdentityType"),
+      educationStage: valueOf("profileEducationStage"),
+      schoolMajor: valueOf("profileSchoolMajor"),
+      resumeStatus: valueOf("resumeStatus"),
+      experience: valueOf("profileExperience")
     };
-    localStorage.setItem("careerloop.homeIntent", JSON.stringify(intent));
+    localStorage.setItem("cyancruise.homeIntent", JSON.stringify(intent));
+    localStorage.setItem("cyancruise.homeIntentSaved", "true");
+    localStorage.removeItem("cyancruise.homeIntentEditing");
     var request = {
-      identityType: "student",
+      identityType: intent.identityType,
+      educationStage: intent.educationStage,
+      schoolMajor: intent.schoolMajor,
       targetRole: intent.targetRole,
-      resumeStatus: Array.isArray(state.resumes) && state.resumes.length > 0 ? "draft" : "none",
+      resumeStatus: intent.resumeStatus,
+      experience: intent.experience,
+      routeGoal: intent.goal,
       preference: ["路线：" + labelForGoal(intent.goal), intent.preference].filter(Boolean).join("；")
     };
     state.snapshot = state.snapshot || {};
@@ -1021,18 +1260,50 @@
     state.snapshot.preferences.targetRole = intent.targetRole;
     updateOverviewCards();
     if (!hasUserIdentity() || isFilePreview()) {
-      localStorage.setItem("careerloop.previewProfile", JSON.stringify(request));
-      showMessage("info", "已保存", "路线信息已保存到当前浏览器。");
+      localStorage.setItem("cyancruise.previewProfile", JSON.stringify(request));
+      renderPage(pageByKey[state.route]);
+      showMessage("info", "已保存", "用户画像草稿已保存到当前浏览器。");
       return;
     }
     post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
       state.snapshot = snapshot;
       updateOverviewCards();
       renderPage(pageByKey[state.route]);
-      showMessage("info", "已保存", "路线信息已写入职业画像。");
+      showMessage("info", "已保存", "用户画像草稿已写入职业画像。");
     }).catch(function () {
-      showMessage("warning", "已本地保存", "平台暂未写入成功，但路线信息已保存在当前浏览器。");
+      renderPage(pageByKey[state.route]);
+      showMessage("warning", "已本地保存", "平台暂未写入成功，但用户画像草稿已保存在当前浏览器。");
     });
+  }
+
+  function labelForIdentity(identityType) {
+    var map = {
+      student: "在校学生",
+      graduate: "应届毕业生",
+      career_switcher: "转行求职"
+    };
+    return map[identityType] || identityType || "未填写";
+  }
+
+  function labelForEducationStage(stage) {
+    var map = {
+      undergraduate: "本科",
+      postgraduate: "研究生",
+      vocational: "高职/专科",
+      working: "已工作",
+      other: "其他"
+    };
+    return map[stage] || stage || "未填写";
+  }
+
+  function labelForResumeStatus(status) {
+    var map = {
+      none: "还没有简历",
+      draft: "已有初稿",
+      ready: "已有可投递简历",
+      materials: "已有升学材料"
+    };
+    return map[status] || status || "未填写";
   }
 
   function labelForGoal(goal) {
@@ -1049,9 +1320,8 @@
     var preview = readPreviewProfile();
     state.snapshot = preview || {};
     state.today = {
-      title: "补齐画像后生成今日行动",
-      summary: "部署到苍穹后可调用 " + endpoints.today,
-      target: "onboarding"
+      title: "等待完整用户画像",
+      summary: "完整用户画像需要结合首页草稿、后续上传资料、简历和 AI 分析后生成。"
     };
     state.resumes = [];
     state.plan = null;
@@ -1065,7 +1335,7 @@
     var assessment = getValue(state.snapshot, "assessment") || {};
     var score = calculateReadiness(target, resume, assessment);
     els.targetRole.textContent = target || "待确认";
-    els.profileStatus.textContent = target ? "方向已建立" : "需要完成 onboarding";
+    els.profileStatus.textContent = target ? "方向已建立" : "需要完善个人情况";
     els.readinessScore.textContent = score + "%";
     els.readinessHint.textContent = score >= 80 ? "可以进入专项练习" : "继续补齐测评、简历和面试信号";
     els.resumeState.textContent = Array.isArray(state.resumes) && state.resumes.length ? "已有 " + state.resumes.length + " 份" : resume.lastResumeId ? "已有记录" : "待补入";
@@ -1091,19 +1361,19 @@
   function saveDevelopmentUser() {
     var userId = trim(els.userIdInput.value);
     if (!userId) {
-      localStorage.removeItem("careerloop.userId");
+      localStorage.removeItem("cyancruise.userId");
       state.identity = resolveIdentity();
       updateIdentityState();
       renderPage(pageByKey[state.route]);
       showMessage("warning", "需要 userId", "请输入开发验证 userId 后再加载。");
       return;
     }
-    localStorage.setItem("careerloop.userId", userId);
+    localStorage.setItem("cyancruise.userId", userId);
     state.identity = {
       mode: "development",
       userId: userId,
-      adminId: trim(localStorage.getItem("careerloop.adminId")),
-      roles: parseRoles(localStorage.getItem("careerloop.roles")),
+      adminId: trim(localStorage.getItem("cyancruise.adminId")),
+      roles: parseRoles(localStorage.getItem("cyancruise.roles")),
       source: "manual-input"
     };
     updateIdentityState();
@@ -1266,7 +1536,7 @@
     var params = new URLSearchParams(window.location.search);
     var fromQuery = trim(params.get("userId"));
     if (fromQuery) {
-      localStorage.setItem("careerloop.userId", fromQuery);
+      localStorage.setItem("cyancruise.userId", fromQuery);
       return {
         mode: "development",
         userId: fromQuery,
@@ -1275,13 +1545,16 @@
         source: "query:userId"
       };
     }
-    var stored = trim(localStorage.getItem("careerloop.userId"));
+    migrateLegacyStorageKey("cyancruise.userId", "careerloop.userId");
+    migrateLegacyStorageKey("cyancruise.adminId", "careerloop.adminId");
+    migrateLegacyStorageKey("cyancruise.roles", "careerloop.roles");
+    var stored = trim(localStorage.getItem("cyancruise.userId"));
     return {
       mode: "development",
       userId: stored,
-      adminId: trim(localStorage.getItem("careerloop.adminId")),
-      roles: parseRoles(localStorage.getItem("careerloop.roles")),
-      source: stored ? "localStorage:careerloop.userId" : "development-missing-userId"
+      adminId: trim(localStorage.getItem("cyancruise.adminId")),
+      roles: parseRoles(localStorage.getItem("cyancruise.roles")),
+      source: stored ? "localStorage:cyancruise.userId" : "development-missing-userId"
     };
   }
 
@@ -1348,9 +1621,9 @@
     if (resolveKapiRouteVersion() === "v2") {
       return resolveKapiV2Request(path, body);
     }
-    var appId = firstText(readQueryOrStorage("appId", "careerloop.kapi.appId"), "cc001");
-    var serviceName = firstText(readQueryOrStorage("serviceName", "careerloop.kapi.serviceName"), "careerloop");
-    var accessToken = readQueryOrStorage("access_token", "careerloop.kapi.accessToken");
+    var appId = firstText(readQueryOrStorage("appId", "cyancruise.kapi.appId"), "cc001");
+    var serviceName = firstText(readQueryOrStorage("serviceName", "cyancruise.kapi.serviceName"), "careerloop");
+    var accessToken = readQueryOrStorage("access_token", "cyancruise.kapi.accessToken");
     var url = resolveApiBase() + "/kapi/app/" + encodeURIComponent(appId) + "/" + encodeURIComponent(serviceName) + "/";
     if (accessToken) {
       url += "?access_token=" + encodeURIComponent(accessToken);
@@ -1366,10 +1639,10 @@
   }
 
   function resolveKapiV2Request(path, body) {
-    var cloudId = firstText(readQueryOrStorage("cloudId", "careerloop.kapi.cloudId"), "v620");
-    var appNumber = firstText(readQueryOrStorage("appNumber", "careerloop.kapi.appNumber"), "v620_cc001");
-    var apiCode = firstText(readQueryOrStorage("apiCode", "careerloop.kapi.apiCode"), "cc001/careerloop/route");
-    var accessToken = readQueryOrStorage("access_token", "careerloop.kapi.accessToken");
+    var cloudId = firstText(readQueryOrStorage("cloudId", "cyancruise.kapi.cloudId"), "v620");
+    var appNumber = firstText(readQueryOrStorage("appNumber", "cyancruise.kapi.appNumber"), "v620_cc001");
+    var apiCode = firstText(readQueryOrStorage("apiCode", "cyancruise.kapi.apiCode"), "cc001/careerloop/route");
+    var accessToken = readQueryOrStorage("access_token", "cyancruise.kapi.accessToken");
     var url = resolveApiBase() + "/kapi/v2/" + encodeURIComponent(cloudId) + "/" + encodeURIComponent(appNumber) + "/" + encodeApiCode(apiCode);
     if (accessToken) {
       url += "?access_token=" + encodeURIComponent(accessToken);
@@ -1385,7 +1658,7 @@
   }
 
   function resolveKapiRouteVersion() {
-    return firstText(readQueryOrStorage("kapiRouteVersion", "careerloop.kapi.routeVersion"), "v2").toLowerCase();
+    return firstText(readQueryOrStorage("kapiRouteVersion", "cyancruise.kapi.routeVersion"), "v2").toLowerCase();
   }
 
   function encodeApiCode(apiCode) {
@@ -1393,7 +1666,7 @@
   }
 
   function resolveApiMode() {
-    return firstText(readQueryOrStorage("apiMode", "careerloop.apiMode"), "direct").toLowerCase();
+    return firstText(readQueryOrStorage("apiMode", "cyancruise.apiMode"), "direct").toLowerCase();
   }
 
   function readQueryOrStorage(queryKey, storageKey) {
@@ -1403,6 +1676,7 @@
       localStorage.setItem(storageKey, fromQuery);
       return fromQuery;
     }
+    migrateLegacyStorageKey(storageKey, legacyStorageKey(storageKey));
     return trim(localStorage.getItem(storageKey));
   }
 
@@ -1410,14 +1684,29 @@
     var params = new URLSearchParams(window.location.search);
     var fromQuery = trim(params.get("apiBase"));
     if (fromQuery) {
-      localStorage.setItem("careerloop.apiBase", fromQuery);
+      localStorage.setItem("cyancruise.apiBase", fromQuery);
       return fromQuery.replace(/\/$/, "");
     }
-    var stored = trim(localStorage.getItem("careerloop.apiBase"));
+    migrateLegacyStorageKey("cyancruise.apiBase", "careerloop.apiBase");
+    var stored = trim(localStorage.getItem("cyancruise.apiBase"));
     if (stored) {
       return stored.replace(/\/$/, "");
     }
     return defaultApiBase();
+  }
+
+  function legacyStorageKey(storageKey) {
+    return storageKey.indexOf("cyancruise.") === 0 ? "careerloop." + storageKey.substring("cyancruise.".length) : "";
+  }
+
+  function migrateLegacyStorageKey(storageKey, legacyKey) {
+    if (!legacyKey || localStorage.getItem(storageKey)) {
+      return;
+    }
+    var legacyValue = localStorage.getItem(legacyKey);
+    if (legacyValue) {
+      localStorage.setItem(storageKey, legacyValue);
+    }
   }
 
   function defaultApiBase() {
@@ -1490,7 +1779,10 @@
   function mapTargetToRoute(target) {
     var normalized = trim(target).replace(/^#/, "").replace(/^\//, "");
     var map = {
+      "onboarding": "workbench",
+      "personal-situation": "workbench",
       "pages/agent/index": "today-action",
+      "pages/onboarding/index": "workbench",
       "pages/assistant/index": "assistant",
       "pages/resume/index": "resume",
       "pages/resume-ai/index": "resume-diagnosis",
@@ -1502,7 +1794,8 @@
 
   function readPreviewProfile() {
     try {
-      var raw = localStorage.getItem("careerloop.previewProfile");
+      migrateLegacyStorageKey("cyancruise.previewProfile", "careerloop.previewProfile");
+      var raw = localStorage.getItem("cyancruise.previewProfile");
       if (!raw) {
         return null;
       }
@@ -1548,7 +1841,12 @@
   }
 
   function normalizeRoute(hash) {
-    return trim(hash || window.location.hash || "").replace(/^#/, "") || "workbench";
+    var fromHash = trim(hash || window.location.hash || "").replace(/^#/, "");
+    if (fromHash) {
+      return fromHash;
+    }
+    var params = new URLSearchParams(window.location.search);
+    return trim(params.get("ccRoute") || params.get("route")) || "workbench";
   }
 
   function hasUserIdentity() {

@@ -91,7 +91,7 @@ textarea {
 .shell {
   width: min(1220px, calc(100vw - 32px));
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 0 0 48px;
 }
 
 .app-header,
@@ -308,6 +308,13 @@ h3 {
   margin-bottom: 18px;
 }
 
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .route-meta {
   display: flex;
   flex-wrap: wrap;
@@ -348,6 +355,21 @@ h3 {
   grid-column: 1 / -1;
 }
 
+.resume-layout {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.resume-main,
+.resume-records {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
 .panel h3,
 .state-card h3 {
   margin-bottom: 10px;
@@ -383,6 +405,14 @@ h3 {
 
 .metric:last-child {
   border-bottom: 0;
+}
+
+.profile-summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-summary-grid .metric {
+  min-width: 0;
 }
 
 .metric strong,
@@ -424,6 +454,18 @@ h3 {
 
 .form-grid .full {
   grid-column: 1 / -1;
+}
+
+.form-section-title {
+  margin: 8px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 18px;
+}
+
+.form-section-title:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .actions-row {
@@ -576,8 +618,13 @@ h3 {
   .page-header,
   .feature-page-header,
   .panel-grid,
+  .resume-layout,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-actions {
+    justify-content: flex-start;
   }
 
   .status-grid,
@@ -590,7 +637,7 @@ h3 {
 @media (max-width: 620px) {
   .shell {
     width: min(100vw - 20px, 560px);
-    padding-top: 10px;
+    padding-top: 0;
   }
 
   .app-header,
@@ -608,6 +655,7 @@ h3 {
 
   .identity-row,
   .status-grid,
+  .profile-summary-grid,
   .metric {
     grid-template-columns: 1fr;
   }

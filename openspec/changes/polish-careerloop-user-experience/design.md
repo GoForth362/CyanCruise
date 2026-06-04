@@ -1,6 +1,6 @@
 ## Context
 
-CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识别、KAPI route、简历上传/预览/删除和工作台摘要刷新。当前页面仍保留大量迁移验收阶段的信息，例如接口契约面板、Route 标识、available/entry-only/user chip、文件上传预览独立入口。这些信息对开发调试有价值，但会让普通用户误以为系统是接口清单或半成品页面。
+CyanCruise 页面已经完成苍穹门户挂载、平台身份识别、KAPI route、简历上传/预览/删除和工作台摘要刷新。当前页面仍保留大量迁移验收阶段的信息，例如接口契约面板、Route 标识、available/entry-only/user chip、文件上传预览独立入口。这些信息对开发调试有价值，但会让普通用户误以为系统是接口清单或半成品页面。
 
 本 change 的目标是把现有静态 webapp 体验收口为用户可自然操作的求职主循环，同时保留调试能力，避免影响后续排查。
 
@@ -12,7 +12,7 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 - 将调试信息统一收敛到 `?ccDebug=1` 或等价开关，不在默认页面展示。
 - 简历页保留上传、创建、预览、删除、去诊断闭环，并减少 fileKey、接口路径等工程字段的视觉噪音。
 - 默认首页采用“平台菜单外部链接 + 右侧功能页”布局：金蝶平台侧边栏负责导航，CyanCruise 页面只负责当前菜单对应的内容卡片，减少大 hero、横向滚动导航和工程状态面板对用户注意力的占用。
-- 保持 `careerloop-routes.json`、`validate-routes.js`、OpenSpec 和现有 `/cc001/*` API 契约可审计。
+- 保持 `cyancruise-routes.json`、`validate-routes.js`、OpenSpec 和现有 `/cc001/*` API 契约可审计。
 - 仅修改静态 webapp 和 route metadata，除非验证发现必须补后端映射。
 
 **Non-Goals:**
@@ -32,7 +32,7 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 
 ### 2. route metadata 继续作为单一审计来源
 
-导航是否默认展示、是否调试可见、是否 entry-only，继续以 `careerloop-routes.json` 为基础。`app.js` 只消费 metadata，不在多处硬编码同一套可见性规则。
+导航是否默认展示、是否调试可见、是否 entry-only，继续以 `cyancruise-routes.json` 为基础。`app.js` 只消费 metadata，不在多处硬编码同一套可见性规则。
 
 替代方案是在 `app.js` 中直接写 route 白名单。该方案改动小，但后续菜单发布和 route 校验容易分叉，因此不采用。
 
@@ -46,11 +46,11 @@ CyanCruise 的 CareerLoop 页面已经完成苍穹门户挂载、平台身份识
 
 ### 5. 默认入口改为平台菜单驱动的功能页，而不是页面内自造侧边栏
 
-普通用户从金蝶平台侧边栏进入 CyanCruise 时，侧边栏应由金蝶“应用菜单”配置承载。CyanCruise 静态页不再重复绘制页面内左侧分组导航，避免和平台侧栏叠加、挤压内容区。每个菜单项使用外部链接打开同一个静态入口的不同 hash，例如 `/ierp/isv/v620/careerloop/index.htm#resume-home` 或 `/ierp/isv/v620/careerloop/index.htm#interview-home`。
+普通用户从金蝶平台侧边栏进入 CyanCruise 时，侧边栏应由金蝶“应用菜单”配置承载。CyanCruise 静态页不再重复绘制页面内左侧分组导航，避免和平台侧栏叠加、挤压内容区。每个菜单项使用外部链接打开同一个静态入口，并通过 `ccRoute` 查询参数指定页面，例如 `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-home` 或 `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-home`。
 
 CyanCruise 页面右侧展示当前外部链接对应的功能页：页面标题、短说明和功能卡片矩阵。当前阶段只发布 IPD 已有核心逻辑对应的四个入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试。
 
-顶部的大标题、身份卡、状态卡和横向 route 导航应被收敛：身份信息只保留在必要位置或调试模式，状态摘要可以变成右侧页面中的轻量信息，不应占据首屏主体。默认页面不再把“工作台”作为唯一内容容器，而是把不同 hash 视为金蝶平台菜单的落地页。
+顶部的大标题、身份卡、状态卡和横向 route 导航应被收敛：身份信息只保留在必要位置或调试模式，状态摘要可以变成右侧页面中的轻量信息，不应占据首屏主体。默认页面不再把“工作台”作为唯一内容容器，而是把不同 `ccRoute` 入口视为金蝶平台菜单的落地页。
 
 替代方案是在 CyanCruise 页面内部继续做一套左侧分组导航。该方案可控性高，但会和金蝶平台自带侧边栏重复，因此不采用。
 
@@ -58,25 +58,25 @@ CyanCruise 页面右侧展示当前外部链接对应的功能页：页面标题
 
 | 平台侧边栏菜单 | 外部链接 | CyanCruise 页面设计 |
 | --- | --- | --- |
-| CyanCruise 首页 | `/ierp/isv/v620/careerloop/index.htm#workbench` | 首页，填写基础信息并选择就业或深造路线。 |
-| 就业 | `/ierp/isv/v620/careerloop/index.htm#employment-home` | 就业落地页，展示简历和面试四个核心入口。 |
-| 就业 / 简历 | `/ierp/isv/v620/careerloop/index.htm#resume-home` | 父级/分组；展示 AI简历制作和 AI简历修改卡片。 |
-| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/careerloop/index.htm#resume` | 简历功能页，进入 AI简历制作流程。 |
-| 就业 / 简历 / AI简历修改 | `/ierp/isv/v620/careerloop/index.htm#resume-diagnosis` | 简历诊断页，突出诊断、关键词、优化建议和返回简历入口。 |
-| 就业 / 面试 | `/ierp/isv/v620/careerloop/index.htm#interview-home` | 父级/分组；展示全景仿真面试和 AI模拟面试卡片。 |
-| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 面试功能页，进入全景仿真面试入口。 |
-| 就业 / 面试 / AI模拟面试 | `/ierp/isv/v620/careerloop/index.htm#interview` | 已接入模拟面试页，展示面试历史和开始练习入口。 |
-| 深造 | `/ierp/isv/v620/careerloop/index.htm#further-study-home` | 深造落地页，展示考研、保研、留学规划入口。 |
-| 深造 / 考研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-exam` | 规划入口，后续接入考研规划 Agent。 |
-| 深造 / 保研 | `/ierp/isv/v620/careerloop/index.htm#postgraduate-recommendation` | 规划入口，后续接入保研规划 Agent。 |
-| 深造 / 留学 | `/ierp/isv/v620/careerloop/index.htm#study-abroad` | 规划入口，后续接入留学规划 Agent。 |
+| CyanCruise 首页 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=workbench` | 首页，填写基础信息并选择就业或深造路线。 |
+| 就业 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=employment-home` | 就业落地页，展示简历和面试四个核心入口。 |
+| 就业 / 简历 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-home` | 父级/分组；展示 AI简历制作和 AI简历修改卡片。 |
+| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume` | 简历功能页，进入 AI简历制作流程。 |
+| 就业 / 简历 / AI简历修改 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-diagnosis` | 简历诊断页，突出诊断、关键词、优化建议和返回简历入口。 |
+| 就业 / 面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-home` | 父级/分组；展示全景仿真面试和 AI模拟面试卡片。 |
+| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 面试功能页，进入全景仿真面试入口。 |
+| 就业 / 面试 / AI模拟面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 已接入模拟面试页，展示面试历史和开始练习入口。 |
+| 深造 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=further-study-home` | 深造落地页，展示考研、保研、留学规划入口。 |
+| 深造 / 考研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-exam` | 规划入口，后续接入考研规划 Agent。 |
+| 深造 / 保研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-recommendation` | 规划入口，后续接入保研规划 Agent。 |
+| 深造 / 留学 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=study-abroad` | 规划入口，后续接入留学规划 Agent。 |
 
 乔布简历、简历微课、数字人面试、公务员真题、事业编、大厂真题、面试微课等能力不在当前 IPD 核心流程中，本 change 不创建菜单、不创建占位 hash 页面，后续真实能力明确后再追加。
 
 ## Risks / Trade-offs
 
 - **调试入口隐藏后排查路径不明显** -> 在 README 或迁移文档记录 `?ccDebug=1`，并保留 route hash 直达。
-- **route metadata 调整可能影响校验脚本** -> 同步更新 `careerloop-routes.json` 与 `validate-routes.js`，运行 route 校验。
+- **route metadata 调整可能影响校验脚本** -> 同步更新 `cyancruise-routes.json` 与 `validate-routes.js`，运行 route 校验。
 - **用户模式与 debug 模式分支造成遗漏** -> 重点验证 `#workbench`、`#resume`、`#resume-diagnosis` 以及 `?ccDebug=1#file-upload-preview`。
 - **简历页隐藏 fileKey 后排错信息减少** -> debug 模式下显示完整 fileKey 和接口契约；默认模式保留必要的“已关联文件”状态。
 - **功能中心卡片多但真实能力未完全闭环** -> 当前阶段只保留 IPD 已有核心入口；新增想象功能不进入菜单和页面卡片，避免用户误以为已完成。
