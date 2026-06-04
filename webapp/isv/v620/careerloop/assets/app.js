@@ -873,9 +873,28 @@
     var links = els.pageHost.querySelectorAll("[data-link]");
     for (var i = 0; i < links.length; i += 1) {
       links[i].addEventListener("click", function (event) {
-        window.location.hash = event.currentTarget.getAttribute("data-link");
+        event.preventDefault();
+        event.stopPropagation();
+        navigateToRoute(event.currentTarget.getAttribute("data-link"));
       });
     }
+  }
+
+  function navigateToRoute(route) {
+    var key = normalizeRoute(route);
+    if (!pageByKey[key]) {
+      showMessage("warning", "页面不可用", "未找到页面: " + key);
+      return;
+    }
+    state.route = key;
+    if (window.location.hash !== "#" + key) {
+      window.location.hash = key;
+    }
+    markActiveNav();
+    renderPage(pageByKey[key]);
+    window.setTimeout(function () {
+      window.scrollTo(0, 0);
+    }, 0);
   }
 
   function overviewRows() {
