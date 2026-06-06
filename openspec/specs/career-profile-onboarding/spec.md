@@ -140,3 +140,15 @@ onboarding/profile 迁移 SHALL 保持现有今日推荐规则兼容，同时允
 #### Scenario: 运行存储持久化测试
 - **WHEN** cloud 应用模块测试套件运行
 - **THEN** 测试验证 snapshot、facts 和派生画像数据能跨新的文件存储或应用服务实例保留
+
+### Requirement: Separate drafts from completed onboarding
+The system SHALL distinguish profile draft saves from completed onboarding saves. Saving or clearing a draft SHALL NOT update the onboarding snapshot block, target-role preferences, profile facts, or derived unified profile.
+
+#### Scenario: Draft save does not complete onboarding
+- **WHEN** a user saves profile draft data with identity type and target role
+- **THEN** the user's onboarding snapshot remains unchanged and no derived profile refresh is triggered by the draft save
+
+#### Scenario: Onboarding save still updates profile snapshot
+- **WHEN** a user submits completed onboarding through the existing onboarding operation
+- **THEN** the system continues to merge onboarding data into the snapshot, merge target role into preferences, and refresh the unified profile
+
