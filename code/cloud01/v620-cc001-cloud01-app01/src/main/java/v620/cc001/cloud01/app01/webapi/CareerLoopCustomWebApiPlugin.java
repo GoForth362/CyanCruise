@@ -12,6 +12,7 @@ import v620.cc001.base.common.dto.career.AdminBroadcastRequest;
 import v620.cc001.base.common.dto.career.AssessmentScaleDto;
 import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
 import v620.cc001.base.common.dto.career.AssistantChatRequest;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
 import v620.cc001.base.common.dto.career.FileUploadRequest;
 import v620.cc001.base.common.dto.career.InterviewStartRequest;
@@ -120,6 +121,16 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/career-profile/snapshot/get".equals(path)) {
                 return ApiResult.success(profileWebApi.snapshot(extractUserId(body)));
+            }
+            if ("/cc001/career-profile/draft/get".equals(path)) {
+                return ApiResult.success(profileWebApi.draft(extractUserId(body)));
+            }
+            if ("/cc001/career-profile/draft/save".equals(path)) {
+                return ApiResult.success(profileWebApi.saveDraft(
+                        extractUserId(body), extractProfileDraft(body)));
+            }
+            if ("/cc001/career-profile/draft/clear".equals(path)) {
+                return ApiResult.success(profileWebApi.clearDraft(extractUserId(body)));
             }
             if ("/cc001/career-profile/onboarding/save".equals(path)) {
                 return ApiResult.success(profileWebApi.saveOnboarding(
@@ -353,6 +364,26 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             onboarding.setHasResume(hasResumeFromStatus(onboarding.getResumeStatus()));
         }
         return onboarding;
+    }
+
+    private CareerProfileDraftDto extractProfileDraft(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof CareerProfileDraftDto) {
+            return (CareerProfileDraftDto) request;
+        }
+        CareerProfileDraftDto draft = new CareerProfileDraftDto();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            draft.setIdentityType(textOrNull(values.get("identityType")));
+            draft.setEducationStage(textOrNull(values.get("educationStage")));
+            draft.setSchoolMajor(textOrNull(values.get("schoolMajor")));
+            draft.setResumeStatus(textOrNull(values.get("resumeStatus")));
+            draft.setTargetRole(textOrNull(values.get("targetRole")));
+            draft.setPreference(textOrNull(values.get("preference")));
+            draft.setExperience(textOrNull(firstPresent(values, "experience", "strengths")));
+            draft.setRouteIntent(textOrNull(firstPresent(values, "routeIntent", "selectedGoal")));
+        }
+        return draft;
     }
 
     private ResumeCreateRequest extractResumeCreateRequest(Object body) {

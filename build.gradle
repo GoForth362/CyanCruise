@@ -146,3 +146,75 @@ subprojects {
 	
 }
 
+task deployWebapp {
+	group 'build'
+	description 'Copy CyanCruise webapp assets to the configured Cosmic home.'
+
+	doLast {
+		def cosmicHome = System.getProperty('cosmic_home') ?: System.getenv('COSMIC_HOME')
+		if (cosmicHome == null) {
+			throw new GradleException("Neither 'cosmic_home' in gradle.properties nor 'COSMIC_HOME' in environment was set.")
+		}
+
+		deployWebappToHome(cosmicHome)
+	}
+}
+
+task deployRuntimeHome {
+	group 'build'
+	description 'Mirror CyanCruise jars and webapp assets to the optional runtime home.'
+	dependsOn subprojects.collect { it.tasks.deployJar }
+	dependsOn deployWebapp
+
+	doLast {
+		def cosmicHome = System.getProperty('cosmic_home') ?: System.getenv('COSMIC_HOME')
+		def runtimeHome = System.getProperty('cc001.runtime_home') ?: System.getenv('CC001_RUNTIME_HOME')
+		if (runtimeHome == null || runtimeHome.trim().length() == 0) {
+			println "No 'cc001.runtime_home' or 'CC001_RUNTIME_HOME' configured; skip runtime home mirror."
+			return
+		}
+		if (cosmicHome == null || cosmicHome.trim().length() == 0) {
+			throw new GradleException("Neither 'cosmic_home' in gradle.properties nor 'COSMIC_HOME' in environment was set.")
+		}
+
+		copy {
+			from "${cosmicHome}/mservice-cosmic/lib/cus"
+			into "${runtimeHome}/mservice-cosmic/lib/cus"
+			include 'v620-cc001*.jar'
+		}
+		deployWebappToHome(runtimeHome)
+	}
+}
+
+task deployAll {
+	group 'build'
+	description 'Build and deploy CyanCruise jars and webapp assets to the configured Cosmic home and optional runtime home.'
+	dependsOn subprojects.collect { it.tasks.deployJar }
+	dependsOn deployWebapp
+	dependsOn deployRuntimeHome
+}
+
+def deployWebappToHome(String home) {
+	copy {
+		from "${rootDir}/webapp"
+		into "${home}/mservice-cosmic/webapp"
+	}
+
+	copy {
+		from "${rootDir}/webapp"
+		into "${home}/static-file-service"
+	}
+
+	def webappIndex = file("${home}/mservice-cosmic/webapp/isv/v620/cyancruise/index.html")
+	def webappIndexAlias = file("${home}/mservice-cosmic/webapp/isv/v620/cyancruise/index.htm")
+	def staticIndex = file("${home}/static-file-service/isv/v620/cyancruise/index.html")
+	def staticIndexAlias = file("${home}/static-file-service/isv/v620/cyancruise/index.htm")
+
+	if (webappIndex.exists()) {
+		webappIndexAlias.bytes = webappIndex.bytes
+	}
+	if (staticIndex.exists()) {
+		staticIndexAlias.bytes = staticIndex.bytes
+	}
+}
+

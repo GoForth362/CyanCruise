@@ -21,6 +21,8 @@ systemProp.project_flag=cc001
 systemProp.project_dir=D:/code/kingdee/CyanCruise
 #--This is the dir for cosmic project libs and static resouces
 systemProp.cosmic_home=D:/code/kingdee/cosmic/home
+#--Optional runtime home mirror. Set this when the running Cosmic environment differs from cosmic_home.
+#systemProp.cc001.runtime_home=D:/code/kingdee/ENV
 #--Performance configuration for gradle build
 org.gradle.parallel=true
 org.gradle.daemon=true

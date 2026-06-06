@@ -6,6 +6,7 @@ package v620.cc001.cloud01.app01.mservice.datamodel;
 public final class CareerLoopDatamodelObjects {
 
     public static final String PROFILE_SNAPSHOT = "cc_cl_profile_snapshot";
+    public static final String PROFILE_DRAFT = "cc_cl_profile_draft";
     public static final String PROFILE_FACT = "cc_cl_profile_fact";
     public static final String USER_PROFILE = "cc_cl_user_profile";
     public static final String ASSESSMENT_RECORD = "cc_cl_assessment_record";

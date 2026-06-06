@@ -5,6 +5,7 @@ import kd.bos.openapi.common.custom.annotation.ApiMapping;
 import kd.bos.openapi.common.custom.annotation.ApiPostMapping;
 import kd.bos.openapi.common.custom.annotation.ApiRequestBody;
 import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerProfileInputsRequest;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
 import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
@@ -35,6 +36,25 @@ public class CareerProfileWebApi {
     public @ApiResponseBody(value = "职业画像快照") UserProfileSnapshot snapshot(
             @ApiRequestBody(value = "用户ID", required = true) String userId) {
         return applicationService.getSnapshot(identityBoundary.requireUser(userId));
+    }
+
+    @ApiPostMapping(value = "/draft/get", desc = "get career profile draft", methodParamNames = {"userId"})
+    public @ApiResponseBody(value = "career profile draft") CareerProfileDraftDto draft(
+            @ApiRequestBody(value = "userId", required = true) String userId) {
+        return applicationService.getDraft(identityBoundary.requireUser(userId));
+    }
+
+    @ApiPostMapping(value = "/draft/save", desc = "save career profile draft", methodParamNames = {"userId", "request"})
+    public @ApiResponseBody(value = "career profile draft") CareerProfileDraftDto saveDraft(
+            @ApiRequestBody(value = "userId", required = true) String userId,
+            @ApiRequestBody(value = "career profile draft", required = true) CareerProfileDraftDto request) {
+        return applicationService.saveDraft(identityBoundary.requireUser(userId), request);
+    }
+
+    @ApiPostMapping(value = "/draft/clear", desc = "clear career profile draft", methodParamNames = {"userId"})
+    public @ApiResponseBody(value = "career profile draft") CareerProfileDraftDto clearDraft(
+            @ApiRequestBody(value = "userId", required = true) String userId) {
+        return applicationService.clearDraft(identityBoundary.requireUser(userId));
     }
 
     @ApiPostMapping(value = "/preferences/save", desc = "保存职业偏好", methodParamNames = {"userId", "request"})

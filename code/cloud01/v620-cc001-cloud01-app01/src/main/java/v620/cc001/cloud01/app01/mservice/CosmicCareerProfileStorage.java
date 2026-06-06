@@ -1,6 +1,7 @@
 package v620.cc001.cloud01.app01.mservice;
 
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.datamodel.CareerLoopDatamodelObjects;
 import v620.cc001.cloud01.app01.mservice.datamodel.CosmicDatamodelGateway;
@@ -68,6 +69,24 @@ public class CosmicCareerProfileStorage implements CareerProfileStorage {
                 .set("current_stage", profile == null ? null : profile.getCurrentStage())
                 .set("target_role", targetRole)
                 .set("profile_json", profile)
+                .set(CareerLoopDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
+    }
+
+    public CareerProfileDraftDto loadDraft(String userId) {
+        CosmicDatamodelRecord record = findByUser(CareerLoopDatamodelObjects.PROFILE_DRAFT, userId);
+        Object draft = record == null ? null : record.get("draft_json");
+        return draft instanceof CareerProfileDraftDto ? (CareerProfileDraftDto) draft : new CareerProfileDraftDto();
+    }
+
+    public void saveDraft(String userId, CareerProfileDraftDto draft) {
+        CosmicDatamodelRecord record = existingOrNew(CareerLoopDatamodelObjects.PROFILE_DRAFT, userId);
+        gateway.save(record.set("draft_json", draft == null ? new CareerProfileDraftDto() : draft)
+                .set(CareerLoopDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
+    }
+
+    public void clearDraft(String userId) {
+        CosmicDatamodelRecord record = existingOrNew(CareerLoopDatamodelObjects.PROFILE_DRAFT, userId);
+        gateway.save(record.set("draft_json", new CareerProfileDraftDto())
                 .set(CareerLoopDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
     }
 

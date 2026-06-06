@@ -1,6 +1,7 @@
 package v620.cc001.cloud01.app01.mservice;
 
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
 import java.util.Map;
@@ -21,4 +22,10 @@ public interface CareerProfileStorage {
     CareerUserProfileDto loadProfile(String userId);
 
     void saveProfile(String userId, CareerUserProfileDto profile);
+
+    CareerProfileDraftDto loadDraft(String userId);
+
+    void saveDraft(String userId, CareerProfileDraftDto draft);
+
+    void clearDraft(String userId);
 }

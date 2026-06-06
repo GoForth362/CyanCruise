@@ -239,6 +239,33 @@
           "fallback": "Show onboarding-required or empty profile state."
         },
         {
+          "name": "career profile draft",
+          "method": "POST",
+          "path": "/cc001/career-profile/draft/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerProfileDraftDto",
+          "fallback": "Use local draft fallback and keep the profile form editable."
+        },
+        {
+          "name": "save career profile draft",
+          "method": "POST",
+          "path": "/cc001/career-profile/draft/save",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "CareerProfileDraftDto",
+          "fallback": "Keep local draft values and show non-blocking save failed state."
+        },
+        {
+          "name": "clear career profile draft",
+          "method": "POST",
+          "path": "/cc001/career-profile/draft/clear",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerProfileDraftDto",
+          "fallback": "Keep local draft values if backend clear is unavailable."
+        },
+        {
           "name": "today action by user",
           "method": "POST",
           "path": "/cc001/career-agent/today/get",
