@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
@@ -96,6 +97,42 @@ class CareerLoopCustomWebApiPluginTest {
     }
 
     @Test
+    void routesProfileDraftSaveAndGetThroughCustomWebApiContract(@TempDir Path tempDir) {
+        System.setProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY, tempDir.toString());
+        try {
+            IdentityAwareCareerLoopWebApiBoundary boundary =
+                    new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
+            CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
+                    new CareerLoopIdentityWebApi(boundary),
+                    new CareerProfileWebApi(boundary),
+                    new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
+            Map<String, Object> request = new HashMap<String, Object>();
+            request.put("identityType", "student");
+            request.put("educationStage", "undergraduate");
+            request.put("targetRole", "Data Analyst");
+            request.put("selectedGoal", "employment");
+            Map<String, Object> body = new HashMap<String, Object>();
+            body.put("userId", "api-user");
+            body.put("request", request);
+
+            ApiResult save = plugin.doCustomService(params("/cc001/career-profile/draft/save", body));
+            ApiResult get = plugin.doCustomService(params("/cc001/career-profile/draft/get", body));
+            ApiResult snapshot = plugin.doCustomService(params("/cc001/career-profile/snapshot/get", body));
+
+            assertTrue(save.getSuccess());
+            assertTrue(get.getSuccess());
+            CareerProfileDraftDto draft = (CareerProfileDraftDto) get.getData();
+            assertEquals("student", draft.getIdentityType());
+            assertEquals("undergraduate", draft.getEducationStage());
+            assertEquals("Data Analyst", draft.getTargetRole());
+            assertEquals("employment", draft.getRouteIntent());
+            assertEquals(null, ((UserProfileSnapshot) snapshot.getData()).getOnboarding());
+        } finally {
+            System.clearProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY);
+        }
+    }
+
+    @Test
     void routesSecondaryReadEndpointsThroughCustomWebApiContract() {
         IdentityAwareCareerLoopWebApiBoundary boundary =
                 new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
@@ -124,7 +161,7 @@ class CareerLoopCustomWebApiPluginTest {
     @Test
     void routeMapWebApisAreDeclaredInCustomRouter() throws Exception {
         String routeMap = new String(Files.readAllBytes(workspaceFile(
-                "webapp/isv/v620/careerloop/careerloop-routes.json")), "UTF-8");
+                "webapp/isv/v620/cyancruise/cyancruise-routes.json")), "UTF-8");
         String router = new String(Files.readAllBytes(workspaceFile(
                 "code/cloud01/v620-cc001-cloud01-app01/src/main/java/v620/cc001/cloud01/app01/webapi/CareerLoopCustomWebApiPlugin.java")), "UTF-8");
 

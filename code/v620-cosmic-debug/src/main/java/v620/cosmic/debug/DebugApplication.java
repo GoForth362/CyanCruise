@@ -44,6 +44,10 @@ public class DebugApplication {
         cosmic.setMcServerUrl(mcUrl);
         cosmic.set("monitor.es.url", monitorEsUrl);
         cosmic.set("gov.reporter.es.url", monitorEsUrl);
+        setDefault("cc001.identity.adapter.enabled", "true");
+        setDefault("cc001.identity.login.provider.enabled", "true");
+        setDefault("cc001.identity.login.provider.name", "RequestContext");
+        setDefault("cc001.file.adapter.enabled", "true");
         
         // 自定义本地苍穹调试服务的端口
         cosmic.setCosmicWebPort(intConfig("cosmic.web.port", "COSMIC_WEB_PORT", 8881));
@@ -82,6 +86,12 @@ public class DebugApplication {
             return value.trim();
         }
         return defaultValue;
+    }
+
+    private static void setDefault(String key, String value) {
+        if (isBlank(System.getProperty(key))) {
+            System.setProperty(key, value);
+        }
     }
 
     private static Properties loadLocalConfig() {

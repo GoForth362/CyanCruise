@@ -1,6 +1,7 @@
 package v620.cc001.cloud01.app01.mservice;
 
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
 import java.io.File;
@@ -63,6 +64,22 @@ public class FileCareerProfileStorage implements CareerProfileStorage {
     public synchronized void saveProfile(String userId, CareerUserProfileDto profile) {
         if (profile != null) {
             write(userId, "profile.ser", profile);
+        }
+    }
+
+    public synchronized CareerProfileDraftDto loadDraft(String userId) {
+        Object value = read(userId, "draft.ser");
+        return value instanceof CareerProfileDraftDto ? (CareerProfileDraftDto) value : new CareerProfileDraftDto();
+    }
+
+    public synchronized void saveDraft(String userId, CareerProfileDraftDto draft) {
+        write(userId, "draft.ser", draft == null ? new CareerProfileDraftDto() : draft);
+    }
+
+    public synchronized void clearDraft(String userId) {
+        File file = file(userId, "draft.ser");
+        if (file.exists() && !file.delete()) {
+            throw new IllegalStateException("Unable to delete career profile draft file: " + file.getAbsolutePath());
         }
     }
 

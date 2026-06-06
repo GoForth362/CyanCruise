@@ -1,6 +1,7 @@
 package v620.cc001.cloud01.app01.mservice;
 
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
 import java.util.LinkedHashMap;
@@ -18,6 +19,8 @@ public class InMemoryCareerProfileStorage implements CareerProfileStorage {
             new ConcurrentHashMap<String, Map<String, String>>();
     private static final Map<String, CareerUserProfileDto> PROFILES =
             new ConcurrentHashMap<String, CareerUserProfileDto>();
+    private static final Map<String, CareerProfileDraftDto> DRAFTS =
+            new ConcurrentHashMap<String, CareerProfileDraftDto>();
 
     public UserProfileSnapshot loadSnapshot(String userId) {
         UserProfileSnapshot snapshot = SNAPSHOTS.get(userId);
@@ -53,5 +56,18 @@ public class InMemoryCareerProfileStorage implements CareerProfileStorage {
         if (profile != null) {
             PROFILES.put(userId, profile);
         }
+    }
+
+    public CareerProfileDraftDto loadDraft(String userId) {
+        CareerProfileDraftDto draft = DRAFTS.get(userId);
+        return draft == null ? new CareerProfileDraftDto() : draft;
+    }
+
+    public void saveDraft(String userId, CareerProfileDraftDto draft) {
+        DRAFTS.put(userId, draft == null ? new CareerProfileDraftDto() : draft);
+    }
+
+    public void clearDraft(String userId) {
+        DRAFTS.remove(userId);
     }
 }

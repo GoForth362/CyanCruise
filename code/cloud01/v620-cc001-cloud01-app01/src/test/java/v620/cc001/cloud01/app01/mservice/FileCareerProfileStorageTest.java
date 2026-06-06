@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import v620.base.helper.career.CareerProfileBuildService;
 import v620.base.helper.career.CareerProfileSnapshotMergeService;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
 import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
@@ -75,6 +76,56 @@ class FileCareerProfileStorageTest {
         CareerProfileApplicationService second = service(new FileCareerProfileStorage(tempDir));
 
         assertEquals("Product Manager", second.getSnapshot("user-3").getPreferences().getTargetRole());
+    }
+
+    @Test
+    void reloadsProfileDraftFromFreshStorageInstance() {
+        CareerProfileApplicationService first = service(new FileCareerProfileStorage(tempDir));
+        CareerProfileDraftDto draft = new CareerProfileDraftDto();
+        draft.setIdentityType("student");
+        draft.setTargetRole("AI Product Manager");
+        first.saveDraft("user-4", draft);
+
+        CareerProfileApplicationService second = service(new FileCareerProfileStorage(tempDir));
+
+        assertEquals("student", second.getDraft("user-4").getIdentityType());
+        assertEquals("AI Product Manager", second.getDraft("user-4").getTargetRole());
+        assertNotNull(second.getDraft("user-4").getUpdatedAt());
+    }
+
+    @Test
+    void profileDraftMergePreservesExistingValuesAndIgnoresBlankValues() {
+        CareerProfileApplicationService service = service(new FileCareerProfileStorage(tempDir));
+        CareerProfileDraftDto first = new CareerProfileDraftDto();
+        first.setTargetRole("Data Analyst");
+        first.setPreference("analytics");
+        service.saveDraft("user-5", first);
+
+        CareerProfileDraftDto second = new CareerProfileDraftDto();
+        second.setTargetRole(" ");
+        second.setPreference("");
+        second.setResumeStatus("draft");
+        CareerProfileDraftDto saved = service.saveDraft("user-5", second);
+
+        assertEquals("Data Analyst", saved.getTargetRole());
+        assertEquals("analytics", saved.getPreference());
+        assertEquals("draft", saved.getResumeStatus());
+    }
+
+    @Test
+    void clearProfileDraftDoesNotClearSnapshot() {
+        CareerProfileApplicationService service = service(new FileCareerProfileStorage(tempDir));
+        CareerProfileOnboardingRequest onboarding = new CareerProfileOnboardingRequest();
+        onboarding.setIdentityType("graduate");
+        service.saveOnboarding("user-6", onboarding);
+        CareerProfileDraftDto draft = new CareerProfileDraftDto();
+        draft.setTargetRole("Consultant");
+        service.saveDraft("user-6", draft);
+
+        service.clearDraft("user-6");
+
+        assertEquals(null, service.getDraft("user-6").getTargetRole());
+        assertEquals("graduate", service.getSnapshot("user-6").getOnboarding().getIdentityType());
     }
 
     private CareerProfileApplicationService service(CareerProfileStorage storage) {

@@ -3,12 +3,14 @@ package v620.cc001.cloud01.app01.mservice;
 import v620.base.helper.career.CareerProfileBuildService;
 import v620.base.helper.career.CareerProfileSnapshotMergeService;
 import v620.cc001.base.common.dto.career.CareerAgentRuleInput;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerProfileInputsRequest;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
 import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
@@ -44,6 +46,24 @@ public class CareerProfileApplicationService {
 
     public UserProfileSnapshot getSnapshot(String userId) {
         return mergeService.ensureSnapshot(storage.loadSnapshot(requireUserId(userId)));
+    }
+
+    public CareerProfileDraftDto getDraft(String userId) {
+        return ensureDraft(storage.loadDraft(requireUserId(userId)));
+    }
+
+    public CareerProfileDraftDto saveDraft(String userId, CareerProfileDraftDto request) {
+        String safeUserId = requireUserId(userId);
+        CareerProfileDraftDto draft = mergeDraft(storage.loadDraft(safeUserId), request);
+        draft.setUpdatedAt(LocalDateTime.now());
+        storage.saveDraft(safeUserId, draft);
+        return draft;
+    }
+
+    public CareerProfileDraftDto clearDraft(String userId) {
+        String safeUserId = requireUserId(userId);
+        storage.clearDraft(safeUserId);
+        return new CareerProfileDraftDto();
     }
 
     public UserProfileSnapshot savePreferences(String userId, CareerProfilePreferencesRequest request) {
@@ -133,6 +153,46 @@ public class CareerProfileApplicationService {
         if (value != null && value.trim().length() > 0) {
             storage.saveFact(userId, key, value);
         }
+    }
+
+    private CareerProfileDraftDto mergeDraft(CareerProfileDraftDto existing, CareerProfileDraftDto request) {
+        CareerProfileDraftDto draft = ensureDraft(existing);
+        if (request == null) {
+            return draft;
+        }
+        if (hasText(request.getIdentityType())) {
+            draft.setIdentityType(request.getIdentityType().trim());
+        }
+        if (hasText(request.getEducationStage())) {
+            draft.setEducationStage(request.getEducationStage().trim());
+        }
+        if (hasText(request.getSchoolMajor())) {
+            draft.setSchoolMajor(request.getSchoolMajor().trim());
+        }
+        if (hasText(request.getResumeStatus())) {
+            draft.setResumeStatus(request.getResumeStatus().trim());
+        }
+        if (hasText(request.getTargetRole())) {
+            draft.setTargetRole(request.getTargetRole().trim());
+        }
+        if (hasText(request.getPreference())) {
+            draft.setPreference(request.getPreference().trim());
+        }
+        if (hasText(request.getExperience())) {
+            draft.setExperience(request.getExperience().trim());
+        }
+        if (hasText(request.getRouteIntent())) {
+            draft.setRouteIntent(request.getRouteIntent().trim());
+        }
+        return draft;
+    }
+
+    private CareerProfileDraftDto ensureDraft(CareerProfileDraftDto draft) {
+        return draft == null ? new CareerProfileDraftDto() : draft;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && value.trim().length() > 0;
     }
 
     private String requireUserId(String userId) {

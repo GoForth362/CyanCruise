@@ -3,6 +3,9 @@
 
   var endpoints = {
     snapshot: "/cc001/career-profile/snapshot/get",
+    draft: "/cc001/career-profile/draft/get",
+    draftSave: "/cc001/career-profile/draft/save",
+    draftClear: "/cc001/career-profile/draft/clear",
     onboarding: "/cc001/career-profile/onboarding/save",
     today: "/cc001/career-agent/today/get",
     assessmentSubmit: "/cc001/assessment/submit",
@@ -1587,6 +1590,7 @@
     return fetch(request.url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
       body: JSON.stringify(request.body)
     }).then(function (response) {
       if (!response.ok) {
@@ -1666,7 +1670,7 @@
   }
 
   function resolveApiMode() {
-    return firstText(readQueryOrStorage("apiMode", "cyancruise.apiMode"), "direct").toLowerCase();
+    return firstText(readQueryOrStorage("apiMode", "cyancruise.apiMode"), "kapi").toLowerCase();
   }
 
   function readQueryOrStorage(queryKey, storageKey) {
