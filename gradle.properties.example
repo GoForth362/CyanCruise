@@ -23,6 +23,15 @@ systemProp.project_dir=D:/code/kingdee/CyanCruise
 systemProp.cosmic_home=D:/code/kingdee/cosmic/home
 #--Optional runtime home mirror. Set this when the running Cosmic environment differs from cosmic_home.
 #systemProp.cc001.runtime_home=D:/code/kingdee/ENV
+
+#--CyanCruise profile storage. PostgreSQL is enabled only when adapter is set to postgresql and all connection properties are present.
+#systemProp.cc001.profile.storage.adapter=postgresql
+#systemProp.cc001.profile.postgresql.url=jdbc:postgresql://10.0.0.8:5432/cyancruise
+#systemProp.cc001.profile.postgresql.username=cyancruise_app
+#systemProp.cc001.profile.postgresql.password=<password>
+#systemProp.cc001.profile.postgresql.schema=public
+#systemProp.cc001.profile.postgresql.initialize=false
+
 #--Performance configuration for gradle build
 org.gradle.parallel=true
 org.gradle.daemon=true

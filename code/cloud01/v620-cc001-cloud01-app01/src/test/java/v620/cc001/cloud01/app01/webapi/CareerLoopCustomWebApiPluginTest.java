@@ -12,6 +12,7 @@ import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
 import v620.cc001.cloud01.app01.mservice.FileCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
+import v620.cc001.cloud01.app01.mservice.PostgresqlProfileStorageConfig;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,6 +66,8 @@ class CareerLoopCustomWebApiPluginTest {
 
     @Test
     void routesOnboardingSaveThroughCustomWebApiContract(@TempDir Path tempDir) {
+        String previousAdapter = System.getProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY);
+        System.setProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, "file");
         System.setProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY, tempDir.toString());
         try {
             IdentityAwareCareerLoopWebApiBoundary boundary =
@@ -93,11 +96,14 @@ class CareerLoopCustomWebApiPluginTest {
             assertEquals("Java Backend Engineer", snapshot.getPreferences().getTargetRole());
         } finally {
             System.clearProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY);
+            restoreProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, previousAdapter);
         }
     }
 
     @Test
     void routesProfileDraftSaveAndGetThroughCustomWebApiContract(@TempDir Path tempDir) {
+        String previousAdapter = System.getProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY);
+        System.setProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, "file");
         System.setProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY, tempDir.toString());
         try {
             IdentityAwareCareerLoopWebApiBoundary boundary =
@@ -129,6 +135,7 @@ class CareerLoopCustomWebApiPluginTest {
             assertEquals(null, ((UserProfileSnapshot) snapshot.getData()).getOnboarding());
         } finally {
             System.clearProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY);
+            restoreProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, previousAdapter);
         }
     }
 
@@ -208,5 +215,13 @@ class CareerLoopCustomWebApiPluginTest {
             current = current.getParent();
         }
         throw new IllegalStateException("workspace file not found: " + relativePath);
+    }
+
+    private void restoreProperty(String key, String value) {
+        if (value == null) {
+            System.clearProperty(key);
+            return;
+        }
+        System.setProperty(key, value);
     }
 }
