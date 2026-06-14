@@ -68,6 +68,19 @@ allprojects {
 	
 	test {
 	    useJUnitPlatform()
+	    [
+	    	'cc001.profile.storage.adapter',
+	    	'cc001.profile.postgresql.url',
+	    	'cc001.profile.postgresql.username',
+	    	'cc001.profile.postgresql.password',
+	    	'cc001.profile.postgresql.schema',
+	    	'cc001.profile.postgresql.initialize',
+	    	'cc001.profile.postgresql.liveTest'
+	    ].each { propertyName ->
+	    	if (System.getProperty(propertyName) != null) {
+	    		systemProperty propertyName, System.getProperty(propertyName)
+	    	}
+	    }
 	}
 	
 	java {

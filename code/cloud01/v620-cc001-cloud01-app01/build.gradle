@@ -9,6 +9,9 @@
 dependencies {
 	api project(':v620-cc001-base-common')
 	api project(':v620-cc001-base-helper')
+	api 'org.postgresql:postgresql:42.7.3'
+	api 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
+	api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.5'
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
 } 
 
