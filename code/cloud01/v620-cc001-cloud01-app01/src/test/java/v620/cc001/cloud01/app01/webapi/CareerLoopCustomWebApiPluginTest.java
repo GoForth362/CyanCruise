@@ -4,15 +4,39 @@ import kd.bos.entity.api.ApiResult;
 import kd.bos.openapi.common.result.CustomApiResult;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import v620.base.helper.career.AssessmentScoringService;
+import v620.base.helper.career.AssistantChatHelper;
+import v620.base.helper.career.CareerAgentTodayRuleService;
+import v620.base.helper.career.CareerPlanSummaryService;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
+import v620.base.helper.career.CareerProfileBuildService;
+import v620.base.helper.career.CareerProfileSnapshotMergeService;
+import v620.base.helper.career.InterviewCoreService;
+import v620.base.helper.career.ResumeDiagnosisService;
+import v620.cc001.cloud01.app01.mservice.AssessmentApplicationService;
+import v620.cc001.cloud01.app01.mservice.AssistantChatApplicationService;
+import v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService;
+import v620.cc001.cloud01.app01.mservice.CareerPlanApplicationService;
+import v620.cc001.cloud01.app01.mservice.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.CareerProfileRuleInputSource;
+import v620.cc001.cloud01.app01.mservice.DefaultResumeDiagnosisAnalyzer;
 import v620.cc001.cloud01.app01.mservice.DevelopmentCareerLoopIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.EmptyAssistantChatContextProvider;
+import v620.cc001.cloud01.app01.mservice.FileAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.FileCareerPlanStorage;
 import v620.cc001.cloud01.app01.mservice.FileCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.FileInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.FileResumeDiagnosisStorage;
+import v620.cc001.cloud01.app01.mservice.FileResumeStorage;
 import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
-import v620.cc001.cloud01.app01.mservice.PostgresqlProfileStorageConfig;
+import v620.cc001.cloud01.app01.mservice.InterviewApplicationService;
+import v620.cc001.cloud01.app01.mservice.ResumeApplicationService;
+import v620.cc001.cloud01.app01.mservice.ResumeDiagnosisApplicationService;
+import v620.cc001.cloud01.app01.mservice.UnavailableAssistantChatGenerator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,13 +56,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CareerLoopCustomWebApiPluginTest {
 
     @Test
-    void routesIdentityCurrentThroughCustomWebApiContract() {
+    void routesIdentityCurrentThroughCustomWebApiContract(@TempDir Path tempDir) {
         IdentityAwareCareerLoopWebApiBoundary boundary =
                 new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
-        CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
-                new CareerLoopIdentityWebApi(boundary),
-                new CareerProfileWebApi(boundary),
-                new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir, boundary);
 
         ApiResult result = plugin.doCustomService(params("/cc001/identity/current", new HashMap<String, Object>()));
 
@@ -49,13 +70,10 @@ class CareerLoopCustomWebApiPluginTest {
     }
 
     @Test
-    void routeReturnsCustomApiResultForOpenApiJavaPlugin() {
+    void routeReturnsCustomApiResultForOpenApiJavaPlugin(@TempDir Path tempDir) {
         IdentityAwareCareerLoopWebApiBoundary boundary =
                 new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
-        CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
-                new CareerLoopIdentityWebApi(boundary),
-                new CareerProfileWebApi(boundary),
-                new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir, boundary);
 
         CustomApiResult<Object> result = plugin.route(params("/cc001/identity/current", new HashMap<String, Object>()));
 
@@ -66,87 +84,62 @@ class CareerLoopCustomWebApiPluginTest {
 
     @Test
     void routesOnboardingSaveThroughCustomWebApiContract(@TempDir Path tempDir) {
-        String previousAdapter = System.getProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY);
-        System.setProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, "file");
-        System.setProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY, tempDir.toString());
-        try {
-            IdentityAwareCareerLoopWebApiBoundary boundary =
-                    new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
-            CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
-                    new CareerLoopIdentityWebApi(boundary),
-                    new CareerProfileWebApi(boundary),
-                    new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
-            Map<String, Object> request = new HashMap<String, Object>();
-            request.put("identityType", "career_switcher");
-            request.put("targetRole", "Java Backend Engineer");
-            request.put("resumeStatus", "ready");
-            request.put("preference", "backend");
-            Map<String, Object> body = new HashMap<String, Object>();
-            body.put("userId", "api-user");
-            body.put("request", request);
+        IdentityAwareCareerLoopWebApiBoundary boundary =
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir, boundary);
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("identityType", "career_switcher");
+        request.put("targetRole", "Java Backend Engineer");
+        request.put("resumeStatus", "ready");
+        request.put("preference", "backend");
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("userId", "api-user");
+        body.put("request", request);
 
-            ApiResult result = plugin.doCustomService(params("/cc001/career-profile/onboarding/save", body));
+        ApiResult result = plugin.doCustomService(params("/cc001/career-profile/onboarding/save", body));
 
-            assertTrue(result.getSuccess());
-            UserProfileSnapshot snapshot = (UserProfileSnapshot) result.getData();
-            assertEquals("career_switcher", snapshot.getOnboarding().getIdentityType());
-            assertEquals("ready", snapshot.getOnboarding().getResumeStatus());
-            assertEquals("yes", snapshot.getOnboarding().getHasResume());
-            assertEquals("backend", snapshot.getOnboarding().getPainPoint());
-            assertEquals("Java Backend Engineer", snapshot.getPreferences().getTargetRole());
-        } finally {
-            System.clearProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY);
-            restoreProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, previousAdapter);
-        }
+        assertTrue(result.getSuccess());
+        UserProfileSnapshot snapshot = (UserProfileSnapshot) result.getData();
+        assertEquals("career_switcher", snapshot.getOnboarding().getIdentityType());
+        assertEquals("ready", snapshot.getOnboarding().getResumeStatus());
+        assertEquals("yes", snapshot.getOnboarding().getHasResume());
+        assertEquals("backend", snapshot.getOnboarding().getPainPoint());
+        assertEquals("Java Backend Engineer", snapshot.getPreferences().getTargetRole());
     }
 
     @Test
     void routesProfileDraftSaveAndGetThroughCustomWebApiContract(@TempDir Path tempDir) {
-        String previousAdapter = System.getProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY);
-        System.setProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, "file");
-        System.setProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY, tempDir.toString());
-        try {
-            IdentityAwareCareerLoopWebApiBoundary boundary =
-                    new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
-            CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
-                    new CareerLoopIdentityWebApi(boundary),
-                    new CareerProfileWebApi(boundary),
-                    new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
-            Map<String, Object> request = new HashMap<String, Object>();
-            request.put("identityType", "student");
-            request.put("educationStage", "undergraduate");
-            request.put("targetRole", "Data Analyst");
-            request.put("selectedGoal", "employment");
-            Map<String, Object> body = new HashMap<String, Object>();
-            body.put("userId", "api-user");
-            body.put("request", request);
+        IdentityAwareCareerLoopWebApiBoundary boundary =
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir, boundary);
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("identityType", "student");
+        request.put("educationStage", "undergraduate");
+        request.put("targetRole", "Data Analyst");
+        request.put("selectedGoal", "employment");
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("userId", "api-user");
+        body.put("request", request);
 
-            ApiResult save = plugin.doCustomService(params("/cc001/career-profile/draft/save", body));
-            ApiResult get = plugin.doCustomService(params("/cc001/career-profile/draft/get", body));
-            ApiResult snapshot = plugin.doCustomService(params("/cc001/career-profile/snapshot/get", body));
+        ApiResult save = plugin.doCustomService(params("/cc001/career-profile/draft/save", body));
+        ApiResult get = plugin.doCustomService(params("/cc001/career-profile/draft/get", body));
+        ApiResult snapshot = plugin.doCustomService(params("/cc001/career-profile/snapshot/get", body));
 
-            assertTrue(save.getSuccess());
-            assertTrue(get.getSuccess());
-            CareerProfileDraftDto draft = (CareerProfileDraftDto) get.getData();
-            assertEquals("student", draft.getIdentityType());
-            assertEquals("undergraduate", draft.getEducationStage());
-            assertEquals("Data Analyst", draft.getTargetRole());
-            assertEquals("employment", draft.getRouteIntent());
-            assertEquals(null, ((UserProfileSnapshot) snapshot.getData()).getOnboarding());
-        } finally {
-            System.clearProperty(FileCareerProfileStorage.STORAGE_DIR_PROPERTY);
-            restoreProperty(PostgresqlProfileStorageConfig.ADAPTER_PROPERTY, previousAdapter);
-        }
+        assertTrue(save.getSuccess());
+        assertTrue(get.getSuccess());
+        CareerProfileDraftDto draft = (CareerProfileDraftDto) get.getData();
+        assertEquals("student", draft.getIdentityType());
+        assertEquals("undergraduate", draft.getEducationStage());
+        assertEquals("Data Analyst", draft.getTargetRole());
+        assertEquals("employment", draft.getRouteIntent());
+        assertEquals(null, ((UserProfileSnapshot) snapshot.getData()).getOnboarding());
     }
 
     @Test
-    void routesSecondaryReadEndpointsThroughCustomWebApiContract() {
+    void routesSecondaryReadEndpointsThroughCustomWebApiContract(@TempDir Path tempDir) {
         IdentityAwareCareerLoopWebApiBoundary boundary =
                 new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
-        CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin(
-                new CareerLoopIdentityWebApi(boundary),
-                new CareerProfileWebApi(boundary),
-                new CareerAgentWebApi(new v620.cc001.cloud01.app01.mservice.CareerAgentTodayApplicationService(), boundary));
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir, boundary);
 
         ApiResult notifications = plugin.doCustomService(params("/cc001/notifications/unread-count", "api-user"));
         ApiResult resources = plugin.doCustomService(params("/cc001/career-employment/resources/list", new HashMap<String, Object>()));
@@ -180,8 +173,9 @@ class CareerLoopCustomWebApiPluginTest {
     }
 
     @Test
-    void rejectsUnsupportedPath() {
-        CareerLoopCustomWebApiPlugin plugin = new CareerLoopCustomWebApiPlugin();
+    void rejectsUnsupportedPath(@TempDir Path tempDir) {
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir,
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user")));
 
         ApiResult result = plugin.doCustomService(params("/cc001/missing", new HashMap<String, Object>()));
 
@@ -205,6 +199,60 @@ class CareerLoopCustomWebApiPluginTest {
         return paths;
     }
 
+    private CareerLoopCustomWebApiPlugin plugin(Path tempDir, IdentityAwareCareerLoopWebApiBoundary boundary) {
+        CareerProfileApplicationService profileService = profileService(tempDir);
+        ResumeApplicationService resumeService = new ResumeApplicationService(
+                new FileResumeStorage(tempDir.resolve("resume").toFile()), profileService);
+        CareerPlanApplicationService planService = new CareerPlanApplicationService(
+                new FileCareerPlanStorage(tempDir.resolve("plan-main").toFile()),
+                profileService,
+                new CareerPlanSummaryService());
+        InterviewApplicationService interviewService = new InterviewApplicationService(
+                new FileInterviewStorage(tempDir.resolve("interview").toFile()),
+                profileService,
+                new InterviewCoreService());
+        AssistantChatApplicationService assistantService = new AssistantChatApplicationService(
+                new FileAssistantChatStorage(tempDir.resolve("assistant").toFile()),
+                new UnavailableAssistantChatGenerator(),
+                new EmptyAssistantChatContextProvider(),
+                new AssistantChatHelper());
+        ResumeDiagnosisApplicationService diagnosisService = new ResumeDiagnosisApplicationService(
+                resumeService,
+                new FileResumeDiagnosisStorage(tempDir.resolve("diagnosis").toFile()),
+                new DefaultResumeDiagnosisAnalyzer(),
+                new ResumeDiagnosisService());
+        AssessmentApplicationService assessmentService = new AssessmentApplicationService(
+                new AssessmentScoringService(), profileService);
+        return new CareerLoopCustomWebApiPlugin(
+                new CareerLoopIdentityWebApi(boundary),
+                new CareerProfileWebApi(boundary, profileService),
+                new CareerAgentWebApi(agentService(tempDir), boundary),
+                new ResumeWebApi(resumeService, boundary),
+                new CareerPlanWebApi(planService),
+                new InterviewWebApi(interviewService),
+                new AssistantChatWebApi(assistantService),
+                new EmploymentInsightsResourcesWebApi(),
+                new NotificationsSubscriptionsWebApi(),
+                new AdminConsoleGovernanceWebApi(),
+                new FileUploadPreviewWebApi(),
+                new ResumeDiagnosisWebApi(diagnosisService),
+                new AssessmentWebApi(assessmentService));
+    }
+
+    private CareerProfileApplicationService profileService(Path tempDir) {
+        return new CareerProfileApplicationService(
+                new FileCareerProfileStorage(tempDir.toFile()),
+                new FileCareerPlanStorage(tempDir.resolve("plan").toFile()),
+                new CareerProfileSnapshotMergeService(),
+                new CareerProfileBuildService());
+    }
+
+    private CareerAgentTodayApplicationService agentService(Path tempDir) {
+        return new CareerAgentTodayApplicationService(
+                new CareerAgentTodayRuleService(),
+                new CareerProfileRuleInputSource(profileService(tempDir)));
+    }
+
     private Path workspaceFile(String relativePath) {
         Path current = Paths.get("").toAbsolutePath();
         while (current != null) {
@@ -217,11 +265,4 @@ class CareerLoopCustomWebApiPluginTest {
         throw new IllegalStateException("workspace file not found: " + relativePath);
     }
 
-    private void restoreProperty(String key, String value) {
-        if (value == null) {
-            System.clearProperty(key);
-            return;
-        }
-        System.setProperty(key, value);
-    }
 }

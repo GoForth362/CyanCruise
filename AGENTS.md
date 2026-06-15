@@ -2,6 +2,12 @@
 
 本仓库使用 OpenSpec 进行规格驱动开发。涉及 IPD 迁移或业务能力重构时，先创建或更新 `openspec/changes/<change-id>/` 下的 proposal、spec、design、tasks，再进行代码实现。
 
+## OpenSpec 文档与归档要求
+
+- 提供给用户审查的 OpenSpec 文档必须默认使用中文；`SHALL`、`WHEN`、`THEN` 等 OpenSpec 关键词、代码标识、配置项和路径可保留英文。
+- OpenSpec change 归档目录必须带三位顺序号前缀，格式为 `NNN-YYYY-MM-DD-<change-id>`，例如 `034-2026-06-14-connect-career-profile-postgresql-storage`。
+- 归档前必须扫描 `openspec/changes/archive/` 中已有三位数字前缀目录，取最大序号加 1；不得使用无序号的 `YYYY-MM-DD-<change-id>` 归档目录名。
+
 ## 项目约束
 
 - 本项目是 Kingdee Cosmic 二开工程，必须兼容 JDK 1.8。

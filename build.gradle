@@ -75,7 +75,14 @@ allprojects {
 	    	'cc001.profile.postgresql.password',
 	    	'cc001.profile.postgresql.schema',
 	    	'cc001.profile.postgresql.initialize',
-	    	'cc001.profile.postgresql.liveTest'
+	    	'cc001.profile.postgresql.liveTest',
+	    	'cc001.storage.backend',
+	    	'cc001.storage.postgresql.url',
+	    	'cc001.storage.postgresql.username',
+	    	'cc001.storage.postgresql.password',
+	    	'cc001.storage.postgresql.schema',
+	    	'cc001.storage.postgresql.initialize',
+	    	'cc001.storage.postgresql.liveTest'
 	    ].each { propertyName ->
 	    	if (System.getProperty(propertyName) != null) {
 	    		systemProperty propertyName, System.getProperty(propertyName)

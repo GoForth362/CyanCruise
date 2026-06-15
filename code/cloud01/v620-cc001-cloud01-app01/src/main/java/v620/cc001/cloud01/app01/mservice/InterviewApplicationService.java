@@ -22,7 +22,7 @@ public class InterviewApplicationService {
     private final InterviewCoreService helper;
 
     public InterviewApplicationService() {
-        this(new FileInterviewStorage(), new CareerProfileApplicationService(), new InterviewCoreService());
+        this(CyanCruiseStorageFactory.interviewStorage(), new CareerProfileApplicationService(), new InterviewCoreService());
     }
 
     public InterviewApplicationService(InterviewStorage storage,

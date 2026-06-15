@@ -17,7 +17,7 @@ public class ResumeApplicationService {
     private final CareerProfileApplicationService profileApplicationService;
 
     public ResumeApplicationService() {
-        this(new FileResumeStorage(), new CareerProfileApplicationService());
+        this(CyanCruiseStorageFactory.resumeStorage(), new CareerProfileApplicationService());
     }
 
     public ResumeApplicationService(ResumeStorage resumeStorage,

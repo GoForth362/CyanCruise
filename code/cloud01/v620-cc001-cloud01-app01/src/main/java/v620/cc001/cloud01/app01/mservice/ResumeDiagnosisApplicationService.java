@@ -22,7 +22,7 @@ public class ResumeDiagnosisApplicationService {
 
     public ResumeDiagnosisApplicationService() {
         this(new ResumeApplicationService(),
-                new FileResumeDiagnosisStorage(),
+                CyanCruiseStorageFactory.resumeDiagnosisStorage(),
                 new AiGatewayResumeDiagnosisAnalyzer(
                         new DefaultAiGateway(AiProviderAdapterFactory.fromSystemProperties()),
                         new DefaultResumeDiagnosisAnalyzer()),

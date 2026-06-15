@@ -4,6 +4,7 @@
 logs/
 build/
 filestorage/
+filestorage/
 script_modules/
 local_dataentity/
 

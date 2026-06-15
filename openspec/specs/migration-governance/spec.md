@@ -70,3 +70,18 @@
 - **WHEN** 文档需要引用 `CareerProfileStorage`、`CareerPlanApplicationService` 等已有类名、接口名或 route metadata
 - **THEN** 文档 SHALL 将这些名称视为历史领域命名或代码标识，而不是当前项目名称
 
+### Requirement: OpenSpec 审查文档使用中文并按序号归档
+提供给用户审查的 OpenSpec proposal、design、spec、tasks、verification、migration 说明 SHALL 默认使用中文表达范围、设计、任务、风险和验证要求。OpenSpec 关键词、代码标识、配置项、路径和数据库对象名 MAY 保留英文。OpenSpec change 归档目录 SHALL 使用三位顺序号前缀、日期和 change id，格式为 `NNN-YYYY-MM-DD-<change-id>`。
+
+#### Scenario: 生成审查文档
+- **WHEN** 创建或更新给用户审查的 OpenSpec 文档
+- **THEN** 文档 SHALL 默认使用中文
+- **AND** 文档 MAY 保留 `SHALL`、`WHEN`、`THEN`、代码标识、配置项、路径和数据库对象名等英文内容
+
+#### Scenario: 归档 change
+- **WHEN** change 准备归档
+- **THEN** 归档工具或操作者 SHALL 扫描 `openspec/changes/archive/` 中已有三位数字前缀目录
+- **AND** 新归档目录 SHALL 使用最大序号加 1 作为三位数字前缀
+- **AND** 归档目标 SHALL 为 `NNN-YYYY-MM-DD-<change-id>`
+- **AND** SHALL NOT 使用无序号的 `YYYY-MM-DD-<change-id>` 目录
+

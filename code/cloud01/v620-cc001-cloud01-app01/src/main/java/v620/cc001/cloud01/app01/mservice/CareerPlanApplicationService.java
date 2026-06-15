@@ -18,7 +18,7 @@ public class CareerPlanApplicationService {
     private final CareerPlanSummaryService summaryService;
 
     public CareerPlanApplicationService() {
-        this(new FileCareerPlanStorage(), new CareerProfileApplicationService(), new CareerPlanSummaryService());
+        this(CyanCruiseStorageFactory.careerPlanStorage(), new CareerProfileApplicationService(), new CareerPlanSummaryService());
     }
 
     public CareerPlanApplicationService(CareerPlanStorage storage,
