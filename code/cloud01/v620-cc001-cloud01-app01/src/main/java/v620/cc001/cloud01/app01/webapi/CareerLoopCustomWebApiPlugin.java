@@ -20,6 +20,7 @@ import v620.cc001.base.common.dto.career.ResumeCreateRequest;
 import v620.cc001.base.common.dto.career.ResumeDiagnosisRequest;
 import v620.cc001.base.common.dto.career.SubscriptionGrantRequest;
 import v620.cc001.base.common.dto.career.SubscriptionSendRequest;
+import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.IdentityBoundaryException;
 
 import java.util.ArrayList;
@@ -350,11 +351,16 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
 
         Map<?, ?> values = (Map<?, ?>) request;
         onboarding.setIdentityType(textOrNull(values.get("identityType")));
-        onboarding.setStage(textOrNull(values.get("stage")));
+        onboarding.setStage(textOrNull(firstPresent(values, "stage", "educationStage")));
         onboarding.setPainPoint(textOrNull(firstPresent(values, "painPoint", "preference")));
         onboarding.setHasResume(textOrNull(firstPresent(values, "hasResume")));
         onboarding.setResumeStatus(textOrNull(values.get("resumeStatus")));
+        onboarding.setExperience(textOrNull(firstPresent(values, "experience", "strengths")));
         onboarding.setTimeline(textOrNull(values.get("timeline")));
+        UserProfileSnapshot.EducationBlock education = extractEducation(values);
+        if (education != null) {
+            onboarding.setEducation(education);
+        }
         onboarding.setWeeklyAvailability(textOrNull(values.get("weeklyAvailability")));
         onboarding.setPriorityHelp(textOrNull(values.get("priorityHelp")));
         onboarding.setRecommendedEntry(textOrNull(values.get("recommendedEntry")));
@@ -364,6 +370,29 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             onboarding.setHasResume(hasResumeFromStatus(onboarding.getResumeStatus()));
         }
         return onboarding;
+    }
+
+    private UserProfileSnapshot.EducationBlock extractEducation(Map<?, ?> values) {
+        Object educationValue = values.get("education");
+        UserProfileSnapshot.EducationBlock education = null;
+        if (educationValue instanceof UserProfileSnapshot.EducationBlock) {
+            education = (UserProfileSnapshot.EducationBlock) educationValue;
+        } else if (educationValue instanceof Map) {
+            education = new UserProfileSnapshot.EducationBlock();
+            Map<?, ?> educationMap = (Map<?, ?>) educationValue;
+            education.setSchool(textOrNull(educationMap.get("school")));
+            education.setMajor(textOrNull(firstPresent(educationMap, "major", "schoolMajor")));
+            education.setDegree(textOrNull(educationMap.get("degree")));
+            education.setGraduationYear(textOrNull(educationMap.get("graduationYear")));
+        }
+        String schoolMajor = textOrNull(values.get("schoolMajor"));
+        if (schoolMajor != null) {
+            if (education == null) {
+                education = new UserProfileSnapshot.EducationBlock();
+            }
+            education.setMajor(schoolMajor);
+        }
+        return education;
     }
 
     private CareerProfileDraftDto extractProfileDraft(Object body) {

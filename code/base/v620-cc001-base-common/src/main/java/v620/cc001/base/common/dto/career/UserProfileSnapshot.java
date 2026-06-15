@@ -287,6 +287,7 @@ public class UserProfileSnapshot implements Serializable {
         private String painPoint;
         private String hasResume;
         private String resumeStatus;
+        private String experience;
         private String timeline;
         private EducationBlock education;
         private String weeklyAvailability;
@@ -332,6 +333,14 @@ public class UserProfileSnapshot implements Serializable {
 
         public void setResumeStatus(String resumeStatus) {
             this.resumeStatus = resumeStatus;
+        }
+
+        public String getExperience() {
+            return experience;
+        }
+
+        public void setExperience(String experience) {
+            this.experience = experience;
         }
 
         public String getTimeline() {

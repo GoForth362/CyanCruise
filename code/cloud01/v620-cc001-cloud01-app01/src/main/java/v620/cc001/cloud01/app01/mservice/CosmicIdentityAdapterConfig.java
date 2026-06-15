@@ -19,9 +19,11 @@ public class CosmicIdentityAdapterConfig {
     public static final String DIAGNOSTICS_ENABLED_PROPERTY = "cc001.identity.adapter.diagnostics.enabled";
 
     private boolean enabled;
-    private List<String> userIdFields = list("userId", "personId", "operatorId", "uid");
-    private List<String> adminIdFields = list("adminId", "userId", "operatorId");
-    private List<String> orgIdFields = list("orgId", "organizationId", "deptId");
+    private List<String> userIdFields = list("userId", "currentUserId", "currUserId", "loginUserId",
+            "personId", "operatorId", "uid", "userNumber");
+    private List<String> adminIdFields = list("adminId", "userId", "currentUserId", "currUserId",
+            "loginUserId", "operatorId");
+    private List<String> orgIdFields = list("orgId", "organizationId", "deptId", "departmentId");
     private List<String> roleFields = list("roles", "roleCodes", "role", "permissionCodes");
     private List<String> adminRoleAliases = list(CosmicIdentityConstants.ROLE_ADMIN,
             CosmicIdentityConstants.ROLE_COSMIC_ADMIN,

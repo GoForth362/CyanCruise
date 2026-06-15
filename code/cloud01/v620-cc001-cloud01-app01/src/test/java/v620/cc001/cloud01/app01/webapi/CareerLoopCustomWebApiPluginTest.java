@@ -89,6 +89,9 @@ class CareerLoopCustomWebApiPluginTest {
         CareerLoopCustomWebApiPlugin plugin = plugin(tempDir, boundary);
         Map<String, Object> request = new HashMap<String, Object>();
         request.put("identityType", "career_switcher");
+        request.put("educationStage", "undergraduate");
+        request.put("schoolMajor", "软件工程");
+        request.put("experience", "自学数据结构与算法");
         request.put("targetRole", "Java Backend Engineer");
         request.put("resumeStatus", "ready");
         request.put("preference", "backend");
@@ -101,6 +104,9 @@ class CareerLoopCustomWebApiPluginTest {
         assertTrue(result.getSuccess());
         UserProfileSnapshot snapshot = (UserProfileSnapshot) result.getData();
         assertEquals("career_switcher", snapshot.getOnboarding().getIdentityType());
+        assertEquals("undergraduate", snapshot.getOnboarding().getStage());
+        assertEquals("软件工程", snapshot.getOnboarding().getEducation().getMajor());
+        assertEquals("自学数据结构与算法", snapshot.getOnboarding().getExperience());
         assertEquals("ready", snapshot.getOnboarding().getResumeStatus());
         assertEquals("yes", snapshot.getOnboarding().getHasResume());
         assertEquals("backend", snapshot.getOnboarding().getPainPoint());

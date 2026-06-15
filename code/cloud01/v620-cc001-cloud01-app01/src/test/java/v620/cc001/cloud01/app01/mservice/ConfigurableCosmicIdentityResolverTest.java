@@ -59,6 +59,15 @@ class ConfigurableCosmicIdentityResolverTest {
     }
 
     @Test
+    void resolvesCurrentUserIdFromPlatformContext() {
+        CosmicIdentityContextDto context = new ConfigurableCosmicIdentityResolver(
+                provider(map("currentUserId", "1565321489509515264")), enabled()).resolve();
+
+        assertEquals(CosmicIdentityConstants.STATUS_OK, context.getStatus());
+        assertEquals("1565321489509515264", context.getUserId());
+    }
+
+    @Test
     void parsesRolesFromArrayAndDelimitedText() {
         Map<String, Object> map = map("userId", "u1");
         map.put("roles", "reader;cosmic-admin");
