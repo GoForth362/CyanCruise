@@ -75,7 +75,14 @@ allprojects {
 	    	'cc001.profile.postgresql.password',
 	    	'cc001.profile.postgresql.schema',
 	    	'cc001.profile.postgresql.initialize',
-	    	'cc001.profile.postgresql.liveTest'
+	    	'cc001.profile.postgresql.liveTest',
+	    	'cc001.storage.backend',
+	    	'cc001.storage.postgresql.url',
+	    	'cc001.storage.postgresql.username',
+	    	'cc001.storage.postgresql.password',
+	    	'cc001.storage.postgresql.schema',
+	    	'cc001.storage.postgresql.initialize',
+	    	'cc001.storage.postgresql.liveTest'
 	    ].each { propertyName ->
 	    	if (System.getProperty(propertyName) != null) {
 	    		systemProperty propertyName, System.getProperty(propertyName)
@@ -170,6 +177,10 @@ task deployWebapp {
 		}
 
 		deployWebappToHome(cosmicHome)
+		def runtimeHome = System.getProperty('cc001.runtime_home') ?: System.getenv('CC001_RUNTIME_HOME')
+		if (runtimeHome != null && runtimeHome.trim().length() > 0) {
+			deployWebappToHome(runtimeHome)
+		}
 	}
 }
 
@@ -194,6 +205,42 @@ task deployRuntimeHome {
 			from "${cosmicHome}/mservice-cosmic/lib/cus"
 			into "${runtimeHome}/mservice-cosmic/lib/cus"
 			include 'v620-cc001*.jar'
+		}
+		copy {
+			from "${cosmicHome}/mservice-cosmic/lib/cus"
+			into "${runtimeHome}/apppackage-cosmic/biz"
+			include 'v620-cc001*.jar'
+		}
+		copy {
+			from "${cosmicHome}/mservice-cosmic/lib/cus"
+			into "${runtimeHome}/apppackage-cosmic/cus"
+			include 'v620-cc001*.jar'
+		}
+		copy {
+			from "${cosmicHome}/mservice-cosmic/lib/cus"
+			into "${runtimeHome}/mservice-cosmic/lib/biz"
+			include 'v620-cc001*.jar'
+		}
+		def runtimePackageRoots = [
+			file("${runtimeHome}/apppackage-cosmic/biz"),
+			file("${runtimeHome}/apppackage-cosmic/cus")
+		]
+		def packageJars = fileTree("${cosmicHome}/mservice-cosmic/lib/cus") {
+			include 'v620-cc001*.jar'
+		}
+		packageJars.files.each { jarFile ->
+			def suffix = "-${version}.jar"
+			def moduleName = jarFile.name.endsWith(suffix)
+					? jarFile.name.substring(0, jarFile.name.length() - suffix.length())
+					: jarFile.name.replaceFirst(/\.jar$/, '')
+			runtimePackageRoots.each { packageRoot ->
+				packageRoot.mkdirs()
+				def packageZip = new File(packageRoot, "${moduleName}.zip")
+				delete packageZip
+				ant.zip(destfile: packageZip) {
+					zipfileset(file: jarFile, fullpath: jarFile.name)
+				}
+			}
 		}
 		deployWebappToHome(runtimeHome)
 	}

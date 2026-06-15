@@ -21,7 +21,7 @@ import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 @ApiMapping("/cc001/career-profile")
 public class CareerProfileWebApi {
 
-    private final CareerProfileApplicationService applicationService = new CareerProfileApplicationService();
+    private final CareerProfileApplicationService applicationService;
     private final IdentityAwareCareerLoopWebApiBoundary identityBoundary;
 
     public CareerProfileWebApi() {
@@ -29,7 +29,13 @@ public class CareerProfileWebApi {
     }
 
     CareerProfileWebApi(IdentityAwareCareerLoopWebApiBoundary identityBoundary) {
+        this(identityBoundary, new CareerProfileApplicationService());
+    }
+
+    CareerProfileWebApi(IdentityAwareCareerLoopWebApiBoundary identityBoundary,
+                        CareerProfileApplicationService applicationService) {
         this.identityBoundary = identityBoundary;
+        this.applicationService = applicationService;
     }
 
     @ApiPostMapping(value = "/snapshot/get", desc = "获取职业画像快照", methodParamNames = {"userId"})

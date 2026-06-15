@@ -25,7 +25,7 @@ public class AssistantChatApplicationService {
     private final AssistantChatHelper helper;
 
     public AssistantChatApplicationService() {
-        this(new FileAssistantChatStorage(),
+        this(CyanCruiseStorageFactory.assistantChatStorage(),
                 new AiGatewayAssistantChatGenerator(new DefaultAiGateway(AiProviderAdapterFactory.fromSystemProperties())),
                 new EmptyAssistantChatContextProvider(),
                 new AssistantChatHelper());

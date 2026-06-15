@@ -319,7 +319,7 @@
     var intent = readHomeIntent();
     var profile = {
       identityType: firstText(intent.identityType, onboarding.identityType),
-      educationStage: firstText(intent.educationStage, onboarding.educationStage),
+      educationStage: firstText(intent.educationStage, onboarding.educationStage, onboarding.stage),
       schoolMajor: firstText(intent.schoolMajor, onboarding.schoolMajor),
       resumeStatus: firstText(intent.resumeStatus, onboarding.resumeStatus),
       experience: firstText(intent.experience, onboarding.experience, onboarding.strengths)
@@ -365,7 +365,7 @@
       '<form class="form-grid" id="homeIntentForm">' +
       '<h4 class="form-section-title full">个人情况</h4>' +
       field("profileIdentityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
-      field("profileEducationStage", "当前阶段", "select", firstText(onboarding.educationStage, "undergraduate"), [["undergraduate", "本科"], ["postgraduate", "研究生"], ["vocational", "高职/专科"], ["working", "已工作"], ["other", "其他"]]) +
+      field("profileEducationStage", "当前阶段", "select", firstText(onboarding.educationStage, onboarding.stage, "undergraduate"), [["undergraduate", "本科"], ["postgraduate", "研究生"], ["vocational", "高职/专科"], ["working", "已工作"], ["other", "其他"]]) +
       field("profileSchoolMajor", "学校/专业", "text", firstText(onboarding.schoolMajor, "")) +
       field("resumeStatus", "简历/材料状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"], ["materials", "已有升学材料"]]) +
       '<label class="full">经历与优势<textarea id="profileExperience" placeholder="可以写课程、项目、实习、竞赛、语言、技能、研究方向等。">' + escapeHtml(firstText(onboarding.experience, onboarding.strengths, "")) + '</textarea></label>' +
@@ -387,7 +387,7 @@
     ];
     var detailRows = [
       ["身份类型", labelForIdentity(firstText(onboarding.identityType, "student"))],
-      ["当前阶段", labelForEducationStage(firstText(onboarding.educationStage, "undergraduate"))],
+      ["当前阶段", labelForEducationStage(firstText(onboarding.educationStage, onboarding.stage, "undergraduate"))],
       ["学校/专业", firstText(onboarding.schoolMajor, "未填写")],
       ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))],
       ["经历与优势", firstText(onboarding.experience, "未填写")],
@@ -1245,10 +1245,9 @@
       experience: valueOf("profileExperience")
     };
     localStorage.setItem("cyancruise.homeIntent", JSON.stringify(intent));
-    localStorage.setItem("cyancruise.homeIntentSaved", "true");
-    localStorage.removeItem("cyancruise.homeIntentEditing");
     var request = {
       identityType: intent.identityType,
+      stage: intent.educationStage,
       educationStage: intent.educationStage,
       schoolMajor: intent.schoolMajor,
       targetRole: intent.targetRole,
@@ -1257,23 +1256,23 @@
       routeGoal: intent.goal,
       preference: ["路线：" + labelForGoal(intent.goal), intent.preference].filter(Boolean).join("；")
     };
-    state.snapshot = state.snapshot || {};
-    state.snapshot.onboarding = request;
-    state.snapshot.preferences = state.snapshot.preferences || {};
-    state.snapshot.preferences.targetRole = intent.targetRole;
-    updateOverviewCards();
     if (!hasUserIdentity() || isFilePreview()) {
       localStorage.setItem("cyancruise.previewProfile", JSON.stringify(request));
+      localStorage.setItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
       showMessage("info", "已保存", "用户画像草稿已保存到当前浏览器。");
       return;
     }
     post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
+      localStorage.setItem("cyancruise.homeIntentSaved", "true");
+      localStorage.removeItem("cyancruise.homeIntentEditing");
+      localStorage.removeItem("cyancruise.previewProfile");
       state.snapshot = snapshot;
       updateOverviewCards();
       renderPage(pageByKey[state.route]);
       showMessage("info", "已保存", "用户画像草稿已写入职业画像。");
-    }).catch(function () {
+    }).catch(function (error) {
+      localStorage.setItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
       showMessage("warning", "已本地保存", "平台暂未写入成功，但用户画像草稿已保存在当前浏览器。");
     });
@@ -1670,7 +1669,23 @@
   }
 
   function resolveApiMode() {
-    return firstText(readQueryOrStorage("apiMode", "cyancruise.apiMode"), "kapi").toLowerCase();
+    var params = new URLSearchParams(window.location.search);
+    var fromQuery = trim(params.get("apiMode")).toLowerCase();
+    if (fromQuery) {
+      if (fromQuery === "direct") {
+        localStorage.removeItem("cyancruise.apiMode");
+        return "direct";
+      }
+      localStorage.setItem("cyancruise.apiMode", fromQuery);
+      return fromQuery;
+    }
+    migrateLegacyStorageKey("cyancruise.apiMode", "careerloop.apiMode");
+    var stored = trim(localStorage.getItem("cyancruise.apiMode")).toLowerCase();
+    if (stored === "direct") {
+      localStorage.removeItem("cyancruise.apiMode");
+      return "kapi";
+    }
+    return firstText(stored, "kapi").toLowerCase();
   }
 
   function readQueryOrStorage(queryKey, storageKey) {

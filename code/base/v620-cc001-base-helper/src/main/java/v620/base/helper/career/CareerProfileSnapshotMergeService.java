@@ -51,6 +51,7 @@ public class CareerProfileSnapshotMergeService {
         if (request.getPainPoint() != null) onboarding.setPainPoint(trimToNull(request.getPainPoint()));
         if (request.getHasResume() != null) onboarding.setHasResume(trimToNull(request.getHasResume()));
         if (request.getResumeStatus() != null) onboarding.setResumeStatus(trimToNull(request.getResumeStatus()));
+        if (request.getExperience() != null) onboarding.setExperience(trimToNull(request.getExperience()));
         if (request.getTimeline() != null) onboarding.setTimeline(trimToNull(request.getTimeline()));
         if (request.getEducation() != null) onboarding.setEducation(mergeEducation(onboarding.getEducation(), request.getEducation()));
         if (request.getWeeklyAvailability() != null) onboarding.setWeeklyAvailability(trimToNull(request.getWeeklyAvailability()));

@@ -24,7 +24,7 @@ public class CareerProfileApplicationService {
     private final CareerProfileBuildService buildService;
 
     public CareerProfileApplicationService() {
-        this(CareerProfileStorageFactory.fromSystemProperties(), new FileCareerPlanStorage(),
+        this(CareerProfileStorageFactory.fromSystemProperties(), CyanCruiseStorageFactory.careerPlanStorage(),
                 new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
     }
 

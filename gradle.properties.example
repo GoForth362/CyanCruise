@@ -32,6 +32,14 @@ systemProp.cosmic_home=D:/code/kingdee/cosmic/home
 #systemProp.cc001.profile.postgresql.schema=public
 #systemProp.cc001.profile.postgresql.initialize=false
 
+#--CyanCruise shared business-state storage. Use this for runtime storage adapters replacing local filestorage.
+#systemProp.cc001.storage.backend=postgresql
+#systemProp.cc001.storage.postgresql.url=jdbc:postgresql://10.0.0.8:5432/cyancruise
+#systemProp.cc001.storage.postgresql.username=cyancruise_app
+#systemProp.cc001.storage.postgresql.password=<password>
+#systemProp.cc001.storage.postgresql.schema=public
+#systemProp.cc001.storage.postgresql.initialize=false
+
 #--Performance configuration for gradle build
 org.gradle.parallel=true
 org.gradle.daemon=true
