@@ -208,7 +208,7 @@ public class PostgresqlCareerProfileStorage implements CareerProfileStorage {
     }
 
     public CareerProfileDraftDto loadDraft(String userId) {
-        String sql = "SELECT identity_type, education_stage, school_major, resume_status, target_role,"
+        String sql = "SELECT identity_type, education_stage, school, major, school_major, resume_status, target_role,"
                 + " preference, experience_text, route_intent, draft_json, updated_at FROM "
                 + table("cc_profile_draft") + " WHERE user_id = ?";
         Connection connection = null;
@@ -226,6 +226,8 @@ public class PostgresqlCareerProfileStorage implements CareerProfileStorage {
                     CareerProfileDraftDto.class, new CareerProfileDraftDto());
             draft.setIdentityType(resultSet.getString("identity_type"));
             draft.setEducationStage(resultSet.getString("education_stage"));
+            draft.setSchool(resultSet.getString("school"));
+            draft.setMajor(firstText(resultSet.getString("major"), resultSet.getString("school_major")));
             draft.setSchoolMajor(resultSet.getString("school_major"));
             draft.setResumeStatus(resultSet.getString("resume_status"));
             draft.setTargetRole(resultSet.getString("target_role"));
@@ -249,12 +251,14 @@ public class PostgresqlCareerProfileStorage implements CareerProfileStorage {
     public void saveDraft(String userId, CareerProfileDraftDto draft) {
         CareerProfileDraftDto safeDraft = draft == null ? new CareerProfileDraftDto() : draft;
         String sql = "INSERT INTO " + table("cc_profile_draft")
-                + " (user_id, identity_type, education_stage, school_major, resume_status, target_role,"
+                + " (user_id, identity_type, education_stage, school, major, school_major, resume_status, target_role,"
                 + " preference, route_intent, experience_text, draft_json, created_at, updated_at)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, now(), now())"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, now(), now())"
                 + " ON CONFLICT (user_id) DO UPDATE SET"
                 + " identity_type = EXCLUDED.identity_type,"
                 + " education_stage = EXCLUDED.education_stage,"
+                + " school = EXCLUDED.school,"
+                + " major = EXCLUDED.major,"
                 + " school_major = EXCLUDED.school_major,"
                 + " resume_status = EXCLUDED.resume_status,"
                 + " target_role = EXCLUDED.target_role,"
@@ -271,13 +275,15 @@ public class PostgresqlCareerProfileStorage implements CareerProfileStorage {
             statement.setString(1, requireText(userId, "userId"));
             statement.setString(2, safeDraft.getIdentityType());
             statement.setString(3, safeDraft.getEducationStage());
-            statement.setString(4, safeDraft.getSchoolMajor());
-            statement.setString(5, safeDraft.getResumeStatus());
-            statement.setString(6, safeDraft.getTargetRole());
-            statement.setString(7, safeDraft.getPreference());
-            statement.setString(8, safeDraft.getRouteIntent());
-            statement.setString(9, safeDraft.getExperience());
-            statement.setString(10, toJson(safeDraft));
+            statement.setString(4, safeDraft.getSchool());
+            statement.setString(5, safeDraft.getMajor());
+            statement.setString(6, firstText(safeDraft.getSchoolMajor(), safeDraft.getMajor()));
+            statement.setString(7, safeDraft.getResumeStatus());
+            statement.setString(8, safeDraft.getTargetRole());
+            statement.setString(9, safeDraft.getPreference());
+            statement.setString(10, safeDraft.getRouteIntent());
+            statement.setString(11, safeDraft.getExperience());
+            statement.setString(12, toJson(safeDraft));
             statement.executeUpdate();
         } catch (SQLException e) {
             throw storageException("save profile draft", e);
@@ -308,7 +314,8 @@ public class PostgresqlCareerProfileStorage implements CareerProfileStorage {
         String[] statements = new String[] {
                 "CREATE TABLE IF NOT EXISTS " + table("cc_profile_draft") + " ("
                         + "user_id VARCHAR(128) PRIMARY KEY,"
-                        + "identity_type VARCHAR(64), education_stage VARCHAR(64), school_major VARCHAR(255),"
+                        + "identity_type VARCHAR(64), education_stage VARCHAR(64),"
+                        + "school VARCHAR(255), major VARCHAR(255), school_major VARCHAR(255),"
                         + "resume_status VARCHAR(64), target_role VARCHAR(255), preference TEXT,"
                         + "route_intent VARCHAR(128), experience_text TEXT,"
                         + "draft_json JSONB NOT NULL DEFAULT '{}'::jsonb,"
@@ -339,7 +346,9 @@ public class PostgresqlCareerProfileStorage implements CareerProfileStorage {
                 "CREATE INDEX IF NOT EXISTS idx_cc_profile_snapshot_updated_at ON " + table("cc_profile_snapshot") + " (updated_at)",
                 "CREATE INDEX IF NOT EXISTS idx_cc_profile_fact_key ON " + table("cc_profile_fact") + " (fact_key)",
                 "CREATE INDEX IF NOT EXISTS idx_cc_user_profile_target_role ON " + table("cc_user_profile") + " (target_role)",
-                "CREATE INDEX IF NOT EXISTS idx_cc_user_profile_updated_at ON " + table("cc_user_profile") + " (updated_at)"
+                "CREATE INDEX IF NOT EXISTS idx_cc_user_profile_updated_at ON " + table("cc_user_profile") + " (updated_at)",
+                "ALTER TABLE " + table("cc_profile_draft") + " ADD COLUMN IF NOT EXISTS school VARCHAR(255)",
+                "ALTER TABLE " + table("cc_profile_draft") + " ADD COLUMN IF NOT EXISTS major VARCHAR(255)"
         };
         Connection connection = null;
         PreparedStatement statement = null;
@@ -372,6 +381,13 @@ public class PostgresqlCareerProfileStorage implements CareerProfileStorage {
 
     private String table(String tableName) {
         return schema + "." + tableName;
+    }
+
+    private String firstText(String first, String second) {
+        if (hasText(first)) {
+            return first.trim();
+        }
+        return hasText(second) ? second.trim() : null;
     }
 
     private String toJson(Object value) {

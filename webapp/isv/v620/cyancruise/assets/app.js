@@ -46,9 +46,9 @@
     page("workbench", "CyanCruise 首页", "available", "user", "填写用户画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
     page("employment-home", "就业", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
     page("further-study-home", "深造", "available", "user", "考研、保研和留学方向规划入口。", ["snapshot", "plan"]),
-    page("postgraduate-exam", "考研", "entry-only", "user", "考研规划入口，后续接入规划 Agent。", ["plan"]),
-    page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划 Agent。", ["plan"]),
-    page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划 Agent。", ["plan"]),
+    page("postgraduate-exam", "考研", "entry-only", "user", "考研规划入口，后续接入规划智能体。", ["plan"]),
+    page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划智能体。", ["plan"]),
+    page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划智能体。", ["plan"]),
     page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
     page("today-action", "今日行动", "entry-only", "user", "等待完整用户画像生成后，由 AI 给出下一步建议。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
@@ -56,7 +56,7 @@
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
-    page("career-plan", "AI路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划 Agent。", ["plan", "ensurePlan"]),
+    page("career-plan", "AI路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
     page("interview-home", "面试", "available", "user", "全景仿真面试和 AI 模拟面试入口。", ["interviews", "startInterview"]),
     page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
@@ -95,9 +95,9 @@
       feature("AI模拟面试", "AI", "沿用 IPD AI 追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
     ],
     "further-study-home": [
-      feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划 Agent", "postgraduate-exam", "规划中"),
-      feature("保研", "保", "记录排名、加分项和目标院校，后续接入保研规划 Agent", "postgraduate-recommendation", "规划中"),
-      feature("留学", "留", "记录语言、GPA 和背景提升计划，后续接入留学规划 Agent", "study-abroad", "规划中")
+      feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划智能体", "postgraduate-exam", "规划中"),
+      feature("保研", "保", "记录排名、加分项和目标院校，后续接入保研规划智能体", "postgraduate-recommendation", "规划中"),
+      feature("留学", "留", "记录语言、GPA 和背景提升计划，后续接入留学规划智能体", "study-abroad", "规划中")
     ]
   };
   var els = {};
@@ -114,7 +114,14 @@
     messageTimer: null,
     previewUrls: {},
     plan: null,
+    planEnsuring: false,
     interviews: null,
+    employmentResources: null,
+    employmentResourcesLoading: false,
+    employmentResourcesError: null,
+    employmentInsight: null,
+    employmentInsightLoading: false,
+    employmentInsightError: null,
     route: "workbench",
     previousRoute: ""
   };
@@ -320,6 +327,8 @@
     var profile = {
       identityType: firstText(intent.identityType, onboarding.identityType),
       educationStage: firstText(intent.educationStage, onboarding.educationStage, onboarding.stage),
+      school: firstText(intent.school, getValue(state.snapshot, "onboarding.education.school")),
+      major: firstText(intent.major, getValue(state.snapshot, "onboarding.education.major"), intent.schoolMajor, onboarding.schoolMajor),
       schoolMajor: firstText(intent.schoolMajor, onboarding.schoolMajor),
       resumeStatus: firstText(intent.resumeStatus, onboarding.resumeStatus),
       experience: firstText(intent.experience, onboarding.experience, onboarding.strengths)
@@ -366,7 +375,8 @@
       '<h4 class="form-section-title full">个人情况</h4>' +
       field("profileIdentityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
       field("profileEducationStage", "当前阶段", "select", firstText(onboarding.educationStage, onboarding.stage, "undergraduate"), [["undergraduate", "本科"], ["postgraduate", "研究生"], ["vocational", "高职/专科"], ["working", "已工作"], ["other", "其他"]]) +
-      field("profileSchoolMajor", "学校/专业", "text", firstText(onboarding.schoolMajor, "")) +
+      field("profileSchool", "学校", "text", firstText(onboarding.school, "")) +
+      field("profileMajor", "专业", "text", firstText(onboarding.major, onboarding.schoolMajor, "")) +
       field("resumeStatus", "简历/材料状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"], ["materials", "已有升学材料"]]) +
       '<label class="full">经历与优势<textarea id="profileExperience" placeholder="可以写课程、项目、实习、竞赛、语言、技能、研究方向等。">' + escapeHtml(firstText(onboarding.experience, onboarding.strengths, "")) + '</textarea></label>' +
       '<h4 class="form-section-title full">路线选择</h4>' +
@@ -388,7 +398,8 @@
     var detailRows = [
       ["身份类型", labelForIdentity(firstText(onboarding.identityType, "student"))],
       ["当前阶段", labelForEducationStage(firstText(onboarding.educationStage, onboarding.stage, "undergraduate"))],
-      ["学校/专业", firstText(onboarding.schoolMajor, "未填写")],
+      ["学校", firstText(onboarding.school, "未填写")],
+      ["专业", firstText(onboarding.major, onboarding.schoolMajor, "未填写")],
       ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))],
       ["经历与优势", firstText(onboarding.experience, "未填写")],
       ["当前路线", labelForGoal(selectedGoal)],
@@ -429,8 +440,8 @@
 
   function homeRouteFeatures(goal) {
     var employment = feature("就业", "就", "进入 AI 简历制作、AI 简历修改、全景仿真面试和 AI 模拟面试", "employment-home", "已接入");
-    var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划 Agent", "further-study-home", "规划中");
-    var plan = feature("AI路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划 Agent", "career-plan", "规划中");
+    var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划智能体", "further-study-home", "规划中");
+    var plan = feature("AI路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划智能体", "career-plan", "规划中");
     var assessment = feature("职业测评", "测", "通过答题分析人格、性格和偏好，补全用户画像", "assessment", "规划中");
     var today = feature("今日行动", "今", "完整用户画像生成后，由 AI 给出每日建议", "today-action", "即将接入");
     employment.platformLink = true;
@@ -462,7 +473,9 @@
       preference: valueOf("homePreference"),
       identityType: valueOf("profileIdentityType"),
       educationStage: valueOf("profileEducationStage"),
-      schoolMajor: valueOf("profileSchoolMajor"),
+      school: valueOf("profileSchool"),
+      major: valueOf("profileMajor"),
+      schoolMajor: valueOf("profileMajor"),
       resumeStatus: valueOf("resumeStatus"),
       experience: valueOf("profileExperience")
     }));
@@ -483,17 +496,541 @@
   }
 
   function renderFeatureHome(item) {
+    if (item.key === "employment-home") {
+      renderEmploymentHome(item);
+      return;
+    }
     var cards = featureGroups[item.key] || [];
     renderFeatureShell(item, item.title, item.summary,
       '<section class="feature-section"><h3>' + escapeHtml(item.title) + '工具</h3><div class="feature-grid">' +
       featureCards(cards) + '</div></section>');
   }
 
+  function renderEmploymentHome(item) {
+    ensureEmploymentHomeData();
+    renderFeatureShell(item, item.title, "先看路线图，再进入简历、面试、就业洞察和公开就业资源。",
+      employmentRoadmapPanel() +
+      employmentInsightPanel() +
+      employmentResourcePanels() +
+      '<section class="feature-section"><h3>就业工具</h3><div class="feature-grid">' +
+      featureCards(featureGroups[item.key] || []) + '</div></section>');
+  }
+
+  function ensureEmploymentHomeData() {
+    loadEmploymentResources();
+    if (hasUserIdentity()) {
+      loadEmploymentInsight();
+    }
+  }
+
+  function loadEmploymentResources() {
+    if (state.employmentResourcesLoading || state.employmentResources || state.employmentResourcesError) {
+      return;
+    }
+    if (isFilePreview()) {
+      state.employmentResources = previewEmploymentResources();
+      return;
+    }
+    state.employmentResourcesLoading = true;
+    post(endpoints.careerResources, hasUserIdentity() ? state.identity.userId : "").then(function (feed) {
+      state.employmentResources = feed || {};
+      state.employmentResourcesError = null;
+    }).catch(function (error) {
+      state.employmentResourcesError = error.message || "就业资源暂不可用。";
+    }).then(function () {
+      state.employmentResourcesLoading = false;
+      if (state.route === "employment-home") {
+        renderPage(pageByKey[state.route]);
+      }
+    });
+  }
+
+  function loadEmploymentInsight() {
+    if (state.employmentInsightLoading || state.employmentInsight || state.employmentInsightError || isFilePreview()) {
+      return;
+    }
+    state.employmentInsightLoading = true;
+    post(endpoints.employmentInsight, state.identity.userId).then(function (insight) {
+      state.employmentInsight = insight || {};
+      state.employmentInsightError = null;
+    }).catch(function (error) {
+      state.employmentInsightError = error.message || "就业洞察暂不可用。";
+    }).then(function () {
+      state.employmentInsightLoading = false;
+      if (state.route === "employment-home") {
+        renderPage(pageByKey[state.route]);
+      }
+    });
+  }
+
+  function employmentRoadmapPanel() {
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var hasPlan = !!(plan && Object.keys(plan).length);
+    var targetRole = employmentTargetRole(plan);
+    var weeklyFocus = normalizeArray(plan.weeklyFocus || plan.weekFocus || plan.actions || plan.nextActions).slice(0, 3);
+    if (!weeklyFocus.length) {
+      weeklyFocus = defaultRoadmapFocus(targetRole);
+    }
+    var summary = firstText(plan.summary, plan.planSummary, "当前先使用规则版路线图组织就业动作；接入智能体后，这里会升级为个性化路径规划。");
+    var planLabel = hasPlan ? "已生成" : "规则版";
+    return '<section class="feature-section roadmap-section">' +
+      '<div class="section-heading"><div><h3>就业路线图</h3><p class="section-note">优先展示下一步怎么走，工具入口放在路线之后。</p></div>' +
+      '<div class="section-actions">' +
+      '<button type="button" class="secondary" data-link="career-plan">完整规划</button>' +
+      '<button type="button" data-ensure-plan ' + (state.planEnsuring ? 'disabled aria-disabled="true"' : '') + '>' +
+      (state.planEnsuring ? "生成中" : hasPlan ? "刷新路线图" : "生成路线图") + '</button></div></div>' +
+      '<div class="roadmap-panel">' +
+      '<div class="roadmap-summary"><span class="resource-type">' + escapeHtml(planLabel) + '</span>' +
+      '<strong>' + escapeHtml(targetRole) + '</strong><p>' + escapeHtml(summary) + '</p>' +
+      '<ul class="compact-list">' + weeklyFocus.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul></div>' +
+      '<div class="roadmap-steps">' + employmentRoadmapSteps(targetRole).map(roadmapStepCard).join("") + '</div>' +
+      '</div></section>';
+  }
+
+  function employmentTargetRole(plan) {
+    return firstText(
+      plan && plan.targetRole,
+      plan && plan.role,
+      textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob"),
+      "目标岗位待确认"
+    );
+  }
+
+  function defaultRoadmapFocus(targetRole) {
+    var role = targetRole === "目标岗位待确认" ? "目标岗位" : targetRole;
+    return [
+      "确认 " + role + " 的岗位要求和能力关键词",
+      "补齐简历证据，完成一次简历诊断",
+      "安排一次模拟面试，并记录复盘反馈"
+    ];
+  }
+
+  function employmentRoadmapSteps(targetRole) {
+    var hasTarget = targetRole !== "目标岗位待确认";
+    var resumeCount = normalizeArray(state.resumes).length;
+    var interviewCount = normalizeArray(state.interviews).length;
+    var resourceReady = !!state.employmentResources && !state.employmentResourcesError;
+    return [
+      {
+        title: "确定目标",
+        status: hasTarget ? "已具备" : "待补充",
+        active: !hasTarget,
+        desc: hasTarget ? "围绕目标岗位拆解能力关键词。" : "先在首页或画像中补充目标岗位。",
+        route: "workbench"
+      },
+      {
+        title: "简历证据",
+        status: resumeCount ? resumeCount + " 份简历" : "待开始",
+        active: hasTarget && !resumeCount,
+        desc: "把项目、实习、课程和竞赛证据写进简历。",
+        route: "resume-home"
+      },
+      {
+        title: "资讯与投递",
+        status: resourceReady ? "可使用" : state.employmentResourcesLoading ? "加载中" : "待加载",
+        active: !!resumeCount,
+        desc: "结合公开就业资源和岗位信息安排投递节奏。",
+        route: "career-resources"
+      },
+      {
+        title: "面试复盘",
+        status: interviewCount ? interviewCount + " 次练习" : "待练习",
+        active: !!resumeCount && !interviewCount,
+        desc: "用模拟面试验证表达、追问和复盘质量。",
+        route: "interview-home"
+      }
+    ];
+  }
+
+  function roadmapStepCard(step, index) {
+    var cls = "roadmap-step" + (step.active ? " active" : "");
+    return '<button type="button" class="' + cls + '" data-link="' + escapeAttr(step.route) + '">' +
+      '<span class="step-index">' + (index + 1) + '</span><span class="step-copy">' +
+      '<strong>' + escapeHtml(step.title) + '</strong><small>' + escapeHtml(step.desc) + '</small></span>' +
+      '<span class="step-status">' + escapeHtml(step.status) + '</span></button>';
+  }
+
+  function ensureEmploymentPlan() {
+    if (state.planEnsuring) {
+      return;
+    }
+    if (isFilePreview()) {
+      state.plan = {
+        summary: "预览模式下展示规则版路线图；部署后可调用 CyanCruise 路径规划接口生成并保存。",
+        targetRole: employmentTargetRole({}),
+        weeklyFocus: defaultRoadmapFocus(employmentTargetRole({}))
+      };
+      renderPage(pageByKey[state.route]);
+      showMessage("info", "已生成预览路线图", "file:// 模式不会调用后端。");
+      return;
+    }
+    if (!hasUserIdentity()) {
+      showMessage("warning", "需要身份", "生成路线图前需要 Cosmic 身份或显式开发身份。");
+      return;
+    }
+    state.planEnsuring = true;
+    renderPage(pageByKey[state.route]);
+    post(endpoints.ensurePlan, state.identity.userId).then(function (plan) {
+      state.plan = plan || {};
+      showMessage("info", "路线图已刷新", "已使用当前画像和规则版规划接口更新就业路线图。");
+    }).catch(function (error) {
+      showMessage("error", "路线图生成失败", error.message || "路径规划接口暂不可用。");
+    }).then(function () {
+      state.planEnsuring = false;
+      if (state.route === "employment-home") {
+        renderPage(pageByKey[state.route]);
+      }
+    });
+  }
+
+  function employmentInsightPanel() {
+    if (state.employmentInsightLoading) {
+      return '<section class="feature-section"><h3>就业洞察</h3>' +
+        statePanel("正在读取就业洞察", "系统正在根据学校、专业和目标岗位加载来源覆盖摘要。", "pending") +
+        '</section>';
+    }
+    if (state.employmentInsightError) {
+      return '<section class="feature-section"><h3>就业洞察</h3>' +
+        statePanel("洞察暂不可用", state.employmentInsightError + " 你仍可继续使用简历和面试工具。", "warning") +
+        '</section>';
+    }
+    if (!state.employmentInsight) {
+      return '<section class="feature-section"><h3>就业洞察</h3>' +
+        statePanel("等待画像信号", "完善学校、专业和目标岗位后，这里会展示就业去向、来源覆盖和匹配摘要。", "empty") +
+        '</section>';
+    }
+    var insight = state.employmentInsight;
+    var rows = employmentInsightProfileRows(insight);
+    if (insight.latestYear) {
+      rows.push(["最近年份", insight.latestYear]);
+    }
+    var resumeSummary = employmentResumeSummary();
+    var summaryText = firstText(resumeSummary, chineseInsightSummary(insight), "暂无简历摘要。完成简历创建和 AI 分析后，这里会展示简历摘要。");
+    return '<section class="feature-section"><div class="section-heading">' +
+      '<h3>就业洞察</h3><button type="button" class="secondary" data-link="employment-insight">查看详情</button></div>' +
+      '<div class="insight-summary">' +
+      metricsPanel("用户画像", rows) +
+      '<section class="panel"><h3>简历摘要</h3><p>' + escapeHtml(summaryText) + '</p>' +
+      insightHighlights(insight) + '</section>' +
+      '</div></section>';
+  }
+
+  function employmentInsightProfileRows(insight) {
+    var school = firstText(getValue(state.snapshot, "onboarding.education.school"), insight.school, "学校待补充");
+    var major = firstText(getValue(state.snapshot, "onboarding.education.major"), insight.major, "专业待补充");
+    var legacySchoolMajor = firstText(getValue(state.snapshot, "onboarding.schoolMajor"), "");
+    var targetRole = firstText(
+      textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob"),
+      insight.targetRole,
+      "目标岗位待补充"
+    );
+    return [
+      ["画像状态", chineseInsightStatus(insight)],
+      ["学校", chineseInsightText(school)],
+      ["专业", chineseInsightText(major === "专业待补充" && legacySchoolMajor ? legacySchoolMajor : major)],
+      ["目标岗位", chineseInsightText(targetRole)],
+      ["洞察来源", firstText(insight.sourceCount, "0") + " 条"]
+    ];
+  }
+
+  function employmentResumeSummary() {
+    var resumeBlock = getValue(state.snapshot, "resume") || {};
+    var resumes = normalizeArray(state.resumes);
+    var latest = resumes.length ? resumes[0] : {};
+    var summary = firstText(
+      latest.aiSummary,
+      latest.resumeSummary,
+      latest.summary,
+      latest.parsedContent,
+      resumeBlock.summary,
+      resumeBlock.aiSummary
+    );
+    if (isDisplayChinese(summary)) {
+      return shortText(summary, 180);
+    }
+    var score = firstText(latest.diagnosisScore, resumeBlock.diagnosisScore, "");
+    if (score) {
+      return "当前简历诊断分为 " + score + "，建议结合目标岗位继续补充项目证据、技能关键词和成果量化。";
+    }
+    var title = firstText(latest.title, latest.resumeName, resumeBlock.title, "");
+    var target = firstText(latest.targetJob, latest.targetRole, resumeBlock.targetJob, textFromSnapshot("preferences.targetRole", "onboarding.targetRole"));
+    if (title || target) {
+      return "当前已维护" + (title ? "《" + title + "》" : "简历记录") + (target ? "，目标岗位为" + target : "") + "。完成 AI 简历分析后，这里会展示更完整的简历摘要。";
+    }
+    return "";
+  }
+
+  function chineseInsightStatus(insight) {
+    var status = firstText(insight.status, "");
+    if (status === "AVAILABLE") {
+      return Number(insight.sourceCount || 0) > 0 ? "已结合画像匹配" : "画像已读取";
+    }
+    if (status === "MISSING_SCHOOL") {
+      return "待补充学校";
+    }
+    if (status === "UNSUPPORTED_SCHOOL") {
+      return "学校来源待接入";
+    }
+    if (status === "MISSING_TARGET_ROLE") {
+      return "待补充目标岗位";
+    }
+    if (status === "NO_SOURCES") {
+      return "就业来源待接入";
+    }
+    if (status === "EMPTY") {
+      return "暂无就业来源";
+    }
+    return chineseInsightText(firstText(insight.matchLabel, status, "待完善画像"));
+  }
+
+  function chineseInsightSummary(insight) {
+    var summary = chineseInsightText(firstText(insight.summary, ""));
+    if (isDisplayChinese(summary)) {
+      return summary;
+    }
+    var status = firstText(insight.status, "");
+    if (status === "MISSING_SCHOOL") {
+      return "用户画像中还缺少学校信息，补充学校和专业后可生成更准确的就业洞察。";
+    }
+    if (status === "UNSUPPORTED_SCHOOL" || status === "NO_SOURCES") {
+      return "当前学校的可追溯就业来源尚未接入，页面会先展示用户画像与简历摘要。";
+    }
+    if (status === "MISSING_TARGET_ROLE") {
+      return "用户画像中还缺少目标岗位，补充后可结合岗位方向生成就业洞察。";
+    }
+    return "";
+  }
+
+  function chineseInsightText(value) {
+    var text = firstText(value, "");
+    var map = {
+      "Employment insight unavailable": "就业洞察暂不可用",
+      "Unknown school": "学校待补充",
+      "Unknown major": "专业待补充",
+      "Unknown target role": "目标岗位待补充",
+      "Matched to profile signals": "已结合画像匹配",
+      "Using school-level public sources": "使用学校公开来源",
+      "School is required before source-backed employment insight can be generated.": "用户画像中还缺少学校信息，补充学校后可生成就业洞察。",
+      "This school is not connected to verified employment insight sources yet.": "当前学校的可验证就业来源尚未接入。",
+      "No traceable employment source is available for this school yet.": "当前学校暂无可追溯就业来源。",
+      "Complete the target role to get role-specific employment insight. Current response only uses school-level sources.": "补充目标岗位后，可生成更贴合岗位方向的就业洞察。"
+    };
+    if (map[text]) {
+      return map[text];
+    }
+    return text
+      .replace(/Chengdu University of Technology/g, "成都理工大学")
+      .replace(/Chengdu University of Traditional Chinese Medicine/g, "成都中医药大学")
+      .replace(/Computer Science/g, "计算机科学")
+      .replace(/Software Engineering/g, "软件工程")
+      .replace(/Software Engineer/g, "软件工程师")
+      .replace(/Frontend Developer/g, "前端开发")
+      .replace(/Front-end Developer/g, "前端开发")
+      .replace(/Unknown University/g, "学校待补充");
+  }
+
+  function insightHighlights(insight) {
+    var highlights = normalizeArray(insight.destinationHighlights).slice(0, 3);
+    if (!highlights.length) {
+      return "";
+    }
+    var translated = highlights.map(chineseInsightText).filter(function (item) {
+      return isDisplayChinese(item);
+    });
+    if (!translated.length) {
+      return "";
+    }
+    return '<ul class="compact-list">' + translated.map(function (item) {
+      return '<li>' + escapeHtml(item) + '</li>';
+    }).join("") + '</ul>';
+  }
+
+  function employmentResourcePanels() {
+    if (state.employmentResourcesLoading) {
+      return '<section class="feature-section"><h3>就业资讯与文章</h3>' +
+        statePanel("正在加载资源", "正在读取就业资讯、职业指导和公共就业服务入口。", "pending") +
+        '</section>';
+    }
+    if (state.employmentResourcesError) {
+      return '<section class="feature-section"><h3>就业资讯与文章</h3>' +
+        statePanel("资源暂不可用", state.employmentResourcesError + " 工具入口仍可正常使用。", "warning") +
+        '</section>';
+    }
+    var feed = state.employmentResources || {};
+    var articles = normalizeArray(feed.articles);
+    var services = normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths));
+    var videos = normalizeArray(feed.videos);
+    var total = articles.length + services.length + videos.length;
+    if (!total) {
+      return '<section class="feature-section"><h3>就业资讯与文章</h3>' +
+        statePanel("暂无资源", firstText(feed.message, "当前还没有配置就业资讯资源。"), "empty") +
+        '</section>';
+    }
+    return '<section class="feature-section"><div class="section-heading">' +
+      '<h3>就业资讯与文章</h3><button type="button" class="secondary" data-link="career-resources">全部资源</button></div>' +
+      '<div class="employment-resource-layout">' +
+      resourceColumn("公共服务", services, "service", 2) +
+      resourceColumn("精选文章", articles, "article", 2) +
+      resourceColumn("相关视频", videos, "video", 2) +
+      '</div></section>';
+  }
+
+  function resourceColumn(title, cards, type, limit) {
+    var items = normalizeArray(cards).slice(0, limit || 4);
+    if (!items.length) {
+      return '<section class="resource-column"><h4>' + escapeHtml(title) + '</h4><p class="panel-note">暂无内容。</p></section>';
+    }
+    return '<section class="resource-column"><h4>' + escapeHtml(title) + '</h4><div class="resource-list">' +
+      items.map(function (item) { return resourceCard(item, type); }).join("") + '</div></section>';
+  }
+
+  function resourceCard(item, type) {
+    var rawUrl = firstText(item.sourceUrl, item.url, "");
+    var url = externalResourceUrl(item, rawUrl);
+    var detailKey = url ? "" : resourceDetailKey(item, rawUrl);
+    var meta = [resourceTypeLabel(item.type || type), firstText(item.category, item.keyword, ""), shortDate(item.publishedAt)].filter(Boolean).join(" · ");
+    return '<article class="resource-card">' +
+      '<div><span class="resource-type">' + escapeHtml(meta || "就业资源") + '</span>' +
+      '<strong>' + escapeHtml(resourceTitle(item)) + '</strong>' +
+      '<p>' + escapeHtml(resourceSummary(item)) + '</p></div>' +
+      (detailKey ? '<button type="button" class="resource-link resource-link-button" data-resource-detail="' + escapeAttr(detailKey) + '">查看资源</button>' : '') +
+      (url ? '<a class="resource-link" href="' + escapeAttr(url) + '" target="_blank" rel="noopener noreferrer">查看资源</a>' : '') +
+      '</article>';
+  }
+
+  function externalResourceUrl(item, rawUrl) {
+    var value = trim(rawUrl);
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+    var id = trim(item && item.id);
+    if (id === "article-resume-001" || id === "tip-resume-evidence-001") {
+      return "https://www.ncss.cn/ncss/zd/ws/202208/20220809/2209339200.html";
+    }
+    if (id === "tip-plan-001" || id === "tip-weekly-focus-001") {
+      return "https://www.ncss.cn/ncss/jydt/jy/202404/20240403/2293279892.html";
+    }
+    if (id === "video-interview-001" || id === "video-interview-practice-001") {
+      return "https://www.bilibili.com/video/BV1RN411f7LU/";
+    }
+    if (id === "path-software" || trim(item && item.careerPathId) === "software-engineer") {
+      return "https://search.bilibili.com/all?keyword=%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B%E5%B8%88%20%E6%A0%A1%E6%8B%9B%20%E8%81%8C%E4%B8%9A%E8%B7%AF%E5%BE%84";
+    }
+    return "";
+  }
+
+  function resourceTitle(item) {
+    var title = firstText(item.title, "未命名资源");
+    if (title === "Resume evidence checklist") {
+      return "简历证据清单";
+    }
+    if (title === "This week career focus") {
+      return "本周求职行动重点";
+    }
+    if (title === "Mock interview practice loop") {
+      return "面试练习前的回答结构";
+    }
+    if (title === "Software Engineer path") {
+      return "软件工程师路径";
+    }
+    return title;
+  }
+
+  function resourceSummary(item) {
+    var summary = firstText(item.summary, item.body, "暂无摘要。");
+    if (summary === "Use target-role evidence to improve resume bullets.") {
+      return "围绕目标岗位梳理项目、实习、课程和竞赛证据，再写入简历要点。";
+    }
+    if (summary === "Pick one target role, one resume improvement and one interview drill.") {
+      return "选择一个目标岗位、完成一次简历修改、安排一次模拟面试，并记录反馈。";
+    }
+    if (summary === "Practice answer structure before a real interview.") {
+      return "用 STAR、项目复盘和岗位能力关键词整理模拟面试回答。";
+    }
+    if (summary === "Core route for backend, web, data and AI application roles.") {
+      return "面向后端、Web、数据和 AI 应用岗位的基础成长路线。";
+    }
+    return summary;
+  }
+
+  function resourceDetailKey(item, url) {
+    var value = trim(url);
+    var id = trim(item && item.id);
+    if (value.indexOf("/careerloop/resources/resume-evidence") >= 0 || value.indexOf("/cyancruise/resources/resume-evidence") >= 0 || id === "article-resume-001") {
+      return "resume-evidence";
+    }
+    if (value.indexOf("/careerloop/resources/weekly-focus") >= 0 || value.indexOf("/cyancruise/resources/weekly-focus") >= 0 || id === "tip-plan-001") {
+      return "weekly-focus";
+    }
+    if (value.indexOf("BV1careerloop") >= 0 || value.indexOf("BV1cyancruise") >= 0 || id === "video-interview-001") {
+      return "interview-practice";
+    }
+    if (id === "tip-resume-evidence-001") {
+      return "resume-evidence";
+    }
+    if (id === "tip-weekly-focus-001") {
+      return "weekly-focus";
+    }
+    if (id === "video-interview-practice-001") {
+      return "interview-practice";
+    }
+    if (id === "path-software" || trim(item && item.careerPathId) === "software-engineer") {
+      return "software-engineer-path";
+    }
+    return "";
+  }
+
+  function resourceTypeLabel(type) {
+    var value = trim(type).toLowerCase();
+    if (value === "article") {
+      return "文章";
+    }
+    if (value === "video") {
+      return "视频";
+    }
+    if (value === "career_path" || value === "career-path") {
+      return "职业路径";
+    }
+    if (value === "consultation" || value === "tip") {
+      return "服务入口";
+    }
+    return "就业资源";
+  }
+
+  function shortDate(value) {
+    var text = trim(value);
+    if (!text) {
+      return "";
+    }
+    return text.length > 10 ? text.substring(0, 10) : text;
+  }
+
+  function previewEmploymentResources() {
+    return {
+      articles: [
+        { type: "article", title: "三“新”看就业共赴好前程", summary: "关注高校毕业生就业新趋势、数智就业服务和 AI 模拟面试等公共就业服务实践。", category: "就业观察", sourceUrl: "https://cpc.people.com.cn/n1/2026/0614/c64387-40739823.html" },
+        { type: "article", title: "专家支招大学生求职：明确目标、提升自我", summary: "围绕高校毕业生求职困惑，提供目标定位、能力提升和就业指导建议。", category: "求职指导", sourceUrl: "https://www.ncss.cn/ncss/jydt/jy/202404/20240403/2293279892.html" }
+      ],
+      consultations: [
+        { type: "consultation", title: "国家大学生就业服务平台", summary: "查看职位信息、就业指导、专场招聘、重点领域就业和高校毕业生服务。", category: "公共服务", sourceUrl: "https://www.ncss.cn/" },
+        { type: "consultation", title: "全国就业公共服务平台", summary: "查询岗位推荐、招聘会信息、职业指导、职业测评和高校毕业生就业服务。", category: "公共服务", sourceUrl: "https://www.12333.gov.cn/job/" },
+        { type: "consultation", title: "中国公共招聘网", summary: "查看招聘信息、招聘会信息、事业单位公开招聘和市场资讯。", category: "公共招聘", sourceUrl: "https://job.mohrss.gov.cn/" }
+      ],
+      careerPaths: [
+        { type: "career_path", title: "就业在线", summary: "全国招聘求职服务平台入口，聚合各地公共就业人才服务和招聘求职资源。", category: "公共招聘", sourceUrl: "https://www.jobonline.cn/" }
+      ],
+      videos: [
+        { type: "video", title: "求职简历怎么写？看这 1 个视频就够了", summary: "求职简历讲解视频，可直接跳转播放。", category: "简历", sourceUrl: "https://www.bilibili.com/video/BV1RN411f7LU/" },
+        { type: "video", title: "大学生就业季：求职路观察", summary: "央视网就业季视频页面，可直接跳转观看。", category: "就业观察", sourceUrl: "https://news.cctv.com/2013/05/31/VIDE1369989879849147.shtml" }
+      ]
+    };
+  }
+
   function renderPlannedStudyPage(item) {
     renderFeatureShell(item, item.title, item.summary,
       '<section class="panel full">' +
       '<h3>' + escapeHtml(item.title) + '规划</h3>' +
-      '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度 Agent、用户画像 Agent 和对应规划 Agent；当前可以先回到深造页选择方向，或回到首页调整路线信息。</p>' +
+      '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度智能体、用户画像智能体和对应规划智能体；当前可以先回到深造页选择方向，或回到首页调整路线信息。</p>' +
       '<div class="actions-row"><button type="button" data-link="further-study-home">返回深造</button><button type="button" class="secondary" data-link="workbench">返回首页</button></div>' +
       '</section>');
   }
@@ -958,7 +1495,7 @@
     } else if (item.key === "interview") {
       body += listPanel("面试历史", state.interviews, "暂无面试历史。");
     } else if (item.key === "career-plan") {
-      body += statePanel("AI路径规划", "后续由 AI 根据首页路线选择、完整用户画像、简历/材料和阶段目标生成实现路径。当前先保留入口，不展开规划 Agent。", "pending");
+      body += statePanel("AI路径规划", "后续由 AI 根据首页路线选择、完整用户画像、简历/材料和阶段目标生成实现路径。当前先保留入口，不展开规划智能体。", "pending");
     } else if (item.key === "assessment") {
       body += statePanel("职业测评", "后续通过答题分析人格、性格、偏好和行动风格，并把结果补入完整用户画像，用于指导路径规划和今日行动。当前先保留入口，不展开题组。", "pending");
     } else if (item.key === "assistant") {
@@ -1019,9 +1556,6 @@
   }
 
   function backRouteFor(key) {
-    if (state.previousRoute && state.previousRoute !== key && pageByKey[state.previousRoute]) {
-      return state.previousRoute;
-    }
     return parentRouteFor(key);
   }
 
@@ -1043,7 +1577,7 @@
       "assistant": "workbench",
       "messages": "workbench",
       "employment-insight": "employment-home",
-      "career-resources": "workbench",
+      "career-resources": "employment-home",
       "file-upload-preview": "resume-home",
       "onboarding": "workbench",
       "admin-console": "workbench"
@@ -1052,6 +1586,20 @@
   }
 
   function handlePageHostClick(event) {
+    var ensurePlanTarget = findEnsurePlanTarget(event.target);
+    if (ensurePlanTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      ensureEmploymentPlan();
+      return;
+    }
+    var resourceTarget = findResourceDetailTarget(event.target);
+    if (resourceTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      showResourceDetailDialog(resourceTarget.getAttribute("data-resource-detail"));
+      return;
+    }
     var target = findPageLinkTarget(event.target);
     if (!target) {
       return;
@@ -1069,6 +1617,26 @@
   function findPageLinkTarget(node) {
     while (node && node !== els.pageHost) {
       if (node.getAttribute && (node.getAttribute("data-link") || node.getAttribute("data-back-route"))) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findEnsurePlanTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-ensure-plan") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findResourceDetailTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-resource-detail")) {
         return node.disabled ? null : node;
       }
       node = node.parentNode;
@@ -1243,7 +1811,9 @@
       preference: valueOf("homePreference"),
       identityType: valueOf("profileIdentityType"),
       educationStage: valueOf("profileEducationStage"),
-      schoolMajor: valueOf("profileSchoolMajor"),
+      school: valueOf("profileSchool"),
+      major: valueOf("profileMajor"),
+      schoolMajor: valueOf("profileMajor"),
       resumeStatus: valueOf("resumeStatus"),
       experience: valueOf("profileExperience")
     };
@@ -1252,7 +1822,13 @@
       identityType: intent.identityType,
       stage: intent.educationStage,
       educationStage: intent.educationStage,
-      schoolMajor: intent.schoolMajor,
+      school: intent.school,
+      major: intent.major,
+      schoolMajor: intent.major,
+      education: {
+        school: intent.school,
+        major: intent.major
+      },
       targetRole: intent.targetRole,
       resumeStatus: intent.resumeStatus,
       experience: intent.experience,
@@ -1945,6 +2521,20 @@
     return "";
   }
 
+  function shortText(value, limit) {
+    var text = trim(value);
+    var max = limit || 160;
+    return text.length > max ? text.slice(0, max - 1) + "…" : text;
+  }
+
+  function isDisplayChinese(value) {
+    var text = trim(value);
+    if (!text) {
+      return false;
+    }
+    return /[\u4e00-\u9fff]/.test(text) || !/[A-Za-z]{4,}/.test(text);
+  }
+
   function trim(value) {
     return value == null ? "" : String(value).replace(/^\s+|\s+$/g, "");
   }
@@ -2021,6 +2611,111 @@
     });
     document.addEventListener("keydown", onKeydown);
     ok.focus();
+  }
+
+  function showResourceDetailDialog(key) {
+    var detail = resourceDetail(key);
+    if (!detail) {
+      showMessage("warning", "资源不可用", "未找到对应的资源内容。");
+      return;
+    }
+    hideConfirmDialog();
+    var previousFocus = document.activeElement;
+    var overlay = document.createElement("div");
+    overlay.className = "confirm-overlay resource-overlay";
+    overlay.innerHTML =
+      '<div class="confirm-dialog resource-dialog" role="dialog" aria-modal="true" aria-labelledby="resourceDialogTitle">' +
+      '<div class="confirm-copy"><strong id="resourceDialogTitle">' + escapeHtml(detail.title) + '</strong>' +
+      '<span>' + escapeHtml(detail.summary) + '</span></div>' +
+      '<div class="resource-detail-body">' + detail.sections.map(function (section) {
+        return '<section><h4>' + escapeHtml(section.title) + '</h4><ul>' + section.items.map(function (item) {
+          return '<li>' + escapeHtml(item) + '</li>';
+        }).join("") + '</ul></section>';
+      }).join("") + '</div>' +
+      '<div class="confirm-actions">' +
+      '<button type="button" class="secondary" data-confirm-cancel>关闭</button>' +
+      (detail.route ? '<button type="button" data-resource-route="' + escapeAttr(detail.route) + '">' + escapeHtml(detail.actionText || "进入相关工具") + '</button>' : '') +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    var cancel = overlay.querySelector("[data-confirm-cancel]");
+    var route = overlay.querySelector("[data-resource-route]");
+    function close() {
+      hideConfirmDialog();
+      document.removeEventListener("keydown", onKeydown);
+      if (previousFocus && typeof previousFocus.focus === "function") {
+        previousFocus.focus();
+      }
+    }
+    function onKeydown(event) {
+      if (event.key === "Escape") {
+        close();
+      }
+    }
+    overlay.addEventListener("click", function (event) {
+      if (event.target === overlay) {
+        close();
+      }
+    });
+    cancel.addEventListener("click", close);
+    if (route) {
+      route.addEventListener("click", function () {
+        var targetRoute = route.getAttribute("data-resource-route");
+        close();
+        navigateToRoute(targetRoute);
+      });
+    }
+    document.addEventListener("keydown", onKeydown);
+    cancel.focus();
+  }
+
+  function resourceDetail(key) {
+    var details = {
+      "resume-evidence": {
+        title: "简历证据清单",
+        summary: "把经历先整理成可验证证据，再写成简历要点。",
+        route: "resume-diagnosis",
+        actionText: "去简历诊断",
+        sections: [
+          { title: "先收集", items: ["目标岗位 JD 中反复出现的能力词。", "课程、项目、实习、竞赛、开源或作品中能证明这些能力的材料。", "每段经历对应的任务、动作、结果和可量化指标。"] },
+          { title: "再改写", items: ["用动词开头描述你做了什么。", "补上技术栈、业务场景或协作对象。", "尽量写出结果，例如效率、规模、准确率、用户量或交付物。"] },
+          { title: "检查", items: ["一条经历只服务一个核心能力。", "删除泛泛的形容词，保留证据和结果。", "和目标岗位无关的内容放到次要位置。"] }
+        ]
+      },
+      "weekly-focus": {
+        title: "本周求职行动重点",
+        summary: "把求职推进拆成一周内能完成的三个动作。",
+        route: "career-plan",
+        actionText: "查看路径规划",
+        sections: [
+          { title: "第 1 步", items: ["选定一个本周主攻岗位，不要同时追太多方向。", "保存 3 条代表性 JD，提取共同能力词。"] },
+          { title: "第 2 步", items: ["按能力词修改一版简历。", "至少补充一个项目或实习的结果指标。"] },
+          { title: "第 3 步", items: ["完成一次模拟面试。", "记录 2 个回答卡住的问题，并写下下一轮改进动作。"] }
+        ]
+      },
+      "interview-practice": {
+        title: "面试练习前的回答结构",
+        summary: "用固定结构减少临场组织语言的成本。",
+        route: "interview",
+        actionText: "开始模拟面试",
+        sections: [
+          { title: "STAR 框架", items: ["Situation：一句话交代背景。", "Task：说明你负责解决什么问题。", "Action：讲清楚你的关键动作和取舍。", "Result：用结果、指标或复盘收尾。"] },
+          { title: "项目题", items: ["先讲目标和边界，再讲架构或流程。", "准备一个技术难点、一个协作难点、一个复盘点。"] },
+          { title: "行为题", items: ["准备失败经历、冲突经历、主动推进经历。", "回答时避免只讲态度，要给具体场景。"] }
+        ]
+      },
+      "software-engineer-path": {
+        title: "软件工程师路径",
+        summary: "面向后端、Web、数据和 AI 应用岗位的基础成长路线。",
+        route: "career-plan",
+        actionText: "查看路径规划",
+        sections: [
+          { title: "基础能力", items: ["数据结构与算法、计算机网络、数据库、操作系统。", "至少掌握一门主力语言和对应工程框架。"] },
+          { title: "项目能力", items: ["完成一个可部署的业务系统。", "补充登录、权限、存储、日志、测试和部署说明。"] },
+          { title: "求职准备", items: ["把项目写成问题、方案、结果三段。", "围绕目标岗位准备高频八股和项目追问。"] }
+        ]
+      }
+    };
+    return details[key] || null;
   }
 
   function hideConfirmDialog() {

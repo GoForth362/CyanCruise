@@ -392,6 +392,19 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             education.setMajor(schoolMajor);
         }
+        String school = textOrNull(values.get("school"));
+        String major = textOrNull(values.get("major"));
+        if (school != null || major != null) {
+            if (education == null) {
+                education = new UserProfileSnapshot.EducationBlock();
+            }
+            if (school != null) {
+                education.setSchool(school);
+            }
+            if (major != null) {
+                education.setMajor(major);
+            }
+        }
         return education;
     }
 
@@ -405,6 +418,8 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
         if (values != null) {
             draft.setIdentityType(textOrNull(values.get("identityType")));
             draft.setEducationStage(textOrNull(values.get("educationStage")));
+            draft.setSchool(textOrNull(values.get("school")));
+            draft.setMajor(textOrNull(values.get("major")));
             draft.setSchoolMajor(textOrNull(values.get("schoolMajor")));
             draft.setResumeStatus(textOrNull(values.get("resumeStatus")));
             draft.setTargetRole(textOrNull(values.get("targetRole")));

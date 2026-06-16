@@ -279,7 +279,7 @@
     {
       "key": "employment-home",
       "title": "就业",
-      "ipdPaths": ["pages/home/index", "pages/resume/index", "pages/interview/index"],
+      "ipdPaths": ["pages/home/index", "pages/resume/index", "pages/interview/index", "pages/cdut-employment/index"],
       "target": "index.html?ccRoute=employment-home",
       "status": "available",
       "webApis": [
@@ -300,6 +300,24 @@
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto>",
           "fallback": "Show employment feature cards and empty interview state."
+        },
+        {
+          "name": "employment insight",
+          "method": "POST",
+          "path": "/cc001/career-employment/insight/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "EmploymentInsightDto",
+          "fallback": "Show employment tools and an inline insight unavailable state."
+        },
+        {
+          "name": "career resource feed",
+          "method": "POST",
+          "path": "/cc001/career-employment/resources/list",
+          "body": ["userId"],
+          "userIdRequired": false,
+          "dto": "CareerResourceFeedDto",
+          "fallback": "Show employment tools and an inline resources unavailable state."
         }
       ]
     },

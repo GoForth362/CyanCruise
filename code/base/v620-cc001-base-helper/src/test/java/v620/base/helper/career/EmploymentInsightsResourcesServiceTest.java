@@ -37,6 +37,18 @@ class EmploymentInsightsResourcesServiceTest {
     }
 
     @Test
+    void chineseSchoolNameIsNormalizedToSupportedSource() {
+        EmploymentInsightDto insight = service.buildInsight(context("成都理工大学", "软件工程", "前端开发"),
+                Arrays.asList(record("r1", "Chengdu University of Technology", 2025,
+                        "CDUT official report", "CDUT_OFFICIAL_PDF", "软件", "前端",
+                        new BigDecimal("91.20"), null, "软件和前端岗位去向可见。")), now);
+
+        assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, insight.getStatus());
+        assertEquals("Chengdu University of Technology", insight.getSchool());
+        assertEquals(Integer.valueOf(1), insight.getSourceCount());
+    }
+
+    @Test
     void missingSchoolDoesNotBorrowOtherSchoolMetrics() {
         EmploymentInsightDto insight = service.buildInsight(context(null, "Computer Science", "Software Engineer"),
                 Arrays.asList(record("r1", "Chengdu University of Technology", 2025,
@@ -70,7 +82,7 @@ class EmploymentInsightsResourcesServiceTest {
         assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, insight.getStatus());
         assertNull(insight.getLatestEmploymentRate());
         assertNull(insight.getLatestPostgraduateRate());
-        assertTrue(insight.getSummary().contains("Numeric metrics are not available"));
+        assertTrue(insight.getSummary().contains("暂未提供量化指标"));
         assertEquals(EmploymentInsightsResourcesService.COVERAGE_NEEDS_REVIEW, insight.getCoverage().get(4).getStatus());
     }
 
@@ -82,7 +94,7 @@ class EmploymentInsightsResourcesServiceTest {
                         new BigDecimal("91.20"), null, "Software roles.")), now);
 
         assertEquals(EmploymentInsightsResourcesService.STATUS_MISSING_TARGET_ROLE, insight.getStatus());
-        assertTrue(insight.getSummary().contains("Complete the target role"));
+        assertTrue(insight.getSummary().contains("补充目标岗位"));
     }
 
     @Test

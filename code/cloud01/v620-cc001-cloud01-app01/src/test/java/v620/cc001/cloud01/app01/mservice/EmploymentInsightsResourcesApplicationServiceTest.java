@@ -62,6 +62,9 @@ class EmploymentInsightsResourcesApplicationServiceTest {
         assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, feed.getStatus());
         assertFalse(feed.getArticles().isEmpty());
         assertFalse(feed.getVideos().isEmpty());
+        assertFalse(feed.getConsultations().isEmpty());
+        assertContainsSource(feed, "https://www.ncss.cn/");
+        assertContainsSource(feed, "https://www.bilibili.com/video/BV1RN411f7LU/");
     }
 
     private EmploymentInsightsResourcesApplicationService serviceWithProfile(String userId,
@@ -81,5 +84,29 @@ class EmploymentInsightsResourcesApplicationServiceTest {
         return new EmploymentInsightsResourcesApplicationService(
                 new InMemoryEmploymentInsightStorage(), new InMemoryCareerResourceStorage(),
                 profileService, new EmploymentInsightsResourcesService());
+    }
+
+    private void assertContainsSource(CareerResourceFeedDto feed, String sourceUrl) {
+        for (int i = 0; i < feed.getArticles().size(); i += 1) {
+            if (sourceUrl.equals(feed.getArticles().get(i).getSourceUrl())) {
+                return;
+            }
+        }
+        for (int i = 0; i < feed.getConsultations().size(); i += 1) {
+            if (sourceUrl.equals(feed.getConsultations().get(i).getSourceUrl())) {
+                return;
+            }
+        }
+        for (int i = 0; i < feed.getCareerPaths().size(); i += 1) {
+            if (sourceUrl.equals(feed.getCareerPaths().get(i).getSourceUrl())) {
+                return;
+            }
+        }
+        for (int i = 0; i < feed.getVideos().size(); i += 1) {
+            if (sourceUrl.equals(feed.getVideos().get(i).getSourceUrl())) {
+                return;
+            }
+        }
+        throw new AssertionError("missing sourceUrl: " + sourceUrl);
     }
 }

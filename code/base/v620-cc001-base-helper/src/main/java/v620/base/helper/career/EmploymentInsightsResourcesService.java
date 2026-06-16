@@ -18,7 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Pure Java rules for source-backed employment insight and resource feed shaping.
+ * Pure Java rules for profile-backed employment insight and resource feed shaping.
  */
 public class EmploymentInsightsResourcesService {
 
@@ -57,7 +57,7 @@ public class EmploymentInsightsResourcesService {
         alias("Southwestern University of Finance and Economics", "swufe", "southwestern finance", "xinan caijing");
         alias("Southwest Petroleum University", "swpu", "southwest petroleum", "xinan shiyou");
         alias("Sichuan Agricultural University", "sicau", "sichuan agricultural", "sichuan nongye");
-        alias("Chengdu University of Technology", "cdut", "chengdu university of technology", "chengdu ligong");
+        alias("Chengdu University of Technology", "cdut", "chengdu university of technology", "chengdu ligong", "成都理工大学", "成都理工");
         alias("Chengdu University of Traditional Chinese Medicine", "cdutcm", "chengdu university of traditional chinese medicine", "chengdu zhongyiyao");
     }
 
@@ -66,23 +66,23 @@ public class EmploymentInsightsResourcesService {
                                              LocalDateTime now) {
         EmploymentInsightProfileContext safeContext = context == null ? new EmploymentInsightProfileContext() : context;
         LocalDateTime safeNow = now == null ? LocalDateTime.now() : now;
-        String major = firstText(safeContext.getMajor(), "Unknown major");
-        String targetRole = firstText(safeContext.getTargetRole(), "Unknown target role");
+        String major = firstText(safeContext.getMajor(), "专业待补充");
+        String targetRole = firstText(safeContext.getTargetRole(), "目标岗位待补充");
         String normalizedSchool = normalizeSchool(safeContext.getSchool());
 
         if (!hasText(safeContext.getSchool())) {
-            return unavailable(STATUS_MISSING_SCHOOL, "Unknown school", major, targetRole,
-                    "School is required before source-backed employment insight can be generated.", safeNow);
+            return unavailable(STATUS_MISSING_SCHOOL, "学校待补充", major, targetRole,
+                    "用户画像中还缺少学校信息，补充学校后可生成就业洞察。", safeNow);
         }
         if (!isSupportedSchool(normalizedSchool)) {
             return unavailable(STATUS_UNSUPPORTED_SCHOOL, safeContext.getSchool(), major, targetRole,
-                    "This school is not connected to verified employment insight sources yet.", safeNow);
+                    "当前学校的可验证就业来源尚未接入。", safeNow);
         }
 
         List<EmploymentInsightRecordDto> schoolRecords = filterBySchool(records, normalizedSchool);
         if (schoolRecords.isEmpty()) {
             return unavailable(STATUS_NO_SOURCES, normalizedSchool, major, targetRole,
-                    "No traceable employment source is available for this school yet.", safeNow);
+                    "当前学校暂无可追溯就业来源。", safeNow);
         }
 
         List<EmploymentInsightRecordDto> selected = selectRecords(schoolRecords, major, targetRole);
@@ -128,10 +128,10 @@ public class EmploymentInsightsResourcesService {
                 + feed.getConsultations().size() + feed.getCareerPaths().size();
         if (total == 0) {
             feed.setStatus(STATUS_EMPTY);
-            feed.setMessage("No configured CyanCruise resources are available.");
+            feed.setMessage("暂无已配置的 CyanCruise 就业资源。");
         } else {
             feed.setStatus(STATUS_AVAILABLE);
-            feed.setMessage("CyanCruise resources are available.");
+            feed.setMessage("CyanCruise 就业资源已可用。");
         }
         return feed;
     }
@@ -176,7 +176,7 @@ public class EmploymentInsightsResourcesService {
         result.setSchool(school);
         result.setMajor(major);
         result.setTargetRole(targetRole);
-        result.setMatchLabel("Employment insight unavailable");
+        result.setMatchLabel("就业洞察暂不可用");
         result.setSummary(summary);
         result.setSourceCount(Integer.valueOf(0));
         result.setUpdatedAt(now);
@@ -237,33 +237,33 @@ public class EmploymentInsightsResourcesService {
     private String matchLabel(List<EmploymentInsightRecordDto> records, String major, String targetRole) {
         for (EmploymentInsightRecordDto record : records) {
             if (score(record, major, targetRole) >= 4) {
-                return "Matched to profile signals";
+                return "已结合画像匹配";
             }
         }
-        return "Using school-level public sources";
+        return "使用学校公开来源";
     }
 
     private String summary(EmploymentInsightDto insight) {
         if (STATUS_MISSING_TARGET_ROLE.equals(insight.getStatus())) {
-            return "Complete the target role to get role-specific employment insight. Current response only uses school-level sources.";
+            return "补充目标岗位后，可生成更贴合岗位方向的就业洞察。当前仅使用学校层面的公开来源。";
         }
         StringBuilder builder = new StringBuilder();
-        builder.append("Based on ").append(insight.getSchool()).append(" public sources");
-        if (hasText(insight.getMajor()) && !"Unknown major".equals(insight.getMajor())) {
-            builder.append(" and major ").append(insight.getMajor());
+        builder.append("基于").append(insight.getSchool()).append("公开来源");
+        if (hasText(insight.getMajor()) && !"专业待补充".equals(insight.getMajor())) {
+            builder.append("、").append(insight.getMajor()).append("专业");
         }
-        if (hasText(insight.getTargetRole()) && !"Unknown target role".equals(insight.getTargetRole())) {
-            builder.append(", target role ").append(insight.getTargetRole());
+        if (hasText(insight.getTargetRole()) && !"目标岗位待补充".equals(insight.getTargetRole())) {
+            builder.append("和目标岗位").append(insight.getTargetRole());
         }
-        builder.append(".");
+        builder.append("生成就业洞察。");
         if (insight.getLatestEmploymentRate() != null) {
-            builder.append(" Latest employment placement rate: ").append(insight.getLatestEmploymentRate()).append("%.");
+            builder.append(" 最近就业去向率为 ").append(insight.getLatestEmploymentRate()).append("%。");
         }
         if (insight.getLatestPostgraduateRate() != null) {
-            builder.append(" Latest postgraduate rate: ").append(insight.getLatestPostgraduateRate()).append("%.");
+            builder.append(" 最近升学率为 ").append(insight.getLatestPostgraduateRate()).append("%。");
         }
         if (insight.getLatestEmploymentRate() == null && insight.getLatestPostgraduateRate() == null) {
-            builder.append(" Numeric metrics are not available in traceable sources yet.");
+            builder.append(" 当前可追溯来源暂未提供量化指标。");
         }
         return builder.toString();
     }
@@ -280,9 +280,9 @@ public class EmploymentInsightsResourcesService {
         }
         if (out.isEmpty()) {
             if (hasText(targetRole)) {
-                out.add("Traceable sources do not contain destination highlights for the target role yet.");
+                out.add("可追溯来源暂未包含该目标岗位的去向要点。");
             } else {
-                out.add("Complete the target role before role-specific destination highlights are generated.");
+                out.add("补充目标岗位后，可生成岗位相关的去向要点。");
             }
         }
         return out;
