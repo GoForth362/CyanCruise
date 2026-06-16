@@ -68,6 +68,18 @@ class ConfigurableCosmicIdentityResolverTest {
     }
 
     @Test
+    void carriesPlatformUserNameAsDisplayName() {
+        Map<String, Object> map = map("userId", "u1");
+        map.put("userName", "冯如");
+
+        CosmicIdentityContextDto context = new ConfigurableCosmicIdentityResolver(provider(map), enabled()).resolve();
+
+        assertEquals(CosmicIdentityConstants.STATUS_OK, context.getStatus());
+        assertEquals("冯如", context.getDisplayName());
+        assertEquals("冯如", context.getUserName());
+    }
+
+    @Test
     void parsesRolesFromArrayAndDelimitedText() {
         Map<String, Object> map = map("userId", "u1");
         map.put("roles", "reader;cosmic-admin");

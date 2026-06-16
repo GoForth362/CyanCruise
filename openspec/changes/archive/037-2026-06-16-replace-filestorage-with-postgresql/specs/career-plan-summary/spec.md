@@ -1,6 +1,6 @@
 # Career Plan Summary Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 ### Requirement: PostgreSQL 持久化职业计划记录
 CyanCruise 职业计划记录 SHALL 在运行时通过 PostgreSQL 持久化，而不是默认写入 `filestorage/career-plan`。
 

@@ -51,6 +51,9 @@ class CareerPlanApplicationServiceTest {
         assertEquals(Boolean.TRUE, summary.getHasPlan());
         assertEquals("Data Analyst", summary.getTargetRole());
         assertTrue(summary.getWeeklyFocus().get(0).contains("Data Analyst"));
+        assertEquals("RULE_FALLBACK", summary.getPlanningMode());
+        assertTrue(summary.getPhases().size() >= 3);
+        assertTrue(summary.getDailySuggestions().size() >= 3);
     }
 
     @Test
@@ -70,6 +73,8 @@ class CareerPlanApplicationServiceTest {
         assertEquals(Integer.valueOf(created.getVersion().intValue() + 1), updated.getVersion());
         assertEquals(1, updated.getWeeklyFocus().size());
         assertEquals("投递产品岗位", updated.getWeeklyFocus().get(0));
+        assertTrue(updated.getPhases().size() >= 3);
+        assertTrue(updated.getDailySuggestions().size() >= 3);
     }
 
     private CareerPlanApplicationService service(CareerPlanStorage storage,

@@ -1,6 +1,6 @@
 # Migration Governance Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 ### Requirement: 记录 filestorage 替换范围和凭据约束
 本迁移 SHALL 明确记录被替换的业务状态范围、暂不替换的文件服务范围、PostgreSQL 配置、手工 DDL、验证命令和凭据处理规则。
 

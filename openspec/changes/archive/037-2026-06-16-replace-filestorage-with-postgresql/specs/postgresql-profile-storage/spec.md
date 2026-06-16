@@ -1,6 +1,6 @@
 # PostgreSQL Profile Storage Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 ### Requirement: 用户画像运行时不再回退到文件存储
 CyanCruise 用户画像运行时存储 SHALL 使用 PostgreSQL。默认应用服务构造器 SHALL NOT 在 PostgreSQL 配置缺失或不完整时回退到 `FileCareerProfileStorage`。
 

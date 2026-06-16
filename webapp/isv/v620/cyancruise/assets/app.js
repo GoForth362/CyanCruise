@@ -50,14 +50,14 @@
     page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划智能体。", ["plan"]),
     page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划智能体。", ["plan"]),
     page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
-    page("today-action", "今日行动", "entry-only", "user", "等待完整用户画像生成后，由 AI 给出下一步建议。", ["today"]),
+    page("today-action", "今日行动", "entry-only", "user", "根据路径规划拆解每天应该推进的事项。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
-    page("resume-home", "简历", "available", "user", "AI 简历制作和 AI 简历修改入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+    page("resume-home", "简历", "available", "user", "简历制作和简历修改入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
-    page("career-plan", "AI路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
-    page("interview-home", "面试", "available", "user", "全景仿真面试和 AI 模拟面试入口。", ["interviews", "startInterview"]),
+    page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
+    page("interview-home", "面试", "available", "user", "全景仿真面试和模拟面试入口。", ["interviews", "startInterview"]),
     page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
@@ -70,10 +70,10 @@
   var platformMenuLinks = [
     ["CyanCruise 首页", "#workbench", "已接入"],
     ["就业", "#employment-home", "已接入"],
-    ["简历 / AI简历制作", "#resume-home", "已接入"],
-    ["简历 / AI简历修改", "#resume-diagnosis", "已接入"],
+    ["简历 / 简历制作", "#resume-home", "已接入"],
+    ["简历 / 简历修改", "#resume-diagnosis", "已接入"],
     ["面试 / 全景仿真面试", "#interview-home", "已接入"],
-    ["面试 / AI模拟面试", "#interview", "已接入"],
+    ["面试 / 模拟面试", "#interview", "已接入"],
     ["深造", "#further-study-home", "规划中"],
     ["深造 / 考研", "#postgraduate-exam", "规划中"],
     ["深造 / 保研", "#postgraduate-recommendation", "规划中"],
@@ -81,18 +81,18 @@
   ];
   var featureGroups = {
     "employment-home": [
-      feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
-      feature("AI简历修改", "改", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
+      feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
+      feature("简历修改", "改", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
       feature("全景仿真面试", "仿", "按目标岗位进入真实面试流程练习", "interview", "已接入"),
-      feature("AI模拟面试", "AI", "查看面试历史并开始 AI 模拟练习", "interview", "已接入")
+      feature("模拟面试", "面", "查看面试历史并开始模拟练习", "interview", "已接入")
     ],
     "resume-home": [
-      feature("AI简历制作", "AI", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
-      feature("AI简历修改", "改", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
+      feature("简历制作", "简", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
+      feature("简历修改", "改", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
     ],
     "interview-home": [
       feature("全景仿真面试", "仿", "沿用 IPD 模拟面试流程，按目标岗位进入练习", "interview", "已接入"),
-      feature("AI模拟面试", "AI", "沿用 IPD AI 追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
+      feature("模拟面试", "面", "沿用 IPD 面试追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
     ],
     "further-study-home": [
       feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划智能体", "postgraduate-exam", "规划中"),
@@ -122,6 +122,9 @@
     employmentInsight: null,
     employmentInsightLoading: false,
     employmentInsightError: null,
+    planProgress: null,
+    scrollPositions: {},
+    returnRoutes: {},
     route: "workbench",
     previousRoute: ""
   };
@@ -245,6 +248,7 @@
 
   function handleRouteChange() {
     var key = normalizeRoute(window.location.hash);
+    var previous = state.route;
     if (!pageByKey[key]) {
       state.route = "workbench";
       showMessage("warning", "未知页面", "未找到 route: " + key + "，已回到工作台。");
@@ -253,6 +257,10 @@
         return;
       }
     } else {
+      if (previous && previous !== key) {
+        rememberRouteScroll(previous);
+        rememberReturnRoute(key, previous);
+      }
       state.route = key;
     }
     markActiveNav();
@@ -298,8 +306,12 @@
       renderOnboarding(item);
     } else if (item.key === "resume") {
       renderResumePage(item);
+    } else if (item.key === "career-plan") {
+      renderCareerPlanPage(item);
     } else if (item.key === "today-action") {
       renderTodayPage(item);
+    } else if (item.key === "career-resources") {
+      renderCareerResourcesPage(item);
     } else {
       renderContractPage(item);
     }
@@ -339,7 +351,7 @@
     var intentPanel = isHomeIntentCollapsed(intent)
       ? homeIntentSummaryPanel(selectedGoal, profile, targetRole, preference)
       : homeIntentFormPanel(selectedGoal, profile, targetRole, preference);
-    renderFeatureShell(item, "用户画像", "先一次性填写大概画像和路线选择，后续结合资料、简历与 AI 分析生成完整用户画像。",
+    renderFeatureShell(item, homeWelcomeTitle(), "这里汇总你的路线、今日行动、简历和面试进展。",
       intentPanel +
       overviewStrip(selectedGoal) +
       '<section class="feature-section"><h3>路线入口</h3><div class="feature-grid">' +
@@ -362,10 +374,46 @@
     if (toggle) {
       toggle.addEventListener("click", toggleHomeProfile);
     }
+    var cancel = $("cancelHomeIntentButton");
+    if (cancel) {
+      cancel.addEventListener("click", cancelHomeIntentEdit);
+    }
   }
 
   function isHomeIntentCollapsed(intent) {
     return localStorage.getItem("cyancruise.homeIntentSaved") === "true" && localStorage.getItem("cyancruise.homeIntentEditing") !== "true" && !!intent.goal;
+  }
+
+  function homeWelcomeTitle() {
+    var name = currentUserDisplayName();
+    return name ? "欢迎回来，" + name : "欢迎回来";
+  }
+
+  function currentUserDisplayName() {
+    var onboarding = getValue(state.snapshot, "onboarding") || {};
+    var identity = state.identity || {};
+    var name = firstText(
+      identity.displayName,
+      identity.name,
+      identity.userName,
+      identity.nickName,
+      onboarding.displayName,
+      onboarding.name,
+      onboarding.userName,
+      onboarding.nickName,
+      getValue(state.snapshot, "user.displayName"),
+      getValue(state.snapshot, "user.name"),
+      getValue(state.snapshot, "user.userName"),
+      getValue(state.snapshot, "profile.displayName"),
+      getValue(state.snapshot, "profile.name")
+    );
+    if (name) {
+      return name;
+    }
+    if (identity.userId) {
+      return "用户";
+    }
+    return "";
   }
 
   function homeIntentFormPanel(selectedGoal, onboarding, targetRole, preference) {
@@ -383,7 +431,7 @@
       field("homeGoal", "当前路线", "select", selectedGoal, [["employment", "就业"], ["study", "深造"], ["explore", "先了解一下"]]) +
       field("homeTargetRole", "目标岗位或方向", "text", targetRole) +
       field("homePreference", "路线偏好说明", "text", preference) +
-      '<div class="full actions-row"><button type="submit">保存用户画像</button>' + homeDirectionButtons(selectedGoal) + '</div>' +
+      '<div class="full actions-row"><button type="submit">保存用户画像</button><button type="button" class="secondary" id="cancelHomeIntentButton">取消修改</button>' + homeDirectionButtons(selectedGoal) + '</div>' +
       '</form></section>';
   }
 
@@ -421,6 +469,19 @@
     renderPage(pageByKey.workbench);
   }
 
+  function cancelHomeIntentEdit() {
+    if (localStorage.getItem("cyancruise.homeIntentSaved") === "true") {
+      localStorage.removeItem("cyancruise.homeIntentEditing");
+      localStorage.removeItem("cyancruise.previewProfile");
+    } else {
+      localStorage.removeItem("cyancruise.homeIntent");
+      localStorage.removeItem("cyancruise.homeIntentEditing");
+      localStorage.removeItem("cyancruise.previewProfile");
+    }
+    renderPage(pageByKey.workbench);
+    showMessage("info", "已取消修改", "页面已恢复到修改前的用户画像。");
+  }
+
   function toggleHomeProfile() {
     var expanded = localStorage.getItem("cyancruise.homeProfileExpanded") === "true";
     localStorage.setItem("cyancruise.homeProfileExpanded", expanded ? "false" : "true");
@@ -439,20 +500,20 @@
   }
 
   function homeRouteFeatures(goal) {
-    var employment = feature("就业", "就", "进入 AI 简历制作、AI 简历修改、全景仿真面试和 AI 模拟面试", "employment-home", "已接入");
+    var employment = feature("就业", "就", "进入简历制作、简历修改、全景仿真面试和模拟面试", "employment-home", "已接入");
     var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划智能体", "further-study-home", "规划中");
-    var plan = feature("AI路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划智能体", "career-plan", "规划中");
+    var plan = feature("路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划智能体", "career-plan", "规划中");
     var assessment = feature("职业测评", "测", "通过答题分析人格、性格和偏好，补全用户画像", "assessment", "规划中");
-    var today = feature("今日行动", "今", "完整用户画像生成后，由 AI 给出每日建议", "today-action", "即将接入");
+    var today = feature("今日行动", "今", "根据路径规划拆解每天应该推进的事项", "today-action", "已接入");
     employment.platformLink = true;
     study.platformLink = true;
     if (goal === "employment") {
-      return [employment, plan, assessment, today];
+      return [employment, plan, today, assessment];
     }
     if (goal === "study") {
-      return [study, plan, assessment, today];
+      return [study, plan, today, assessment];
     }
-    return [employment, study, plan, assessment, today];
+    return [employment, plan, today, assessment, study];
   }
 
   function homeRecommendedFeatures(goal) {
@@ -460,27 +521,14 @@
       return featureGroups["further-study-home"];
     }
     return [
-      feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
-      feature("AI简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
-      feature("AI模拟面试", "AI", "从岗位目标开始面试练习", "interview", "已接入")
+      feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
+      feature("简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
+      feature("模拟面试", "面", "从岗位目标开始面试练习", "interview", "已接入")
     ];
   }
 
   function changeHomeGoal() {
-    localStorage.setItem("cyancruise.homeIntent", JSON.stringify({
-      goal: valueOf("homeGoal"),
-      targetRole: valueOf("homeTargetRole"),
-      preference: valueOf("homePreference"),
-      identityType: valueOf("profileIdentityType"),
-      educationStage: valueOf("profileEducationStage"),
-      school: valueOf("profileSchool"),
-      major: valueOf("profileMajor"),
-      schoolMajor: valueOf("profileMajor"),
-      resumeStatus: valueOf("resumeStatus"),
-      experience: valueOf("profileExperience")
-    }));
     localStorage.setItem("cyancruise.homeIntentEditing", "true");
-    renderPage(pageByKey.workbench);
   }
 
   function resolveHomeGoal(goal, target, preference) {
@@ -539,7 +587,7 @@
       state.employmentResourcesError = error.message || "就业资源暂不可用。";
     }).then(function () {
       state.employmentResourcesLoading = false;
-      if (state.route === "employment-home") {
+      if (state.route === "employment-home" || state.route === "career-resources") {
         renderPage(pageByKey[state.route]);
       }
     });
@@ -567,12 +615,13 @@
     var plan = state.plan && !state.plan.unavailable ? state.plan : {};
     var hasPlan = !!(plan && Object.keys(plan).length);
     var targetRole = employmentTargetRole(plan);
-    var weeklyFocus = normalizeArray(plan.weeklyFocus || plan.weekFocus || plan.actions || plan.nextActions).slice(0, 3);
+    var weeklyFocus = normalizeArray(plan.weeklyFocus || getValue(plan, "weeklyPlan.actions") || plan.weekFocus || plan.actions || plan.nextActions).slice(0, 3);
     if (!weeklyFocus.length) {
       weeklyFocus = defaultRoadmapFocus(targetRole);
     }
-    var summary = firstText(plan.summary, plan.planSummary, "当前先使用规则版路线图组织就业动作；接入智能体后，这里会升级为个性化路径规划。");
-    var planLabel = hasPlan ? "已生成" : "规则版";
+    var phases = normalizeArray(plan.phases);
+    var summary = firstText(plan.startStateSummary, plan.summary, plan.planSummary, "当前先使用规则版路线图组织就业动作；接入智能体后，这里会升级为个性化路径规划。");
+    var planLabel = hasPlan ? planModeLabel(plan) : "规则版";
     return '<section class="feature-section roadmap-section">' +
       '<div class="section-heading"><div><h3>就业路线图</h3><p class="section-note">优先展示下一步怎么走，工具入口放在路线之后。</p></div>' +
       '<div class="section-actions">' +
@@ -583,8 +632,30 @@
       '<div class="roadmap-summary"><span class="resource-type">' + escapeHtml(planLabel) + '</span>' +
       '<strong>' + escapeHtml(targetRole) + '</strong><p>' + escapeHtml(summary) + '</p>' +
       '<ul class="compact-list">' + weeklyFocus.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul></div>' +
-      '<div class="roadmap-steps">' + employmentRoadmapSteps(targetRole).map(roadmapStepCard).join("") + '</div>' +
+      '<div class="roadmap-steps">' + (phases.length ? phases.slice(0, 4).map(planPhaseStepCard).join("") : employmentRoadmapSteps(targetRole).map(roadmapStepCard).join("")) + '</div>' +
       '</div></section>';
+  }
+
+  function planModeLabel(plan) {
+    var mode = firstText(plan && plan.planningMode, "");
+    if (mode === "AGENT") {
+      return "智能体生成";
+    }
+    if (mode === "RULE_FALLBACK") {
+      return "规则版";
+    }
+    return "已生成";
+  }
+
+  function planPhaseStepCard(phase, index) {
+    var title = firstText(phase && phase.title, "阶段目标");
+    var desc = firstText(phase && phase.goal, phase && phase.description, "按阶段推进就业目标。");
+    var horizon = firstText(phase && phase.horizon, "阶段");
+    var cls = "roadmap-step" + (index === 0 ? " active" : "");
+    return '<button type="button" class="' + cls + '" data-link="career-plan">' +
+      '<span class="step-index">' + (index + 1) + '</span><span class="step-copy">' +
+      '<strong>' + escapeHtml(title) + '</strong><small>' + escapeHtml(desc) + '</small></span>' +
+      '<span class="step-status">' + escapeHtml(horizon) + '</span></button>';
   }
 
   function employmentTargetRole(plan) {
@@ -655,13 +726,26 @@
       return;
     }
     if (isFilePreview()) {
-      state.plan = {
-        summary: "预览模式下展示规则版路线图；部署后可调用 CyanCruise 路径规划接口生成并保存。",
+      var previewPlan = {
+        startStateSummary: "预览模式下展示规则版路线图；部署后可调用 CyanCruise 路径规划接口生成并保存。",
+        planningMode: "RULE_FALLBACK",
+        agentStatus: "FALLBACK_READY",
+        horizonYears: 3,
         targetRole: employmentTargetRole({}),
-        weeklyFocus: defaultRoadmapFocus(employmentTargetRole({}))
+        weeklyFocus: defaultRoadmapFocus(employmentTargetRole({})),
+        weeklyPlan: {
+          weekTitle: "本周启动计划",
+          weekGoal: "完成目标岗位拆解、简历证据整理和一次面试练习。",
+          actions: defaultRoadmapFocus(employmentTargetRole({})),
+          deliverables: ["岗位关键词清单", "简历优化清单", "模拟面试复盘"],
+          dailySuggestions: defaultDailySuggestions(employmentTargetRole({}))
+        },
+        phases: previewPlanPhases(employmentTargetRole({})),
+        dailySuggestions: defaultDailySuggestions(employmentTargetRole({}))
       };
+      state.plan = mergeRefreshedPlan(state.plan, previewPlan);
       renderPage(pageByKey[state.route]);
-      showMessage("info", "已生成预览路线图", "file:// 模式不会调用后端。");
+      showMessage("info", "已生成预览路线图", "file:// 模式不会调用后端，已完成阶段会保留。");
       return;
     }
     if (!hasUserIdentity()) {
@@ -671,13 +755,13 @@
     state.planEnsuring = true;
     renderPage(pageByKey[state.route]);
     post(endpoints.ensurePlan, state.identity.userId).then(function (plan) {
-      state.plan = plan || {};
-      showMessage("info", "路线图已刷新", "已使用当前画像和规则版规划接口更新就业路线图。");
+      state.plan = mergeRefreshedPlan(state.plan, plan || {});
+      showMessage("info", "路线图已刷新", "未开始的阶段已更新，已完成的阶段保持不变。");
     }).catch(function (error) {
       showMessage("error", "路线图生成失败", error.message || "路径规划接口暂不可用。");
     }).then(function () {
       state.planEnsuring = false;
-      if (state.route === "employment-home") {
+      if (state.route === "employment-home" || state.route === "career-plan" || state.route === "today-action") {
         renderPage(pageByKey[state.route]);
       }
     });
@@ -705,7 +789,7 @@
       rows.push(["最近年份", insight.latestYear]);
     }
     var resumeSummary = employmentResumeSummary();
-    var summaryText = firstText(resumeSummary, chineseInsightSummary(insight), "暂无简历摘要。完成简历创建和 AI 分析后，这里会展示简历摘要。");
+    var summaryText = firstText(resumeSummary, chineseInsightSummary(insight), "暂无简历摘要。完成简历创建和智能分析后，这里会展示简历摘要。");
     return '<section class="feature-section"><div class="section-heading">' +
       '<h3>就业洞察</h3><button type="button" class="secondary" data-link="employment-insight">查看详情</button></div>' +
       '<div class="insight-summary">' +
@@ -755,7 +839,7 @@
     var title = firstText(latest.title, latest.resumeName, resumeBlock.title, "");
     var target = firstText(latest.targetJob, latest.targetRole, resumeBlock.targetJob, textFromSnapshot("preferences.targetRole", "onboarding.targetRole"));
     if (title || target) {
-      return "当前已维护" + (title ? "《" + title + "》" : "简历记录") + (target ? "，目标岗位为" + target : "") + "。完成 AI 简历分析后，这里会展示更完整的简历摘要。";
+      return "当前已维护" + (title ? "《" + title + "》" : "简历记录") + (target ? "，目标岗位为" + target : "") + "。完成简历智能分析后，这里会展示更完整的简历摘要。";
     }
     return "";
   }
@@ -873,6 +957,43 @@
       resourceColumn("精选文章", articles, "article", 2) +
       resourceColumn("相关视频", videos, "video", 2) +
       '</div></section>';
+  }
+
+  function renderCareerResourcesPage(item) {
+    loadEmploymentResources();
+    if (state.employmentResourcesLoading && !state.employmentResources) {
+      renderFeatureShell(item, item.title, item.summary,
+        '<section class="feature-section">' +
+        statePanel("正在加载资源", "正在读取公共服务、精选文章和相关视频。", "pending") +
+        '</section>');
+      return;
+    }
+    var feed = state.employmentResources || {};
+    var articles = normalizeArray(feed.articles);
+    var services = normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths));
+    var videos = normalizeArray(feed.videos);
+    var total = articles.length + services.length + videos.length;
+    var body = "";
+    if (state.employmentResourcesError) {
+      body += '<section class="feature-section">' +
+        statePanel("资源暂不可用", state.employmentResourcesError + " 请稍后重试。", "warning") +
+        '</section>';
+    }
+    if (!total) {
+      body += '<section class="feature-section">' +
+        statePanel("暂无资源", firstText(feed.message, "当前还没有配置就业资讯资源。"), "empty") +
+        '</section>';
+    } else {
+      body += '<section class="feature-section">' +
+        '<div class="section-heading"><div><h3>全部资源</h3>' +
+        '<p class="section-note">按公共服务、精选文章、相关视频分类展示，可直接打开来源平台。</p></div></div>' +
+        '<div class="employment-resource-layout">' +
+        resourceColumn("公共服务", services, "service", services.length) +
+        resourceColumn("精选文章", articles, "article", articles.length) +
+        resourceColumn("相关视频", videos, "video", videos.length) +
+        '</div></section>';
+    }
+    renderFeatureShell(item, item.title, item.summary, body);
   }
 
   function resourceColumn(title, cards, type, limit) {
@@ -1008,7 +1129,7 @@
   function previewEmploymentResources() {
     return {
       articles: [
-        { type: "article", title: "三“新”看就业共赴好前程", summary: "关注高校毕业生就业新趋势、数智就业服务和 AI 模拟面试等公共就业服务实践。", category: "就业观察", sourceUrl: "https://cpc.people.com.cn/n1/2026/0614/c64387-40739823.html" },
+        { type: "article", title: "三“新”看就业共赴好前程", summary: "关注高校毕业生就业新趋势、数智就业服务和模拟面试等公共就业服务实践。", category: "就业观察", sourceUrl: "https://cpc.people.com.cn/n1/2026/0614/c64387-40739823.html" },
         { type: "article", title: "专家支招大学生求职：明确目标、提升自我", summary: "围绕高校毕业生求职困惑，提供目标定位、能力提升和就业指导建议。", category: "求职指导", sourceUrl: "https://www.ncss.cn/ncss/jydt/jy/202404/20240403/2293279892.html" }
       ],
       consultations: [
@@ -1051,9 +1172,32 @@
   }
 
   function renderTodayPage(item) {
-    renderShell(item,
-      statePanel("等待完整用户画像", "今日行动需要先由首页大概画像、后续上传资料、简历和其他材料，经 AI 大模型分析生成完整用户画像后，再结合最初路线规划给出。当前阶段不提供跳转或执行动作。", "pending")
-    );
+    if (hasUserIdentity() && !state.plan && !state.planEnsuring && !isFilePreview()) {
+      ensureEmploymentPlan();
+    }
+    var view = buildPlanViewModel();
+    if (!view.dailyPlan.items.length) {
+      renderShell(item,
+        statePanel("等待路径规划", "今日行动会从路径规划里的当前阶段和本周计划拆解出来。请先生成路线图。", "pending")
+      );
+      return;
+    }
+    var body = '<section class="feature-section route-execution-grid daily-first">' +
+      renderDailyPlanCard(view.dailyPlan, view.progressState) +
+      renderWeeklyPlanCard(view.weeklyPlan, view.weeklyActions, view.weeklyDeliverables, view.targetRole, view.progressState) +
+      '</section>' +
+      '<section class="feature-section route-control-grid">' +
+      metricsPanel("今日来源", [
+        ["目标岗位", view.targetRole],
+        ["当前阶段", view.progressSummary.activePhaseTitle],
+        ["规划周期", view.selectedYears + " 年"],
+        ["完成进度", view.progressSummary.completedTasks + " / " + view.progressSummary.totalTasks + " 项"]
+      ]) +
+      '<section class="panel route-control-card"><div class="route-card-head"><div><span class="resource-type">继续规划</span><h3>路线图</h3></div></div>' +
+      '<p class="route-goal">今日行动来自路径规划。调整阶段、周期或刷新规划后，这里会跟着变化。</p>' +
+      '<div class="actions-row"><button type="button" data-link="career-plan">查看路径规划</button></div></section>' +
+      '</section>';
+    renderFeatureShell(item, item.title, "根据路径规划拆解今天应该推进的小事项。", body);
   }
 
   function renderResumePage(item) {
@@ -1378,6 +1522,551 @@
     });
   }
 
+  function renderCareerPlanPage(item) {
+    if (hasUserIdentity() && !state.plan && !state.planEnsuring && !isFilePreview()) {
+      ensureEmploymentPlan();
+    }
+    var view = buildPlanViewModel();
+    var summary = firstText(view.plan.startStateSummary, view.plan.summary, "根据用户画像、简历记录和目标岗位生成分阶段路线图，后续可直接接入 agent 自动规划。");
+    var metrics = [
+      ["规划模式", planModeLabel(view.plan)],
+      ["目标岗位", view.targetRole],
+      ["规划周期", view.selectedYears + " 年"],
+      ["Agent 状态", firstText(view.plan.agentStatus, "待接入")]
+    ];
+    var phaseHtml = view.visiblePhases.length ? view.visiblePhases.map(function (phase, index) {
+      return renderPlanPhaseCard(phase, index, view.progressState, view.activePhaseId);
+    }).join("") :
+      statePanel("路线图待生成", "当前还没有可展示的路线图，点击“生成路线图”后会先使用规则版规划，后续可平滑切换到 agent。", "pending");
+    var timelineHtml = view.visiblePhases.length ? renderPlanTimeline(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
+    var flowHtml = view.visiblePhases.length ? renderPlanFlow(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
+    renderFeatureShell(item, item.title, summary,
+      '<section class="feature-section route-execution-grid daily-first">' +
+      renderDailyPlanCard(view.dailyPlan, view.progressState) +
+      renderWeeklyPlanCard(view.weeklyPlan, view.weeklyActions, view.weeklyDeliverables, view.targetRole, view.progressState) +
+      '</section>' +
+      '<section class="feature-section route-control-grid">' +
+      planningHorizonPanel(view.selectedYears) +
+      metricsPanel("路线概览", metrics) +
+      '</section>' +
+      timelineHtml +
+      '<section class="feature-section"><div class="section-heading"><div><h3>阶段路线图</h3><p class="section-note">先给出 1 年和 3 年的大阶段，再细化到周和每天。</p></div>' +
+      '<div class="section-actions"><button type="button" data-ensure-plan ' + (state.planEnsuring ? 'disabled aria-disabled="true"' : '') + '>' +
+      (state.planEnsuring ? "生成中" : "刷新路线图") + '</button></div></div>' +
+      flowHtml +
+      '<div class="route-phase-grid">' + phaseHtml + '</div></section>' +
+      '');
+  }
+
+  function buildPlanViewModel() {
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    var phases = normalizeArray(plan.phases);
+    var weeklyPlan = plan.weeklyPlan || {};
+    if (!phases.length && isFilePreview()) {
+      phases = previewPlanPhases(targetRole);
+    }
+    var selectedYears = readSelectedPlanHorizon(plan, targetRole);
+    var visiblePhases = filterPlanPhasesByYears(phases, selectedYears);
+    if (!visiblePhases.length) {
+      visiblePhases = phases;
+    }
+    var progressState = readPlanProgress(plan, targetRole, phases);
+    var activePhaseId = firstText(progressState.activePhaseId, visiblePhases.length ? phaseKey(visiblePhases[0], 0) : "");
+    if (!containsPhaseId(visiblePhases, activePhaseId)) {
+      activePhaseId = visiblePhases.length ? phaseKey(visiblePhases[0], 0) : "";
+    }
+    var dailyPlan = deriveDailyPlan(visiblePhases, weeklyPlan, progressState, activePhaseId, targetRole);
+    var progressSummary = summarizePlanProgress(visiblePhases, progressState);
+    return {
+      plan: plan,
+      targetRole: targetRole,
+      phases: phases,
+      visiblePhases: visiblePhases,
+      weeklyPlan: weeklyPlan,
+      weeklyActions: normalizeArray(weeklyPlan.actions || plan.weeklyFocus),
+      weeklyDeliverables: normalizeArray(weeklyPlan.deliverables),
+      selectedYears: selectedYears,
+      progressState: progressState,
+      activePhaseId: activePhaseId,
+      dailyPlan: dailyPlan,
+      progressSummary: progressSummary
+    };
+  }
+
+  function renderDailyPlanCard(dailyPlan, progressState) {
+    return '<section class="panel route-daily-card"><div class="route-card-head"><div><span class="resource-type">每日计划</span><h3>今天可以做什么</h3></div></div>' +
+      '<p class="route-goal">' + escapeHtml(dailyPlan.summary) + '</p>' +
+      renderLinkedTaskList("今日小事", dailyPlan.items, progressState) + '</section>';
+  }
+
+  function renderWeeklyPlanCard(weeklyPlan, weeklyActions, weeklyDeliverables, targetRole, progressState) {
+    return '<section class="panel route-weekly-card"><div class="route-card-head"><div><span class="resource-type">本周计划</span><h3>' +
+      escapeHtml(firstText(weeklyPlan.weekTitle, "本周推进重点")) + '</h3></div></div><p class="route-goal">' +
+      escapeHtml(firstText(weeklyPlan.weekGoal, "围绕当前目标岗位推进简历、项目和面试准备。")) + '</p>' +
+      renderTaskList("本周动作", weeklyActions.length ? weeklyActions : defaultRoadmapFocus(targetRole), "weekly-actions", progressState) +
+      renderTaskList("本周交付物", weeklyDeliverables.length ? weeklyDeliverables : ["简历优化清单", "岗位关键词清单", "一次模拟面试复盘"], "weekly-deliverables", progressState) +
+      '</section>';
+  }
+
+  function renderPlanPhaseCard(phase, phaseIndex, progressState, activePhaseId) {
+    var subStages = normalizeArray(phase && phase.subStages);
+    var phaseId = phaseKey(phase, phaseIndex);
+    var phaseStatus = phaseProgressStatus(phase, phaseIndex, progressState);
+    var cls = "panel route-phase-card" + (phaseId === activePhaseId ? " active" : "");
+    return '<article class="' + cls + '" data-phase-card="' + escapeAttr(phaseId) + '">' +
+      '<div class="route-card-head"><div><span class="resource-type">' + escapeHtml(firstText(phase && phase.horizon, "阶段")) + '</span>' +
+      '<h3>' + escapeHtml(firstText(phase && phase.title, "阶段目标")) + '</h3></div>' +
+      '<span class="phase-status ' + escapeAttr(phaseStatus.code) + '">' + escapeHtml(phaseStatus.label) + '</span></div>' +
+      '<p class="route-goal">' + escapeHtml(firstText(phase && phase.goal, phase && phase.description, "围绕目标岗位推进阶段目标。")) + '</p>' +
+      renderTaskList("阶段动作", normalizeArray(phase && phase.actions), phaseId + ".actions", progressState) +
+      renderTaskList("阶段达成", normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState) +
+      renderSubStageList(subStages, phaseId, progressState) +
+      '</article>';
+  }
+
+  function renderSubStageList(subStages, phaseId, progressState) {
+    if (!subStages.length) {
+      return "";
+    }
+    return '<div class="route-substage-list">' + subStages.map(function (subStage, index) {
+      var subStageId = phaseId + ".substage." + index;
+      return '<section class="route-substage">' +
+        '<strong>' + escapeHtml(firstText(subStage.period, "短周期")) + " · " + escapeHtml(firstText(subStage.title, "执行阶段")) + '</strong>' +
+        '<p>' + escapeHtml(firstText(subStage.goal, "围绕阶段目标推进执行。")) + '</p>' +
+        renderTaskList("建议动作", normalizeArray(subStage.actions), subStageId + ".actions", progressState) +
+        '</section>';
+    }).join("") + '</div>';
+  }
+
+  function renderSimpleList(title, items) {
+    var list = normalizeArray(items).filter(Boolean);
+    if (!list.length) {
+      return "";
+    }
+    return '<div class="route-list-block"><span class="label">' + escapeHtml(title) + '</span><ul class="compact-list">' +
+      list.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul></div>';
+  }
+
+  function renderTaskList(title, items, scopeKey, progressState) {
+    var list = normalizeArray(items).filter(Boolean);
+    if (!list.length) {
+      return "";
+    }
+    return '<div class="route-list-block"><span class="label">' + escapeHtml(title) + '</span><ul class="route-task-list">' +
+      list.map(function (item, index) {
+        var taskId = scopeKey + "." + index + "." + sanitizeKey(item);
+        var checked = !!(progressState.checked && progressState.checked[taskId]);
+        return '<li class="route-task-item' + (checked ? " done" : "") + '">' +
+          '<label class="route-task-toggle" data-plan-task="' + escapeAttr(taskId) + '"><input type="checkbox" data-plan-task="' + escapeAttr(taskId) + '"' + (checked ? " checked" : "") + '>' +
+          '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item) + '</span></label></li>';
+      }).join("") + '</ul></div>';
+  }
+
+  function renderLinkedTaskList(title, items, progressState) {
+    var list = normalizeArray(items).filter(function (item) { return item && item.taskId && item.text; });
+    if (!list.length) {
+      return "";
+    }
+    return '<div class="route-list-block"><span class="label">' + escapeHtml(title) + '</span><ul class="route-task-list">' +
+      list.map(function (item) {
+        var checked = !!(progressState.checked && progressState.checked[item.taskId]);
+        return '<li class="route-task-item' + (checked ? " done" : "") + '">' +
+          '<label class="route-task-toggle" data-plan-task="' + escapeAttr(item.taskId) + '"><input type="checkbox" data-plan-task="' + escapeAttr(item.taskId) + '"' + (checked ? " checked" : "") + '>' +
+          '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item.text) + '</span></label></li>';
+      }).join("") + '</ul></div>';
+  }
+
+  function planningHorizonPanel(selectedYears) {
+    return '<section class="panel route-control-card"><div class="route-card-head"><div><span class="resource-type">规划周期</span><h3>查看周期</h3></div></div>' +
+      '<p class="route-goal">可以先聚焦 1 年内目标，也可以切回完整 3 年路线图。</p>' +
+      '<div class="route-horizon-toggle">' +
+      horizonButton(1, selectedYears) +
+      horizonButton(3, selectedYears) +
+      '</div></section>';
+  }
+
+  function horizonButton(years, selectedYears) {
+    return '<button type="button" class="route-horizon-button' + (years === selectedYears ? " active" : "") + '" data-plan-horizon="' + years + '">' + years + '年</button>';
+  }
+
+  function renderPlanTimeline(phases, activePhaseId, progressSummary) {
+    var percent = progressSummary.totalTasks ? Math.round(progressSummary.completedTasks * 100 / progressSummary.totalTasks) : 0;
+    return '<section class="panel route-progress-card">' +
+      '<div class="route-progress-head"><div><h3>总目标进度</h3><p class="panel-note">只统计阶段路线图里的阶段动作和阶段达成；每日计划和本周计划用于辅助推进。</p></div>' +
+      '<strong>' + percent + '%</strong></div>' +
+      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' + percent + '%"></span></div>' +
+      '<div class="route-progress-meta"><span>已完成 ' + progressSummary.completedTasks + ' / ' + progressSummary.totalTasks + ' 项</span><span>当前聚焦：' + escapeHtml(progressSummary.activePhaseTitle) + '</span></div>' +
+      '<div class="route-milestone-row">' + phases.map(function (phase, index) {
+        var phaseId = phaseKey(phase, index);
+        var left = phases.length === 1 ? 0 : Math.round(index * 100 / (phases.length - 1));
+        var active = phaseId === activePhaseId;
+        var edgeClass = index === 0 ? " first" : index === phases.length - 1 ? " last" : "";
+        return '<button type="button" class="route-milestone' + edgeClass + (active ? " active" : "") + '" style="left:' + left + '%" data-plan-focus="' + escapeAttr(phaseId) + '">' +
+          '<span class="route-milestone-dot"></span><span class="route-milestone-label">' + escapeHtml(firstText(phase.horizon, phase.title, "阶段")) + '</span></button>';
+      }).join("") + '</div></section>';
+  }
+
+  function renderPlanFlow(phases, activePhaseId, progressSummary) {
+    return '<div class="route-arrow-flow">' + phases.map(function (phase, index) {
+      var phaseId = phaseKey(phase, index);
+      var phaseStats = progressSummary.phaseMap[phaseId] || { completed: 0, total: 0 };
+      var active = phaseId === activePhaseId;
+      var done = phaseStats.total > 0 && phaseStats.completed >= phaseStats.total;
+      return '<button type="button" class="route-arrow-step' + (active ? " active" : "") + (done ? " done" : "") + '" data-plan-focus="' + escapeAttr(phaseId) + '">' +
+        '<span class="route-arrow-period">' + escapeHtml(firstText(phase.horizon, "阶段")) + '</span>' +
+        '<strong>' + escapeHtml(firstText(phase.title, "阶段目标")) + '</strong>' +
+        '<small>' + phaseStats.completed + '/' + phaseStats.total + '</small></button>';
+    }).join('<span class="route-arrow-connector" aria-hidden="true">→</span>') + '</div>';
+  }
+
+  function summarizePlanProgress(phases, progressState) {
+    var totalTasks = 0;
+    var completedTasks = 0;
+    var phaseMap = {};
+    for (var i = 0; i < phases.length; i += 1) {
+      var phase = phases[i];
+      var phaseId = phaseKey(phase, i);
+      phaseMap[phaseId] = { completed: 0, total: 0, title: firstText(phase.title, phase.horizon, "阶段目标") };
+      countTaskGroup(normalizeArray(phase.actions), phaseId + ".actions", progressState, phaseMap[phaseId]);
+      countTaskGroup(normalizeArray(phase.kpis), phaseId + ".kpis", progressState, phaseMap[phaseId]);
+      var subStages = normalizeArray(phase.subStages);
+      for (var j = 0; j < subStages.length; j += 1) {
+        countTaskGroup(normalizeArray(subStages[j].actions), phaseId + ".substage." + j + ".actions", progressState, phaseMap[phaseId]);
+      }
+      totalTasks += phaseMap[phaseId].total;
+      completedTasks += phaseMap[phaseId].completed;
+    }
+    var activePhaseTitle = "";
+    if (progressState.activePhaseId && phaseMap[progressState.activePhaseId]) {
+      activePhaseTitle = phaseMap[progressState.activePhaseId].title;
+    } else if (phases.length) {
+      activePhaseTitle = firstText(phases[0].title, phases[0].horizon, "阶段目标");
+    }
+    return {
+      totalTasks: totalTasks,
+      completedTasks: completedTasks,
+      phaseMap: phaseMap,
+      activePhaseTitle: activePhaseTitle
+    };
+  }
+
+  function countTaskGroup(items, scopeKey, progressState, bucket) {
+    var list = normalizeArray(items).filter(Boolean);
+    for (var i = 0; i < list.length; i += 1) {
+      bucket.total += 1;
+      if (isPlanTaskChecked(scopeKey + "." + i + "." + sanitizeKey(list[i]), progressState)) {
+        bucket.completed += 1;
+      }
+    }
+  }
+
+  function countCompletedTaskGroup(items, scopeKey, progressState) {
+    var list = normalizeArray(items).filter(Boolean);
+    var completed = 0;
+    for (var i = 0; i < list.length; i += 1) {
+      var taskId = typeof list[i] === "object" && list[i].taskId
+        ? list[i].taskId
+        : scopeKey + "." + i + "." + sanitizeKey(list[i]);
+      if (isPlanTaskChecked(taskId, progressState)) {
+        completed += 1;
+      }
+    }
+    return completed;
+  }
+
+  function isPlanTaskChecked(taskId, progressState) {
+    return !!(progressState && progressState.checked && progressState.checked[taskId]);
+  }
+
+  function phaseKey(phase, index) {
+    return firstText(phase && phase.phaseId, "") || "phase-" + sanitizeKey(firstText(phase && phase.horizon, "")) + "-" + sanitizeKey(firstText(phase && phase.title, "stage"));
+  }
+
+  function containsPhaseId(phases, phaseId) {
+    for (var i = 0; i < phases.length; i += 1) {
+      if (phaseKey(phases[i], i) === phaseId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function deriveDailyPlan(phases, weeklyPlan, progressState, activePhaseId, targetRole) {
+    var linked = [];
+    var activePhase = findActivePhase(phases, activePhaseId);
+    if (activePhase) {
+      linked = linked.concat(collectDailyMicroTasks(activePhase.actions, phaseKey(activePhase.phase, activePhase.index) + ".actions", progressState));
+      linked = linked.concat(collectDailyMicroTasks(activePhase.kpis, phaseKey(activePhase.phase, activePhase.index) + ".kpis", progressState));
+      var subStages = normalizeArray(activePhase.phase.subStages);
+      for (var i = 0; i < subStages.length; i += 1) {
+        linked = linked.concat(collectDailyMicroTasks(subStages[i].actions, phaseKey(activePhase.phase, activePhase.index) + ".substage." + i + ".actions", progressState));
+      }
+    }
+    linked = linked.concat(collectDailyMicroTasks(weeklyPlan.actions, "weekly-actions", progressState));
+    linked = linked.concat(collectDailyMicroTasks(weeklyPlan.deliverables, "weekly-deliverables", progressState));
+    linked = dedupeLinkedTasks(linked).slice(0, 5);
+    if (!linked.length) {
+      linked = defaultDailySuggestions(targetRole).map(function (text, index) {
+        return { taskId: "daily-suggestions." + index + "." + sanitizeKey(text), text: text };
+      });
+    }
+    return {
+      items: linked,
+      summary: activePhase
+        ? "今天优先围绕“" + firstText(activePhase.phase.title, "当前阶段") + "”里还没完成的事项推进。"
+        : "今天优先处理当前阶段和本周尚未完成的事项。"
+    };
+  }
+
+  function collectUnfinishedTasks(items, scopeKey, progressState, prefix) {
+    var list = normalizeArray(items).filter(Boolean);
+    var out = [];
+    for (var i = 0; i < list.length; i += 1) {
+      var taskId = scopeKey + "." + i + "." + sanitizeKey(list[i]);
+      if (!isPlanTaskChecked(taskId, progressState)) {
+        out.push({ taskId: taskId, text: prefix + list[i] });
+      }
+    }
+    return out;
+  }
+
+  function collectDailyMicroTasks(items, scopeKey, progressState) {
+    var list = normalizeArray(items).filter(Boolean);
+    var out = [];
+    for (var i = 0; i < list.length; i += 1) {
+      var taskId = scopeKey + "." + i + "." + sanitizeKey(list[i]);
+      if (!isPlanTaskChecked(taskId, progressState)) {
+        out.push({ taskId: taskId, text: microTaskText(list[i], i, scopeKey) });
+      }
+    }
+    return out;
+  }
+
+  function microTaskText(taskText, index, scopeKey) {
+    var text = trim(taskText);
+    if (containsAny(text, ["简历", "bullet", "经历"])) {
+      return pickMicroTask([
+        "用 30 分钟改 1 条简历经历，补上结果、数字和个人贡献。",
+        "挑 1 段项目经历，删掉空泛描述，补 1 个可量化结果。",
+        "把 1 条简历 bullet 改成“动作 + 方法 + 结果”的表达。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["岗位", "JD", "招聘", "公司", "关键词"])) {
+      return pickMicroTask([
+        "看 2 个目标岗位描述，记录 3 个高频能力词。",
+        "打开 1 个目标岗位，把任职要求拆成 3 个技能点。",
+        "选 1 家目标公司，写下它最看重的 2 个岗位能力。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["项目", "作品", "仓库", "README"])) {
+      return pickMicroTask([
+        "推进 1 个项目小任务，并在记录里写下今天产出的 1 个证据。",
+        "给项目补 1 段 README，说明背景、你的贡献和结果。",
+        "整理 1 个项目截图或链接，作为简历里的可展示证据。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["面试", "STAR", "复盘", "问答"])) {
+      return pickMicroTask([
+        "练 1 个面试问题，用 STAR 写下 4 句话版本。",
+        "复盘 1 个项目问题，准备 1 个追问和对应回答。",
+        "录 3 分钟自述，检查是否讲清楚背景、动作和结果。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["技能", "学习", "练习", "技术"])) {
+      return pickMicroTask([
+        "做 45 分钟技能练习，并记录 1 个卡点和 1 个解决思路。",
+        "选 1 个薄弱技能点，看 1 篇资料并写 3 行笔记。",
+        "完成 1 个小练习，把错误原因写成一句复盘。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["投递", "offer", "机会"])) {
+      return pickMicroTask([
+        "筛选 3 个岗位，给其中 1 个岗位写投递备注。",
+        "更新 1 条投递记录，标出下一步跟进时间。",
+        "挑 1 个岗位，对照简历找出 1 个需要补强的证据。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["清单", "整理", "梳理"])) {
+      return pickMicroTask([
+        "整理 1 个小清单，只补 3 条最关键的信息。",
+        "把清单里最重要的 1 项拆成今天能完成的第一步。",
+        "删掉清单里 1 条不重要的项，保留今天最该推进的内容。"
+      ], index, scopeKey);
+    }
+    return "把“" + shortText(text, 24) + "”拆成 1 个 30 分钟内能完成的小动作。";
+  }
+
+  function pickMicroTask(options, index, scopeKey) {
+    var seed = Math.abs((index || 0) + sanitizeKey(scopeKey).length);
+    return options[seed % options.length];
+  }
+
+  function containsAny(text, keywords) {
+    for (var i = 0; i < keywords.length; i += 1) {
+      if (text.indexOf(keywords[i]) >= 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function dedupeLinkedTasks(items) {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < items.length; i += 1) {
+      var key = sanitizeKey(items[i].text);
+      if (!seen[key]) {
+        seen[key] = true;
+        out.push(items[i]);
+      }
+    }
+    return out;
+  }
+
+  function findActivePhase(phases, activePhaseId) {
+    for (var i = 0; i < phases.length; i += 1) {
+      if (phaseKey(phases[i], i) === activePhaseId) {
+        return { phase: phases[i], index: i };
+      }
+    }
+    return phases.length ? { phase: phases[0], index: 0 } : null;
+  }
+
+  function readSelectedPlanHorizon(plan, targetRole) {
+    var key = planHorizonStorageKey(plan, targetRole);
+    var stored = parseInt(trim(localStorage.getItem(key)), 10);
+    if (stored === 1 || stored === 3) {
+      return stored;
+    }
+    var planYears = Number(plan && plan.horizonYears);
+    return planYears === 1 ? 1 : 3;
+  }
+
+  function persistSelectedPlanHorizon(plan, targetRole, years) {
+    localStorage.setItem(planHorizonStorageKey(plan, targetRole), String(years));
+  }
+
+  function planHorizonStorageKey(plan, targetRole) {
+    var userId = hasUserIdentity() ? state.identity.userId : "preview";
+    var role = sanitizeKey(firstText(plan && plan.targetRole, targetRole, "general"));
+    return "cyancruise.planHorizon." + sanitizeKey(userId) + "." + role;
+  }
+
+  function filterPlanPhasesByYears(phases, selectedYears) {
+    return normalizeArray(phases).filter(function (phase) {
+      return phaseHorizonMaxYears(phase) <= selectedYears;
+    });
+  }
+
+  function phaseHorizonMaxYears(phase) {
+    var horizon = firstText(phase && phase.horizon, "");
+    if (horizon.indexOf("年") >= 0) {
+      var yearMatch = horizon.match(/(\d+)\s*-\s*(\d+)年|(\d+)年/);
+      if (yearMatch) {
+        if (yearMatch[2]) {
+          return parseInt(yearMatch[2], 10);
+        }
+        if (yearMatch[3]) {
+          return parseInt(yearMatch[3], 10);
+        }
+      }
+    }
+    if (horizon.indexOf("个月") >= 0 || horizon.indexOf("月") >= 0) {
+      return 1;
+    }
+    return 3;
+  }
+
+  function sanitizeKey(value) {
+    return trim(value).toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-+|-+$/g, "") || "item";
+  }
+
+  function readPlanProgress(plan, targetRole, phases) {
+    var key = planProgressStorageKey(plan, targetRole);
+    var stored = parseStorageJson(localStorage, key) || {};
+    stored.checked = stored.checked || {};
+    if (!firstText(stored.activePhaseId) && phases.length) {
+      stored.activePhaseId = phaseKey(phases[0], 0);
+    }
+    state.planProgress = stored;
+    return stored;
+  }
+
+  function planProgressStorageKey(plan, targetRole) {
+    var userId = hasUserIdentity() ? state.identity.userId : "preview";
+    var role = sanitizeKey(firstText(plan && plan.targetRole, targetRole, "general"));
+    return "cyancruise.planProgress." + sanitizeKey(userId) + "." + role;
+  }
+
+  function persistPlanProgress(plan, targetRole, progressState) {
+    var key = planProgressStorageKey(plan, targetRole);
+    state.planProgress = progressState;
+    localStorage.setItem(key, JSON.stringify(progressState));
+  }
+
+  function mergeRefreshedPlan(previousPlan, nextPlan) {
+    var incoming = nextPlan || {};
+    var existing = previousPlan || {};
+    var nextPhases = normalizeArray(incoming.phases);
+    if (!nextPhases.length) {
+      return incoming;
+    }
+    var targetRole = employmentTargetRole(existing);
+    var progressState = readPlanProgress(existing, targetRole, normalizeArray(existing.phases));
+    var completedPhaseMap = {};
+    var existingPhases = normalizeArray(existing.phases);
+    for (var i = 0; i < existingPhases.length; i += 1) {
+      var existingPhase = existingPhases[i];
+      if (isPhaseCompletedByProgress(existingPhase, i, progressState)) {
+        completedPhaseMap[phaseIdentityKey(existingPhase, i)] = existingPhase;
+      }
+    }
+    incoming.phases = nextPhases.map(function (phase, index) {
+      var identity = phaseIdentityKey(phase, index);
+      return completedPhaseMap[identity] || phase;
+    });
+    if (!firstText(progressState.activePhaseId) && incoming.phases.length) {
+      progressState.activePhaseId = phaseKey(incoming.phases[0], 0);
+      persistPlanProgress(incoming, employmentTargetRole(incoming), progressState);
+    }
+    return incoming;
+  }
+
+  function isPhaseCompletedByProgress(phase, index, progressState) {
+    var phaseId = phaseKey(phase, index);
+    var counters = { total: 0, completed: 0 };
+    countTaskGroup(normalizeArray(phase && phase.actions), phaseId + ".actions", progressState, counters);
+    countTaskGroup(normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState, counters);
+    var subStages = normalizeArray(phase && phase.subStages);
+    for (var i = 0; i < subStages.length; i += 1) {
+      countTaskGroup(normalizeArray(subStages[i].actions), phaseId + ".substage." + i + ".actions", progressState, counters);
+    }
+    return counters.total > 0 && counters.completed >= counters.total;
+  }
+
+  function phaseIdentityKey(phase, index) {
+    return sanitizeKey(firstText(phase && phase.horizon, "")) + "::" + sanitizeKey(firstText(phase && phase.title, phaseKey(phase, index)));
+  }
+
+  function phaseProgressStatus(phase, index, progressState) {
+    var phaseId = phaseKey(phase, index);
+    var counters = { total: 0, completed: 0 };
+    countTaskGroup(normalizeArray(phase && phase.actions), phaseId + ".actions", progressState, counters);
+    countTaskGroup(normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState, counters);
+    var subStages = normalizeArray(phase && phase.subStages);
+    for (var i = 0; i < subStages.length; i += 1) {
+      countTaskGroup(normalizeArray(subStages[i].actions), phaseId + ".substage." + i + ".actions", progressState, counters);
+    }
+    if (counters.total > 0 && counters.completed >= counters.total) {
+      return { code: "done", label: "已完成" };
+    }
+    if (counters.completed > 0) {
+      return { code: "active", label: "进行中" };
+    }
+    return { code: "idle", label: "未开始" };
+  }
+
   function performDeleteResumeRecord(resumeId) {
     if (isFilePreview()) {
       state.resumes = normalizeArray(state.resumes).filter(function (item) {
@@ -1494,12 +2183,10 @@
       body += listPanel("简历记录", state.resumes, "暂无简历记录，仍可保留创建和文件入口。");
     } else if (item.key === "interview") {
       body += listPanel("面试历史", state.interviews, "暂无面试历史。");
-    } else if (item.key === "career-plan") {
-      body += statePanel("AI路径规划", "后续由 AI 根据首页路线选择、完整用户画像、简历/材料和阶段目标生成实现路径。当前先保留入口，不展开规划智能体。", "pending");
     } else if (item.key === "assessment") {
       body += statePanel("职业测评", "后续通过答题分析人格、性格、偏好和行动风格，并把结果补入完整用户画像，用于指导路径规划和今日行动。当前先保留入口，不展开题组。", "pending");
     } else if (item.key === "assistant") {
-      body += statePanel("助手会话", "可调用发送消息和会话列表契约；真实 AI provider 在后续 change 接入。", "pending");
+      body += statePanel("助手会话", "可调用发送消息和会话列表契约；真实智能服务在后续 change 接入。", "pending");
     } else if (item.key === "messages") {
       body += statePanel("站内消息", "消息列表、未读数、已读和订阅配额契约已映射；微信真实发送暂不迁移。", "pending");
     } else if (item.key === "file-upload-preview") {
@@ -1556,6 +2243,10 @@
   }
 
   function backRouteFor(key) {
+    var source = state.returnRoutes && state.returnRoutes[key];
+    if (source && source !== key && pageByKey[source]) {
+      return source;
+    }
     return parentRouteFor(key);
   }
 
@@ -1586,6 +2277,27 @@
   }
 
   function handlePageHostClick(event) {
+    var planHorizonTarget = findPlanHorizonTarget(event.target);
+    if (planHorizonTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      updatePlanHorizon(planHorizonTarget.getAttribute("data-plan-horizon"));
+      return;
+    }
+    var planTaskTarget = findPlanTaskTarget(event.target);
+    if (planTaskTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      togglePlanTask(planTaskTarget.getAttribute("data-plan-task"));
+      return;
+    }
+    var planFocusTarget = findPlanFocusTarget(event.target);
+    if (planFocusTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      focusPlanPhase(planFocusTarget.getAttribute("data-plan-focus"));
+      return;
+    }
     var ensurePlanTarget = findEnsurePlanTarget(event.target);
     if (ensurePlanTarget) {
       event.preventDefault();
@@ -1624,6 +2336,74 @@
     return null;
   }
 
+  function findPlanTaskTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-plan-task")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findPlanFocusTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-plan-focus")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findPlanHorizonTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-plan-horizon")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function togglePlanTask(taskId) {
+    if (!taskId || state.route !== "career-plan") {
+      return;
+    }
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
+    progressState.checked[taskId] = !progressState.checked[taskId];
+    persistPlanProgress(plan, targetRole, progressState);
+    renderPage(pageByKey[state.route]);
+  }
+
+  function focusPlanPhase(phaseId) {
+    if (!phaseId || state.route !== "career-plan") {
+      return;
+    }
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
+    progressState.activePhaseId = phaseId;
+    persistPlanProgress(plan, targetRole, progressState);
+    renderPage(pageByKey[state.route]);
+  }
+
+  function updatePlanHorizon(value) {
+    if (state.route !== "career-plan") {
+      return;
+    }
+    var years = parseInt(trim(value), 10);
+    if (years !== 1 && years !== 3) {
+      return;
+    }
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    persistSelectedPlanHorizon(plan, targetRole, years);
+    renderPage(pageByKey[state.route]);
+  }
+
   function findEnsurePlanTarget(node) {
     while (node && node !== els.pageHost) {
       if (node.getAttribute && node.getAttribute("data-ensure-plan") != null) {
@@ -1651,7 +2431,9 @@
       return;
     }
     if (state.route && state.route !== key) {
+      rememberRouteScroll(state.route);
       state.previousRoute = state.route;
+      rememberReturnRoute(key, state.route);
     }
     state.route = key;
     if (window.location.hash !== "#" + key) {
@@ -1670,6 +2452,8 @@
       showMessage("warning", "页面不可用", "未找到页面: " + key);
       return;
     }
+    rememberRouteScroll(state.route);
+    clearReturnRoute(state.route);
     state.previousRoute = "";
     state.route = key;
     if (window.location.hash !== "#" + key) {
@@ -1677,9 +2461,43 @@
     }
     markActiveNav();
     renderPage(pageByKey[key]);
+    restoreRouteScroll(key);
+  }
+
+  function rememberRouteScroll(route) {
+    var key = normalizeRoute(route);
+    if (!pageByKey[key]) {
+      return;
+    }
+    state.scrollPositions[key] = currentScrollTop();
+  }
+
+  function rememberReturnRoute(route, sourceRoute) {
+    var key = normalizeRoute(route);
+    var source = normalizeRoute(sourceRoute);
+    if (!pageByKey[key] || !pageByKey[source] || key === source) {
+      return;
+    }
+    state.returnRoutes[key] = source;
+  }
+
+  function clearReturnRoute(route) {
+    var key = normalizeRoute(route);
+    if (state.returnRoutes) {
+      delete state.returnRoutes[key];
+    }
+  }
+
+  function restoreRouteScroll(route) {
+    var key = normalizeRoute(route);
+    var y = state.scrollPositions[key];
     window.setTimeout(function () {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, typeof y === "number" ? y : 0);
     }, 0);
+  }
+
+  function currentScrollTop() {
+    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
   }
 
   function overviewRows(goal) {
@@ -1701,10 +2519,24 @@
     }
     return [
       ["目标岗位", textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob") || "待确认"],
-      ["今日行动", "等待完整用户画像"],
+      ["今日行动", todayOverviewStatus()],
       ["简历记录", Array.isArray(state.resumes) ? state.resumes.length + " 份" : "待加载"],
       ["面试练习", Array.isArray(state.interviews) ? state.interviews.length + " 次" : "待加载"]
     ];
+  }
+
+  function todayOverviewStatus() {
+    if (state.plan && !state.plan.unavailable) {
+      var view = buildPlanViewModel();
+      if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length) {
+        return "今日可推进";
+      }
+      return "等待任务拆解";
+    }
+    if (state.planEnsuring) {
+      return "路线生成中";
+    }
+    return "等待路径规划";
   }
 
   function overviewStrip(goal) {
@@ -1901,8 +2733,8 @@
     var preview = readPreviewProfile();
     state.snapshot = preview || {};
     state.today = {
-      title: "等待完整用户画像",
-      summary: "完整用户画像需要结合首页草稿、后续上传资料、简历和 AI 分析后生成。"
+      title: "等待路径规划",
+      summary: "今日行动会根据路径规划里的当前阶段和本周计划拆解生成。"
     };
     state.resumes = [];
     state.plan = null;
@@ -2006,6 +2838,7 @@
       userId: userId,
       adminId: firstText(context.adminId, context.userId, context.operatorId, getValue(context, "user.id"), getValue(context, "currentUser.id")),
       roles: normalizeRoles(firstText(context.roles, context.roleCodes, context.role, context.permissionCodes, getValue(context, "user.roles"), getValue(context, "currentUser.roles"))),
+      displayName: firstText(context.displayName, context.userName, context.username, context.name, context.nickName, context.nickname, context.operatorName, context.personName, getValue(context, "user.displayName"), getValue(context, "user.userName"), getValue(context, "user.name"), getValue(context, "currentUser.displayName"), getValue(context, "currentUser.userName"), getValue(context, "currentUser.name"), getValue(context, "userInfo.displayName"), getValue(context, "userInfo.userName"), getValue(context, "userInfo.name")),
       source: userId ? resolved.source : "missing-cosmic-platform-context"
     };
   }
@@ -2123,6 +2956,7 @@
         userId: fromQuery,
         adminId: trim(params.get("adminId")),
         roles: parseRoles(params.get("roles")),
+        displayName: firstText(params.get("userName"), params.get("displayName"), params.get("name"), fromQuery ? "用户" : ""),
         source: "query:userId"
       };
     }
@@ -2135,6 +2969,7 @@
       userId: stored,
       adminId: trim(localStorage.getItem("cyancruise.adminId")),
       roles: parseRoles(localStorage.getItem("cyancruise.roles")),
+      displayName: firstText(localStorage.getItem("cyancruise.userName"), stored ? "用户" : ""),
       source: stored ? "localStorage:cyancruise.userId" : "development-missing-userId"
     };
   }
@@ -2154,6 +2989,7 @@
         userId: userId,
         adminId: firstText(identity.adminId, identity.userId),
         roles: normalizeRoles(identity.roles),
+        displayName: firstText(identity.displayName, identity.userName, identity.username, identity.name, identity.nickName, identity.nickname, userId ? "用户" : ""),
         source: firstText(identity.source, "cc001-identity-current")
       };
       updateIdentityState();
@@ -2492,6 +3328,50 @@
       return value.list;
     }
     return [];
+  }
+
+  function defaultDailySuggestions(targetRole) {
+    var role = targetRole === "目标岗位待确认" ? "目标岗位" : targetRole;
+    return [
+      "阅读 1 到 2 个" + role + "岗位描述，补充高频关键词。",
+      "优化 1 组简历经历，补充结果、数字和个人贡献。",
+      "推进 1 个项目任务或技能练习，并保留可展示成果。",
+      "练习 1 个面试问题，整理成 STAR 回答。",
+      "记录今天完成项、卡点和明天第一步。"
+    ];
+  }
+
+  function previewPlanPhases(targetRole) {
+    var role = targetRole === "目标岗位待确认" ? "目标岗位" : targetRole;
+    return [
+      {
+        horizon: "0-1个月",
+        title: "定位与材料准备",
+        goal: "明确" + role + "要求，完成可投递简历和项目证据清单。",
+        status: "待推进",
+        actions: ["分析 10 个目标岗位 JD", "完成 1 版简历", "整理 2 个项目 STAR 讲述"],
+        kpis: ["岗位关键词清单", "可投递简历", "项目证据清单"],
+        subStages: [{ period: "第 1 周", title: "岗位拆解", goal: "完成目标岗位分析", actions: ["每天分析 2 个 JD", "补充项目证据"] }]
+      },
+      {
+        horizon: "1-3个月",
+        title: "能力补齐与项目验证",
+        goal: "围绕" + role + "补齐核心技能并形成项目成果。",
+        status: "待推进",
+        actions: ["完成核心技能计划", "交付 1-2 个项目", "形成项目复盘"],
+        kpis: ["项目成果", "技能短板清单"],
+        subStages: [{ period: "第 2-8 周", title: "技能和项目推进", goal: "形成可展示成果", actions: ["每日技能练习", "每日推进项目任务"] }]
+      },
+      {
+        horizon: "3-12个月",
+        title: "投递面试与机会转化",
+        goal: "建立稳定投递节奏，持续复盘面试反馈。",
+        status: "待推进",
+        actions: ["每周投递岗位", "每周模拟面试", "根据反馈更新简历"],
+        kpis: ["投递记录", "面试复盘", "offer 或实习机会"],
+        subStages: [{ period: "每周循环", title: "投递复盘", goal: "保持节奏并提升转化", actions: ["投递 5-10 个岗位", "复盘 1 次面试"] }]
+      }
+    ];
   }
 
   function normalizeRoles(value) {

@@ -13,6 +13,8 @@ public class CosmicIdentityContextDto implements Serializable {
 
     private String userId;
     private String adminId;
+    private String displayName;
+    private String userName;
     private List<String> roles = new ArrayList<String>();
     private String orgId;
     private String source;
@@ -57,6 +59,22 @@ public class CosmicIdentityContextDto implements Serializable {
 
     public void setAdminId(String adminId) {
         this.adminId = adminId;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 
     public List<String> getRoles() {

@@ -1,6 +1,6 @@
 # Resume Core Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 ### Requirement: PostgreSQL 持久化简历记录
 CyanCruise 简历记录 SHALL 在运行时通过 PostgreSQL 持久化，而不是默认写入 `filestorage/resume-core`。简历记录中的 `fileKey` SHALL 继续作为稳定文件引用保存，二进制文件服务不属于本要求。
 

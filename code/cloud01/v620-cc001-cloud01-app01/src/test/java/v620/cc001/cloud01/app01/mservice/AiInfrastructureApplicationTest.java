@@ -78,14 +78,14 @@ class AiInfrastructureApplicationTest {
     void structuredCareerPlanRequiresJsonFields() {
         AiGatewayCareerPlanGenerator generator = new AiGatewayCareerPlanGenerator(
                 new DefaultAiGateway(new FakeAiProviderAdapter(
-                        "```json\n{\"target_role\":\"Java\",\"weekly_focus\":[\"resume\"]}\n```", "plan-model")));
+                        "```json\n{\"target_role\":\"Java\",\"phases\":[{\"title\":\"prepare\",\"goal\":\"ready\",\"actions\":[\"resume\"],\"kpis\":[\"profile\"],\"sub_stages\":[]}],\"weekly_plan\":{\"week_title\":\"start\",\"actions\":[\"resume\"],\"deliverables\":[\"profile\"]},\"daily_suggestions\":[\"read one JD\"]}\n```", "plan-model")));
 
         CareerPlanRecordDto plan = generator.generate("u2", "Java", null);
 
         assertEquals("u2", plan.getUserId());
         assertEquals("Java", plan.getTargetRole());
         assertEquals("plan-model", plan.getModelUsed());
-        assertTrue(plan.getStartStateSummary().contains("weekly_focus"));
+        assertTrue(plan.getStartStateSummary().contains("weekly_plan"));
     }
 
     @Test

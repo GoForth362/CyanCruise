@@ -1,6 +1,6 @@
 # Cosmic Datamodel Adapters Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 ### Requirement: PostgreSQL 替换当前业务状态文件存储
 对于当前 CyanCruise 租户，PostgreSQL SHALL 作为已批准的业务状态数据库后端，替换本地 `filestorage` 业务状态适配器；未来 Cosmic datamodel adapter 仍可通过相同业务边界替换 PostgreSQL。
 

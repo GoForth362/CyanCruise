@@ -1,6 +1,6 @@
 # Assistant Chat Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 ### Requirement: PostgreSQL 持久化助手会话和消息
 CyanCruise 助手聊天会话、消息和历史 SHALL 在运行时通过 PostgreSQL 持久化，而不是默认写入 `filestorage/assistant-chat`。
 

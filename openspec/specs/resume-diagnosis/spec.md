@@ -2,7 +2,6 @@
 
 ## Purpose
 定义 CyanCruise 如何基于简历文本、目标 JD 和已保存简历记录生成诊断结果、抽取简历关键词并维护关键词状态，为今日行动、职业计划和后续 AI 适配提供稳定后端契约。
-
 ## Requirements
 ### Requirement: 发起简历诊断
 系统 SHALL 支持用户基于 resumeId 或直接简历文本发起简历诊断。诊断请求 SHALL 包含用户 ID、可选 resumeId、可选 resumeText、可选目标 JD 和可选画像上下文。若未提供 resumeText 且提供 resumeId，系统 SHALL 读取该用户拥有的简历记录并使用其 parsedContent 作为诊断文本。
@@ -119,3 +118,19 @@
 #### Scenario: 替换为 Cosmic 存储
 - **WHEN** Cosmic datamodel 关键词或诊断记录适配器实现完成
 - **THEN** 它可以通过同一存储边界替换默认存储
+
+### Requirement: PostgreSQL 持久化简历诊断与关键词状态
+CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 PostgreSQL 持久化，而不是默认写入 `filestorage/resume-diagnosis`。
+
+#### Scenario: 诊断结果跨实例读取
+- **WHEN** 用户完成简历诊断并创建新的应用服务实例
+- **THEN** 新实例 SHALL 从 PostgreSQL 读取同一 resumeId 的诊断结果
+
+#### Scenario: 关键词状态跨实例读取
+- **WHEN** 用户触发关键词抽取并保存 READY、EMPTY、FAILED 或其他状态
+- **THEN** 后续实例 SHALL 从 PostgreSQL 读取该状态和关键词载荷
+
+#### Scenario: 诊断仍遵守简历所有权
+- **WHEN** 用户尝试读取、触发或回写不属于自己的 resumeId
+- **THEN** 系统 SHALL 拒绝该操作，并且 PostgreSQL 中其他用户数据保持不变
+

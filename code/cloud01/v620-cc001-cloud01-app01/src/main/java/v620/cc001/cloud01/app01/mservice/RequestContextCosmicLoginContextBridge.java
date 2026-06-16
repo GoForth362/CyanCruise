@@ -66,6 +66,11 @@ public class RequestContextCosmicLoginContextBridge implements CosmicLoginContex
         putByMethod(context, requestContext, "userNumber", "getUserNumber");
         putByMethod(context, requestContext, "userNumber", "getUserNo");
         putByMethod(context, requestContext, "userName", "getUserName");
+        putByMethod(context, requestContext, "displayName", "getDisplayName");
+        putByMethod(context, requestContext, "displayName", "getUserDisplayName");
+        putByMethod(context, requestContext, "nickName", "getNickName");
+        putByMethod(context, requestContext, "personName", "getPersonName");
+        putByMethod(context, requestContext, "operatorName", "getOperatorName");
         putByMethod(context, requestContext, "orgId", "getOrgId");
         putByMethod(context, requestContext, "orgId", "getOrgID");
         putByMethod(context, requestContext, "organizationId", "getOrganizationId");

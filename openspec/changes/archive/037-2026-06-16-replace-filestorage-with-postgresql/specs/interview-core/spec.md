@@ -1,6 +1,6 @@
 # Interview Core Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 ### Requirement: PostgreSQL 持久化模拟面试会话和消息
 CyanCruise 模拟面试会话、消息和报告摘要 SHALL 在运行时通过 PostgreSQL 持久化，而不是默认写入 `filestorage/interview-core`。
 

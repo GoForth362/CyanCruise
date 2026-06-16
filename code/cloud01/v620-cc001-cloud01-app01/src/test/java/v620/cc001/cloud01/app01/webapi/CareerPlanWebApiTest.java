@@ -16,6 +16,7 @@ import v620.cc001.cloud01.app01.mservice.InMemoryCareerProfileStorage;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CareerPlanWebApiTest {
 
@@ -39,6 +40,8 @@ class CareerPlanWebApiTest {
         assertEquals(Boolean.FALSE, missing.getHasPlan());
         assertEquals(Boolean.TRUE, ensured.getHasPlan());
         assertEquals("Data Analyst", ensured.getTargetRole());
+        assertEquals("RULE_FALLBACK", ensured.getPlanningMode());
+        assertTrue(ensured.getPhases().size() >= 3);
         assertEquals("分析一个招聘 JD", saved.getWeeklyFocus().get(0));
     }
 
