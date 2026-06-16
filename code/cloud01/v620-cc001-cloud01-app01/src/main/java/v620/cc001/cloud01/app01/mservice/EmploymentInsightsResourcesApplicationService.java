@@ -9,7 +9,7 @@ import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import java.time.LocalDateTime;
 
 /**
- * Application boundary for employment insight and CareerLoop resources.
+ * Application boundary for employment insight and CyanCruise resources.
  */
 public class EmploymentInsightsResourcesApplicationService {
 

@@ -603,7 +603,7 @@
     return '<section class="panel"><h3>可选文件上传</h3>' +
       '<div class="form-grid">' +
       '<label class="full">选择小文件<input id="resumeFileInput" type="file"></label>' +
-      '<div class="full actions-row"><button type="button" class="secondary" id="uploadResumeFileButton">上传并填入 fileKey</button></div>' +
+      '<div class="full actions-row"><button type="button" class="secondary" id="uploadResumeFileButton">上传</button></div>' +
       '</div>' +
       '<p class="panel-note ' + escapeHtml(type) + '">' + escapeHtml(text) + '</p>' +
       '</section>';
@@ -836,9 +836,12 @@
     if (!resumeId) {
       return;
     }
-    if (!window.confirm("确定删除这条简历记录吗？")) {
-      return;
-    }
+    showConfirmDialog("删除简历记录", "删除后这条简历记录将从列表中移除。", "删除", function () {
+      performDeleteResumeRecord(resumeId);
+    });
+  }
+
+  function performDeleteResumeRecord(resumeId) {
     if (isFilePreview()) {
       state.resumes = normalizeArray(state.resumes).filter(function (item) {
         return String(firstText(item.resumeId, item.id, "")) !== String(resumeId);
@@ -1973,6 +1976,57 @@
     }
     if (type === "info") {
       state.messageTimer = window.setTimeout(hideMessage, 5000);
+    }
+  }
+
+  function showConfirmDialog(title, text, confirmText, onConfirm) {
+    hideConfirmDialog();
+    var previousFocus = document.activeElement;
+    var overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    overlay.innerHTML =
+      '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogText">' +
+      '<div class="confirm-copy"><strong id="confirmDialogTitle">' + escapeHtml(title) + '</strong>' +
+      '<span id="confirmDialogText">' + escapeHtml(text) + '</span></div>' +
+      '<div class="confirm-actions">' +
+      '<button type="button" class="secondary" data-confirm-cancel>取消</button>' +
+      '<button type="button" class="danger" data-confirm-ok>' + escapeHtml(confirmText || "确认") + '</button>' +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    var cancel = overlay.querySelector("[data-confirm-cancel]");
+    var ok = overlay.querySelector("[data-confirm-ok]");
+    function close() {
+      hideConfirmDialog();
+      document.removeEventListener("keydown", onKeydown);
+      if (previousFocus && typeof previousFocus.focus === "function") {
+        previousFocus.focus();
+      }
+    }
+    function onKeydown(event) {
+      if (event.key === "Escape") {
+        close();
+      }
+    }
+    overlay.addEventListener("click", function (event) {
+      if (event.target === overlay) {
+        close();
+      }
+    });
+    cancel.addEventListener("click", close);
+    ok.addEventListener("click", function () {
+      close();
+      if (typeof onConfirm === "function") {
+        onConfirm();
+      }
+    });
+    document.addEventListener("keydown", onKeydown);
+    ok.focus();
+  }
+
+  function hideConfirmDialog() {
+    var existing = document.querySelector(".confirm-overlay");
+    if (existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
     }
   }
 

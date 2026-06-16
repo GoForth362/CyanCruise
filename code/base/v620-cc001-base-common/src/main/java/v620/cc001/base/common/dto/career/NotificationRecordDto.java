@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * In-app notification surfaced by the CareerLoop message center.
+ * In-app notification surfaced by the CyanCruise message center.
  */
 public class NotificationRecordDto implements Serializable {
 

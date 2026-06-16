@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Application boundary for CareerLoop admin console governance.
+ * Application boundary for CyanCruise admin console governance.
  */
 public class AdminConsoleGovernanceApplicationService {
 
@@ -224,7 +224,7 @@ public class AdminConsoleGovernanceApplicationService {
     }
 
     public AdminQuestionDto contributeQuestion(AdminQuestionContributionRequest request) {
-        AdminQuestionDto question = helper.buildContribution(request, "careerloop-qbank");
+        AdminQuestionDto question = helper.buildContribution(request, "cyancruise-qbank");
         return storage.saveQuestion(question);
     }
 

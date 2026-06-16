@@ -317,7 +317,7 @@ public class AdminConsoleGovernanceService {
     private String hashUserId(String userId, String pepper) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] bytes = digest.digest(((hasText(pepper) ? pepper.trim() : "careerloop-qbank") + ":" + userId)
+            byte[] bytes = digest.digest(((hasText(pepper) ? pepper.trim() : "cyancruise-qbank") + ":" + userId)
                     .getBytes(StandardCharsets.UTF_8));
             StringBuilder builder = new StringBuilder(bytes.length * 2);
             for (byte b : bytes) {

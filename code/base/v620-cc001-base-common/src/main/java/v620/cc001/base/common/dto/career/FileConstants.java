@@ -1,7 +1,7 @@
 package v620.cc001.base.common.dto.career;
 
 /**
- * Constants for CareerLoop file upload, preview and extraction contracts.
+ * Constants for CyanCruise file upload, preview and extraction contracts.
  */
 public final class FileConstants {
 

@@ -17,15 +17,15 @@ public class InMemoryCareerResourceStorage implements CareerResourceStorage {
         LocalDateTime now = LocalDateTime.now();
         cards.add(card("article-resume-001", "article", "Resume evidence checklist",
                 "Use target-role evidence to improve resume bullets.", "resume", "resume",
-                "/careerloop/resources/resume-evidence", now.minusDays(1)));
+                "/cyancruise/resources/resume-evidence", now.minusDays(1)));
         cards.add(card("video-interview-001", "video", "Mock interview practice loop",
                 "Practice answer structure before a real interview.", "interview", "interview",
-                "https://www.bilibili.com/video/BV1careerloop", now.minusDays(2)));
-        cards.get(cards.size() - 1).setBvid("BV1careerloop");
+                "https://www.bilibili.com/video/BV1cyancruise", now.minusDays(2)));
+        cards.get(cards.size() - 1).setBvid("BV1cyancruise");
         cards.get(cards.size() - 1).setDurationSec(Integer.valueOf(480));
         cards.add(card("tip-plan-001", "consultation", "This week career focus",
                 "Pick one target role, one resume improvement and one interview drill.", "plan", "plan",
-                "/careerloop/resources/weekly-focus", now.minusDays(3)));
+                "/cyancruise/resources/weekly-focus", now.minusDays(3)));
         CareerResourceCardDto path = card("path-software", "career_path", "Software Engineer path",
                 "Core route for backend, web, data and AI application roles.", "career-path", "software",
                 "index.html#career-plan", now.minusDays(4));

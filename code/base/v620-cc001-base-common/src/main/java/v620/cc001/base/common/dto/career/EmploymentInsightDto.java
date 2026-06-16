@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Source-backed employment insight for the CareerLoop workbench.
+ * Source-backed employment insight for the CyanCruise workbench.
  */
 public class EmploymentInsightDto implements Serializable {
 

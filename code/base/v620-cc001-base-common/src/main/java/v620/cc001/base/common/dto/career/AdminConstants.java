@@ -1,7 +1,7 @@
 package v620.cc001.base.common.dto.career;
 
 /**
- * Constants for CareerLoop admin governance.
+ * Constants for CyanCruise admin governance.
  */
 public final class AdminConstants {
 

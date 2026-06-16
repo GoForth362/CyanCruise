@@ -186,7 +186,7 @@ class CareerLoopCustomWebApiPluginTest {
         ApiResult result = plugin.doCustomService(params("/cc001/missing", new HashMap<String, Object>()));
 
         assertFalse(result.getSuccess());
-        assertEquals("Unsupported CareerLoop custom WebAPI path: /cc001/missing", result.getMessage());
+        assertEquals("Unsupported CyanCruise custom WebAPI path: /cc001/missing", result.getMessage());
     }
 
     private Map<String, Object> params(String path, Object body) {

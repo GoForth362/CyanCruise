@@ -128,10 +128,10 @@ public class EmploymentInsightsResourcesService {
                 + feed.getConsultations().size() + feed.getCareerPaths().size();
         if (total == 0) {
             feed.setStatus(STATUS_EMPTY);
-            feed.setMessage("No configured CareerLoop resources are available.");
+            feed.setMessage("No configured CyanCruise resources are available.");
         } else {
             feed.setStatus(STATUS_AVAILABLE);
-            feed.setMessage("CareerLoop resources are available.");
+            feed.setMessage("CyanCruise resources are available.");
         }
         return feed;
     }

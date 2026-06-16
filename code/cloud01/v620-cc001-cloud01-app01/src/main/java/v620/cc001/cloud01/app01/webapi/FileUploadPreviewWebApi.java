@@ -13,7 +13,7 @@ import v620.cc001.base.common.dto.career.FileUploadRequest;
 import v620.cc001.base.common.dto.career.FileUploadResult;
 import v620.cc001.cloud01.app01.mservice.FileUploadPreviewApplicationService;
 
-@ApiController(value = "fileUploadPreviewWebApi", desc = "CareerLoop file upload and preview API")
+@ApiController(value = "fileUploadPreviewWebApi", desc = "CyanCruise file upload and preview API")
 @ApiMapping("/cc001/files")
 public class FileUploadPreviewWebApi {
 

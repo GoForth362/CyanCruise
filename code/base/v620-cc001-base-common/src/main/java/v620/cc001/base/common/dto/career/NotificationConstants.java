@@ -1,7 +1,7 @@
 package v620.cc001.base.common.dto.career;
 
 /**
- * Canonical CareerLoop notification types and grouping keys.
+ * Canonical CyanCruise notification types and grouping keys.
  */
 public final class NotificationConstants {
 

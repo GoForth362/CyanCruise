@@ -13,7 +13,7 @@ import v620.cc001.base.common.dto.career.FileUploadResult;
 import java.time.LocalDateTime;
 
 /**
- * Application boundary for CareerLoop file upload, preview and text extraction.
+ * Application boundary for CyanCruise file upload, preview and text extraction.
  */
 public class FileUploadPreviewApplicationService {
 

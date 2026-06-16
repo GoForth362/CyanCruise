@@ -30,9 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Cosmic Custom Web API entry that routes platform kapi calls to CareerLoop WebAPI contracts.
+ * Cosmic Custom Web API entry that routes platform kapi calls to CyanCruise WebAPI contracts.
  */
-@ApiController(value = "careerLoopCustomWebApiPlugin", desc = "CareerLoop custom WebAPI router")
+@ApiController(value = "careerLoopCustomWebApiPlugin", desc = "CyanCruise custom WebAPI router")
 @ApiMapping("/cc001/careerloop")
 public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
 
@@ -99,9 +99,9 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
         this.assessmentWebApi = assessmentWebApi;
     }
 
-    @ApiPostMapping(value = "/route", desc = "Route CareerLoop custom WebAPI call", methodParamNames = {"params"})
-    public @ApiResponseBody(value = "CareerLoop custom WebAPI result") CustomApiResult<Object> route(
-            @ApiRequestBody(value = "CareerLoop custom WebAPI params", required = true) Map<String, Object> params) {
+    @ApiPostMapping(value = "/route", desc = "Route CyanCruise custom WebAPI call", methodParamNames = {"params"})
+    public @ApiResponseBody(value = "CyanCruise custom WebAPI result") CustomApiResult<Object> route(
+            @ApiRequestBody(value = "CyanCruise custom WebAPI params", required = true) Map<String, Object> params) {
         ApiResult result = doCustomService(params);
         if (result.getSuccess()) {
             return CustomApiResult.success(result.getData());
@@ -112,7 +112,7 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
     @Override
     public ApiResult doCustomService(Map<String, Object> params) {
         if (params == null) {
-            return ApiResult.fail("CareerLoop custom WebAPI params are required");
+            return ApiResult.fail("CyanCruise custom WebAPI params are required");
         }
         String path = normalizePath(text(params.get(PARAM_PATH)));
         Object body = params.get(PARAM_BODY);
@@ -273,7 +273,7 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(resumeDiagnosisWebApi.keywordStatus(
                         extractUserId(body), longObject(value(body, "resumeId"))));
             }
-            return ApiResult.fail("Unsupported CareerLoop custom WebAPI path: " + path);
+            return ApiResult.fail("Unsupported CyanCruise custom WebAPI path: " + path);
         } catch (IdentityBoundaryException ex) {
             return ApiResult.fail(ex.getStatus(), ex.getMessage());
         } catch (RuntimeException ex) {

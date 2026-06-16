@@ -10,9 +10,9 @@ import v620.cc001.base.common.dto.career.EmploymentInsightDto;
 import v620.cc001.cloud01.app01.mservice.EmploymentInsightsResourcesApplicationService;
 
 /**
- * WebAPI entry for CareerLoop employment insights and resources.
+ * WebAPI entry for CyanCruise employment insights and resources.
  */
-@ApiController(value = "employmentInsightsResourcesWebApi", desc = "CareerLoop employment insights and resources API")
+@ApiController(value = "employmentInsightsResourcesWebApi", desc = "CyanCruise employment insights and resources API")
 @ApiMapping("/cc001/career-employment")
 public class EmploymentInsightsResourcesWebApi {
 
@@ -32,8 +32,8 @@ public class EmploymentInsightsResourcesWebApi {
         return applicationService.getInsight(userId);
     }
 
-    @ApiPostMapping(value = "/resources/list", desc = "Get CareerLoop resource feed", methodParamNames = {"userId"})
-    public @ApiResponseBody(value = "CareerLoop resources") CareerResourceFeedDto resources(
+    @ApiPostMapping(value = "/resources/list", desc = "Get CyanCruise resource feed", methodParamNames = {"userId"})
+    public @ApiResponseBody(value = "CyanCruise resources") CareerResourceFeedDto resources(
             @ApiRequestBody(value = "userId", required = false) String userId) {
         return applicationService.getResources(userId);
     }

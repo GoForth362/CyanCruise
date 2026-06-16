@@ -18,7 +18,7 @@ import v620.cc001.cloud01.app01.mservice.NotificationsSubscriptionsApplicationSe
 
 import java.util.List;
 
-@ApiController(value = "notificationsSubscriptionsWebApi", desc = "CareerLoop notifications and subscriptions API")
+@ApiController(value = "notificationsSubscriptionsWebApi", desc = "CyanCruise notifications and subscriptions API")
 @ApiMapping("/cc001/notifications")
 public class NotificationsSubscriptionsWebApi {
 

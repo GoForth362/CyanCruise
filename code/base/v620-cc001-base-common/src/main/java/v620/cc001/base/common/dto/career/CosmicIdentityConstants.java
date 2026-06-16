@@ -1,7 +1,7 @@
 package v620.cc001.base.common.dto.career;
 
 /**
- * Constants for CareerLoop identity context resolution.
+ * Constants for CyanCruise identity context resolution.
  */
 public final class CosmicIdentityConstants {
 

@@ -27,7 +27,7 @@ import v620.cc001.cloud01.app01.mservice.IdentityBoundaryException;
 
 import java.util.List;
 
-@ApiController(value = "adminConsoleGovernanceWebApi", desc = "CareerLoop admin console governance API")
+@ApiController(value = "adminConsoleGovernanceWebApi", desc = "CyanCruise admin console governance API")
 @ApiMapping("/cc001/admin")
 public class AdminConsoleGovernanceWebApi {
 
