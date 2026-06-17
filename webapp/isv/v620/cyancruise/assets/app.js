@@ -1835,10 +1835,9 @@
     var list = normalizeArray(items).filter(Boolean);
     var out = [];
     for (var i = 0; i < list.length; i += 1) {
-      var taskId = scopeKey + "." + i + "." + sanitizeKey(list[i]);
-      if (!isPlanTaskChecked(taskId, progressState)) {
-        out.push({ taskId: taskId, text: microTaskText(list[i], i, scopeKey) });
-      }
+      var text = microTaskText(list[i], i, scopeKey);
+      var taskId = "daily." + scopeKey + "." + i + "." + sanitizeKey(text);
+      out.push({ taskId: taskId, text: text });
     }
     return out;
   }
@@ -2367,7 +2366,7 @@
   }
 
   function togglePlanTask(taskId) {
-    if (!taskId || state.route !== "career-plan") {
+    if (!taskId) {
       return;
     }
     var plan = state.plan && !state.plan.unavailable ? state.plan : {};
@@ -2529,7 +2528,8 @@
     if (state.plan && !state.plan.unavailable) {
       var view = buildPlanViewModel();
       if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length) {
-        return "今日可推进";
+        var firstDailyItem = view.dailyPlan.items[0];
+        return firstText(firstDailyItem && firstDailyItem.text, firstDailyItem, "今日可推进");
       }
       return "等待任务拆解";
     }
