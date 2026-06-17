@@ -55,6 +55,12 @@ button.secondary {
   background: var(--surface-soft);
 }
 
+button.secondary:hover,
+button.secondary:focus {
+  color: #0f6f60;
+  background: #dcefe9;
+}
+
 button.danger {
   color: #a83232;
   background: #fff0f0;
@@ -405,6 +411,10 @@ h4 {
 }
 
 .panel.full {
+  grid-column: 1 / -1;
+}
+
+.panel-grid > .full {
   grid-column: 1 / -1;
 }
 
@@ -1249,6 +1259,192 @@ h4 {
   font-weight: 700;
 }
 
+.assessment-list-section {
+  padding-top: 2px;
+}
+
+.assessment-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.assessment-card {
+  display: grid;
+  grid-template-columns: 64px minmax(260px, 0.35fr) minmax(360px, 1fr) minmax(220px, auto) minmax(96px, auto);
+  gap: 20px;
+  align-items: center;
+  width: 100%;
+  min-height: 126px;
+  padding: 18px 20px;
+  border: 1px solid #d2dfd9;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(30, 62, 51, 0.07);
+}
+
+.assessment-card:hover,
+.assessment-card:focus-within {
+  border-color: #94cbb9;
+  background: #fbfffd;
+}
+
+.assessment-card .card-left {
+  display: contents;
+}
+
+.assessment-card .card-info {
+  display: contents;
+}
+
+.assessment-card .card-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.app-icon-tile {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  color: #206f59;
+  background: #eaf8f4;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.app-icon-tile--candy {
+  color: #b94a80;
+  background: #fff1f7;
+}
+
+.app-icon-tile--cyan {
+  color: #21826d;
+  background: #e8faf6;
+}
+
+.a-title {
+  display: block;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.28;
+  overflow-wrap: anywhere;
+}
+
+.a-desc {
+  display: block;
+  color: var(--muted);
+  line-height: 1.62;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  max-width: 260px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #557168;
+  background: #f3f7f5;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tag-blue {
+  color: var(--blue);
+  background: var(--blue-bg);
+}
+
+.tag-done {
+  color: #18794e;
+  background: #e7f8ed;
+}
+
+.btn-start {
+  min-width: 88px;
+  min-height: 42px;
+  border-radius: 8px;
+  color: var(--blue);
+  background: #edf5ff;
+  font-weight: 800;
+}
+
+.btn-start:hover,
+.btn-start:focus {
+  color: #fff;
+  background: var(--blue);
+}
+
+.assessment-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.assessment-quiz {
+  display: grid;
+  gap: 14px;
+}
+
+.assessment-question {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+}
+
+.assessment-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.assessment-options .route-horizon-button {
+  border: 1px solid #d7e6e0;
+  background: #f8fbfa;
+}
+
+.assessment-options .route-horizon-button:hover,
+.assessment-options .route-horizon-button:focus {
+  border-color: #8fc6b5;
+  background: #dcefe9;
+  color: #0f6f60;
+}
+
+.assessment-options .route-horizon-button.active {
+  border-color: transparent;
+}
+
+@media (max-width: 1100px) {
+  .assessment-card {
+    grid-template-columns: 58px minmax(210px, 0.35fr) minmax(260px, 1fr) minmax(132px, auto) minmax(92px, auto);
+    gap: 14px;
+  }
+
+  .assessment-card .app-icon-tile {
+    width: 58px;
+    height: 58px;
+  }
+
+  .tags {
+    max-width: 150px;
+  }
+}
+
 @media (max-width: 920px) {
   .app-header,
   .page-header,
@@ -1332,10 +1528,41 @@ h4 {
   .employment-resource-layout,
   .feature-grid,
   .feature-grid.single,
+  .assessment-list,
   .route-control-grid,
   .route-phase-grid,
   .route-execution-grid {
     grid-template-columns: 1fr;
+  }
+
+  .assessment-card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .assessment-card .card-left,
+  .assessment-card .card-info {
+    display: grid;
+  }
+
+  .assessment-card .card-left {
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 14px;
+    align-items: center;
+  }
+
+  .assessment-card .card-info {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .assessment-card .card-right {
+    justify-content: flex-start;
+  }
+
+  .app-icon-tile {
+    width: 54px;
+    height: 54px;
   }
 
   .route-progress-head,

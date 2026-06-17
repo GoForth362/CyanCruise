@@ -448,16 +448,52 @@
       "title": "职业测评",
       "ipdPaths": ["pages/assessment/index", "pages/assessment/quiz", "pages/assessment/result"],
       "target": "index.html?ccRoute=assessment",
-      "status": "entry-only",
+      "status": "available",
       "webApis": [
+        {
+          "name": "list assessment scales",
+          "method": "POST",
+          "path": "/cc001/assessment/scales",
+          "body": [],
+          "userIdRequired": false,
+          "dto": "List<AssessmentScaleDto>",
+          "fallback": "Show local MBTI preview or recoverable unavailable state."
+        },
+        {
+          "name": "load assessment questions",
+          "method": "POST",
+          "path": "/cc001/assessment/questions",
+          "body": ["scaleId"],
+          "userIdRequired": false,
+          "dto": "AssessmentScaleDto",
+          "fallback": "Show assessment question unavailable state."
+        },
         {
           "name": "submit assessment",
           "method": "POST",
           "path": "/cc001/assessment/submit",
-          "body": ["userId", "scale", "request"],
+          "body": ["userId", "scaleId", "answers"],
           "userIdRequired": true,
           "dto": "AssessmentSubmitRequest -> AssessmentScoreResult",
-          "fallback": "Show personality and preference assessment placeholder only."
+          "fallback": "Keep selected answers locally and show recoverable submit failed state."
+        },
+        {
+          "name": "list assessment records",
+          "method": "POST",
+          "path": "/cc001/assessment/records",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<AssessmentScoreResult>",
+          "fallback": "Show empty completed assessments state."
+        },
+        {
+          "name": "get assessment record",
+          "method": "POST",
+          "path": "/cc001/assessment/record/get",
+          "body": ["userId", "recordId"],
+          "userIdRequired": true,
+          "dto": "AssessmentScoreResult",
+          "fallback": "Show record unavailable state."
         }
       ]
     },

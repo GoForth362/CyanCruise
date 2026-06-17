@@ -12,6 +12,8 @@ import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.AssessmentApplicationService;
+import v620.cc001.cloud01.app01.mservice.InMemoryAssessmentCatalog;
+import v620.cc001.cloud01.app01.mservice.InMemoryAssessmentResultStorage;
 import v620.cc001.cloud01.app01.mservice.CareerProfileApplicationService;
 import v620.cc001.cloud01.app01.mservice.InMemoryCareerProfileStorage;
 
@@ -48,6 +50,36 @@ class AssessmentWebApiTest {
         assertEquals("MBTI", snapshot.getAssessment().getScaleTitle());
         assertEquals("ENTP", snapshot.getAssessment().getSummary());
         assertTrue(profile.getReadiness().getHasAssessment().booleanValue());
+    }
+
+    @Test
+    void exposesCatalogQuestionsAndRecordList() {
+        String userId = "assessment-catalog-user-" + System.nanoTime();
+        CareerProfileApplicationService profileService = profileService();
+        AssessmentWebApi webApi = new AssessmentWebApi(new AssessmentApplicationService(
+                new AssessmentScoringService(),
+                new InMemoryAssessmentCatalog(),
+                new InMemoryAssessmentResultStorage(),
+                profileService));
+
+        AssessmentScaleDto scale = webApi.questions(Long.valueOf(1001L));
+        AssessmentSubmitRequest request = answers(answer(100101L, 100101L), answer(100102L, 100201L),
+                answer(100103L, 100301L), answer(100104L, 100401L),
+                answer(100105L, 100502L), answer(100106L, 100602L),
+                answer(100107L, 100702L), answer(100108L, 100802L),
+                answer(100109L, 100901L), answer(100110L, 101001L),
+                answer(100111L, 101101L), answer(100112L, 101201L),
+                answer(100113L, 101302L), answer(100114L, 101402L),
+                answer(100115L, 101502L), answer(100116L, 101602L));
+        request.setScaleId(scale.getScaleId());
+
+        AssessmentScoreResult result = webApi.submit(userId, null, request);
+
+        assertEquals(Integer.valueOf(16), webApi.scales().get(0).getQuestionCount());
+        assertEquals(16, scale.getQuestions().size());
+        assertEquals("ENTP", result.getResultSummary());
+        assertEquals(1, webApi.records(userId).size());
+        assertEquals(result.getRecordId(), webApi.record(userId, result.getRecordId()).getRecordId());
     }
 
     private CareerProfileApplicationService profileService() {

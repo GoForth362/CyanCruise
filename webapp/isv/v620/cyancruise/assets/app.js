@@ -8,7 +8,11 @@
     draftClear: "/cc001/career-profile/draft/clear",
     onboarding: "/cc001/career-profile/onboarding/save",
     today: "/cc001/career-agent/today/get",
+    assessmentScales: "/cc001/assessment/scales",
+    assessmentQuestions: "/cc001/assessment/questions",
     assessmentSubmit: "/cc001/assessment/submit",
+    assessmentRecords: "/cc001/assessment/records",
+    assessmentRecord: "/cc001/assessment/record/get",
     resumes: "/cc001/resume/list",
     resumeCreate: "/cc001/resume/create",
     resumeDelete: "/cc001/resume/delete",
@@ -123,6 +127,16 @@
     employmentInsightLoading: false,
     employmentInsightError: null,
     planProgress: null,
+    assessmentScales: null,
+    assessmentScale: null,
+    assessmentSelectedScaleId: null,
+    assessmentAnswers: {},
+    assessmentCurrentIndex: 0,
+    assessmentResult: null,
+    assessmentRecords: null,
+    assessmentLoading: false,
+    assessmentSubmitting: false,
+    assessmentError: null,
     scrollPositions: {},
     returnRoutes: {},
     route: "workbench",
@@ -162,8 +176,8 @@
     state.identity = resolveIdentity();
     updateIdentityState();
     bindEvents();
-    handleRouteChange();
     loadPlatformIdentity().then(function () {
+      handleRouteChange();
       loadOverview();
     });
   }
@@ -310,6 +324,8 @@
       renderCareerPlanPage(item);
     } else if (item.key === "today-action") {
       renderTodayPage(item);
+    } else if (item.key === "assessment") {
+      renderAssessmentPage(item);
     } else if (item.key === "career-resources") {
       renderCareerResourcesPage(item);
     } else {
@@ -2165,6 +2181,572 @@
     };
   }
 
+  function renderAssessmentPage(item) {
+    if (!state.assessmentScales && !state.assessmentLoading) {
+      loadAssessment();
+    }
+    var body = "";
+
+    if (state.assessmentLoading && !state.assessmentScales) {
+      body += statePanel("正在加载职业测评", "正在读取 CyanCruise 职业测评题库和最近结果。", "pending");
+    }
+    if (state.assessmentError) {
+      body += statePanel("测评暂不可用", state.assessmentError, "warning");
+    }
+
+    if (!state.assessmentSelectedScaleId) {
+      body += renderAssessmentList();
+      renderShell(item, body);
+      return;
+    }
+
+    var scale = state.assessmentScale || selectedAssessmentScaleSummary() || previewAssessmentScale();
+    var questions = normalizeArray(scale.questions);
+    var answered = assessmentAnsweredCount(questions);
+    var total = questions.length;
+    var result = state.assessmentResult;
+    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(total - 1, 0)));
+    var currentQuestion = questions[currentIndex];
+
+    body += '<section class="panel assessment-panel"><h3>' + escapeHtml(scale.title || "职业测评") + '</h3>' +
+      '<p>' + escapeHtml(scale.description || "完成答题后，系统会生成职业画像结果，并写入 CyanCruise 职业画像。") + '</p>' +
+      '<div class="route-progress-card"><div class="route-progress-head"><strong>' + answered + "/" + total +
+      '</strong><span>' + escapeHtml(estimateAssessmentMinutes(scale) + " 分钟") + '</span></div>' +
+      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' +
+      (total ? Math.round(answered * 100 / total) : 0) + '%"></span></div></div>' +
+      '</section>';
+
+    if (result && (result.resultSummary || result.summary)) {
+      body += assessmentResultPanel(result);
+    }
+
+    body += '<section class="panel assessment-quiz"><h3>开始答题</h3>' +
+      questions.map(assessmentQuestionCard).join("") +
+      '<div class="actions-row"><button type="button" data-assessment-submit ' +
+      (state.assessmentSubmitting || answered < total ? 'disabled aria-disabled="true"' : '') + '>' +
+      (state.assessmentSubmitting ? "提交中" : "提交测评") + '</button>' +
+      '<button type="button" class="secondary" data-assessment-back>返回测评列表</button></div>' +
+      '</section>';
+
+    renderShell(item, body);
+  }
+
+  function renderAssessmentPage(item) {
+    if (!state.assessmentScales && !state.assessmentLoading) {
+      loadAssessment();
+    }
+    var body = "";
+
+    if (state.assessmentLoading && !state.assessmentScales) {
+      body += statePanel("正在加载职业测评", "正在读取 CyanCruise 职业测评题库和最近结果。", "pending");
+    }
+    if (state.assessmentError) {
+      body += statePanel("测评暂不可用", state.assessmentError, "warning");
+    }
+
+    if (!state.assessmentSelectedScaleId) {
+      body += renderAssessmentList();
+      renderShell(item, body);
+      return;
+    }
+
+    var scale = state.assessmentScale || selectedAssessmentScaleSummary() || previewAssessmentScale();
+    var questions = normalizeArray(scale.questions);
+    var answered = assessmentAnsweredCount(questions);
+    var total = questions.length;
+    var result = state.assessmentResult;
+    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(total - 1, 0)));
+    var currentQuestion = questions[currentIndex];
+
+    body += '<section class="panel full assessment-panel"><h3>' + escapeHtml(scale.title || "职业测评") + '</h3>' +
+      '<p>' + escapeHtml(scale.description || "完成答题后，系统会生成职业画像结果，并写入 CyanCruise 职业画像。") + '</p>' +
+      '<div class="route-progress-card"><div class="route-progress-head"><strong>' + answered + "/" + total +
+      '</strong><span>' + escapeHtml(total ? "第 " + (currentIndex + 1) + " / " + total + " 题" : "暂无题目") + '</span></div>' +
+      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' +
+      (total ? Math.round(answered * 100 / total) : 0) + '%"></span></div></div>' +
+      '</section>';
+
+    if (result && (result.resultSummary || result.summary)) {
+      body += '<section class="panel full assessment-result-wrap">' + assessmentResultPanel(result) +
+        '<div class="actions-row"><button type="button" data-assessment-back>返回测评列表</button></div></section>';
+      renderShell(item, body);
+      return;
+    }
+
+    body += '<section class="panel full assessment-quiz"><h3>开始答题</h3>' +
+      (currentQuestion ? assessmentQuestionCard(currentQuestion, currentIndex) : statePanel("暂无题目", "当前测评题库为空。", "warning")) +
+      '<div class="actions-row"><button type="button" class="secondary" data-assessment-prev ' +
+      (currentIndex <= 0 || state.assessmentSubmitting ? 'disabled aria-disabled="true"' : '') + '>上一题</button>' +
+      '<button type="button" class="secondary" data-assessment-back>返回测评列表</button>' +
+      (state.assessmentSubmitting ? '<button type="button" disabled aria-disabled="true">提交中</button>' : '') + '</div>' +
+      '</section>';
+
+    renderShell(item, body);
+  }
+
+  function loadAssessment() {
+    state.assessmentLoading = true;
+    state.assessmentError = null;
+    if (isFilePreview()) {
+      state.assessmentScales = previewAssessmentScaleSummaries();
+      state.assessmentScale = null;
+      state.assessmentRecords = [];
+      state.assessmentLoading = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+      return;
+    }
+    Promise.all([
+      post(endpoints.assessmentScales, {}),
+      hasUserIdentity() ? post(endpoints.assessmentRecords, state.identity.userId).catch(function () { return []; }) : Promise.resolve([])
+    ]).then(function (results) {
+      state.assessmentScales = normalizeArray(results[0]);
+      state.assessmentRecords = normalizeArray(results[1]);
+      if (!state.assessmentScales.length) {
+        throw new Error("没有可用的职业测评量表");
+      }
+      state.assessmentScale = null;
+      state.assessmentError = null;
+    }).catch(function (error) {
+      state.assessmentError = error.message || "职业测评题库暂不可用。";
+      state.assessmentScales = previewAssessmentScaleSummaries();
+      state.assessmentScale = null;
+    }).then(function () {
+      state.assessmentLoading = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+    });
+  }
+
+  function renderAssessmentList() {
+    var scales = normalizeArray(state.assessmentScales);
+    if (!scales.length) {
+      scales = previewAssessmentScaleSummaries();
+    }
+    var completed = completedAssessmentScaleIds();
+    return '<section class="feature-section assessment-list-section full"><div class="section-heading">' +
+      '<div><h3>选择职业测评</h3><p class="section-note">按你当前最想了解的问题选择测评，结果会写入职业画像。</p></div></div>' +
+      '<div class="assessment-list">' + scales.map(function (scale, index) {
+        var done = completed[String(scale.scaleId)];
+        var tone = index === 0 ? "app-icon-tile--cyan" : "app-icon-tile--candy";
+        return '<article class="assessment-card app-card-soft">' +
+          '<div class="card-left"><div class="app-icon-tile icon-box ' + tone + '"><span class="icon-glyph">' +
+          escapeHtml(index === 0 ? "测" : "题") + '</span></div><div class="card-info">' +
+          '<strong class="a-title">' + escapeHtml(scale.title) + '</strong>' +
+          '<span class="a-desc">' + escapeHtml(scale.description) + '</span>' +
+          '<div class="tags"><span class="tag tag-time">约 ' + estimateAssessmentMinutes(scale) + ' 分钟</span>' +
+          '<span class="tag tag-blue">' + escapeHtml(firstText(scale.questionCount, normalizeArray(scale.questions).length, 0)) + ' 题</span>' +
+          (done ? '<span class="tag tag-done">已完成</span>' : '') + '</div></div></div>' +
+          '<div class="card-right"><button type="button" class="btn-start" data-assessment-scale="' +
+          escapeAttr(scale.scaleId) + '">' + (done ? "重新测" : "开始") + '</button></div></article>';
+      }).join("") + '</div></section>';
+  }
+
+  function startAssessmentScale(scaleId) {
+    if (!scaleId) {
+      return;
+    }
+    state.assessmentSelectedScaleId = String(scaleId);
+    state.assessmentScale = null;
+    state.assessmentAnswers = {};
+    state.assessmentCurrentIndex = 0;
+    state.assessmentResult = null;
+    state.assessmentError = null;
+    if (isFilePreview()) {
+      state.assessmentScale = previewAssessmentScale(scaleId);
+      renderPage(pageByKey.assessment);
+      return;
+    }
+    state.assessmentLoading = true;
+    renderPage(pageByKey.assessment);
+    post(endpoints.assessmentQuestions, { scaleId: scaleId }).then(function (scale) {
+      state.assessmentScale = scale || previewAssessmentScale(scaleId);
+    }).catch(function (error) {
+      state.assessmentError = error.message || "职业测评题目暂不可用。";
+      state.assessmentScale = previewAssessmentScale(scaleId);
+    }).then(function () {
+      state.assessmentLoading = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+    });
+  }
+
+  function backToAssessmentList() {
+    state.assessmentSelectedScaleId = null;
+    state.assessmentScale = null;
+    state.assessmentAnswers = {};
+    state.assessmentCurrentIndex = 0;
+    state.assessmentResult = null;
+    renderPage(pageByKey.assessment);
+  }
+
+  function assessmentQuestionCard(question, index) {
+    var options = normalizeArray(question.options);
+    var selected = state.assessmentAnswers[String(question.questionId)];
+    return '<div class="route-control-card assessment-question"><div class="route-card-head"><h3>' +
+      (index + 1) + ". " + escapeHtml(question.questionText) + '</h3></div><div class="assessment-options">' +
+      options.map(function (option) {
+        var active = String(option.optionId) === String(selected) ? " active" : "";
+        return '<button type="button" class="route-horizon-button' + active + '" data-assessment-question="' +
+          escapeAttr(question.questionId) + '" data-assessment-option="' + escapeAttr(option.optionId) + '">' +
+          '<strong>' + escapeHtml(option.optionLabel) + '</strong><span>' + escapeHtml(option.optionText) + '</span></button>';
+      }).join("") + '</div></div>';
+  }
+
+  function chooseAssessmentOption(questionId, optionId) {
+    if (!questionId || !optionId || state.assessmentSubmitting) {
+      return;
+    }
+    state.assessmentAnswers[String(questionId)] = String(optionId);
+    var questions = normalizeArray(state.assessmentScale && state.assessmentScale.questions);
+    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(questions.length - 1, 0)));
+    if (questions.length && currentIndex < questions.length - 1) {
+      state.assessmentCurrentIndex = currentIndex + 1;
+    } else if (questions.length) {
+      submitAssessment();
+      return;
+    }
+    renderPage(pageByKey.assessment);
+  }
+
+  function previousAssessmentQuestion() {
+    state.assessmentCurrentIndex = Math.max(0, Number(state.assessmentCurrentIndex || 0) - 1);
+    renderPage(pageByKey.assessment);
+  }
+
+  function submitAssessment() {
+    var scale = state.assessmentScale;
+    var questions = normalizeArray(scale && scale.questions);
+    if (!scale || !scale.scaleId || !questions.length) {
+      showMessage("warning", "无法提交", "职业测评题库尚未加载完成。");
+      return;
+    }
+    if (!hasUserIdentity() || isFilePreview()) {
+      state.assessmentResult = previewAssessmentResult(scale);
+      state.snapshot = state.snapshot || {};
+      state.snapshot.assessment = {
+        scaleId: scale.scaleId,
+        scaleTitle: scale.title,
+        summary: state.assessmentResult.resultSummary,
+        suggestedRoles: state.assessmentResult.suggestedRoles
+      };
+      updateOverviewCards();
+      renderPage(pageByKey.assessment);
+      showMessage("info", "已生成预览结果", "当前未调用受保护后端，部署后会写入 CyanCruise 职业画像。");
+      return;
+    }
+    state.assessmentSubmitting = true;
+    renderPage(pageByKey.assessment);
+    post(endpoints.assessmentSubmit, {
+      userId: state.identity.userId,
+      scaleId: scale.scaleId,
+      answers: assessmentAnswersPayload()
+    }).then(function (result) {
+      state.assessmentResult = result;
+      state.assessmentRecords = [result].concat(state.assessmentRecords || []);
+      return post(endpoints.snapshot, state.identity.userId).catch(function () { return state.snapshot; });
+    }).then(function (snapshot) {
+      if (snapshot) {
+        state.snapshot = snapshot;
+      }
+      updateOverviewCards();
+      showMessage("info", "测评已完成", "结果已写入 CyanCruise 职业画像。");
+    }).catch(function (error) {
+      showMessage("error", "提交失败", error.message || "职业测评提交接口暂不可用。");
+    }).then(function () {
+      state.assessmentSubmitting = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+    });
+  }
+
+  function assessmentAnswersPayload() {
+    var out = {};
+    Object.keys(state.assessmentAnswers).forEach(function (key) {
+      out[key] = state.assessmentAnswers[key];
+    });
+    return out;
+  }
+
+  function assessmentAnsweredCount(questions) {
+    var count = 0;
+    questions.forEach(function (question) {
+      if (state.assessmentAnswers[String(question.questionId)]) {
+        count += 1;
+      }
+    });
+    return count;
+  }
+
+  function assessmentResultPanel(result) {
+    var summary = firstText(result.resultSummary, result.summary, "已完成");
+    var roles = normalizeArray(result.suggestedRoles);
+    var counts = result.dimensionCounts || {};
+    var rows = [
+      ["结果", summary],
+      ["量表", firstText(result.scaleTitle, getValue(state.snapshot, "assessment.scaleTitle"), "职业测评")],
+      ["记录", firstText(result.recordId, getValue(state.snapshot, "assessment.lastRecordId"), "预览")]
+    ];
+    return metricsPanel("测评结果", rows) +
+      '<section class="panel"><h3>推荐方向</h3><ul class="compact-list">' +
+      (roles.length ? roles : defaultAssessmentRoles(summary)).map(function (role) {
+        return '<li>' + escapeHtml(role) + '</li>';
+      }).join("") + '</ul><p class="section-note">维度计数：' +
+      escapeHtml(Object.keys(counts).map(function (key) { return key + "=" + counts[key]; }).join(" / ") || "预览结果") +
+      '</p></section>';
+  }
+
+  function latestAssessmentFromSnapshot() {
+    var assessment = getValue(state.snapshot, "assessment") || null;
+    if (!assessment) {
+      return null;
+    }
+    return {
+      recordId: assessment.lastRecordId,
+      scaleId: assessment.scaleId,
+      scaleTitle: assessment.scaleTitle,
+      resultSummary: assessment.summary,
+      suggestedRoles: assessment.suggestedRoles || [],
+      dimensionCounts: {}
+    };
+  }
+
+  function previewAssessmentScaleSummary() {
+    var scale = previewAssessmentScale();
+    return {
+      scaleId: scale.scaleId,
+      title: scale.title,
+      description: scale.description,
+      version: scale.version,
+      questionCount: scale.questions.length
+    };
+  }
+
+  function previewAssessmentScale() {
+    var questions = [
+      ["1", "在社交场合中，你通常会：", [["11", "A", "主动认识新朋友", "E"], ["12", "B", "和少数熟人交流", "I"]]],
+      ["2", "学习新内容时，你更喜欢：", [["21", "A", "按步骤掌握细节", "S"], ["22", "B", "先看整体图景", "N"]]],
+      ["3", "做决定时，你更看重：", [["31", "A", "逻辑和事实", "T"], ["32", "B", "人的感受", "F"]]],
+      ["4", "面对截止日期，你通常：", [["41", "A", "提前完成", "J"], ["42", "B", "临近时效率更高", "P"]]]
+    ];
+    return {
+      scaleId: 1001,
+      title: "MBTI 职业性格测评",
+      description: "预览题库，部署后使用后端 16 题完整题库。",
+      version: "preview",
+      questions: questions.map(function (row, index) {
+        return {
+          questionId: row[0],
+          questionText: row[1],
+          sortOrder: index + 1,
+          options: row[2].map(function (option) {
+            return { optionId: option[0], optionLabel: option[1], optionText: option[2], dimensionCode: option[3] };
+          })
+        };
+      })
+    };
+  }
+
+  function previewAssessmentResult(scale) {
+    var counts = {};
+    normalizeArray(scale.questions).forEach(function (question) {
+      var optionId = state.assessmentAnswers[String(question.questionId)];
+      var option = normalizeArray(question.options).filter(function (item) {
+        return String(item.optionId) === String(optionId);
+      })[0];
+      if (option && option.dimensionCode) {
+        counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
+      }
+    });
+    var summary = (counts.E >= counts.I ? "E" : "I") +
+      (counts.S >= counts.N ? "S" : "N") +
+      (counts.T >= counts.F ? "T" : "F") +
+      (counts.J >= counts.P ? "J" : "P");
+    return {
+      recordId: "preview",
+      scaleId: scale.scaleId,
+      scaleTitle: scale.title,
+      status: "COMPLETED",
+      resultSummary: summary,
+      dimensionCounts: counts,
+      suggestedRoles: defaultAssessmentRoles(summary)
+    };
+  }
+
+  function defaultAssessmentRoles(summary) {
+    if (summary.indexOf("N") >= 0 && summary.indexOf("T") >= 0) {
+      return ["产品经理", "数据分析师", "后端开发工程师"];
+    }
+    if (summary.indexOf("F") >= 0) {
+      return ["用户研究员", "人力资源专员", "客户成功顾问"];
+    }
+    return ["软件工程师", "业务分析师", "解决方案顾问"];
+  }
+
+  function latestAssessmentFromSnapshot(scaleId) {
+    var assessment = getValue(state.snapshot, "assessment") || null;
+    if (!assessment) {
+      return null;
+    }
+    if (scaleId && assessment.scaleId && String(scaleId) !== String(assessment.scaleId)) {
+      return null;
+    }
+    return {
+      recordId: assessment.lastRecordId,
+      scaleId: assessment.scaleId,
+      scaleTitle: assessment.scaleTitle,
+      resultSummary: assessment.summary,
+      suggestedRoles: assessment.suggestedRoles || [],
+      dimensionCounts: {}
+    };
+  }
+
+  function selectedAssessmentScaleSummary() {
+    var scales = normalizeArray(state.assessmentScales);
+    for (var i = 0; i < scales.length; i += 1) {
+      if (String(scales[i].scaleId) === String(state.assessmentSelectedScaleId)) {
+        return scales[i];
+      }
+    }
+    return null;
+  }
+
+  function completedAssessmentScaleIds() {
+    var out = {};
+    normalizeArray(state.assessmentRecords).forEach(function (record) {
+      if (record && record.scaleId) {
+        out[String(record.scaleId)] = true;
+      }
+    });
+    var assessment = getValue(state.snapshot, "assessment") || {};
+    if (assessment.scaleId) {
+      out[String(assessment.scaleId)] = true;
+    }
+    return out;
+  }
+
+  function estimateAssessmentMinutes(scale) {
+    var count = Number(firstText(scale && scale.questionCount, normalizeArray(scale && scale.questions).length, 0));
+    return Math.max(1, Math.round(count * 12 / 60));
+  }
+
+  function previewAssessmentScaleSummaries() {
+    return ["1001", "1002", "1003", "1004", "1005"].map(function (scaleId) {
+      var scale = previewAssessmentScale(scaleId);
+      return {
+        scaleId: scale.scaleId,
+        title: scale.title,
+        description: scale.description,
+        version: scale.version,
+        questionCount: scale.questions.length
+      };
+    });
+  }
+
+  function previewAssessmentScale(scaleId) {
+    var id = String(scaleId || state.assessmentSelectedScaleId || "1001");
+    var meta = previewAssessmentMeta()[id] || previewAssessmentMeta()["1001"];
+    return {
+      scaleId: Number(id),
+      title: meta[0],
+      description: meta[1],
+      version: "preview",
+      questions: meta[2].map(function (row, index) {
+        return {
+          questionId: id + row[0],
+          questionText: row[1],
+          sortOrder: index + 1,
+          options: row[2].map(function (option) {
+            return { optionId: id + option[0], optionLabel: option[1], optionText: option[2], dimensionCode: option[3] };
+          })
+        };
+      })
+    };
+  }
+
+  function previewAssessmentMeta() {
+    return {
+      "1001": ["性格倾向测评(MBTI)", "探索你在四个维度上的性格倾向，帮助了解自己的思维与决策风格。", [
+        ["1", "在社交场合中，你通常会：", [["11", "A", "主动认识新朋友", "E"], ["12", "B", "和少数熟人交流", "I"]]],
+        ["2", "学习新内容时，你更喜欢：", [["21", "A", "按步骤掌握细节", "S"], ["22", "B", "先看整体图景", "N"]]],
+        ["3", "做决定时，你更看重：", [["31", "A", "逻辑和事实", "T"], ["32", "B", "人的感受", "F"]]],
+        ["4", "面对截止日期，你通常：", [["41", "A", "提前完成", "J"], ["42", "B", "临近时效率更高", "P"]]]
+      ]],
+      "1002": ["RIASEC职业兴趣", "Holland职业兴趣测评，探索你的实际型、研究型、艺术型、社会型、企业型、常规型倾向。", [
+        ["1", "更吸引你的任务是：", [["101", "A", "修理设备或处理工具", "R"], ["102", "B", "分析问题或验证假设", "I"]]],
+        ["2", "你更愿意参与：", [["201", "A", "创意表达或设计内容", "A"], ["202", "B", "帮助他人或教学辅导", "S"]]],
+        ["3", "团队中你更自然承担：", [["301", "A", "推动决策和组织行动", "E"], ["302", "B", "整理资料和检查细节", "C"]]]
+      ]],
+      "1003": ["大五人格(BIG5)", "测量开放性、尽责性、外向性、宜人性、神经质五大人格维度。", [
+        ["1", "你更像是：", [["101", "A", "喜欢新想法和跨界探索", "O"], ["102", "B", "重视计划和完成质量", "C"]]],
+        ["2", "别人更常说你：", [["201", "A", "外向、活跃", "E"], ["202", "B", "温和、配合", "A"]]],
+        ["3", "压力来临时你通常：", [["301", "A", "情绪波动明显", "N"], ["302", "B", "先拆任务再推进", "C"]]]
+      ]],
+      "1004": ["职业价值观", "了解你最看重的职业价值维度：成就感、安全感、自主性、社会服务、地位声望、多样挑战。", [
+        ["1", "你更看重工作带来：", [["101", "A", "明确成果和成长成就", "ACH"], ["102", "B", "稳定收入和安全边界", "SEC"]]],
+        ["2", "你更希望拥有：", [["201", "A", "自主安排和决策空间", "AUT"], ["202", "B", "帮助他人和社会价值", "SOC"]]],
+        ["3", "更吸引你的是：", [["301", "A", "更高平台或行业认可", "STA"], ["302", "B", "不同任务和持续挑战", "VAR"]]]
+      ]],
+      "1005": ["压力应对测评", "评估你在压力情境中的应对风格和情绪调节模式。", [
+        ["1", "压力出现时，你通常先：", [["101", "A", "拆解问题并找行动", "PROBLEM"], ["102", "B", "先处理情绪和感受", "EMOTION"]]],
+        ["2", "遇到不确定任务，你更倾向于：", [["201", "A", "列计划控制节奏", "PLAN"], ["202", "B", "找人讨论获得支持", "SUPPORT"]]],
+        ["3", "当结果不理想时，你更常：", [["301", "A", "复盘并重新解释问题", "REFRAME"], ["302", "B", "暂时回避等状态恢复", "AVOID"]]]
+      ]]
+    };
+  }
+
+  function previewAssessmentResult(scale) {
+    var counts = {};
+    normalizeArray(scale.questions).forEach(function (question) {
+      var optionId = state.assessmentAnswers[String(question.questionId)];
+      var option = normalizeArray(question.options).filter(function (item) {
+        return String(item.optionId) === String(optionId);
+      })[0];
+      if (option && option.dimensionCode) {
+        counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
+      }
+    });
+    var isMbti = String(scale.title || "").toUpperCase().indexOf("MBTI") >= 0;
+    var summary = isMbti
+      ? (counts.E >= counts.I ? "E" : "I") +
+        (counts.S >= counts.N ? "S" : "N") +
+        (counts.T >= counts.F ? "T" : "F") +
+        (counts.J >= counts.P ? "J" : "P")
+      : topAssessmentDimensions(counts);
+    return {
+      recordId: "preview",
+      scaleId: scale.scaleId,
+      scaleTitle: scale.title,
+      status: "COMPLETED",
+      resultSummary: summary,
+      dimensionCounts: counts,
+      suggestedRoles: defaultAssessmentRoles(summary)
+    };
+  }
+
+  function topAssessmentDimensions(counts) {
+    var keys = Object.keys(counts || {});
+    keys.sort(function (left, right) {
+      var diff = (counts[right] || 0) - (counts[left] || 0);
+      return diff || left.localeCompare(right);
+    });
+    return keys.slice(0, 3).join("") || "N/A";
+  }
+
+  function defaultAssessmentRoles(summary) {
+    if (summary.indexOf("N") >= 0 && summary.indexOf("T") >= 0) {
+      return ["产品经理", "数据分析师", "后端开发工程师"];
+    }
+    if (summary.indexOf("F") >= 0 || summary.indexOf("S") >= 0) {
+      return ["用户研究员", "人力资源专员", "客户成功顾问"];
+    }
+    return ["软件工程师", "业务分析师", "解决方案顾问"];
+  }
+
   function renderContractPage(item) {
     var endpointRows = item.endpoints.map(function (name) {
       return ["WebAPI", endpoints[name] || name];
@@ -2230,14 +2812,15 @@
   }
 
   function pageHeaderActions(item) {
+    if (item.key === "workbench" || (item.key === "assessment" && state.assessmentSelectedScaleId)) {
+      return "";
+    }
     var back = backRouteFor(item.key);
     var actions = [];
     if (back) {
       actions.push('<button type="button" class="secondary" data-back-route="' + escapeHtml(back) + '">返回</button>');
     }
-    if (item.key !== "workbench") {
-      actions.push('<button type="button" class="secondary" data-link="workbench">首页</button>');
-    }
+    actions.push('<button type="button" class="secondary" data-link="workbench">首页</button>');
     return actions.length ? '<div class="page-actions">' + actions.join("") + '</div>' : "";
   }
 
@@ -2311,6 +2894,44 @@
       showResourceDetailDialog(resourceTarget.getAttribute("data-resource-detail"));
       return;
     }
+    var assessmentOptionTarget = findAssessmentOptionTarget(event.target);
+    if (assessmentOptionTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      chooseAssessmentOption(
+        assessmentOptionTarget.getAttribute("data-assessment-question"),
+        assessmentOptionTarget.getAttribute("data-assessment-option")
+      );
+      return;
+    }
+    var assessmentScaleTarget = findAssessmentScaleTarget(event.target);
+    if (assessmentScaleTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      startAssessmentScale(assessmentScaleTarget.getAttribute("data-assessment-scale"));
+      return;
+    }
+    var assessmentBackTarget = findAssessmentBackTarget(event.target);
+    if (assessmentBackTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      backToAssessmentList();
+      return;
+    }
+    var assessmentPrevTarget = findAssessmentPrevTarget(event.target);
+    if (assessmentPrevTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      previousAssessmentQuestion();
+      return;
+    }
+    var assessmentSubmitTarget = findAssessmentSubmitTarget(event.target);
+    if (assessmentSubmitTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      submitAssessment();
+      return;
+    }
     var target = findPageLinkTarget(event.target);
     if (!target) {
       return;
@@ -2328,6 +2949,56 @@
   function findPageLinkTarget(node) {
     while (node && node !== els.pageHost) {
       if (node.getAttribute && (node.getAttribute("data-link") || node.getAttribute("data-back-route"))) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentOptionTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-option")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentScaleTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-scale")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentBackTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-back") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentPrevTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-prev") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentSubmitTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-submit") != null) {
         return node.disabled ? null : node;
       }
       node = node.parentNode;
@@ -2474,6 +3145,9 @@
   function rememberReturnRoute(route, sourceRoute) {
     var key = normalizeRoute(route);
     var source = normalizeRoute(sourceRoute);
+    if (key === "workbench") {
+      return;
+    }
     if (!pageByKey[key] || !pageByKey[source] || key === source) {
       return;
     }
@@ -2579,7 +3253,6 @@
       showMessage("info", "契约预览", "file:// 模式不调用后端；部署到苍穹或 Web 服务后可请求 WebAPI。");
       return;
     }
-    showMessage("info", "正在加载", "读取画像、今日行动、简历、计划和面试摘要。");
     Promise.all([
       post(endpoints.snapshot, state.identity.userId).catch(asUnavailable),
       post(endpoints.today, state.identity.userId).catch(asUnavailable),
@@ -2594,7 +3267,6 @@
       state.interviews = normalizeArray(results[4]);
       updateOverviewCards();
       renderPage(pageByKey[state.route]);
-      showMessage("info", "已加载", "页面按当前身份刷新完成。");
     }).catch(function (error) {
       renderPreview();
       showMessage("error", "加载失败", error.message || "后端暂不可用，已保留可恢复页面状态。");
@@ -2993,7 +3665,6 @@
         source: firstText(identity.source, "cc001-identity-current")
       };
       updateIdentityState();
-      renderPage(pageByKey[state.route]);
     }).catch(function (error) {
       showMessage("warning", "平台身份调用失败", error && error.message ? error.message : "identity request failed");
     });
@@ -3305,7 +3976,7 @@
     if (resume && (resume.lastResumeId || resume.targetJob)) {
       score += 30;
     }
-    if (assessment && (assessment.latestRecordId || assessment.resultCode || assessment.mbtiType)) {
+    if (assessment && (assessment.latestRecordId || assessment.lastRecordId || assessment.resultCode || assessment.resultSummary || assessment.summary || assessment.mbtiType)) {
       score += 25;
     }
     if (resume && resume.diagnosisScore) {

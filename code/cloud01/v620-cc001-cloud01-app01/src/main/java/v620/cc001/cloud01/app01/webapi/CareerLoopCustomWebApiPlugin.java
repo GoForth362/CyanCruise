@@ -140,9 +140,22 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             if ("/cc001/career-agent/today/get".equals(path)) {
                 return ApiResult.success(agentWebApi.todayByUserId(extractUserId(body)));
             }
+            if ("/cc001/assessment/scales".equals(path)) {
+                return ApiResult.success(assessmentWebApi.scales());
+            }
+            if ("/cc001/assessment/questions".equals(path)) {
+                return ApiResult.success(assessmentWebApi.questions(longObject(value(body, "scaleId"))));
+            }
             if ("/cc001/assessment/submit".equals(path)) {
                 return ApiResult.success(assessmentWebApi.submit(
                         extractUserId(body), extractAssessmentScale(body), extractAssessmentSubmitRequest(body)));
+            }
+            if ("/cc001/assessment/records".equals(path)) {
+                return ApiResult.success(assessmentWebApi.records(extractUserId(body)));
+            }
+            if ("/cc001/assessment/record/get".equals(path)) {
+                return ApiResult.success(assessmentWebApi.record(
+                        extractUserId(body), longObject(value(body, "recordId"))));
             }
             if ("/cc001/resume/list".equals(path)) {
                 return ApiResult.success(resumeWebApi.list(extractUserId(body)));
