@@ -611,7 +611,7 @@
           "body": ["fileUrlOrKey"],
           "userIdRequired": false,
           "dto": "FileTextExtractionResult",
-          "fallback": "Return empty text and keep diagnosis metadata flow available."
+          "fallback": "Return explicit empty, unsupported, unavailable, or failed status without inventing document text."
         }
       ]
     },
@@ -623,13 +623,22 @@
       "status": "available",
       "webApis": [
         {
+          "name": "resume list for revision",
+          "method": "POST",
+          "path": "/cc001/resume/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<ResumeRecordDto>",
+          "fallback": "Show create-resume action before diagnosis."
+        },
+        {
           "name": "analyze resume",
           "method": "POST",
           "path": "/cc001/resume-diagnosis/analyze",
           "body": ["userId", "request"],
           "userIdRequired": true,
-          "dto": "ResumeDiagnosisRequest -> ResumeDiagnosisResultDto",
-          "fallback": "Show diagnosis unavailable until resume content exists."
+          "dto": "ResumeDiagnosisRequest -> ResumeDiagnosisResultDto with PDF text extraction and revision suggestions",
+          "fallback": "When saved text is empty, extract the owned PDF first; preserve inputs and show a retry or scanned-document message on failure."
         },
         {
           "name": "keyword status",
@@ -639,6 +648,24 @@
           "userIdRequired": true,
           "dto": "ResumeKeywordStatusDto",
           "fallback": "Show keyword status pending."
+        },
+        {
+          "name": "career profile snapshot for revision context",
+          "method": "POST",
+          "path": "/cc001/career-profile/snapshot/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "UserProfileSnapshot",
+          "fallback": "Use the selected resume target job or manual target role."
+        },
+        {
+          "name": "resume file preview",
+          "method": "POST",
+          "path": "/cc001/files/preview-url",
+          "body": ["fileUrlOrKey", "ttlSeconds"],
+          "userIdRequired": false,
+          "dto": "FilePreviewResult",
+          "fallback": "Show file preview unavailable without blocking diagnosis."
         }
       ]
     },

@@ -16,6 +16,11 @@ public class ResumeDiagnosisResultDto implements Serializable {
     private List<String> strengths = new ArrayList<String>();
     private List<String> weaknesses = new ArrayList<String>();
     private List<String> suggestions = new ArrayList<String>();
+    private List<ResumeDiagnosisScoreItemDto> scoreBreakdown = new ArrayList<ResumeDiagnosisScoreItemDto>();
+    private List<ResumeRevisionSuggestionDto> revisionSuggestions = new ArrayList<ResumeRevisionSuggestionDto>();
+    private ResumeRevisionPlanDto revisionPlan;
+    private List<String> contextSources = new ArrayList<String>();
+    private String fallbackStatus;
     private String rawAnalysis;
 
     public Long getResumeId() {
@@ -56,6 +61,47 @@ public class ResumeDiagnosisResultDto implements Serializable {
 
     public void setSuggestions(List<String> suggestions) {
         this.suggestions = suggestions == null ? new ArrayList<String>() : suggestions;
+    }
+
+    public List<ResumeDiagnosisScoreItemDto> getScoreBreakdown() {
+        return scoreBreakdown;
+    }
+
+    public void setScoreBreakdown(List<ResumeDiagnosisScoreItemDto> scoreBreakdown) {
+        this.scoreBreakdown = scoreBreakdown == null
+                ? new ArrayList<ResumeDiagnosisScoreItemDto>() : scoreBreakdown;
+    }
+
+    public List<ResumeRevisionSuggestionDto> getRevisionSuggestions() {
+        return revisionSuggestions;
+    }
+
+    public void setRevisionSuggestions(List<ResumeRevisionSuggestionDto> revisionSuggestions) {
+        this.revisionSuggestions = revisionSuggestions == null ? new ArrayList<ResumeRevisionSuggestionDto>() : revisionSuggestions;
+    }
+
+    public ResumeRevisionPlanDto getRevisionPlan() {
+        return revisionPlan;
+    }
+
+    public void setRevisionPlan(ResumeRevisionPlanDto revisionPlan) {
+        this.revisionPlan = revisionPlan;
+    }
+
+    public List<String> getContextSources() {
+        return contextSources;
+    }
+
+    public void setContextSources(List<String> contextSources) {
+        this.contextSources = contextSources == null ? new ArrayList<String>() : contextSources;
+    }
+
+    public String getFallbackStatus() {
+        return fallbackStatus;
+    }
+
+    public void setFallbackStatus(String fallbackStatus) {
+        this.fallbackStatus = fallbackStatus;
     }
 
     public String getRawAnalysis() {

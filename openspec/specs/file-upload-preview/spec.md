@@ -216,3 +216,33 @@ The file upload preview capability SHALL integrate with a production Cosmic file
 - **WHEN** 开发者使用 `?ccDebug=1#file-upload-preview` 或 hash 直达方式打开文件上传预览页面
 - **THEN** 页面 SHALL 保留文件上传、预览、下载、删除和文本抽取契约信息，用于排查 BOS 文件服务接入
 
+
+
+### Requirement: 简历诊断复用文件边界
+简历诊断页面 SHALL 复用现有文件上传预览和文本提取边界。页面 MAY 为已有 `fileKey` 请求预览 URL 或文本提取，但文件 adapter unavailable、skipped 或 failed SHALL 只影响文件局部面板，不得阻断已有简历诊断和诊断建议查看。
+
+#### Scenario: 文件预览可用
+- **WHEN** 用户选择的简历包含 `fileKey` 且文件 adapter 返回预览 URL
+- **THEN** 页面提供打开或查看预览的入口，并继续允许诊断
+
+#### Scenario: 文件预览不可用
+- **WHEN** 文件 adapter 无法生成预览 URL
+- **THEN** 页面显示预览不可用状态，但仍允许用户基于已保存简历文本或手工粘贴文本发起诊断
+
+### Requirement: 不迁移 IPD 文件运行时
+简历诊断能力 SHALL NOT 直接迁移 IPD 的 Spring Multipart、Aliyun OSS SDK、PDFBox、Flyway SQL、Vue 或 uni-app 文件选择实现。CyanCruise SHALL 只迁移稳定 object key、文本提取结果、预览失败降级和业务流程语义。
+
+#### Scenario: 依赖审查
+- **WHEN** 审查本 change 的依赖和实现
+- **THEN** 不应出现新增 PDFBox、OSS SDK、Spring Multipart、Vue 或 uni-app 运行时依赖
+
+### Requirement: 文件边界支持 PDF 正文提取
+文件文本提取边界 SHALL 在对象 key 以 `.pdf` 结尾时使用 PDF 提取器，在 `.txt` 或 `.md` 时继续使用 UTF-8 纯文本提取器。文件下载失败、解析器不可用和正文为空 SHALL 返回不同的可恢复状态。
+
+#### Scenario: 从 BOS 文件提取 PDF 正文
+- **WHEN** 已授权用户请求提取有效 PDF object key 且文件下载成功
+- **THEN** 文件服务将下载字节交给 PDF 提取器并返回正文结果
+
+#### Scenario: 文件下载失败
+- **WHEN** BOS provider 无法下载指定 object key
+- **THEN** 系统返回下载失败或不可用状态，并且不调用 PDF 解析器

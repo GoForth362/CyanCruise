@@ -12,7 +12,8 @@ dependencies {
 	api 'org.postgresql:postgresql:42.7.3'
 	api 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
 	api 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.5'
+	implementation 'org.apache.pdfbox:pdfbox:2.0.31'
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
-} 
+}
 
 

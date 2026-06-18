@@ -57,6 +57,27 @@ class CareerPlanApplicationServiceTest {
     }
 
     @Test
+    void getSummaryRefreshesStoredPlanWhenProfileTargetRoleChanges() {
+        InMemoryCareerPlanStorage planStorage = new InMemoryCareerPlanStorage();
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage(), planStorage);
+        CareerPlanApplicationService service = service(planStorage, profileService);
+        CareerPlanSaveRequest oldPlan = new CareerPlanSaveRequest();
+        oldPlan.setTargetRole("Frontend Engineer");
+        oldPlan.setWeeklyFocus(Arrays.asList("Build UI portfolio"));
+        service.savePlan("plan-user-target-refresh", oldPlan);
+
+        CareerProfilePreferencesRequest preferences = new CareerProfilePreferencesRequest();
+        preferences.setTargetRole("Backend Engineer");
+        profileService.savePreferences("plan-user-target-refresh", preferences);
+
+        CareerPlanSummaryDto summary = service.getSummary("plan-user-target-refresh");
+
+        assertEquals("Backend Engineer", summary.getTargetRole());
+        assertTrue(summary.getWeeklyFocus().get(0).contains("Backend Engineer"));
+        assertEquals("Backend Engineer", planStorage.load("plan-user-target-refresh").getTargetRole());
+    }
+
+    @Test
     void savePlanUpdatesSameUserAndIncrementsVersion() {
         CareerPlanApplicationService service = service(new InMemoryCareerPlanStorage(),
                 profileService(new InMemoryCareerProfileStorage(), null));

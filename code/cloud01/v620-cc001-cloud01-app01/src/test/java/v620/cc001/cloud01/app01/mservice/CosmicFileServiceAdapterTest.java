@@ -68,7 +68,7 @@ class CosmicFileServiceAdapterTest {
     }
 
     @Test
-    void unsupportedTextExtractionReturnsUnavailableWithoutBreakingDownload() {
+    void damagedPdfReturnsParseFailureWithoutBreakingDownload() {
         RecordingCosmicFileProvider provider = new RecordingCosmicFileProvider();
         provider.textExtractionAvailable = false;
         FileUploadPreviewApplicationService service = CareerLoopFileServiceAdapterFactory.production(
@@ -76,7 +76,7 @@ class CosmicFileServiceAdapterTest {
         FileUploadResult uploaded = service.upload(upload("resumes", "resume.pdf", new byte[]{1, 2, 3}));
 
         assertEquals(FileConstants.STATUS_OK, service.download(uploaded.getFile().getObjectKey()).getStatus());
-        assertEquals(FileConstants.STATUS_UNAVAILABLE, service.extractText(uploaded.getFile().getObjectKey()).getStatus());
+        assertEquals("PDF_PARSE_FAILED", service.extractText(uploaded.getFile().getObjectKey()).getStatus());
     }
 
     @Test

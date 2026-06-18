@@ -1,13 +1,13 @@
 # 简历诊断规格
 
 ## Purpose
-定义 CyanCruise 如何基于简历文本、目标 JD 和已保存简历记录生成诊断结果、抽取简历关键词并维护关键词状态，为今日行动、职业计划和后续 AI 适配提供稳定后端契约。
+定义 CyanCruise 如何基于简历文本、目标岗位要求 和已保存简历记录生成诊断结果、抽取简历关键词并维护关键词状态，为今日行动、职业计划和后续 AI 适配提供稳定后端契约。
 ## Requirements
 ### Requirement: 发起简历诊断
-系统 SHALL 支持用户基于 resumeId 或直接简历文本发起简历诊断。诊断请求 SHALL 包含用户 ID、可选 resumeId、可选 resumeText、可选目标 JD 和可选画像上下文。若未提供 resumeText 且提供 resumeId，系统 SHALL 读取该用户拥有的简历记录并使用其 parsedContent 作为诊断文本。
+系统 SHALL 支持用户基于 resumeId 或直接简历文本发起简历诊断。诊断请求 SHALL 包含用户 ID、可选 resumeId、可选 resumeText、可选目标岗位要求 和可选画像上下文。若未提供 resumeText 且提供 resumeId，系统 SHALL 读取该用户拥有的简历记录并使用其 parsedContent 作为诊断文本。
 
 #### Scenario: 使用简历文本诊断
-- **WHEN** 用户提交非空 resumeText 和可选目标 JD
+- **WHEN** 用户提交非空 resumeText 和可选目标岗位要求
 - **THEN** 系统基于该文本生成诊断结果，而不要求 resumeId
 
 #### Scenario: 使用 resumeId 诊断
@@ -134,3 +134,89 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 - **WHEN** 用户尝试读取、触发或回写不属于自己的 resumeId
 - **THEN** 系统 SHALL 拒绝该操作，并且 PostgreSQL 中其他用户数据保持不变
 
+
+
+### Requirement: 输出简历诊断建议
+简历诊断结果 SHALL 在保留 `overallScore`、`strengths`、`weaknesses`、`suggestions` 和 `rawAnalysis` 的基础上，支持返回结构化简历诊断建议和优化计划摘要。旧调用方未消费新字段时，既有字段语义 SHALL 保持兼容。
+
+#### Scenario: AI 返回结构化诊断建议
+- **WHEN** AI 诊断响应包含 revision suggestions JSON
+- **THEN** 系统解析为结构化建议列表，并同步保留普通 suggestions 以兼容旧页面
+
+#### Scenario: AI 只返回普通文本
+- **WHEN** AI 或 fallback analyzer 只返回普通建议文本
+- **THEN** 系统从普通文本生成至少一条可展示的诊断建议，或返回空建议列表和明确的 fallback 状态
+
+#### Scenario: 旧诊断记录可读取
+- **WHEN** PostgreSQL 中已有旧版诊断 payload 没有结构化建议字段
+- **THEN** 系统仍能读取诊断结果，并让页面退回展示 `suggestions`
+
+### Requirement: 保存最新诊断建议
+按 `resumeId` 完成的简历诊断 SHALL 将最新结构化诊断建议随诊断结果保存到现有简历诊断存储边界，并 SHALL 将 `overallScore` 和关键建议摘要同步到简历记录及用户画像 resume block。
+
+#### Scenario: 保存诊断建议
+- **WHEN** 用户对自己拥有的简历完成诊断
+- **THEN** 系统保存诊断分数、优缺点、普通建议和结构化诊断建议
+
+#### Scenario: 同步画像摘要
+- **WHEN** 诊断结果包含高优先级诊断建议
+- **THEN** 系统将最新诊断分数和关键建议摘要用于刷新用户画像中的简历状态
+
+### Requirement: 强化诊断上下文组装
+简历诊断 SHALL 在可用时组装目标岗位、目标岗位要求、用户画像摘要、测评结果、简历关键词和文件文本提取结果作为上下文。上下文缺失 SHALL 降级为明确提示或 fallback 规则，不得伪造不存在的画像、文件或 AI 能力。
+
+#### Scenario: 画像和岗位要求同时可用
+- **WHEN** 用户画像存在目标岗位且请求包含目标岗位要求
+- **THEN** 诊断上下文同时包含岗位、岗位要求和画像摘要，并在结果中保留上下文来源
+
+#### Scenario: AI provider 不可用
+- **WHEN** 真实 AI provider 未启用或返回 unavailable
+- **THEN** 系统使用确定性 fallback analyzer 生成基础诊断和诊断建议，并返回明确 fallback 状态
+
+### Requirement: 诊断前补齐 PDF 正文
+按 `resumeId` 发起诊断时，系统 SHALL 在所有权校验后优先读取已有 `parsedContent`；仅当正文为空且存在 `fileKey` 时，系统 SHALL 尝试通过文件文本提取边界读取 PDF 正文，成功后回写简历记录并继续既有诊断流程。
+
+#### Scenario: 缺少正文但 PDF 可提取
+- **WHEN** 用户自己的简历正文为空、存在 PDF `fileKey` 且提取成功
+- **THEN** 系统保存提取正文并基于该正文生成诊断结果
+
+#### Scenario: 扫描版 PDF 无正文
+- **WHEN** 简历 PDF 只有图片且未提供手工简历正文
+- **THEN** 系统不生成伪造诊断，并提示用户当前需要粘贴正文或等待图片文字识别能力
+
+#### Scenario: 已有正文不重复提取
+- **WHEN** 简历记录已有非空 `parsedContent`
+- **THEN** 系统直接使用已有正文诊断，不重新下载或解析 PDF
+
+### Requirement: 返回可解释评分明细
+简历诊断 SHALL 返回总分及分项评分。基础规则诊断 SHALL 使用内容完整度、目标岗位匹配、经历证据和表达清晰度四项标准，各项 SHALL 包含得分、满分和本次评分依据，满分合计 SHALL 为 100。
+
+#### Scenario: 基础规则诊断完成
+- **WHEN** 系统基于简历正文和岗位上下文完成规则诊断
+- **THEN** 结果返回四项评分明细，且各项得分之和等于总分
+
+#### Scenario: 旧结果没有评分明细
+- **WHEN** 系统读取只包含 `overallScore` 的旧诊断结果
+- **THEN** 旧结果仍可读取，页面显示总分并说明暂无分项依据
+
+### Requirement: 建议对应真实缺失信号
+基础规则诊断 SHALL 根据简历中是否识别到岗位相关词、项目或工作经历、量化成果、动作和结果表达生成对应建议。系统 SHALL NOT 在未检查相关信号时输出固定建议。
+
+#### Scenario: 缺少量化成果
+- **WHEN** 简历正文未识别到数字、百分比或数量结果
+- **THEN** 系统生成补充量化成果的建议、修改动作和具体示例
+
+#### Scenario: 岗位要求匹配不足
+- **WHEN** 已提供岗位要求但简历正文未识别到重合关键词
+- **THEN** 系统提示对照岗位要求补充真实经历证据，不使用行业缩写
+
+### Requirement: 目标岗位影响诊断结果
+按已有简历发起诊断时，系统 SHALL 使用该简历记录保存的目标岗位。基础规则 SHALL 根据前端、后端、数据、产品等岗位方向识别对应能力词，使不同目标岗位可以影响岗位匹配得分和建议。
+
+#### Scenario: 前端岗位简历包含前端能力
+- **WHEN** 所选简历目标岗位为前端方向且正文包含前端相关技术和经历
+- **THEN** 目标岗位匹配项识别到岗位证据并提高对应得分
+
+#### Scenario: 岗位方向与简历内容不匹配
+- **WHEN** 所选简历目标岗位为后端方向但正文只包含前端相关能力
+- **THEN** 系统降低目标岗位匹配得分并提示补充后端岗位的真实能力证据

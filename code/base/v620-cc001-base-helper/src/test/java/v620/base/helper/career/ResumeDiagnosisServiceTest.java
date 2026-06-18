@@ -20,12 +20,17 @@ class ResumeDiagnosisServiceTest {
 
     @Test
     void parsesStructuredDiagnosisJson() {
-        ResumeDiagnosisResultDto result = service.parseAnalysis("{\"overallScore\":88,\"strengths\":[\"项目清晰\"],\"weaknesses\":[\"量化不足\"],\"suggestions\":[\"补充指标\"]}");
+        ResumeDiagnosisResultDto result = service.parseAnalysis("{\"overallScore\":88,\"strengths\":[\"项目清晰\"],\"weaknesses\":[\"量化不足\"],\"suggestions\":[\"补充指标\"],\"revisionSuggestions\":[{\"suggestionId\":\"rev-a\",\"issueType\":\"METRIC\",\"priority\":\"HIGH\",\"resumeSection\":\"projects\",\"problem\":\"缺少结果\",\"action\":\"补充转化率\",\"rewriteExample\":\"将结果补成百分比\",\"evidence\":\"项目 A\",\"targetKeywords\":[\"Java\",\"Redis\"],\"status\":\"TODO\"}]}");
 
         assertEquals(Integer.valueOf(88), result.getOverallScore());
         assertEquals("项目清晰", result.getStrengths().get(0));
         assertEquals("量化不足", result.getWeaknesses().get(0));
         assertEquals("补充指标", result.getSuggestions().get(0));
+        assertEquals("rev-a", result.getRevisionSuggestions().get(0).getSuggestionId());
+        assertEquals("HIGH", result.getRevisionSuggestions().get(0).getPriority());
+        assertEquals("Redis", result.getRevisionSuggestions().get(0).getTargetKeywords().get(1));
+        assertEquals(Integer.valueOf(1), result.getRevisionPlan().getTotalSuggestions());
+        assertEquals(Integer.valueOf(1), result.getRevisionPlan().getHighPrioritySuggestions());
     }
 
     @Test
@@ -34,12 +39,15 @@ class ResumeDiagnosisServiceTest {
 
         assertEquals(Integer.valueOf(91), result.getOverallScore());
         assertTrue(result.getSuggestions().get(0).contains("Spring"));
+        assertEquals(1, result.getRevisionSuggestions().size());
+        assertTrue(result.getRevisionSuggestions().get(0).getAction().contains("Spring"));
     }
 
     @Test
     void usesDefaultScoreForEmptyOrInvalidAnalysis() {
         assertEquals(Integer.valueOf(ResumeDiagnosisConstants.DEFAULT_SCORE), service.parseAnalysis(null).getOverallScore());
         assertEquals(Integer.valueOf(ResumeDiagnosisConstants.DEFAULT_SCORE), service.parseAnalysis("没有分数").getOverallScore());
+        assertEquals(Integer.valueOf(0), service.parseAnalysis(null).getRevisionPlan().getTotalSuggestions());
     }
 
     @Test

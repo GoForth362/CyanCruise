@@ -542,6 +542,102 @@ h4 {
   margin-top: 0;
 }
 
+.diagnosis-score-section { margin: 20px 0; }
+.diagnosis-score-section h4 { margin: 0 0 12px; }
+.diagnosis-score-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 24px;
+}
+.diagnosis-score-item { min-width: 0; }
+.diagnosis-score-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.diagnosis-score-head span,
+.diagnosis-score-item p { color: var(--muted); }
+.diagnosis-score-track {
+  height: 7px;
+  margin: 8px 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #e5efeb;
+}
+.diagnosis-score-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #159b82;
+}
+.diagnosis-score-item p { margin: 0; line-height: 1.55; }
+.revision-problem { font-weight: 600; }
+
+.diagnosis-insight-group h4 { margin: 0 0 10px; }
+.diagnosis-insight-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.diagnosis-insight-list li {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  line-height: 1.6;
+}
+.diagnosis-insight-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 9px;
+  border-radius: 50%;
+  background: #159b82;
+}
+.diagnosis-insight-group.warning .diagnosis-insight-dot { background: #b67922; }
+.diagnosis-insight-group.action .diagnosis-insight-dot { background: #3974ad; }
+
+.diagnosis-target-display {
+  display: grid;
+  gap: 7px;
+  align-content: center;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+.diagnosis-target-display strong { font-size: 17px; }
+.diagnosis-target-display small { color: var(--muted); }
+
+.resume-upload-field {
+  display: grid;
+  gap: 8px;
+}
+
+#resumeParsedContent {
+  min-height: 240px;
+}
+
+.resume-upload-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.resume-upload-row button { white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .diagnosis-score-list { grid-template-columns: 1fr; }
+  .resume-upload-row { grid-template-columns: 1fr; }
+}
+
+.actions-row button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .panel-note.warning {
   color: var(--warning);
 }
@@ -1248,15 +1344,6 @@ h4 {
   color: var(--muted);
   line-height: 1.45;
   overflow-wrap: anywhere;
-}
-
-.feature-status {
-  position: absolute;
-  right: 12px;
-  top: 10px;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .assessment-list-section {

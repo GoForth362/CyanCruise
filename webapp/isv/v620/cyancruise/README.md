@@ -47,7 +47,7 @@
 | 就业 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=employment-home` | 已接入 |
 | 就业 / 简历 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-home` | 父级/分组 |
 | 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume` | 已接入 |
-| 就业 / 简历 / AI简历修改 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-diagnosis` | 已接入 |
+| 就业 / 简历 / AI简历诊断 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-diagnosis` | 已接入 |
 | 就业 / 面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-home` | 父级/分组 |
 | 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 已接入 |
 | 就业 / 面试 / AI模拟面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 已接入 |
@@ -66,7 +66,7 @@
 /ierp/isv/v620/cyancruise/index.htm?ccRoute=interview
 ```
 
-当前阶段就业只发布 IPD 已有主流程对应的四个核心入口：AI简历制作、AI简历修改、全景仿真面试、AI模拟面试。深造只提供考研、保研、留学方向入口，后续接 Agent 后再补全真实规划能力。乔布简历、简历微课、数字人面试、真题库和面试微课等能力暂不配置到平台菜单，待后续真实能力接入后再新增。
+当前阶段就业只发布 IPD 已有主流程对应的四个核心入口：AI简历制作、AI简历诊断、全景仿真面试、AI模拟面试。深造只提供考研、保研、留学方向入口，后续接 Agent 后再补全真实规划能力。乔布简历、简历微课、数字人面试、真题库和面试微课等能力暂不配置到平台菜单，待后续真实能力接入后再新增。
 
 ## 调试模式
 
