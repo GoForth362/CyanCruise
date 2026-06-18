@@ -8,9 +8,9 @@ import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.cloud01.app01.mservice.IdentityAwareCareerLoopWebApiBoundary;
 
 /**
- * Identity endpoint used by the static CareerLoop shell after it is opened from a Cosmic menu.
+ * Identity endpoint used by the static CyanCruise shell after it is opened from a Cosmic menu.
  */
-@ApiController(value = "careerLoopIdentityWebApi", desc = "CareerLoop 身份 API")
+@ApiController(value = "careerLoopIdentityWebApi", desc = "CyanCruise 身份 API")
 @ApiMapping("/cc001/identity")
 public class CareerLoopIdentityWebApi {
 

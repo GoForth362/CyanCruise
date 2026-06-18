@@ -165,6 +165,46 @@ class CareerLoopCustomWebApiPluginTest {
     }
 
     @Test
+    void routesAssessmentCatalogAndRecordsThroughCustomWebApiContract(@TempDir Path tempDir) {
+        IdentityAwareCareerLoopWebApiBoundary boundary =
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user"));
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir, boundary);
+
+        ApiResult scales = plugin.doCustomService(params("/cc001/assessment/scales", new HashMap<String, Object>()));
+        Map<String, Object> questionsBody = new HashMap<String, Object>();
+        questionsBody.put("scaleId", Long.valueOf(1001L));
+        ApiResult questions = plugin.doCustomService(params("/cc001/assessment/questions", questionsBody));
+        Map<String, Object> answers = new HashMap<String, Object>();
+        answers.put("100101", "100101");
+        answers.put("100102", "100201");
+        answers.put("100103", "100301");
+        answers.put("100104", "100401");
+        answers.put("100105", "100502");
+        answers.put("100106", "100602");
+        answers.put("100107", "100702");
+        answers.put("100108", "100802");
+        answers.put("100109", "100901");
+        answers.put("100110", "101001");
+        answers.put("100111", "101101");
+        answers.put("100112", "101201");
+        answers.put("100113", "101302");
+        answers.put("100114", "101402");
+        answers.put("100115", "101502");
+        answers.put("100116", "101602");
+        Map<String, Object> submitBody = new HashMap<String, Object>();
+        submitBody.put("userId", "api-user");
+        submitBody.put("scaleId", Long.valueOf(1001L));
+        submitBody.put("answers", answers);
+        ApiResult submit = plugin.doCustomService(params("/cc001/assessment/submit", submitBody));
+        ApiResult records = plugin.doCustomService(params("/cc001/assessment/records", submitBody));
+
+        assertTrue(scales.getSuccess());
+        assertTrue(questions.getSuccess());
+        assertTrue(submit.getSuccess());
+        assertTrue(records.getSuccess());
+    }
+
+    @Test
     void routeMapWebApisAreDeclaredInCustomRouter() throws Exception {
         String routeMap = new String(Files.readAllBytes(workspaceFile(
                 "webapp/isv/v620/cyancruise/cyancruise-routes.json")), "UTF-8");
@@ -186,7 +226,7 @@ class CareerLoopCustomWebApiPluginTest {
         ApiResult result = plugin.doCustomService(params("/cc001/missing", new HashMap<String, Object>()));
 
         assertFalse(result.getSuccess());
-        assertEquals("Unsupported CareerLoop custom WebAPI path: /cc001/missing", result.getMessage());
+        assertEquals("Unsupported CyanCruise custom WebAPI path: /cc001/missing", result.getMessage());
     }
 
     private Map<String, Object> params(String path, Object body) {

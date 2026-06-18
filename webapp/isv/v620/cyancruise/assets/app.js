@@ -8,7 +8,11 @@
     draftClear: "/cc001/career-profile/draft/clear",
     onboarding: "/cc001/career-profile/onboarding/save",
     today: "/cc001/career-agent/today/get",
+    assessmentScales: "/cc001/assessment/scales",
+    assessmentQuestions: "/cc001/assessment/questions",
     assessmentSubmit: "/cc001/assessment/submit",
+    assessmentRecords: "/cc001/assessment/records",
+    assessmentRecord: "/cc001/assessment/record/get",
     resumes: "/cc001/resume/list",
     resumeCreate: "/cc001/resume/create",
     resumeDelete: "/cc001/resume/delete",
@@ -46,18 +50,18 @@
     page("workbench", "CyanCruise 首页", "available", "user", "填写用户画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
     page("employment-home", "就业", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
     page("further-study-home", "深造", "available", "user", "考研、保研和留学方向规划入口。", ["snapshot", "plan"]),
-    page("postgraduate-exam", "考研", "entry-only", "user", "考研规划入口，后续接入规划 Agent。", ["plan"]),
-    page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划 Agent。", ["plan"]),
-    page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划 Agent。", ["plan"]),
+    page("postgraduate-exam", "考研", "entry-only", "user", "考研规划入口，后续接入规划智能体。", ["plan"]),
+    page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划智能体。", ["plan"]),
+    page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划智能体。", ["plan"]),
     page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
-    page("today-action", "今日行动", "entry-only", "user", "等待完整用户画像生成后，由 AI 给出下一步建议。", ["today"]),
+    page("today-action", "今日行动", "entry-only", "user", "根据路径规划拆解每天应该推进的事项。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
-    page("resume-home", "简历", "available", "user", "AI 简历制作和 AI 简历修改入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+    page("resume-home", "简历", "available", "user", "简历制作和简历修改入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
-    page("career-plan", "AI路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划 Agent。", ["plan", "ensurePlan"]),
-    page("interview-home", "面试", "available", "user", "全景仿真面试和 AI 模拟面试入口。", ["interviews", "startInterview"]),
+    page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
+    page("interview-home", "面试", "available", "user", "全景仿真面试和模拟面试入口。", ["interviews", "startInterview"]),
     page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
@@ -70,10 +74,10 @@
   var platformMenuLinks = [
     ["CyanCruise 首页", "#workbench", "已接入"],
     ["就业", "#employment-home", "已接入"],
-    ["简历 / AI简历制作", "#resume-home", "已接入"],
-    ["简历 / AI简历修改", "#resume-diagnosis", "已接入"],
+    ["简历 / 简历制作", "#resume-home", "已接入"],
+    ["简历 / 简历修改", "#resume-diagnosis", "已接入"],
     ["面试 / 全景仿真面试", "#interview-home", "已接入"],
-    ["面试 / AI模拟面试", "#interview", "已接入"],
+    ["面试 / 模拟面试", "#interview", "已接入"],
     ["深造", "#further-study-home", "规划中"],
     ["深造 / 考研", "#postgraduate-exam", "规划中"],
     ["深造 / 保研", "#postgraduate-recommendation", "规划中"],
@@ -81,23 +85,23 @@
   ];
   var featureGroups = {
     "employment-home": [
-      feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
-      feature("AI简历修改", "改", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
+      feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
+      feature("简历修改", "改", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
       feature("全景仿真面试", "仿", "按目标岗位进入真实面试流程练习", "interview", "已接入"),
-      feature("AI模拟面试", "AI", "查看面试历史并开始 AI 模拟练习", "interview", "已接入")
+      feature("模拟面试", "面", "查看面试历史并开始模拟练习", "interview", "已接入")
     ],
     "resume-home": [
-      feature("AI简历制作", "AI", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
-      feature("AI简历修改", "改", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
+      feature("简历制作", "简", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
+      feature("简历修改", "改", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
     ],
     "interview-home": [
       feature("全景仿真面试", "仿", "沿用 IPD 模拟面试流程，按目标岗位进入练习", "interview", "已接入"),
-      feature("AI模拟面试", "AI", "沿用 IPD AI 追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
+      feature("模拟面试", "面", "沿用 IPD 面试追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
     ],
     "further-study-home": [
-      feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划 Agent", "postgraduate-exam", "规划中"),
-      feature("保研", "保", "记录排名、加分项和目标院校，后续接入保研规划 Agent", "postgraduate-recommendation", "规划中"),
-      feature("留学", "留", "记录语言、GPA 和背景提升计划，后续接入留学规划 Agent", "study-abroad", "规划中")
+      feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划智能体", "postgraduate-exam", "规划中"),
+      feature("保研", "保", "记录排名、加分项和目标院校，后续接入保研规划智能体", "postgraduate-recommendation", "规划中"),
+      feature("留学", "留", "记录语言、GPA 和背景提升计划，后续接入留学规划智能体", "study-abroad", "规划中")
     ]
   };
   var els = {};
@@ -114,7 +118,27 @@
     messageTimer: null,
     previewUrls: {},
     plan: null,
+    planEnsuring: false,
     interviews: null,
+    employmentResources: null,
+    employmentResourcesLoading: false,
+    employmentResourcesError: null,
+    employmentInsight: null,
+    employmentInsightLoading: false,
+    employmentInsightError: null,
+    planProgress: null,
+    assessmentScales: null,
+    assessmentScale: null,
+    assessmentSelectedScaleId: null,
+    assessmentAnswers: {},
+    assessmentCurrentIndex: 0,
+    assessmentResult: null,
+    assessmentRecords: null,
+    assessmentLoading: false,
+    assessmentSubmitting: false,
+    assessmentError: null,
+    scrollPositions: {},
+    returnRoutes: {},
     route: "workbench",
     previousRoute: ""
   };
@@ -152,8 +176,8 @@
     state.identity = resolveIdentity();
     updateIdentityState();
     bindEvents();
-    handleRouteChange();
     loadPlatformIdentity().then(function () {
+      handleRouteChange();
       loadOverview();
     });
   }
@@ -238,6 +262,7 @@
 
   function handleRouteChange() {
     var key = normalizeRoute(window.location.hash);
+    var previous = state.route;
     if (!pageByKey[key]) {
       state.route = "workbench";
       showMessage("warning", "未知页面", "未找到 route: " + key + "，已回到工作台。");
@@ -246,6 +271,10 @@
         return;
       }
     } else {
+      if (previous && previous !== key) {
+        rememberRouteScroll(previous);
+        rememberReturnRoute(key, previous);
+      }
       state.route = key;
     }
     markActiveNav();
@@ -291,8 +320,14 @@
       renderOnboarding(item);
     } else if (item.key === "resume") {
       renderResumePage(item);
+    } else if (item.key === "career-plan") {
+      renderCareerPlanPage(item);
     } else if (item.key === "today-action") {
       renderTodayPage(item);
+    } else if (item.key === "assessment") {
+      renderAssessmentPage(item);
+    } else if (item.key === "career-resources") {
+      renderCareerResourcesPage(item);
     } else {
       renderContractPage(item);
     }
@@ -320,6 +355,8 @@
     var profile = {
       identityType: firstText(intent.identityType, onboarding.identityType),
       educationStage: firstText(intent.educationStage, onboarding.educationStage, onboarding.stage),
+      school: firstText(intent.school, getValue(state.snapshot, "onboarding.education.school")),
+      major: firstText(intent.major, getValue(state.snapshot, "onboarding.education.major"), intent.schoolMajor, onboarding.schoolMajor),
       schoolMajor: firstText(intent.schoolMajor, onboarding.schoolMajor),
       resumeStatus: firstText(intent.resumeStatus, onboarding.resumeStatus),
       experience: firstText(intent.experience, onboarding.experience, onboarding.strengths)
@@ -330,7 +367,7 @@
     var intentPanel = isHomeIntentCollapsed(intent)
       ? homeIntentSummaryPanel(selectedGoal, profile, targetRole, preference)
       : homeIntentFormPanel(selectedGoal, profile, targetRole, preference);
-    renderFeatureShell(item, "用户画像", "先一次性填写大概画像和路线选择，后续结合资料、简历与 AI 分析生成完整用户画像。",
+    renderFeatureShell(item, homeWelcomeTitle(), "这里汇总你的路线、今日行动、简历和面试进展。",
       intentPanel +
       overviewStrip(selectedGoal) +
       '<section class="feature-section"><h3>路线入口</h3><div class="feature-grid">' +
@@ -353,10 +390,46 @@
     if (toggle) {
       toggle.addEventListener("click", toggleHomeProfile);
     }
+    var cancel = $("cancelHomeIntentButton");
+    if (cancel) {
+      cancel.addEventListener("click", cancelHomeIntentEdit);
+    }
   }
 
   function isHomeIntentCollapsed(intent) {
     return localStorage.getItem("cyancruise.homeIntentSaved") === "true" && localStorage.getItem("cyancruise.homeIntentEditing") !== "true" && !!intent.goal;
+  }
+
+  function homeWelcomeTitle() {
+    var name = currentUserDisplayName();
+    return name ? "欢迎回来，" + name : "欢迎回来";
+  }
+
+  function currentUserDisplayName() {
+    var onboarding = getValue(state.snapshot, "onboarding") || {};
+    var identity = state.identity || {};
+    var name = firstText(
+      identity.displayName,
+      identity.name,
+      identity.userName,
+      identity.nickName,
+      onboarding.displayName,
+      onboarding.name,
+      onboarding.userName,
+      onboarding.nickName,
+      getValue(state.snapshot, "user.displayName"),
+      getValue(state.snapshot, "user.name"),
+      getValue(state.snapshot, "user.userName"),
+      getValue(state.snapshot, "profile.displayName"),
+      getValue(state.snapshot, "profile.name")
+    );
+    if (name) {
+      return name;
+    }
+    if (identity.userId) {
+      return "用户";
+    }
+    return "";
   }
 
   function homeIntentFormPanel(selectedGoal, onboarding, targetRole, preference) {
@@ -366,14 +439,15 @@
       '<h4 class="form-section-title full">个人情况</h4>' +
       field("profileIdentityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
       field("profileEducationStage", "当前阶段", "select", firstText(onboarding.educationStage, onboarding.stage, "undergraduate"), [["undergraduate", "本科"], ["postgraduate", "研究生"], ["vocational", "高职/专科"], ["working", "已工作"], ["other", "其他"]]) +
-      field("profileSchoolMajor", "学校/专业", "text", firstText(onboarding.schoolMajor, "")) +
+      field("profileSchool", "学校", "text", firstText(onboarding.school, "")) +
+      field("profileMajor", "专业", "text", firstText(onboarding.major, onboarding.schoolMajor, "")) +
       field("resumeStatus", "简历/材料状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"], ["materials", "已有升学材料"]]) +
       '<label class="full">经历与优势<textarea id="profileExperience" placeholder="可以写课程、项目、实习、竞赛、语言、技能、研究方向等。">' + escapeHtml(firstText(onboarding.experience, onboarding.strengths, "")) + '</textarea></label>' +
       '<h4 class="form-section-title full">路线选择</h4>' +
       field("homeGoal", "当前路线", "select", selectedGoal, [["employment", "就业"], ["study", "深造"], ["explore", "先了解一下"]]) +
       field("homeTargetRole", "目标岗位或方向", "text", targetRole) +
       field("homePreference", "路线偏好说明", "text", preference) +
-      '<div class="full actions-row"><button type="submit">保存用户画像</button>' + homeDirectionButtons(selectedGoal) + '</div>' +
+      '<div class="full actions-row"><button type="submit">保存用户画像</button><button type="button" class="secondary" id="cancelHomeIntentButton">取消修改</button>' + homeDirectionButtons(selectedGoal) + '</div>' +
       '</form></section>';
   }
 
@@ -388,7 +462,8 @@
     var detailRows = [
       ["身份类型", labelForIdentity(firstText(onboarding.identityType, "student"))],
       ["当前阶段", labelForEducationStage(firstText(onboarding.educationStage, onboarding.stage, "undergraduate"))],
-      ["学校/专业", firstText(onboarding.schoolMajor, "未填写")],
+      ["学校", firstText(onboarding.school, "未填写")],
+      ["专业", firstText(onboarding.major, onboarding.schoolMajor, "未填写")],
       ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))],
       ["经历与优势", firstText(onboarding.experience, "未填写")],
       ["当前路线", labelForGoal(selectedGoal)],
@@ -410,6 +485,19 @@
     renderPage(pageByKey.workbench);
   }
 
+  function cancelHomeIntentEdit() {
+    if (localStorage.getItem("cyancruise.homeIntentSaved") === "true") {
+      localStorage.removeItem("cyancruise.homeIntentEditing");
+      localStorage.removeItem("cyancruise.previewProfile");
+    } else {
+      localStorage.removeItem("cyancruise.homeIntent");
+      localStorage.removeItem("cyancruise.homeIntentEditing");
+      localStorage.removeItem("cyancruise.previewProfile");
+    }
+    renderPage(pageByKey.workbench);
+    showMessage("info", "已取消修改", "页面已恢复到修改前的用户画像。");
+  }
+
   function toggleHomeProfile() {
     var expanded = localStorage.getItem("cyancruise.homeProfileExpanded") === "true";
     localStorage.setItem("cyancruise.homeProfileExpanded", expanded ? "false" : "true");
@@ -428,20 +516,20 @@
   }
 
   function homeRouteFeatures(goal) {
-    var employment = feature("就业", "就", "进入 AI 简历制作、AI 简历修改、全景仿真面试和 AI 模拟面试", "employment-home", "已接入");
-    var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划 Agent", "further-study-home", "规划中");
-    var plan = feature("AI路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划 Agent", "career-plan", "规划中");
+    var employment = feature("就业", "就", "进入简历制作、简历修改、全景仿真面试和模拟面试", "employment-home", "已接入");
+    var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划智能体", "further-study-home", "规划中");
+    var plan = feature("路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划智能体", "career-plan", "规划中");
     var assessment = feature("职业测评", "测", "通过答题分析人格、性格和偏好，补全用户画像", "assessment", "规划中");
-    var today = feature("今日行动", "今", "完整用户画像生成后，由 AI 给出每日建议", "today-action", "即将接入");
+    var today = feature("今日行动", "今", "根据路径规划拆解每天应该推进的事项", "today-action", "已接入");
     employment.platformLink = true;
     study.platformLink = true;
     if (goal === "employment") {
-      return [employment, plan, assessment, today];
+      return [employment, plan, today, assessment];
     }
     if (goal === "study") {
-      return [study, plan, assessment, today];
+      return [study, plan, today, assessment];
     }
-    return [employment, study, plan, assessment, today];
+    return [employment, plan, today, assessment, study];
   }
 
   function homeRecommendedFeatures(goal) {
@@ -449,25 +537,14 @@
       return featureGroups["further-study-home"];
     }
     return [
-      feature("AI简历制作", "AI", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
-      feature("AI简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
-      feature("AI模拟面试", "AI", "从岗位目标开始面试练习", "interview", "已接入")
+      feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
+      feature("简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
+      feature("模拟面试", "面", "从岗位目标开始面试练习", "interview", "已接入")
     ];
   }
 
   function changeHomeGoal() {
-    localStorage.setItem("cyancruise.homeIntent", JSON.stringify({
-      goal: valueOf("homeGoal"),
-      targetRole: valueOf("homeTargetRole"),
-      preference: valueOf("homePreference"),
-      identityType: valueOf("profileIdentityType"),
-      educationStage: valueOf("profileEducationStage"),
-      schoolMajor: valueOf("profileSchoolMajor"),
-      resumeStatus: valueOf("resumeStatus"),
-      experience: valueOf("profileExperience")
-    }));
     localStorage.setItem("cyancruise.homeIntentEditing", "true");
-    renderPage(pageByKey.workbench);
   }
 
   function resolveHomeGoal(goal, target, preference) {
@@ -483,17 +560,614 @@
   }
 
   function renderFeatureHome(item) {
+    if (item.key === "employment-home") {
+      renderEmploymentHome(item);
+      return;
+    }
     var cards = featureGroups[item.key] || [];
     renderFeatureShell(item, item.title, item.summary,
       '<section class="feature-section"><h3>' + escapeHtml(item.title) + '工具</h3><div class="feature-grid">' +
       featureCards(cards) + '</div></section>');
   }
 
+  function renderEmploymentHome(item) {
+    ensureEmploymentHomeData();
+    renderFeatureShell(item, item.title, "先看路线图，再进入简历、面试、就业洞察和公开就业资源。",
+      employmentRoadmapPanel() +
+      employmentInsightPanel() +
+      employmentResourcePanels() +
+      '<section class="feature-section"><h3>就业工具</h3><div class="feature-grid">' +
+      featureCards(featureGroups[item.key] || []) + '</div></section>');
+  }
+
+  function ensureEmploymentHomeData() {
+    loadEmploymentResources();
+    if (hasUserIdentity()) {
+      loadEmploymentInsight();
+    }
+  }
+
+  function loadEmploymentResources() {
+    if (state.employmentResourcesLoading || state.employmentResources || state.employmentResourcesError) {
+      return;
+    }
+    if (isFilePreview()) {
+      state.employmentResources = previewEmploymentResources();
+      return;
+    }
+    state.employmentResourcesLoading = true;
+    post(endpoints.careerResources, hasUserIdentity() ? state.identity.userId : "").then(function (feed) {
+      state.employmentResources = feed || {};
+      state.employmentResourcesError = null;
+    }).catch(function (error) {
+      state.employmentResourcesError = error.message || "就业资源暂不可用。";
+    }).then(function () {
+      state.employmentResourcesLoading = false;
+      if (state.route === "employment-home" || state.route === "career-resources") {
+        renderPage(pageByKey[state.route]);
+      }
+    });
+  }
+
+  function loadEmploymentInsight() {
+    if (state.employmentInsightLoading || state.employmentInsight || state.employmentInsightError || isFilePreview()) {
+      return;
+    }
+    state.employmentInsightLoading = true;
+    post(endpoints.employmentInsight, state.identity.userId).then(function (insight) {
+      state.employmentInsight = insight || {};
+      state.employmentInsightError = null;
+    }).catch(function (error) {
+      state.employmentInsightError = error.message || "就业洞察暂不可用。";
+    }).then(function () {
+      state.employmentInsightLoading = false;
+      if (state.route === "employment-home") {
+        renderPage(pageByKey[state.route]);
+      }
+    });
+  }
+
+  function employmentRoadmapPanel() {
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var hasPlan = !!(plan && Object.keys(plan).length);
+    var targetRole = employmentTargetRole(plan);
+    var weeklyFocus = normalizeArray(plan.weeklyFocus || getValue(plan, "weeklyPlan.actions") || plan.weekFocus || plan.actions || plan.nextActions).slice(0, 3);
+    if (!weeklyFocus.length) {
+      weeklyFocus = defaultRoadmapFocus(targetRole);
+    }
+    var phases = normalizeArray(plan.phases);
+    var summary = firstText(plan.startStateSummary, plan.summary, plan.planSummary, "当前先使用规则版路线图组织就业动作；接入智能体后，这里会升级为个性化路径规划。");
+    var planLabel = hasPlan ? planModeLabel(plan) : "规则版";
+    return '<section class="feature-section roadmap-section">' +
+      '<div class="section-heading"><div><h3>就业路线图</h3><p class="section-note">优先展示下一步怎么走，工具入口放在路线之后。</p></div>' +
+      '<div class="section-actions">' +
+      '<button type="button" class="secondary" data-link="career-plan">完整规划</button>' +
+      '<button type="button" data-ensure-plan ' + (state.planEnsuring ? 'disabled aria-disabled="true"' : '') + '>' +
+      (state.planEnsuring ? "生成中" : hasPlan ? "刷新路线图" : "生成路线图") + '</button></div></div>' +
+      '<div class="roadmap-panel">' +
+      '<div class="roadmap-summary"><span class="resource-type">' + escapeHtml(planLabel) + '</span>' +
+      '<strong>' + escapeHtml(targetRole) + '</strong><p>' + escapeHtml(summary) + '</p>' +
+      '<ul class="compact-list">' + weeklyFocus.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul></div>' +
+      '<div class="roadmap-steps">' + (phases.length ? phases.slice(0, 4).map(planPhaseStepCard).join("") : employmentRoadmapSteps(targetRole).map(roadmapStepCard).join("")) + '</div>' +
+      '</div></section>';
+  }
+
+  function planModeLabel(plan) {
+    var mode = firstText(plan && plan.planningMode, "");
+    if (mode === "AGENT") {
+      return "智能体生成";
+    }
+    if (mode === "RULE_FALLBACK") {
+      return "规则版";
+    }
+    return "已生成";
+  }
+
+  function planPhaseStepCard(phase, index) {
+    var title = firstText(phase && phase.title, "阶段目标");
+    var desc = firstText(phase && phase.goal, phase && phase.description, "按阶段推进就业目标。");
+    var horizon = firstText(phase && phase.horizon, "阶段");
+    var cls = "roadmap-step" + (index === 0 ? " active" : "");
+    return '<button type="button" class="' + cls + '" data-link="career-plan">' +
+      '<span class="step-index">' + (index + 1) + '</span><span class="step-copy">' +
+      '<strong>' + escapeHtml(title) + '</strong><small>' + escapeHtml(desc) + '</small></span>' +
+      '<span class="step-status">' + escapeHtml(horizon) + '</span></button>';
+  }
+
+  function employmentTargetRole(plan) {
+    return firstText(
+      plan && plan.targetRole,
+      plan && plan.role,
+      textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob"),
+      "目标岗位待确认"
+    );
+  }
+
+  function defaultRoadmapFocus(targetRole) {
+    var role = targetRole === "目标岗位待确认" ? "目标岗位" : targetRole;
+    return [
+      "确认 " + role + " 的岗位要求和能力关键词",
+      "补齐简历证据，完成一次简历诊断",
+      "安排一次模拟面试，并记录复盘反馈"
+    ];
+  }
+
+  function employmentRoadmapSteps(targetRole) {
+    var hasTarget = targetRole !== "目标岗位待确认";
+    var resumeCount = normalizeArray(state.resumes).length;
+    var interviewCount = normalizeArray(state.interviews).length;
+    var resourceReady = !!state.employmentResources && !state.employmentResourcesError;
+    return [
+      {
+        title: "确定目标",
+        status: hasTarget ? "已具备" : "待补充",
+        active: !hasTarget,
+        desc: hasTarget ? "围绕目标岗位拆解能力关键词。" : "先在首页或画像中补充目标岗位。",
+        route: "workbench"
+      },
+      {
+        title: "简历证据",
+        status: resumeCount ? resumeCount + " 份简历" : "待开始",
+        active: hasTarget && !resumeCount,
+        desc: "把项目、实习、课程和竞赛证据写进简历。",
+        route: "resume-home"
+      },
+      {
+        title: "资讯与投递",
+        status: resourceReady ? "可使用" : state.employmentResourcesLoading ? "加载中" : "待加载",
+        active: !!resumeCount,
+        desc: "结合公开就业资源和岗位信息安排投递节奏。",
+        route: "career-resources"
+      },
+      {
+        title: "面试复盘",
+        status: interviewCount ? interviewCount + " 次练习" : "待练习",
+        active: !!resumeCount && !interviewCount,
+        desc: "用模拟面试验证表达、追问和复盘质量。",
+        route: "interview-home"
+      }
+    ];
+  }
+
+  function roadmapStepCard(step, index) {
+    var cls = "roadmap-step" + (step.active ? " active" : "");
+    return '<button type="button" class="' + cls + '" data-link="' + escapeAttr(step.route) + '">' +
+      '<span class="step-index">' + (index + 1) + '</span><span class="step-copy">' +
+      '<strong>' + escapeHtml(step.title) + '</strong><small>' + escapeHtml(step.desc) + '</small></span>' +
+      '<span class="step-status">' + escapeHtml(step.status) + '</span></button>';
+  }
+
+  function ensureEmploymentPlan() {
+    if (state.planEnsuring) {
+      return;
+    }
+    if (isFilePreview()) {
+      var previewPlan = {
+        startStateSummary: "预览模式下展示规则版路线图；部署后可调用 CyanCruise 路径规划接口生成并保存。",
+        planningMode: "RULE_FALLBACK",
+        agentStatus: "FALLBACK_READY",
+        horizonYears: 3,
+        targetRole: employmentTargetRole({}),
+        weeklyFocus: defaultRoadmapFocus(employmentTargetRole({})),
+        weeklyPlan: {
+          weekTitle: "本周启动计划",
+          weekGoal: "完成目标岗位拆解、简历证据整理和一次面试练习。",
+          actions: defaultRoadmapFocus(employmentTargetRole({})),
+          deliverables: ["岗位关键词清单", "简历优化清单", "模拟面试复盘"],
+          dailySuggestions: defaultDailySuggestions(employmentTargetRole({}))
+        },
+        phases: previewPlanPhases(employmentTargetRole({})),
+        dailySuggestions: defaultDailySuggestions(employmentTargetRole({}))
+      };
+      state.plan = mergeRefreshedPlan(state.plan, previewPlan);
+      renderPage(pageByKey[state.route]);
+      showMessage("info", "已生成预览路线图", "file:// 模式不会调用后端，已完成阶段会保留。");
+      return;
+    }
+    if (!hasUserIdentity()) {
+      showMessage("warning", "需要身份", "生成路线图前需要 Cosmic 身份或显式开发身份。");
+      return;
+    }
+    state.planEnsuring = true;
+    renderPage(pageByKey[state.route]);
+    post(endpoints.ensurePlan, state.identity.userId).then(function (plan) {
+      state.plan = mergeRefreshedPlan(state.plan, plan || {});
+      showMessage("info", "路线图已刷新", "未开始的阶段已更新，已完成的阶段保持不变。");
+    }).catch(function (error) {
+      showMessage("error", "路线图生成失败", error.message || "路径规划接口暂不可用。");
+    }).then(function () {
+      state.planEnsuring = false;
+      if (state.route === "employment-home" || state.route === "career-plan" || state.route === "today-action") {
+        renderPage(pageByKey[state.route]);
+      }
+    });
+  }
+
+  function employmentInsightPanel() {
+    if (state.employmentInsightLoading) {
+      return '<section class="feature-section"><h3>就业洞察</h3>' +
+        statePanel("正在读取就业洞察", "系统正在根据学校、专业和目标岗位加载来源覆盖摘要。", "pending") +
+        '</section>';
+    }
+    if (state.employmentInsightError) {
+      return '<section class="feature-section"><h3>就业洞察</h3>' +
+        statePanel("洞察暂不可用", state.employmentInsightError + " 你仍可继续使用简历和面试工具。", "warning") +
+        '</section>';
+    }
+    if (!state.employmentInsight) {
+      return '<section class="feature-section"><h3>就业洞察</h3>' +
+        statePanel("等待画像信号", "完善学校、专业和目标岗位后，这里会展示就业去向、来源覆盖和匹配摘要。", "empty") +
+        '</section>';
+    }
+    var insight = state.employmentInsight;
+    var rows = employmentInsightProfileRows(insight);
+    if (insight.latestYear) {
+      rows.push(["最近年份", insight.latestYear]);
+    }
+    var resumeSummary = employmentResumeSummary();
+    var summaryText = firstText(resumeSummary, chineseInsightSummary(insight), "暂无简历摘要。完成简历创建和智能分析后，这里会展示简历摘要。");
+    return '<section class="feature-section"><div class="section-heading">' +
+      '<h3>就业洞察</h3><button type="button" class="secondary" data-link="employment-insight">查看详情</button></div>' +
+      '<div class="insight-summary">' +
+      metricsPanel("用户画像", rows) +
+      '<section class="panel"><h3>简历摘要</h3><p>' + escapeHtml(summaryText) + '</p>' +
+      insightHighlights(insight) + '</section>' +
+      '</div></section>';
+  }
+
+  function employmentInsightProfileRows(insight) {
+    var school = firstText(getValue(state.snapshot, "onboarding.education.school"), insight.school, "学校待补充");
+    var major = firstText(getValue(state.snapshot, "onboarding.education.major"), insight.major, "专业待补充");
+    var legacySchoolMajor = firstText(getValue(state.snapshot, "onboarding.schoolMajor"), "");
+    var targetRole = firstText(
+      textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob"),
+      insight.targetRole,
+      "目标岗位待补充"
+    );
+    return [
+      ["画像状态", chineseInsightStatus(insight)],
+      ["学校", chineseInsightText(school)],
+      ["专业", chineseInsightText(major === "专业待补充" && legacySchoolMajor ? legacySchoolMajor : major)],
+      ["目标岗位", chineseInsightText(targetRole)],
+      ["洞察来源", firstText(insight.sourceCount, "0") + " 条"]
+    ];
+  }
+
+  function employmentResumeSummary() {
+    var resumeBlock = getValue(state.snapshot, "resume") || {};
+    var resumes = normalizeArray(state.resumes);
+    var latest = resumes.length ? resumes[0] : {};
+    var summary = firstText(
+      latest.aiSummary,
+      latest.resumeSummary,
+      latest.summary,
+      latest.parsedContent,
+      resumeBlock.summary,
+      resumeBlock.aiSummary
+    );
+    if (isDisplayChinese(summary)) {
+      return shortText(summary, 180);
+    }
+    var score = firstText(latest.diagnosisScore, resumeBlock.diagnosisScore, "");
+    if (score) {
+      return "当前简历诊断分为 " + score + "，建议结合目标岗位继续补充项目证据、技能关键词和成果量化。";
+    }
+    var title = firstText(latest.title, latest.resumeName, resumeBlock.title, "");
+    var target = firstText(latest.targetJob, latest.targetRole, resumeBlock.targetJob, textFromSnapshot("preferences.targetRole", "onboarding.targetRole"));
+    if (title || target) {
+      return "当前已维护" + (title ? "《" + title + "》" : "简历记录") + (target ? "，目标岗位为" + target : "") + "。完成简历智能分析后，这里会展示更完整的简历摘要。";
+    }
+    return "";
+  }
+
+  function chineseInsightStatus(insight) {
+    var status = firstText(insight.status, "");
+    if (status === "AVAILABLE") {
+      return Number(insight.sourceCount || 0) > 0 ? "已结合画像匹配" : "画像已读取";
+    }
+    if (status === "MISSING_SCHOOL") {
+      return "待补充学校";
+    }
+    if (status === "UNSUPPORTED_SCHOOL") {
+      return "学校来源待接入";
+    }
+    if (status === "MISSING_TARGET_ROLE") {
+      return "待补充目标岗位";
+    }
+    if (status === "NO_SOURCES") {
+      return "就业来源待接入";
+    }
+    if (status === "EMPTY") {
+      return "暂无就业来源";
+    }
+    return chineseInsightText(firstText(insight.matchLabel, status, "待完善画像"));
+  }
+
+  function chineseInsightSummary(insight) {
+    var summary = chineseInsightText(firstText(insight.summary, ""));
+    if (isDisplayChinese(summary)) {
+      return summary;
+    }
+    var status = firstText(insight.status, "");
+    if (status === "MISSING_SCHOOL") {
+      return "用户画像中还缺少学校信息，补充学校和专业后可生成更准确的就业洞察。";
+    }
+    if (status === "UNSUPPORTED_SCHOOL" || status === "NO_SOURCES") {
+      return "当前学校的可追溯就业来源尚未接入，页面会先展示用户画像与简历摘要。";
+    }
+    if (status === "MISSING_TARGET_ROLE") {
+      return "用户画像中还缺少目标岗位，补充后可结合岗位方向生成就业洞察。";
+    }
+    return "";
+  }
+
+  function chineseInsightText(value) {
+    var text = firstText(value, "");
+    var map = {
+      "Employment insight unavailable": "就业洞察暂不可用",
+      "Unknown school": "学校待补充",
+      "Unknown major": "专业待补充",
+      "Unknown target role": "目标岗位待补充",
+      "Matched to profile signals": "已结合画像匹配",
+      "Using school-level public sources": "使用学校公开来源",
+      "School is required before source-backed employment insight can be generated.": "用户画像中还缺少学校信息，补充学校后可生成就业洞察。",
+      "This school is not connected to verified employment insight sources yet.": "当前学校的可验证就业来源尚未接入。",
+      "No traceable employment source is available for this school yet.": "当前学校暂无可追溯就业来源。",
+      "Complete the target role to get role-specific employment insight. Current response only uses school-level sources.": "补充目标岗位后，可生成更贴合岗位方向的就业洞察。"
+    };
+    if (map[text]) {
+      return map[text];
+    }
+    return text
+      .replace(/Chengdu University of Technology/g, "成都理工大学")
+      .replace(/Chengdu University of Traditional Chinese Medicine/g, "成都中医药大学")
+      .replace(/Computer Science/g, "计算机科学")
+      .replace(/Software Engineering/g, "软件工程")
+      .replace(/Software Engineer/g, "软件工程师")
+      .replace(/Frontend Developer/g, "前端开发")
+      .replace(/Front-end Developer/g, "前端开发")
+      .replace(/Unknown University/g, "学校待补充");
+  }
+
+  function insightHighlights(insight) {
+    var highlights = normalizeArray(insight.destinationHighlights).slice(0, 3);
+    if (!highlights.length) {
+      return "";
+    }
+    var translated = highlights.map(chineseInsightText).filter(function (item) {
+      return isDisplayChinese(item);
+    });
+    if (!translated.length) {
+      return "";
+    }
+    return '<ul class="compact-list">' + translated.map(function (item) {
+      return '<li>' + escapeHtml(item) + '</li>';
+    }).join("") + '</ul>';
+  }
+
+  function employmentResourcePanels() {
+    if (state.employmentResourcesLoading) {
+      return '<section class="feature-section"><h3>就业资讯与文章</h3>' +
+        statePanel("正在加载资源", "正在读取就业资讯、职业指导和公共就业服务入口。", "pending") +
+        '</section>';
+    }
+    if (state.employmentResourcesError) {
+      return '<section class="feature-section"><h3>就业资讯与文章</h3>' +
+        statePanel("资源暂不可用", state.employmentResourcesError + " 工具入口仍可正常使用。", "warning") +
+        '</section>';
+    }
+    var feed = state.employmentResources || {};
+    var articles = normalizeArray(feed.articles);
+    var services = normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths));
+    var videos = normalizeArray(feed.videos);
+    var total = articles.length + services.length + videos.length;
+    if (!total) {
+      return '<section class="feature-section"><h3>就业资讯与文章</h3>' +
+        statePanel("暂无资源", firstText(feed.message, "当前还没有配置就业资讯资源。"), "empty") +
+        '</section>';
+    }
+    return '<section class="feature-section"><div class="section-heading">' +
+      '<h3>就业资讯与文章</h3><button type="button" class="secondary" data-link="career-resources">全部资源</button></div>' +
+      '<div class="employment-resource-layout">' +
+      resourceColumn("公共服务", services, "service", 2) +
+      resourceColumn("精选文章", articles, "article", 2) +
+      resourceColumn("相关视频", videos, "video", 2) +
+      '</div></section>';
+  }
+
+  function renderCareerResourcesPage(item) {
+    loadEmploymentResources();
+    if (state.employmentResourcesLoading && !state.employmentResources) {
+      renderFeatureShell(item, item.title, item.summary,
+        '<section class="feature-section">' +
+        statePanel("正在加载资源", "正在读取公共服务、精选文章和相关视频。", "pending") +
+        '</section>');
+      return;
+    }
+    var feed = state.employmentResources || {};
+    var articles = normalizeArray(feed.articles);
+    var services = normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths));
+    var videos = normalizeArray(feed.videos);
+    var total = articles.length + services.length + videos.length;
+    var body = "";
+    if (state.employmentResourcesError) {
+      body += '<section class="feature-section">' +
+        statePanel("资源暂不可用", state.employmentResourcesError + " 请稍后重试。", "warning") +
+        '</section>';
+    }
+    if (!total) {
+      body += '<section class="feature-section">' +
+        statePanel("暂无资源", firstText(feed.message, "当前还没有配置就业资讯资源。"), "empty") +
+        '</section>';
+    } else {
+      body += '<section class="feature-section">' +
+        '<div class="section-heading"><div><h3>全部资源</h3>' +
+        '<p class="section-note">按公共服务、精选文章、相关视频分类展示，可直接打开来源平台。</p></div></div>' +
+        '<div class="employment-resource-layout">' +
+        resourceColumn("公共服务", services, "service", services.length) +
+        resourceColumn("精选文章", articles, "article", articles.length) +
+        resourceColumn("相关视频", videos, "video", videos.length) +
+        '</div></section>';
+    }
+    renderFeatureShell(item, item.title, item.summary, body);
+  }
+
+  function resourceColumn(title, cards, type, limit) {
+    var items = normalizeArray(cards).slice(0, limit || 4);
+    if (!items.length) {
+      return '<section class="resource-column"><h4>' + escapeHtml(title) + '</h4><p class="panel-note">暂无内容。</p></section>';
+    }
+    return '<section class="resource-column"><h4>' + escapeHtml(title) + '</h4><div class="resource-list">' +
+      items.map(function (item) { return resourceCard(item, type); }).join("") + '</div></section>';
+  }
+
+  function resourceCard(item, type) {
+    var rawUrl = firstText(item.sourceUrl, item.url, "");
+    var url = externalResourceUrl(item, rawUrl);
+    var detailKey = url ? "" : resourceDetailKey(item, rawUrl);
+    var meta = [resourceTypeLabel(item.type || type), firstText(item.category, item.keyword, ""), shortDate(item.publishedAt)].filter(Boolean).join(" · ");
+    return '<article class="resource-card">' +
+      '<div><span class="resource-type">' + escapeHtml(meta || "就业资源") + '</span>' +
+      '<strong>' + escapeHtml(resourceTitle(item)) + '</strong>' +
+      '<p>' + escapeHtml(resourceSummary(item)) + '</p></div>' +
+      (detailKey ? '<button type="button" class="resource-link resource-link-button" data-resource-detail="' + escapeAttr(detailKey) + '">查看资源</button>' : '') +
+      (url ? '<a class="resource-link" href="' + escapeAttr(url) + '" target="_blank" rel="noopener noreferrer">查看资源</a>' : '') +
+      '</article>';
+  }
+
+  function externalResourceUrl(item, rawUrl) {
+    var value = trim(rawUrl);
+    if (/^https?:\/\//i.test(value)) {
+      return value;
+    }
+    var id = trim(item && item.id);
+    if (id === "article-resume-001" || id === "tip-resume-evidence-001") {
+      return "https://www.ncss.cn/ncss/zd/ws/202208/20220809/2209339200.html";
+    }
+    if (id === "tip-plan-001" || id === "tip-weekly-focus-001") {
+      return "https://www.ncss.cn/ncss/jydt/jy/202404/20240403/2293279892.html";
+    }
+    if (id === "video-interview-001" || id === "video-interview-practice-001") {
+      return "https://www.bilibili.com/video/BV1RN411f7LU/";
+    }
+    if (id === "path-software" || trim(item && item.careerPathId) === "software-engineer") {
+      return "https://search.bilibili.com/all?keyword=%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B%E5%B8%88%20%E6%A0%A1%E6%8B%9B%20%E8%81%8C%E4%B8%9A%E8%B7%AF%E5%BE%84";
+    }
+    return "";
+  }
+
+  function resourceTitle(item) {
+    var title = firstText(item.title, "未命名资源");
+    if (title === "Resume evidence checklist") {
+      return "简历证据清单";
+    }
+    if (title === "This week career focus") {
+      return "本周求职行动重点";
+    }
+    if (title === "Mock interview practice loop") {
+      return "面试练习前的回答结构";
+    }
+    if (title === "Software Engineer path") {
+      return "软件工程师路径";
+    }
+    return title;
+  }
+
+  function resourceSummary(item) {
+    var summary = firstText(item.summary, item.body, "暂无摘要。");
+    if (summary === "Use target-role evidence to improve resume bullets.") {
+      return "围绕目标岗位梳理项目、实习、课程和竞赛证据，再写入简历要点。";
+    }
+    if (summary === "Pick one target role, one resume improvement and one interview drill.") {
+      return "选择一个目标岗位、完成一次简历修改、安排一次模拟面试，并记录反馈。";
+    }
+    if (summary === "Practice answer structure before a real interview.") {
+      return "用 STAR、项目复盘和岗位能力关键词整理模拟面试回答。";
+    }
+    if (summary === "Core route for backend, web, data and AI application roles.") {
+      return "面向后端、Web、数据和 AI 应用岗位的基础成长路线。";
+    }
+    return summary;
+  }
+
+  function resourceDetailKey(item, url) {
+    var value = trim(url);
+    var id = trim(item && item.id);
+    if (value.indexOf("/careerloop/resources/resume-evidence") >= 0 || value.indexOf("/cyancruise/resources/resume-evidence") >= 0 || id === "article-resume-001") {
+      return "resume-evidence";
+    }
+    if (value.indexOf("/careerloop/resources/weekly-focus") >= 0 || value.indexOf("/cyancruise/resources/weekly-focus") >= 0 || id === "tip-plan-001") {
+      return "weekly-focus";
+    }
+    if (value.indexOf("BV1careerloop") >= 0 || value.indexOf("BV1cyancruise") >= 0 || id === "video-interview-001") {
+      return "interview-practice";
+    }
+    if (id === "tip-resume-evidence-001") {
+      return "resume-evidence";
+    }
+    if (id === "tip-weekly-focus-001") {
+      return "weekly-focus";
+    }
+    if (id === "video-interview-practice-001") {
+      return "interview-practice";
+    }
+    if (id === "path-software" || trim(item && item.careerPathId) === "software-engineer") {
+      return "software-engineer-path";
+    }
+    return "";
+  }
+
+  function resourceTypeLabel(type) {
+    var value = trim(type).toLowerCase();
+    if (value === "article") {
+      return "文章";
+    }
+    if (value === "video") {
+      return "视频";
+    }
+    if (value === "career_path" || value === "career-path") {
+      return "职业路径";
+    }
+    if (value === "consultation" || value === "tip") {
+      return "服务入口";
+    }
+    return "就业资源";
+  }
+
+  function shortDate(value) {
+    var text = trim(value);
+    if (!text) {
+      return "";
+    }
+    return text.length > 10 ? text.substring(0, 10) : text;
+  }
+
+  function previewEmploymentResources() {
+    return {
+      articles: [
+        { type: "article", title: "三“新”看就业共赴好前程", summary: "关注高校毕业生就业新趋势、数智就业服务和模拟面试等公共就业服务实践。", category: "就业观察", sourceUrl: "https://cpc.people.com.cn/n1/2026/0614/c64387-40739823.html" },
+        { type: "article", title: "专家支招大学生求职：明确目标、提升自我", summary: "围绕高校毕业生求职困惑，提供目标定位、能力提升和就业指导建议。", category: "求职指导", sourceUrl: "https://www.ncss.cn/ncss/jydt/jy/202404/20240403/2293279892.html" }
+      ],
+      consultations: [
+        { type: "consultation", title: "国家大学生就业服务平台", summary: "查看职位信息、就业指导、专场招聘、重点领域就业和高校毕业生服务。", category: "公共服务", sourceUrl: "https://www.ncss.cn/" },
+        { type: "consultation", title: "全国就业公共服务平台", summary: "查询岗位推荐、招聘会信息、职业指导、职业测评和高校毕业生就业服务。", category: "公共服务", sourceUrl: "https://www.12333.gov.cn/job/" },
+        { type: "consultation", title: "中国公共招聘网", summary: "查看招聘信息、招聘会信息、事业单位公开招聘和市场资讯。", category: "公共招聘", sourceUrl: "https://job.mohrss.gov.cn/" }
+      ],
+      careerPaths: [
+        { type: "career_path", title: "就业在线", summary: "全国招聘求职服务平台入口，聚合各地公共就业人才服务和招聘求职资源。", category: "公共招聘", sourceUrl: "https://www.jobonline.cn/" }
+      ],
+      videos: [
+        { type: "video", title: "求职简历怎么写？看这 1 个视频就够了", summary: "求职简历讲解视频，可直接跳转播放。", category: "简历", sourceUrl: "https://www.bilibili.com/video/BV1RN411f7LU/" },
+        { type: "video", title: "大学生就业季：求职路观察", summary: "央视网就业季视频页面，可直接跳转观看。", category: "就业观察", sourceUrl: "https://news.cctv.com/2013/05/31/VIDE1369989879849147.shtml" }
+      ]
+    };
+  }
+
   function renderPlannedStudyPage(item) {
     renderFeatureShell(item, item.title, item.summary,
       '<section class="panel full">' +
       '<h3>' + escapeHtml(item.title) + '规划</h3>' +
-      '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度 Agent、用户画像 Agent 和对应规划 Agent；当前可以先回到深造页选择方向，或回到首页调整路线信息。</p>' +
+      '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度智能体、用户画像智能体和对应规划智能体；当前可以先回到深造页选择方向，或回到首页调整路线信息。</p>' +
       '<div class="actions-row"><button type="button" data-link="further-study-home">返回深造</button><button type="button" class="secondary" data-link="workbench">返回首页</button></div>' +
       '</section>');
   }
@@ -514,9 +1188,32 @@
   }
 
   function renderTodayPage(item) {
-    renderShell(item,
-      statePanel("等待完整用户画像", "今日行动需要先由首页大概画像、后续上传资料、简历和其他材料，经 AI 大模型分析生成完整用户画像后，再结合最初路线规划给出。当前阶段不提供跳转或执行动作。", "pending")
-    );
+    if (hasUserIdentity() && !state.plan && !state.planEnsuring && !isFilePreview()) {
+      ensureEmploymentPlan();
+    }
+    var view = buildPlanViewModel();
+    if (!view.dailyPlan.items.length) {
+      renderShell(item,
+        statePanel("等待路径规划", "今日行动会从路径规划里的当前阶段和本周计划拆解出来。请先生成路线图。", "pending")
+      );
+      return;
+    }
+    var body = '<section class="feature-section route-execution-grid daily-first">' +
+      renderDailyPlanCard(view.dailyPlan, view.progressState) +
+      renderWeeklyPlanCard(view.weeklyPlan, view.weeklyActions, view.weeklyDeliverables, view.targetRole, view.progressState) +
+      '</section>' +
+      '<section class="feature-section route-control-grid">' +
+      metricsPanel("今日来源", [
+        ["目标岗位", view.targetRole],
+        ["当前阶段", view.progressSummary.activePhaseTitle],
+        ["规划周期", view.selectedYears + " 年"],
+        ["完成进度", view.progressSummary.completedTasks + " / " + view.progressSummary.totalTasks + " 项"]
+      ]) +
+      '<section class="panel route-control-card"><div class="route-card-head"><div><span class="resource-type">继续规划</span><h3>路线图</h3></div></div>' +
+      '<p class="route-goal">今日行动来自路径规划。调整阶段、周期或刷新规划后，这里会跟着变化。</p>' +
+      '<div class="actions-row"><button type="button" data-link="career-plan">查看路径规划</button></div></section>' +
+      '</section>';
+    renderFeatureShell(item, item.title, "根据路径规划拆解今天应该推进的小事项。", body);
   }
 
   function renderResumePage(item) {
@@ -603,7 +1300,7 @@
     return '<section class="panel"><h3>可选文件上传</h3>' +
       '<div class="form-grid">' +
       '<label class="full">选择小文件<input id="resumeFileInput" type="file"></label>' +
-      '<div class="full actions-row"><button type="button" class="secondary" id="uploadResumeFileButton">上传并填入 fileKey</button></div>' +
+      '<div class="full actions-row"><button type="button" class="secondary" id="uploadResumeFileButton">上传</button></div>' +
       '</div>' +
       '<p class="panel-note ' + escapeHtml(type) + '">' + escapeHtml(text) + '</p>' +
       '</section>';
@@ -836,9 +1533,556 @@
     if (!resumeId) {
       return;
     }
-    if (!window.confirm("确定删除这条简历记录吗？")) {
-      return;
+    showConfirmDialog("删除简历记录", "删除后这条简历记录将从列表中移除。", "删除", function () {
+      performDeleteResumeRecord(resumeId);
+    });
+  }
+
+  function renderCareerPlanPage(item) {
+    if (hasUserIdentity() && !state.plan && !state.planEnsuring && !isFilePreview()) {
+      ensureEmploymentPlan();
     }
+    var view = buildPlanViewModel();
+    var summary = firstText(view.plan.startStateSummary, view.plan.summary, "根据用户画像、简历记录和目标岗位生成分阶段路线图，后续可直接接入 agent 自动规划。");
+    var metrics = [
+      ["规划模式", planModeLabel(view.plan)],
+      ["目标岗位", view.targetRole],
+      ["规划周期", view.selectedYears + " 年"],
+      ["Agent 状态", firstText(view.plan.agentStatus, "待接入")]
+    ];
+    var phaseHtml = view.visiblePhases.length ? view.visiblePhases.map(function (phase, index) {
+      return renderPlanPhaseCard(phase, index, view.progressState, view.activePhaseId);
+    }).join("") :
+      statePanel("路线图待生成", "当前还没有可展示的路线图，点击“生成路线图”后会先使用规则版规划，后续可平滑切换到 agent。", "pending");
+    var timelineHtml = view.visiblePhases.length ? renderPlanTimeline(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
+    var flowHtml = view.visiblePhases.length ? renderPlanFlow(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
+    renderFeatureShell(item, item.title, summary,
+      '<section class="feature-section route-execution-grid daily-first">' +
+      renderDailyPlanCard(view.dailyPlan, view.progressState) +
+      renderWeeklyPlanCard(view.weeklyPlan, view.weeklyActions, view.weeklyDeliverables, view.targetRole, view.progressState) +
+      '</section>' +
+      '<section class="feature-section route-control-grid">' +
+      planningHorizonPanel(view.selectedYears) +
+      metricsPanel("路线概览", metrics) +
+      '</section>' +
+      timelineHtml +
+      '<section class="feature-section"><div class="section-heading"><div><h3>阶段路线图</h3><p class="section-note">先给出 1 年和 3 年的大阶段，再细化到周和每天。</p></div>' +
+      '<div class="section-actions"><button type="button" data-ensure-plan ' + (state.planEnsuring ? 'disabled aria-disabled="true"' : '') + '>' +
+      (state.planEnsuring ? "生成中" : "刷新路线图") + '</button></div></div>' +
+      flowHtml +
+      '<div class="route-phase-grid">' + phaseHtml + '</div></section>' +
+      '');
+  }
+
+  function buildPlanViewModel() {
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    var phases = normalizeArray(plan.phases);
+    var weeklyPlan = plan.weeklyPlan || {};
+    if (!phases.length && isFilePreview()) {
+      phases = previewPlanPhases(targetRole);
+    }
+    var selectedYears = readSelectedPlanHorizon(plan, targetRole);
+    var visiblePhases = filterPlanPhasesByYears(phases, selectedYears);
+    if (!visiblePhases.length) {
+      visiblePhases = phases;
+    }
+    var progressState = readPlanProgress(plan, targetRole, phases);
+    var activePhaseId = firstText(progressState.activePhaseId, visiblePhases.length ? phaseKey(visiblePhases[0], 0) : "");
+    if (!containsPhaseId(visiblePhases, activePhaseId)) {
+      activePhaseId = visiblePhases.length ? phaseKey(visiblePhases[0], 0) : "";
+    }
+    var dailyPlan = deriveDailyPlan(visiblePhases, weeklyPlan, progressState, activePhaseId, targetRole);
+    var progressSummary = summarizePlanProgress(visiblePhases, progressState);
+    return {
+      plan: plan,
+      targetRole: targetRole,
+      phases: phases,
+      visiblePhases: visiblePhases,
+      weeklyPlan: weeklyPlan,
+      weeklyActions: normalizeArray(weeklyPlan.actions || plan.weeklyFocus),
+      weeklyDeliverables: normalizeArray(weeklyPlan.deliverables),
+      selectedYears: selectedYears,
+      progressState: progressState,
+      activePhaseId: activePhaseId,
+      dailyPlan: dailyPlan,
+      progressSummary: progressSummary
+    };
+  }
+
+  function renderDailyPlanCard(dailyPlan, progressState) {
+    return '<section class="panel route-daily-card"><div class="route-card-head"><div><span class="resource-type">每日计划</span><h3>今天可以做什么</h3></div></div>' +
+      '<p class="route-goal">' + escapeHtml(dailyPlan.summary) + '</p>' +
+      renderLinkedTaskList("今日小事", dailyPlan.items, progressState) + '</section>';
+  }
+
+  function renderWeeklyPlanCard(weeklyPlan, weeklyActions, weeklyDeliverables, targetRole, progressState) {
+    return '<section class="panel route-weekly-card"><div class="route-card-head"><div><span class="resource-type">本周计划</span><h3>' +
+      escapeHtml(firstText(weeklyPlan.weekTitle, "本周推进重点")) + '</h3></div></div><p class="route-goal">' +
+      escapeHtml(firstText(weeklyPlan.weekGoal, "围绕当前目标岗位推进简历、项目和面试准备。")) + '</p>' +
+      renderTaskList("本周动作", weeklyActions.length ? weeklyActions : defaultRoadmapFocus(targetRole), "weekly-actions", progressState) +
+      renderTaskList("本周交付物", weeklyDeliverables.length ? weeklyDeliverables : ["简历优化清单", "岗位关键词清单", "一次模拟面试复盘"], "weekly-deliverables", progressState) +
+      '</section>';
+  }
+
+  function renderPlanPhaseCard(phase, phaseIndex, progressState, activePhaseId) {
+    var subStages = normalizeArray(phase && phase.subStages);
+    var phaseId = phaseKey(phase, phaseIndex);
+    var phaseStatus = phaseProgressStatus(phase, phaseIndex, progressState);
+    var cls = "panel route-phase-card" + (phaseId === activePhaseId ? " active" : "");
+    return '<article class="' + cls + '" data-phase-card="' + escapeAttr(phaseId) + '">' +
+      '<div class="route-card-head"><div><span class="resource-type">' + escapeHtml(firstText(phase && phase.horizon, "阶段")) + '</span>' +
+      '<h3>' + escapeHtml(firstText(phase && phase.title, "阶段目标")) + '</h3></div>' +
+      '<span class="phase-status ' + escapeAttr(phaseStatus.code) + '">' + escapeHtml(phaseStatus.label) + '</span></div>' +
+      '<p class="route-goal">' + escapeHtml(firstText(phase && phase.goal, phase && phase.description, "围绕目标岗位推进阶段目标。")) + '</p>' +
+      renderTaskList("阶段动作", normalizeArray(phase && phase.actions), phaseId + ".actions", progressState) +
+      renderTaskList("阶段达成", normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState) +
+      renderSubStageList(subStages, phaseId, progressState) +
+      '</article>';
+  }
+
+  function renderSubStageList(subStages, phaseId, progressState) {
+    if (!subStages.length) {
+      return "";
+    }
+    return '<div class="route-substage-list">' + subStages.map(function (subStage, index) {
+      var subStageId = phaseId + ".substage." + index;
+      return '<section class="route-substage">' +
+        '<strong>' + escapeHtml(firstText(subStage.period, "短周期")) + " · " + escapeHtml(firstText(subStage.title, "执行阶段")) + '</strong>' +
+        '<p>' + escapeHtml(firstText(subStage.goal, "围绕阶段目标推进执行。")) + '</p>' +
+        renderTaskList("建议动作", normalizeArray(subStage.actions), subStageId + ".actions", progressState) +
+        '</section>';
+    }).join("") + '</div>';
+  }
+
+  function renderSimpleList(title, items) {
+    var list = normalizeArray(items).filter(Boolean);
+    if (!list.length) {
+      return "";
+    }
+    return '<div class="route-list-block"><span class="label">' + escapeHtml(title) + '</span><ul class="compact-list">' +
+      list.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul></div>';
+  }
+
+  function renderTaskList(title, items, scopeKey, progressState) {
+    var list = normalizeArray(items).filter(Boolean);
+    if (!list.length) {
+      return "";
+    }
+    return '<div class="route-list-block"><span class="label">' + escapeHtml(title) + '</span><ul class="route-task-list">' +
+      list.map(function (item, index) {
+        var taskId = scopeKey + "." + index + "." + sanitizeKey(item);
+        var checked = !!(progressState.checked && progressState.checked[taskId]);
+        return '<li class="route-task-item' + (checked ? " done" : "") + '">' +
+          '<label class="route-task-toggle" data-plan-task="' + escapeAttr(taskId) + '"><input type="checkbox" data-plan-task="' + escapeAttr(taskId) + '"' + (checked ? " checked" : "") + '>' +
+          '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item) + '</span></label></li>';
+      }).join("") + '</ul></div>';
+  }
+
+  function renderLinkedTaskList(title, items, progressState) {
+    var list = normalizeArray(items).filter(function (item) { return item && item.taskId && item.text; });
+    if (!list.length) {
+      return "";
+    }
+    return '<div class="route-list-block"><span class="label">' + escapeHtml(title) + '</span><ul class="route-task-list">' +
+      list.map(function (item) {
+        var checked = !!(progressState.checked && progressState.checked[item.taskId]);
+        return '<li class="route-task-item' + (checked ? " done" : "") + '">' +
+          '<label class="route-task-toggle" data-plan-task="' + escapeAttr(item.taskId) + '"><input type="checkbox" data-plan-task="' + escapeAttr(item.taskId) + '"' + (checked ? " checked" : "") + '>' +
+          '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item.text) + '</span></label></li>';
+      }).join("") + '</ul></div>';
+  }
+
+  function planningHorizonPanel(selectedYears) {
+    return '<section class="panel route-control-card"><div class="route-card-head"><div><span class="resource-type">规划周期</span><h3>查看周期</h3></div></div>' +
+      '<p class="route-goal">可以先聚焦 1 年内目标，也可以切回完整 3 年路线图。</p>' +
+      '<div class="route-horizon-toggle">' +
+      horizonButton(1, selectedYears) +
+      horizonButton(3, selectedYears) +
+      '</div></section>';
+  }
+
+  function horizonButton(years, selectedYears) {
+    return '<button type="button" class="route-horizon-button' + (years === selectedYears ? " active" : "") + '" data-plan-horizon="' + years + '">' + years + '年</button>';
+  }
+
+  function renderPlanTimeline(phases, activePhaseId, progressSummary) {
+    var percent = progressSummary.totalTasks ? Math.round(progressSummary.completedTasks * 100 / progressSummary.totalTasks) : 0;
+    return '<section class="panel route-progress-card">' +
+      '<div class="route-progress-head"><div><h3>总目标进度</h3><p class="panel-note">只统计阶段路线图里的阶段动作和阶段达成；每日计划和本周计划用于辅助推进。</p></div>' +
+      '<strong>' + percent + '%</strong></div>' +
+      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' + percent + '%"></span></div>' +
+      '<div class="route-progress-meta"><span>已完成 ' + progressSummary.completedTasks + ' / ' + progressSummary.totalTasks + ' 项</span><span>当前聚焦：' + escapeHtml(progressSummary.activePhaseTitle) + '</span></div>' +
+      '<div class="route-milestone-row">' + phases.map(function (phase, index) {
+        var phaseId = phaseKey(phase, index);
+        var left = phases.length === 1 ? 0 : Math.round(index * 100 / (phases.length - 1));
+        var active = phaseId === activePhaseId;
+        var edgeClass = index === 0 ? " first" : index === phases.length - 1 ? " last" : "";
+        return '<button type="button" class="route-milestone' + edgeClass + (active ? " active" : "") + '" style="left:' + left + '%" data-plan-focus="' + escapeAttr(phaseId) + '">' +
+          '<span class="route-milestone-dot"></span><span class="route-milestone-label">' + escapeHtml(firstText(phase.horizon, phase.title, "阶段")) + '</span></button>';
+      }).join("") + '</div></section>';
+  }
+
+  function renderPlanFlow(phases, activePhaseId, progressSummary) {
+    return '<div class="route-arrow-flow">' + phases.map(function (phase, index) {
+      var phaseId = phaseKey(phase, index);
+      var phaseStats = progressSummary.phaseMap[phaseId] || { completed: 0, total: 0 };
+      var active = phaseId === activePhaseId;
+      var done = phaseStats.total > 0 && phaseStats.completed >= phaseStats.total;
+      return '<button type="button" class="route-arrow-step' + (active ? " active" : "") + (done ? " done" : "") + '" data-plan-focus="' + escapeAttr(phaseId) + '">' +
+        '<span class="route-arrow-period">' + escapeHtml(firstText(phase.horizon, "阶段")) + '</span>' +
+        '<strong>' + escapeHtml(firstText(phase.title, "阶段目标")) + '</strong>' +
+        '<small>' + phaseStats.completed + '/' + phaseStats.total + '</small></button>';
+    }).join('<span class="route-arrow-connector" aria-hidden="true">→</span>') + '</div>';
+  }
+
+  function summarizePlanProgress(phases, progressState) {
+    var totalTasks = 0;
+    var completedTasks = 0;
+    var phaseMap = {};
+    for (var i = 0; i < phases.length; i += 1) {
+      var phase = phases[i];
+      var phaseId = phaseKey(phase, i);
+      phaseMap[phaseId] = { completed: 0, total: 0, title: firstText(phase.title, phase.horizon, "阶段目标") };
+      countTaskGroup(normalizeArray(phase.actions), phaseId + ".actions", progressState, phaseMap[phaseId]);
+      countTaskGroup(normalizeArray(phase.kpis), phaseId + ".kpis", progressState, phaseMap[phaseId]);
+      var subStages = normalizeArray(phase.subStages);
+      for (var j = 0; j < subStages.length; j += 1) {
+        countTaskGroup(normalizeArray(subStages[j].actions), phaseId + ".substage." + j + ".actions", progressState, phaseMap[phaseId]);
+      }
+      totalTasks += phaseMap[phaseId].total;
+      completedTasks += phaseMap[phaseId].completed;
+    }
+    var activePhaseTitle = "";
+    if (progressState.activePhaseId && phaseMap[progressState.activePhaseId]) {
+      activePhaseTitle = phaseMap[progressState.activePhaseId].title;
+    } else if (phases.length) {
+      activePhaseTitle = firstText(phases[0].title, phases[0].horizon, "阶段目标");
+    }
+    return {
+      totalTasks: totalTasks,
+      completedTasks: completedTasks,
+      phaseMap: phaseMap,
+      activePhaseTitle: activePhaseTitle
+    };
+  }
+
+  function countTaskGroup(items, scopeKey, progressState, bucket) {
+    var list = normalizeArray(items).filter(Boolean);
+    for (var i = 0; i < list.length; i += 1) {
+      bucket.total += 1;
+      if (isPlanTaskChecked(scopeKey + "." + i + "." + sanitizeKey(list[i]), progressState)) {
+        bucket.completed += 1;
+      }
+    }
+  }
+
+  function countCompletedTaskGroup(items, scopeKey, progressState) {
+    var list = normalizeArray(items).filter(Boolean);
+    var completed = 0;
+    for (var i = 0; i < list.length; i += 1) {
+      var taskId = typeof list[i] === "object" && list[i].taskId
+        ? list[i].taskId
+        : scopeKey + "." + i + "." + sanitizeKey(list[i]);
+      if (isPlanTaskChecked(taskId, progressState)) {
+        completed += 1;
+      }
+    }
+    return completed;
+  }
+
+  function isPlanTaskChecked(taskId, progressState) {
+    return !!(progressState && progressState.checked && progressState.checked[taskId]);
+  }
+
+  function phaseKey(phase, index) {
+    return firstText(phase && phase.phaseId, "") || "phase-" + sanitizeKey(firstText(phase && phase.horizon, "")) + "-" + sanitizeKey(firstText(phase && phase.title, "stage"));
+  }
+
+  function containsPhaseId(phases, phaseId) {
+    for (var i = 0; i < phases.length; i += 1) {
+      if (phaseKey(phases[i], i) === phaseId) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function deriveDailyPlan(phases, weeklyPlan, progressState, activePhaseId, targetRole) {
+    var linked = [];
+    var activePhase = findActivePhase(phases, activePhaseId);
+    if (activePhase) {
+      linked = linked.concat(collectDailyMicroTasks(activePhase.actions, phaseKey(activePhase.phase, activePhase.index) + ".actions", progressState));
+      linked = linked.concat(collectDailyMicroTasks(activePhase.kpis, phaseKey(activePhase.phase, activePhase.index) + ".kpis", progressState));
+      var subStages = normalizeArray(activePhase.phase.subStages);
+      for (var i = 0; i < subStages.length; i += 1) {
+        linked = linked.concat(collectDailyMicroTasks(subStages[i].actions, phaseKey(activePhase.phase, activePhase.index) + ".substage." + i + ".actions", progressState));
+      }
+    }
+    linked = linked.concat(collectDailyMicroTasks(weeklyPlan.actions, "weekly-actions", progressState));
+    linked = linked.concat(collectDailyMicroTasks(weeklyPlan.deliverables, "weekly-deliverables", progressState));
+    linked = dedupeLinkedTasks(linked).slice(0, 5);
+    if (!linked.length) {
+      linked = defaultDailySuggestions(targetRole).map(function (text, index) {
+        return { taskId: "daily-suggestions." + index + "." + sanitizeKey(text), text: text };
+      });
+    }
+    return {
+      items: linked,
+      summary: activePhase
+        ? "今天优先围绕“" + firstText(activePhase.phase.title, "当前阶段") + "”里还没完成的事项推进。"
+        : "今天优先处理当前阶段和本周尚未完成的事项。"
+    };
+  }
+
+  function collectUnfinishedTasks(items, scopeKey, progressState, prefix) {
+    var list = normalizeArray(items).filter(Boolean);
+    var out = [];
+    for (var i = 0; i < list.length; i += 1) {
+      var taskId = scopeKey + "." + i + "." + sanitizeKey(list[i]);
+      if (!isPlanTaskChecked(taskId, progressState)) {
+        out.push({ taskId: taskId, text: prefix + list[i] });
+      }
+    }
+    return out;
+  }
+
+  function collectDailyMicroTasks(items, scopeKey, progressState) {
+    var list = normalizeArray(items).filter(Boolean);
+    var out = [];
+    for (var i = 0; i < list.length; i += 1) {
+      var text = microTaskText(list[i], i, scopeKey);
+      var taskId = "daily." + scopeKey + "." + i + "." + sanitizeKey(text);
+      out.push({ taskId: taskId, text: text });
+    }
+    return out;
+  }
+
+  function microTaskText(taskText, index, scopeKey) {
+    var text = trim(taskText);
+    if (containsAny(text, ["简历", "bullet", "经历"])) {
+      return pickMicroTask([
+        "用 30 分钟改 1 条简历经历，补上结果、数字和个人贡献。",
+        "挑 1 段项目经历，删掉空泛描述，补 1 个可量化结果。",
+        "把 1 条简历 bullet 改成“动作 + 方法 + 结果”的表达。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["岗位", "JD", "招聘", "公司", "关键词"])) {
+      return pickMicroTask([
+        "看 2 个目标岗位描述，记录 3 个高频能力词。",
+        "打开 1 个目标岗位，把任职要求拆成 3 个技能点。",
+        "选 1 家目标公司，写下它最看重的 2 个岗位能力。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["项目", "作品", "仓库", "README"])) {
+      return pickMicroTask([
+        "推进 1 个项目小任务，并在记录里写下今天产出的 1 个证据。",
+        "给项目补 1 段 README，说明背景、你的贡献和结果。",
+        "整理 1 个项目截图或链接，作为简历里的可展示证据。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["面试", "STAR", "复盘", "问答"])) {
+      return pickMicroTask([
+        "练 1 个面试问题，用 STAR 写下 4 句话版本。",
+        "复盘 1 个项目问题，准备 1 个追问和对应回答。",
+        "录 3 分钟自述，检查是否讲清楚背景、动作和结果。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["技能", "学习", "练习", "技术"])) {
+      return pickMicroTask([
+        "做 45 分钟技能练习，并记录 1 个卡点和 1 个解决思路。",
+        "选 1 个薄弱技能点，看 1 篇资料并写 3 行笔记。",
+        "完成 1 个小练习，把错误原因写成一句复盘。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["投递", "offer", "机会"])) {
+      return pickMicroTask([
+        "筛选 3 个岗位，给其中 1 个岗位写投递备注。",
+        "更新 1 条投递记录，标出下一步跟进时间。",
+        "挑 1 个岗位，对照简历找出 1 个需要补强的证据。"
+      ], index, scopeKey);
+    }
+    if (containsAny(text, ["清单", "整理", "梳理"])) {
+      return pickMicroTask([
+        "整理 1 个小清单，只补 3 条最关键的信息。",
+        "把清单里最重要的 1 项拆成今天能完成的第一步。",
+        "删掉清单里 1 条不重要的项，保留今天最该推进的内容。"
+      ], index, scopeKey);
+    }
+    return "把“" + shortText(text, 24) + "”拆成 1 个 30 分钟内能完成的小动作。";
+  }
+
+  function pickMicroTask(options, index, scopeKey) {
+    var seed = Math.abs((index || 0) + sanitizeKey(scopeKey).length);
+    return options[seed % options.length];
+  }
+
+  function containsAny(text, keywords) {
+    for (var i = 0; i < keywords.length; i += 1) {
+      if (text.indexOf(keywords[i]) >= 0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function dedupeLinkedTasks(items) {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < items.length; i += 1) {
+      var key = sanitizeKey(items[i].text);
+      if (!seen[key]) {
+        seen[key] = true;
+        out.push(items[i]);
+      }
+    }
+    return out;
+  }
+
+  function findActivePhase(phases, activePhaseId) {
+    for (var i = 0; i < phases.length; i += 1) {
+      if (phaseKey(phases[i], i) === activePhaseId) {
+        return { phase: phases[i], index: i };
+      }
+    }
+    return phases.length ? { phase: phases[0], index: 0 } : null;
+  }
+
+  function readSelectedPlanHorizon(plan, targetRole) {
+    var key = planHorizonStorageKey(plan, targetRole);
+    var stored = parseInt(trim(localStorage.getItem(key)), 10);
+    if (stored === 1 || stored === 3) {
+      return stored;
+    }
+    var planYears = Number(plan && plan.horizonYears);
+    return planYears === 1 ? 1 : 3;
+  }
+
+  function persistSelectedPlanHorizon(plan, targetRole, years) {
+    localStorage.setItem(planHorizonStorageKey(plan, targetRole), String(years));
+  }
+
+  function planHorizonStorageKey(plan, targetRole) {
+    var userId = hasUserIdentity() ? state.identity.userId : "preview";
+    var role = sanitizeKey(firstText(plan && plan.targetRole, targetRole, "general"));
+    return "cyancruise.planHorizon." + sanitizeKey(userId) + "." + role;
+  }
+
+  function filterPlanPhasesByYears(phases, selectedYears) {
+    return normalizeArray(phases).filter(function (phase) {
+      return phaseHorizonMaxYears(phase) <= selectedYears;
+    });
+  }
+
+  function phaseHorizonMaxYears(phase) {
+    var horizon = firstText(phase && phase.horizon, "");
+    if (horizon.indexOf("年") >= 0) {
+      var yearMatch = horizon.match(/(\d+)\s*-\s*(\d+)年|(\d+)年/);
+      if (yearMatch) {
+        if (yearMatch[2]) {
+          return parseInt(yearMatch[2], 10);
+        }
+        if (yearMatch[3]) {
+          return parseInt(yearMatch[3], 10);
+        }
+      }
+    }
+    if (horizon.indexOf("个月") >= 0 || horizon.indexOf("月") >= 0) {
+      return 1;
+    }
+    return 3;
+  }
+
+  function sanitizeKey(value) {
+    return trim(value).toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, "-").replace(/^-+|-+$/g, "") || "item";
+  }
+
+  function readPlanProgress(plan, targetRole, phases) {
+    var key = planProgressStorageKey(plan, targetRole);
+    var stored = parseStorageJson(localStorage, key) || {};
+    stored.checked = stored.checked || {};
+    if (!firstText(stored.activePhaseId) && phases.length) {
+      stored.activePhaseId = phaseKey(phases[0], 0);
+    }
+    state.planProgress = stored;
+    return stored;
+  }
+
+  function planProgressStorageKey(plan, targetRole) {
+    var userId = hasUserIdentity() ? state.identity.userId : "preview";
+    var role = sanitizeKey(firstText(plan && plan.targetRole, targetRole, "general"));
+    return "cyancruise.planProgress." + sanitizeKey(userId) + "." + role;
+  }
+
+  function persistPlanProgress(plan, targetRole, progressState) {
+    var key = planProgressStorageKey(plan, targetRole);
+    state.planProgress = progressState;
+    localStorage.setItem(key, JSON.stringify(progressState));
+  }
+
+  function mergeRefreshedPlan(previousPlan, nextPlan) {
+    var incoming = nextPlan || {};
+    var existing = previousPlan || {};
+    var nextPhases = normalizeArray(incoming.phases);
+    if (!nextPhases.length) {
+      return incoming;
+    }
+    var targetRole = employmentTargetRole(existing);
+    var progressState = readPlanProgress(existing, targetRole, normalizeArray(existing.phases));
+    var completedPhaseMap = {};
+    var existingPhases = normalizeArray(existing.phases);
+    for (var i = 0; i < existingPhases.length; i += 1) {
+      var existingPhase = existingPhases[i];
+      if (isPhaseCompletedByProgress(existingPhase, i, progressState)) {
+        completedPhaseMap[phaseIdentityKey(existingPhase, i)] = existingPhase;
+      }
+    }
+    incoming.phases = nextPhases.map(function (phase, index) {
+      var identity = phaseIdentityKey(phase, index);
+      return completedPhaseMap[identity] || phase;
+    });
+    if (!firstText(progressState.activePhaseId) && incoming.phases.length) {
+      progressState.activePhaseId = phaseKey(incoming.phases[0], 0);
+      persistPlanProgress(incoming, employmentTargetRole(incoming), progressState);
+    }
+    return incoming;
+  }
+
+  function isPhaseCompletedByProgress(phase, index, progressState) {
+    var phaseId = phaseKey(phase, index);
+    var counters = { total: 0, completed: 0 };
+    countTaskGroup(normalizeArray(phase && phase.actions), phaseId + ".actions", progressState, counters);
+    countTaskGroup(normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState, counters);
+    var subStages = normalizeArray(phase && phase.subStages);
+    for (var i = 0; i < subStages.length; i += 1) {
+      countTaskGroup(normalizeArray(subStages[i].actions), phaseId + ".substage." + i + ".actions", progressState, counters);
+    }
+    return counters.total > 0 && counters.completed >= counters.total;
+  }
+
+  function phaseIdentityKey(phase, index) {
+    return sanitizeKey(firstText(phase && phase.horizon, "")) + "::" + sanitizeKey(firstText(phase && phase.title, phaseKey(phase, index)));
+  }
+
+  function phaseProgressStatus(phase, index, progressState) {
+    var phaseId = phaseKey(phase, index);
+    var counters = { total: 0, completed: 0 };
+    countTaskGroup(normalizeArray(phase && phase.actions), phaseId + ".actions", progressState, counters);
+    countTaskGroup(normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState, counters);
+    var subStages = normalizeArray(phase && phase.subStages);
+    for (var i = 0; i < subStages.length; i += 1) {
+      countTaskGroup(normalizeArray(subStages[i].actions), phaseId + ".substage." + i + ".actions", progressState, counters);
+    }
+    if (counters.total > 0 && counters.completed >= counters.total) {
+      return { code: "done", label: "已完成" };
+    }
+    if (counters.completed > 0) {
+      return { code: "active", label: "进行中" };
+    }
+    return { code: "idle", label: "未开始" };
+  }
+
+  function performDeleteResumeRecord(resumeId) {
     if (isFilePreview()) {
       state.resumes = normalizeArray(state.resumes).filter(function (item) {
         return String(firstText(item.resumeId, item.id, "")) !== String(resumeId);
@@ -937,6 +2181,572 @@
     };
   }
 
+  function renderAssessmentPage(item) {
+    if (!state.assessmentScales && !state.assessmentLoading) {
+      loadAssessment();
+    }
+    var body = "";
+
+    if (state.assessmentLoading && !state.assessmentScales) {
+      body += statePanel("正在加载职业测评", "正在读取 CyanCruise 职业测评题库和最近结果。", "pending");
+    }
+    if (state.assessmentError) {
+      body += statePanel("测评暂不可用", state.assessmentError, "warning");
+    }
+
+    if (!state.assessmentSelectedScaleId) {
+      body += renderAssessmentList();
+      renderShell(item, body);
+      return;
+    }
+
+    var scale = state.assessmentScale || selectedAssessmentScaleSummary() || previewAssessmentScale();
+    var questions = normalizeArray(scale.questions);
+    var answered = assessmentAnsweredCount(questions);
+    var total = questions.length;
+    var result = state.assessmentResult;
+    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(total - 1, 0)));
+    var currentQuestion = questions[currentIndex];
+
+    body += '<section class="panel assessment-panel"><h3>' + escapeHtml(scale.title || "职业测评") + '</h3>' +
+      '<p>' + escapeHtml(scale.description || "完成答题后，系统会生成职业画像结果，并写入 CyanCruise 职业画像。") + '</p>' +
+      '<div class="route-progress-card"><div class="route-progress-head"><strong>' + answered + "/" + total +
+      '</strong><span>' + escapeHtml(estimateAssessmentMinutes(scale) + " 分钟") + '</span></div>' +
+      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' +
+      (total ? Math.round(answered * 100 / total) : 0) + '%"></span></div></div>' +
+      '</section>';
+
+    if (result && (result.resultSummary || result.summary)) {
+      body += assessmentResultPanel(result);
+    }
+
+    body += '<section class="panel assessment-quiz"><h3>开始答题</h3>' +
+      questions.map(assessmentQuestionCard).join("") +
+      '<div class="actions-row"><button type="button" data-assessment-submit ' +
+      (state.assessmentSubmitting || answered < total ? 'disabled aria-disabled="true"' : '') + '>' +
+      (state.assessmentSubmitting ? "提交中" : "提交测评") + '</button>' +
+      '<button type="button" class="secondary" data-assessment-back>返回测评列表</button></div>' +
+      '</section>';
+
+    renderShell(item, body);
+  }
+
+  function renderAssessmentPage(item) {
+    if (!state.assessmentScales && !state.assessmentLoading) {
+      loadAssessment();
+    }
+    var body = "";
+
+    if (state.assessmentLoading && !state.assessmentScales) {
+      body += statePanel("正在加载职业测评", "正在读取 CyanCruise 职业测评题库和最近结果。", "pending");
+    }
+    if (state.assessmentError) {
+      body += statePanel("测评暂不可用", state.assessmentError, "warning");
+    }
+
+    if (!state.assessmentSelectedScaleId) {
+      body += renderAssessmentList();
+      renderShell(item, body);
+      return;
+    }
+
+    var scale = state.assessmentScale || selectedAssessmentScaleSummary() || previewAssessmentScale();
+    var questions = normalizeArray(scale.questions);
+    var answered = assessmentAnsweredCount(questions);
+    var total = questions.length;
+    var result = state.assessmentResult;
+    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(total - 1, 0)));
+    var currentQuestion = questions[currentIndex];
+
+    body += '<section class="panel full assessment-panel"><h3>' + escapeHtml(scale.title || "职业测评") + '</h3>' +
+      '<p>' + escapeHtml(scale.description || "完成答题后，系统会生成职业画像结果，并写入 CyanCruise 职业画像。") + '</p>' +
+      '<div class="route-progress-card"><div class="route-progress-head"><strong>' + answered + "/" + total +
+      '</strong><span>' + escapeHtml(total ? "第 " + (currentIndex + 1) + " / " + total + " 题" : "暂无题目") + '</span></div>' +
+      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' +
+      (total ? Math.round(answered * 100 / total) : 0) + '%"></span></div></div>' +
+      '</section>';
+
+    if (result && (result.resultSummary || result.summary)) {
+      body += '<section class="panel full assessment-result-wrap">' + assessmentResultPanel(result) +
+        '<div class="actions-row"><button type="button" data-assessment-back>返回测评列表</button></div></section>';
+      renderShell(item, body);
+      return;
+    }
+
+    body += '<section class="panel full assessment-quiz"><h3>开始答题</h3>' +
+      (currentQuestion ? assessmentQuestionCard(currentQuestion, currentIndex) : statePanel("暂无题目", "当前测评题库为空。", "warning")) +
+      '<div class="actions-row"><button type="button" class="secondary" data-assessment-prev ' +
+      (currentIndex <= 0 || state.assessmentSubmitting ? 'disabled aria-disabled="true"' : '') + '>上一题</button>' +
+      '<button type="button" class="secondary" data-assessment-back>返回测评列表</button>' +
+      (state.assessmentSubmitting ? '<button type="button" disabled aria-disabled="true">提交中</button>' : '') + '</div>' +
+      '</section>';
+
+    renderShell(item, body);
+  }
+
+  function loadAssessment() {
+    state.assessmentLoading = true;
+    state.assessmentError = null;
+    if (isFilePreview()) {
+      state.assessmentScales = previewAssessmentScaleSummaries();
+      state.assessmentScale = null;
+      state.assessmentRecords = [];
+      state.assessmentLoading = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+      return;
+    }
+    Promise.all([
+      post(endpoints.assessmentScales, {}),
+      hasUserIdentity() ? post(endpoints.assessmentRecords, state.identity.userId).catch(function () { return []; }) : Promise.resolve([])
+    ]).then(function (results) {
+      state.assessmentScales = normalizeArray(results[0]);
+      state.assessmentRecords = normalizeArray(results[1]);
+      if (!state.assessmentScales.length) {
+        throw new Error("没有可用的职业测评量表");
+      }
+      state.assessmentScale = null;
+      state.assessmentError = null;
+    }).catch(function (error) {
+      state.assessmentError = error.message || "职业测评题库暂不可用。";
+      state.assessmentScales = previewAssessmentScaleSummaries();
+      state.assessmentScale = null;
+    }).then(function () {
+      state.assessmentLoading = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+    });
+  }
+
+  function renderAssessmentList() {
+    var scales = normalizeArray(state.assessmentScales);
+    if (!scales.length) {
+      scales = previewAssessmentScaleSummaries();
+    }
+    var completed = completedAssessmentScaleIds();
+    return '<section class="feature-section assessment-list-section full"><div class="section-heading">' +
+      '<div><h3>选择职业测评</h3><p class="section-note">按你当前最想了解的问题选择测评，结果会写入职业画像。</p></div></div>' +
+      '<div class="assessment-list">' + scales.map(function (scale, index) {
+        var done = completed[String(scale.scaleId)];
+        var tone = index === 0 ? "app-icon-tile--cyan" : "app-icon-tile--candy";
+        return '<article class="assessment-card app-card-soft">' +
+          '<div class="card-left"><div class="app-icon-tile icon-box ' + tone + '"><span class="icon-glyph">' +
+          escapeHtml(index === 0 ? "测" : "题") + '</span></div><div class="card-info">' +
+          '<strong class="a-title">' + escapeHtml(scale.title) + '</strong>' +
+          '<span class="a-desc">' + escapeHtml(scale.description) + '</span>' +
+          '<div class="tags"><span class="tag tag-time">约 ' + estimateAssessmentMinutes(scale) + ' 分钟</span>' +
+          '<span class="tag tag-blue">' + escapeHtml(firstText(scale.questionCount, normalizeArray(scale.questions).length, 0)) + ' 题</span>' +
+          (done ? '<span class="tag tag-done">已完成</span>' : '') + '</div></div></div>' +
+          '<div class="card-right"><button type="button" class="btn-start" data-assessment-scale="' +
+          escapeAttr(scale.scaleId) + '">' + (done ? "重新测" : "开始") + '</button></div></article>';
+      }).join("") + '</div></section>';
+  }
+
+  function startAssessmentScale(scaleId) {
+    if (!scaleId) {
+      return;
+    }
+    state.assessmentSelectedScaleId = String(scaleId);
+    state.assessmentScale = null;
+    state.assessmentAnswers = {};
+    state.assessmentCurrentIndex = 0;
+    state.assessmentResult = null;
+    state.assessmentError = null;
+    if (isFilePreview()) {
+      state.assessmentScale = previewAssessmentScale(scaleId);
+      renderPage(pageByKey.assessment);
+      return;
+    }
+    state.assessmentLoading = true;
+    renderPage(pageByKey.assessment);
+    post(endpoints.assessmentQuestions, { scaleId: scaleId }).then(function (scale) {
+      state.assessmentScale = scale || previewAssessmentScale(scaleId);
+    }).catch(function (error) {
+      state.assessmentError = error.message || "职业测评题目暂不可用。";
+      state.assessmentScale = previewAssessmentScale(scaleId);
+    }).then(function () {
+      state.assessmentLoading = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+    });
+  }
+
+  function backToAssessmentList() {
+    state.assessmentSelectedScaleId = null;
+    state.assessmentScale = null;
+    state.assessmentAnswers = {};
+    state.assessmentCurrentIndex = 0;
+    state.assessmentResult = null;
+    renderPage(pageByKey.assessment);
+  }
+
+  function assessmentQuestionCard(question, index) {
+    var options = normalizeArray(question.options);
+    var selected = state.assessmentAnswers[String(question.questionId)];
+    return '<div class="route-control-card assessment-question"><div class="route-card-head"><h3>' +
+      (index + 1) + ". " + escapeHtml(question.questionText) + '</h3></div><div class="assessment-options">' +
+      options.map(function (option) {
+        var active = String(option.optionId) === String(selected) ? " active" : "";
+        return '<button type="button" class="route-horizon-button' + active + '" data-assessment-question="' +
+          escapeAttr(question.questionId) + '" data-assessment-option="' + escapeAttr(option.optionId) + '">' +
+          '<strong>' + escapeHtml(option.optionLabel) + '</strong><span>' + escapeHtml(option.optionText) + '</span></button>';
+      }).join("") + '</div></div>';
+  }
+
+  function chooseAssessmentOption(questionId, optionId) {
+    if (!questionId || !optionId || state.assessmentSubmitting) {
+      return;
+    }
+    state.assessmentAnswers[String(questionId)] = String(optionId);
+    var questions = normalizeArray(state.assessmentScale && state.assessmentScale.questions);
+    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(questions.length - 1, 0)));
+    if (questions.length && currentIndex < questions.length - 1) {
+      state.assessmentCurrentIndex = currentIndex + 1;
+    } else if (questions.length) {
+      submitAssessment();
+      return;
+    }
+    renderPage(pageByKey.assessment);
+  }
+
+  function previousAssessmentQuestion() {
+    state.assessmentCurrentIndex = Math.max(0, Number(state.assessmentCurrentIndex || 0) - 1);
+    renderPage(pageByKey.assessment);
+  }
+
+  function submitAssessment() {
+    var scale = state.assessmentScale;
+    var questions = normalizeArray(scale && scale.questions);
+    if (!scale || !scale.scaleId || !questions.length) {
+      showMessage("warning", "无法提交", "职业测评题库尚未加载完成。");
+      return;
+    }
+    if (!hasUserIdentity() || isFilePreview()) {
+      state.assessmentResult = previewAssessmentResult(scale);
+      state.snapshot = state.snapshot || {};
+      state.snapshot.assessment = {
+        scaleId: scale.scaleId,
+        scaleTitle: scale.title,
+        summary: state.assessmentResult.resultSummary,
+        suggestedRoles: state.assessmentResult.suggestedRoles
+      };
+      updateOverviewCards();
+      renderPage(pageByKey.assessment);
+      showMessage("info", "已生成预览结果", "当前未调用受保护后端，部署后会写入 CyanCruise 职业画像。");
+      return;
+    }
+    state.assessmentSubmitting = true;
+    renderPage(pageByKey.assessment);
+    post(endpoints.assessmentSubmit, {
+      userId: state.identity.userId,
+      scaleId: scale.scaleId,
+      answers: assessmentAnswersPayload()
+    }).then(function (result) {
+      state.assessmentResult = result;
+      state.assessmentRecords = [result].concat(state.assessmentRecords || []);
+      return post(endpoints.snapshot, state.identity.userId).catch(function () { return state.snapshot; });
+    }).then(function (snapshot) {
+      if (snapshot) {
+        state.snapshot = snapshot;
+      }
+      updateOverviewCards();
+      showMessage("info", "测评已完成", "结果已写入 CyanCruise 职业画像。");
+    }).catch(function (error) {
+      showMessage("error", "提交失败", error.message || "职业测评提交接口暂不可用。");
+    }).then(function () {
+      state.assessmentSubmitting = false;
+      if (state.route === "assessment") {
+        renderPage(pageByKey.assessment);
+      }
+    });
+  }
+
+  function assessmentAnswersPayload() {
+    var out = {};
+    Object.keys(state.assessmentAnswers).forEach(function (key) {
+      out[key] = state.assessmentAnswers[key];
+    });
+    return out;
+  }
+
+  function assessmentAnsweredCount(questions) {
+    var count = 0;
+    questions.forEach(function (question) {
+      if (state.assessmentAnswers[String(question.questionId)]) {
+        count += 1;
+      }
+    });
+    return count;
+  }
+
+  function assessmentResultPanel(result) {
+    var summary = firstText(result.resultSummary, result.summary, "已完成");
+    var roles = normalizeArray(result.suggestedRoles);
+    var counts = result.dimensionCounts || {};
+    var rows = [
+      ["结果", summary],
+      ["量表", firstText(result.scaleTitle, getValue(state.snapshot, "assessment.scaleTitle"), "职业测评")],
+      ["记录", firstText(result.recordId, getValue(state.snapshot, "assessment.lastRecordId"), "预览")]
+    ];
+    return metricsPanel("测评结果", rows) +
+      '<section class="panel"><h3>推荐方向</h3><ul class="compact-list">' +
+      (roles.length ? roles : defaultAssessmentRoles(summary)).map(function (role) {
+        return '<li>' + escapeHtml(role) + '</li>';
+      }).join("") + '</ul><p class="section-note">维度计数：' +
+      escapeHtml(Object.keys(counts).map(function (key) { return key + "=" + counts[key]; }).join(" / ") || "预览结果") +
+      '</p></section>';
+  }
+
+  function latestAssessmentFromSnapshot() {
+    var assessment = getValue(state.snapshot, "assessment") || null;
+    if (!assessment) {
+      return null;
+    }
+    return {
+      recordId: assessment.lastRecordId,
+      scaleId: assessment.scaleId,
+      scaleTitle: assessment.scaleTitle,
+      resultSummary: assessment.summary,
+      suggestedRoles: assessment.suggestedRoles || [],
+      dimensionCounts: {}
+    };
+  }
+
+  function previewAssessmentScaleSummary() {
+    var scale = previewAssessmentScale();
+    return {
+      scaleId: scale.scaleId,
+      title: scale.title,
+      description: scale.description,
+      version: scale.version,
+      questionCount: scale.questions.length
+    };
+  }
+
+  function previewAssessmentScale() {
+    var questions = [
+      ["1", "在社交场合中，你通常会：", [["11", "A", "主动认识新朋友", "E"], ["12", "B", "和少数熟人交流", "I"]]],
+      ["2", "学习新内容时，你更喜欢：", [["21", "A", "按步骤掌握细节", "S"], ["22", "B", "先看整体图景", "N"]]],
+      ["3", "做决定时，你更看重：", [["31", "A", "逻辑和事实", "T"], ["32", "B", "人的感受", "F"]]],
+      ["4", "面对截止日期，你通常：", [["41", "A", "提前完成", "J"], ["42", "B", "临近时效率更高", "P"]]]
+    ];
+    return {
+      scaleId: 1001,
+      title: "MBTI 职业性格测评",
+      description: "预览题库，部署后使用后端 16 题完整题库。",
+      version: "preview",
+      questions: questions.map(function (row, index) {
+        return {
+          questionId: row[0],
+          questionText: row[1],
+          sortOrder: index + 1,
+          options: row[2].map(function (option) {
+            return { optionId: option[0], optionLabel: option[1], optionText: option[2], dimensionCode: option[3] };
+          })
+        };
+      })
+    };
+  }
+
+  function previewAssessmentResult(scale) {
+    var counts = {};
+    normalizeArray(scale.questions).forEach(function (question) {
+      var optionId = state.assessmentAnswers[String(question.questionId)];
+      var option = normalizeArray(question.options).filter(function (item) {
+        return String(item.optionId) === String(optionId);
+      })[0];
+      if (option && option.dimensionCode) {
+        counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
+      }
+    });
+    var summary = (counts.E >= counts.I ? "E" : "I") +
+      (counts.S >= counts.N ? "S" : "N") +
+      (counts.T >= counts.F ? "T" : "F") +
+      (counts.J >= counts.P ? "J" : "P");
+    return {
+      recordId: "preview",
+      scaleId: scale.scaleId,
+      scaleTitle: scale.title,
+      status: "COMPLETED",
+      resultSummary: summary,
+      dimensionCounts: counts,
+      suggestedRoles: defaultAssessmentRoles(summary)
+    };
+  }
+
+  function defaultAssessmentRoles(summary) {
+    if (summary.indexOf("N") >= 0 && summary.indexOf("T") >= 0) {
+      return ["产品经理", "数据分析师", "后端开发工程师"];
+    }
+    if (summary.indexOf("F") >= 0) {
+      return ["用户研究员", "人力资源专员", "客户成功顾问"];
+    }
+    return ["软件工程师", "业务分析师", "解决方案顾问"];
+  }
+
+  function latestAssessmentFromSnapshot(scaleId) {
+    var assessment = getValue(state.snapshot, "assessment") || null;
+    if (!assessment) {
+      return null;
+    }
+    if (scaleId && assessment.scaleId && String(scaleId) !== String(assessment.scaleId)) {
+      return null;
+    }
+    return {
+      recordId: assessment.lastRecordId,
+      scaleId: assessment.scaleId,
+      scaleTitle: assessment.scaleTitle,
+      resultSummary: assessment.summary,
+      suggestedRoles: assessment.suggestedRoles || [],
+      dimensionCounts: {}
+    };
+  }
+
+  function selectedAssessmentScaleSummary() {
+    var scales = normalizeArray(state.assessmentScales);
+    for (var i = 0; i < scales.length; i += 1) {
+      if (String(scales[i].scaleId) === String(state.assessmentSelectedScaleId)) {
+        return scales[i];
+      }
+    }
+    return null;
+  }
+
+  function completedAssessmentScaleIds() {
+    var out = {};
+    normalizeArray(state.assessmentRecords).forEach(function (record) {
+      if (record && record.scaleId) {
+        out[String(record.scaleId)] = true;
+      }
+    });
+    var assessment = getValue(state.snapshot, "assessment") || {};
+    if (assessment.scaleId) {
+      out[String(assessment.scaleId)] = true;
+    }
+    return out;
+  }
+
+  function estimateAssessmentMinutes(scale) {
+    var count = Number(firstText(scale && scale.questionCount, normalizeArray(scale && scale.questions).length, 0));
+    return Math.max(1, Math.round(count * 12 / 60));
+  }
+
+  function previewAssessmentScaleSummaries() {
+    return ["1001", "1002", "1003", "1004", "1005"].map(function (scaleId) {
+      var scale = previewAssessmentScale(scaleId);
+      return {
+        scaleId: scale.scaleId,
+        title: scale.title,
+        description: scale.description,
+        version: scale.version,
+        questionCount: scale.questions.length
+      };
+    });
+  }
+
+  function previewAssessmentScale(scaleId) {
+    var id = String(scaleId || state.assessmentSelectedScaleId || "1001");
+    var meta = previewAssessmentMeta()[id] || previewAssessmentMeta()["1001"];
+    return {
+      scaleId: Number(id),
+      title: meta[0],
+      description: meta[1],
+      version: "preview",
+      questions: meta[2].map(function (row, index) {
+        return {
+          questionId: id + row[0],
+          questionText: row[1],
+          sortOrder: index + 1,
+          options: row[2].map(function (option) {
+            return { optionId: id + option[0], optionLabel: option[1], optionText: option[2], dimensionCode: option[3] };
+          })
+        };
+      })
+    };
+  }
+
+  function previewAssessmentMeta() {
+    return {
+      "1001": ["性格倾向测评(MBTI)", "探索你在四个维度上的性格倾向，帮助了解自己的思维与决策风格。", [
+        ["1", "在社交场合中，你通常会：", [["11", "A", "主动认识新朋友", "E"], ["12", "B", "和少数熟人交流", "I"]]],
+        ["2", "学习新内容时，你更喜欢：", [["21", "A", "按步骤掌握细节", "S"], ["22", "B", "先看整体图景", "N"]]],
+        ["3", "做决定时，你更看重：", [["31", "A", "逻辑和事实", "T"], ["32", "B", "人的感受", "F"]]],
+        ["4", "面对截止日期，你通常：", [["41", "A", "提前完成", "J"], ["42", "B", "临近时效率更高", "P"]]]
+      ]],
+      "1002": ["RIASEC职业兴趣", "Holland职业兴趣测评，探索你的实际型、研究型、艺术型、社会型、企业型、常规型倾向。", [
+        ["1", "更吸引你的任务是：", [["101", "A", "修理设备或处理工具", "R"], ["102", "B", "分析问题或验证假设", "I"]]],
+        ["2", "你更愿意参与：", [["201", "A", "创意表达或设计内容", "A"], ["202", "B", "帮助他人或教学辅导", "S"]]],
+        ["3", "团队中你更自然承担：", [["301", "A", "推动决策和组织行动", "E"], ["302", "B", "整理资料和检查细节", "C"]]]
+      ]],
+      "1003": ["大五人格(BIG5)", "测量开放性、尽责性、外向性、宜人性、神经质五大人格维度。", [
+        ["1", "你更像是：", [["101", "A", "喜欢新想法和跨界探索", "O"], ["102", "B", "重视计划和完成质量", "C"]]],
+        ["2", "别人更常说你：", [["201", "A", "外向、活跃", "E"], ["202", "B", "温和、配合", "A"]]],
+        ["3", "压力来临时你通常：", [["301", "A", "情绪波动明显", "N"], ["302", "B", "先拆任务再推进", "C"]]]
+      ]],
+      "1004": ["职业价值观", "了解你最看重的职业价值维度：成就感、安全感、自主性、社会服务、地位声望、多样挑战。", [
+        ["1", "你更看重工作带来：", [["101", "A", "明确成果和成长成就", "ACH"], ["102", "B", "稳定收入和安全边界", "SEC"]]],
+        ["2", "你更希望拥有：", [["201", "A", "自主安排和决策空间", "AUT"], ["202", "B", "帮助他人和社会价值", "SOC"]]],
+        ["3", "更吸引你的是：", [["301", "A", "更高平台或行业认可", "STA"], ["302", "B", "不同任务和持续挑战", "VAR"]]]
+      ]],
+      "1005": ["压力应对测评", "评估你在压力情境中的应对风格和情绪调节模式。", [
+        ["1", "压力出现时，你通常先：", [["101", "A", "拆解问题并找行动", "PROBLEM"], ["102", "B", "先处理情绪和感受", "EMOTION"]]],
+        ["2", "遇到不确定任务，你更倾向于：", [["201", "A", "列计划控制节奏", "PLAN"], ["202", "B", "找人讨论获得支持", "SUPPORT"]]],
+        ["3", "当结果不理想时，你更常：", [["301", "A", "复盘并重新解释问题", "REFRAME"], ["302", "B", "暂时回避等状态恢复", "AVOID"]]]
+      ]]
+    };
+  }
+
+  function previewAssessmentResult(scale) {
+    var counts = {};
+    normalizeArray(scale.questions).forEach(function (question) {
+      var optionId = state.assessmentAnswers[String(question.questionId)];
+      var option = normalizeArray(question.options).filter(function (item) {
+        return String(item.optionId) === String(optionId);
+      })[0];
+      if (option && option.dimensionCode) {
+        counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
+      }
+    });
+    var isMbti = String(scale.title || "").toUpperCase().indexOf("MBTI") >= 0;
+    var summary = isMbti
+      ? (counts.E >= counts.I ? "E" : "I") +
+        (counts.S >= counts.N ? "S" : "N") +
+        (counts.T >= counts.F ? "T" : "F") +
+        (counts.J >= counts.P ? "J" : "P")
+      : topAssessmentDimensions(counts);
+    return {
+      recordId: "preview",
+      scaleId: scale.scaleId,
+      scaleTitle: scale.title,
+      status: "COMPLETED",
+      resultSummary: summary,
+      dimensionCounts: counts,
+      suggestedRoles: defaultAssessmentRoles(summary)
+    };
+  }
+
+  function topAssessmentDimensions(counts) {
+    var keys = Object.keys(counts || {});
+    keys.sort(function (left, right) {
+      var diff = (counts[right] || 0) - (counts[left] || 0);
+      return diff || left.localeCompare(right);
+    });
+    return keys.slice(0, 3).join("") || "N/A";
+  }
+
+  function defaultAssessmentRoles(summary) {
+    if (summary.indexOf("N") >= 0 && summary.indexOf("T") >= 0) {
+      return ["产品经理", "数据分析师", "后端开发工程师"];
+    }
+    if (summary.indexOf("F") >= 0 || summary.indexOf("S") >= 0) {
+      return ["用户研究员", "人力资源专员", "客户成功顾问"];
+    }
+    return ["软件工程师", "业务分析师", "解决方案顾问"];
+  }
+
   function renderContractPage(item) {
     var endpointRows = item.endpoints.map(function (name) {
       return ["WebAPI", endpoints[name] || name];
@@ -954,12 +2764,10 @@
       body += listPanel("简历记录", state.resumes, "暂无简历记录，仍可保留创建和文件入口。");
     } else if (item.key === "interview") {
       body += listPanel("面试历史", state.interviews, "暂无面试历史。");
-    } else if (item.key === "career-plan") {
-      body += statePanel("AI路径规划", "后续由 AI 根据首页路线选择、完整用户画像、简历/材料和阶段目标生成实现路径。当前先保留入口，不展开规划 Agent。", "pending");
     } else if (item.key === "assessment") {
       body += statePanel("职业测评", "后续通过答题分析人格、性格、偏好和行动风格，并把结果补入完整用户画像，用于指导路径规划和今日行动。当前先保留入口，不展开题组。", "pending");
     } else if (item.key === "assistant") {
-      body += statePanel("助手会话", "可调用发送消息和会话列表契约；真实 AI provider 在后续 change 接入。", "pending");
+      body += statePanel("助手会话", "可调用发送消息和会话列表契约；真实智能服务在后续 change 接入。", "pending");
     } else if (item.key === "messages") {
       body += statePanel("站内消息", "消息列表、未读数、已读和订阅配额契约已映射；微信真实发送暂不迁移。", "pending");
     } else if (item.key === "file-upload-preview") {
@@ -1004,20 +2812,22 @@
   }
 
   function pageHeaderActions(item) {
+    if (item.key === "workbench" || (item.key === "assessment" && state.assessmentSelectedScaleId)) {
+      return "";
+    }
     var back = backRouteFor(item.key);
     var actions = [];
     if (back) {
       actions.push('<button type="button" class="secondary" data-back-route="' + escapeHtml(back) + '">返回</button>');
     }
-    if (item.key !== "workbench") {
-      actions.push('<button type="button" class="secondary" data-link="workbench">首页</button>');
-    }
+    actions.push('<button type="button" class="secondary" data-link="workbench">首页</button>');
     return actions.length ? '<div class="page-actions">' + actions.join("") + '</div>' : "";
   }
 
   function backRouteFor(key) {
-    if (state.previousRoute && state.previousRoute !== key && pageByKey[state.previousRoute]) {
-      return state.previousRoute;
+    var source = state.returnRoutes && state.returnRoutes[key];
+    if (source && source !== key && pageByKey[source]) {
+      return source;
     }
     return parentRouteFor(key);
   }
@@ -1040,7 +2850,7 @@
       "assistant": "workbench",
       "messages": "workbench",
       "employment-insight": "employment-home",
-      "career-resources": "workbench",
+      "career-resources": "employment-home",
       "file-upload-preview": "resume-home",
       "onboarding": "workbench",
       "admin-console": "workbench"
@@ -1049,6 +2859,79 @@
   }
 
   function handlePageHostClick(event) {
+    var planHorizonTarget = findPlanHorizonTarget(event.target);
+    if (planHorizonTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      updatePlanHorizon(planHorizonTarget.getAttribute("data-plan-horizon"));
+      return;
+    }
+    var planTaskTarget = findPlanTaskTarget(event.target);
+    if (planTaskTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      togglePlanTask(planTaskTarget.getAttribute("data-plan-task"));
+      return;
+    }
+    var planFocusTarget = findPlanFocusTarget(event.target);
+    if (planFocusTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      focusPlanPhase(planFocusTarget.getAttribute("data-plan-focus"));
+      return;
+    }
+    var ensurePlanTarget = findEnsurePlanTarget(event.target);
+    if (ensurePlanTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      ensureEmploymentPlan();
+      return;
+    }
+    var resourceTarget = findResourceDetailTarget(event.target);
+    if (resourceTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      showResourceDetailDialog(resourceTarget.getAttribute("data-resource-detail"));
+      return;
+    }
+    var assessmentOptionTarget = findAssessmentOptionTarget(event.target);
+    if (assessmentOptionTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      chooseAssessmentOption(
+        assessmentOptionTarget.getAttribute("data-assessment-question"),
+        assessmentOptionTarget.getAttribute("data-assessment-option")
+      );
+      return;
+    }
+    var assessmentScaleTarget = findAssessmentScaleTarget(event.target);
+    if (assessmentScaleTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      startAssessmentScale(assessmentScaleTarget.getAttribute("data-assessment-scale"));
+      return;
+    }
+    var assessmentBackTarget = findAssessmentBackTarget(event.target);
+    if (assessmentBackTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      backToAssessmentList();
+      return;
+    }
+    var assessmentPrevTarget = findAssessmentPrevTarget(event.target);
+    if (assessmentPrevTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      previousAssessmentQuestion();
+      return;
+    }
+    var assessmentSubmitTarget = findAssessmentSubmitTarget(event.target);
+    if (assessmentSubmitTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      submitAssessment();
+      return;
+    }
     var target = findPageLinkTarget(event.target);
     if (!target) {
       return;
@@ -1073,6 +2956,144 @@
     return null;
   }
 
+  function findAssessmentOptionTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-option")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentScaleTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-scale")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentBackTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-back") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentPrevTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-prev") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findAssessmentSubmitTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-submit") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findPlanTaskTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-plan-task")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findPlanFocusTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-plan-focus")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findPlanHorizonTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-plan-horizon")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function togglePlanTask(taskId) {
+    if (!taskId) {
+      return;
+    }
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
+    progressState.checked[taskId] = !progressState.checked[taskId];
+    persistPlanProgress(plan, targetRole, progressState);
+    renderPage(pageByKey[state.route]);
+  }
+
+  function focusPlanPhase(phaseId) {
+    if (!phaseId || state.route !== "career-plan") {
+      return;
+    }
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
+    progressState.activePhaseId = phaseId;
+    persistPlanProgress(plan, targetRole, progressState);
+    renderPage(pageByKey[state.route]);
+  }
+
+  function updatePlanHorizon(value) {
+    if (state.route !== "career-plan") {
+      return;
+    }
+    var years = parseInt(trim(value), 10);
+    if (years !== 1 && years !== 3) {
+      return;
+    }
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var targetRole = employmentTargetRole(plan);
+    persistSelectedPlanHorizon(plan, targetRole, years);
+    renderPage(pageByKey[state.route]);
+  }
+
+  function findEnsurePlanTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-ensure-plan") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function findResourceDetailTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-resource-detail")) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
   function navigateToRoute(route) {
     var key = normalizeRoute(route);
     if (!pageByKey[key]) {
@@ -1080,7 +3101,9 @@
       return;
     }
     if (state.route && state.route !== key) {
+      rememberRouteScroll(state.route);
       state.previousRoute = state.route;
+      rememberReturnRoute(key, state.route);
     }
     state.route = key;
     if (window.location.hash !== "#" + key) {
@@ -1099,6 +3122,8 @@
       showMessage("warning", "页面不可用", "未找到页面: " + key);
       return;
     }
+    rememberRouteScroll(state.route);
+    clearReturnRoute(state.route);
     state.previousRoute = "";
     state.route = key;
     if (window.location.hash !== "#" + key) {
@@ -1106,9 +3131,46 @@
     }
     markActiveNav();
     renderPage(pageByKey[key]);
+    restoreRouteScroll(key);
+  }
+
+  function rememberRouteScroll(route) {
+    var key = normalizeRoute(route);
+    if (!pageByKey[key]) {
+      return;
+    }
+    state.scrollPositions[key] = currentScrollTop();
+  }
+
+  function rememberReturnRoute(route, sourceRoute) {
+    var key = normalizeRoute(route);
+    var source = normalizeRoute(sourceRoute);
+    if (key === "workbench") {
+      return;
+    }
+    if (!pageByKey[key] || !pageByKey[source] || key === source) {
+      return;
+    }
+    state.returnRoutes[key] = source;
+  }
+
+  function clearReturnRoute(route) {
+    var key = normalizeRoute(route);
+    if (state.returnRoutes) {
+      delete state.returnRoutes[key];
+    }
+  }
+
+  function restoreRouteScroll(route) {
+    var key = normalizeRoute(route);
+    var y = state.scrollPositions[key];
     window.setTimeout(function () {
-      window.scrollTo(0, 0);
+      window.scrollTo(0, typeof y === "number" ? y : 0);
     }, 0);
+  }
+
+  function currentScrollTop() {
+    return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
   }
 
   function overviewRows(goal) {
@@ -1130,10 +3192,25 @@
     }
     return [
       ["目标岗位", textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob") || "待确认"],
-      ["今日行动", "等待完整用户画像"],
+      ["今日行动", todayOverviewStatus()],
       ["简历记录", Array.isArray(state.resumes) ? state.resumes.length + " 份" : "待加载"],
       ["面试练习", Array.isArray(state.interviews) ? state.interviews.length + " 次" : "待加载"]
     ];
+  }
+
+  function todayOverviewStatus() {
+    if (state.plan && !state.plan.unavailable) {
+      var view = buildPlanViewModel();
+      if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length) {
+        var firstDailyItem = view.dailyPlan.items[0];
+        return firstText(firstDailyItem && firstDailyItem.text, firstDailyItem, "今日可推进");
+      }
+      return "等待任务拆解";
+    }
+    if (state.planEnsuring) {
+      return "路线生成中";
+    }
+    return "等待路径规划";
   }
 
   function overviewStrip(goal) {
@@ -1176,7 +3253,6 @@
       showMessage("info", "契约预览", "file:// 模式不调用后端；部署到苍穹或 Web 服务后可请求 WebAPI。");
       return;
     }
-    showMessage("info", "正在加载", "读取画像、今日行动、简历、计划和面试摘要。");
     Promise.all([
       post(endpoints.snapshot, state.identity.userId).catch(asUnavailable),
       post(endpoints.today, state.identity.userId).catch(asUnavailable),
@@ -1191,7 +3267,6 @@
       state.interviews = normalizeArray(results[4]);
       updateOverviewCards();
       renderPage(pageByKey[state.route]);
-      showMessage("info", "已加载", "页面按当前身份刷新完成。");
     }).catch(function (error) {
       renderPreview();
       showMessage("error", "加载失败", error.message || "后端暂不可用，已保留可恢复页面状态。");
@@ -1240,7 +3315,9 @@
       preference: valueOf("homePreference"),
       identityType: valueOf("profileIdentityType"),
       educationStage: valueOf("profileEducationStage"),
-      schoolMajor: valueOf("profileSchoolMajor"),
+      school: valueOf("profileSchool"),
+      major: valueOf("profileMajor"),
+      schoolMajor: valueOf("profileMajor"),
       resumeStatus: valueOf("resumeStatus"),
       experience: valueOf("profileExperience")
     };
@@ -1249,7 +3326,13 @@
       identityType: intent.identityType,
       stage: intent.educationStage,
       educationStage: intent.educationStage,
-      schoolMajor: intent.schoolMajor,
+      school: intent.school,
+      major: intent.major,
+      schoolMajor: intent.major,
+      education: {
+        school: intent.school,
+        major: intent.major
+      },
       targetRole: intent.targetRole,
       resumeStatus: intent.resumeStatus,
       experience: intent.experience,
@@ -1322,8 +3405,8 @@
     var preview = readPreviewProfile();
     state.snapshot = preview || {};
     state.today = {
-      title: "等待完整用户画像",
-      summary: "完整用户画像需要结合首页草稿、后续上传资料、简历和 AI 分析后生成。"
+      title: "等待路径规划",
+      summary: "今日行动会根据路径规划里的当前阶段和本周计划拆解生成。"
     };
     state.resumes = [];
     state.plan = null;
@@ -1427,6 +3510,7 @@
       userId: userId,
       adminId: firstText(context.adminId, context.userId, context.operatorId, getValue(context, "user.id"), getValue(context, "currentUser.id")),
       roles: normalizeRoles(firstText(context.roles, context.roleCodes, context.role, context.permissionCodes, getValue(context, "user.roles"), getValue(context, "currentUser.roles"))),
+      displayName: firstText(context.displayName, context.userName, context.username, context.name, context.nickName, context.nickname, context.operatorName, context.personName, getValue(context, "user.displayName"), getValue(context, "user.userName"), getValue(context, "user.name"), getValue(context, "currentUser.displayName"), getValue(context, "currentUser.userName"), getValue(context, "currentUser.name"), getValue(context, "userInfo.displayName"), getValue(context, "userInfo.userName"), getValue(context, "userInfo.name")),
       source: userId ? resolved.source : "missing-cosmic-platform-context"
     };
   }
@@ -1544,6 +3628,7 @@
         userId: fromQuery,
         adminId: trim(params.get("adminId")),
         roles: parseRoles(params.get("roles")),
+        displayName: firstText(params.get("userName"), params.get("displayName"), params.get("name"), fromQuery ? "用户" : ""),
         source: "query:userId"
       };
     }
@@ -1556,6 +3641,7 @@
       userId: stored,
       adminId: trim(localStorage.getItem("cyancruise.adminId")),
       roles: parseRoles(localStorage.getItem("cyancruise.roles")),
+      displayName: firstText(localStorage.getItem("cyancruise.userName"), stored ? "用户" : ""),
       source: stored ? "localStorage:cyancruise.userId" : "development-missing-userId"
     };
   }
@@ -1575,10 +3661,10 @@
         userId: userId,
         adminId: firstText(identity.adminId, identity.userId),
         roles: normalizeRoles(identity.roles),
+        displayName: firstText(identity.displayName, identity.userName, identity.username, identity.name, identity.nickName, identity.nickname, userId ? "用户" : ""),
         source: firstText(identity.source, "cc001-identity-current")
       };
       updateIdentityState();
-      renderPage(pageByKey[state.route]);
     }).catch(function (error) {
       showMessage("warning", "平台身份调用失败", error && error.message ? error.message : "identity request failed");
     });
@@ -1890,7 +3976,7 @@
     if (resume && (resume.lastResumeId || resume.targetJob)) {
       score += 30;
     }
-    if (assessment && (assessment.latestRecordId || assessment.resultCode || assessment.mbtiType)) {
+    if (assessment && (assessment.latestRecordId || assessment.lastRecordId || assessment.resultCode || assessment.resultSummary || assessment.summary || assessment.mbtiType)) {
       score += 25;
     }
     if (resume && resume.diagnosisScore) {
@@ -1913,6 +3999,50 @@
       return value.list;
     }
     return [];
+  }
+
+  function defaultDailySuggestions(targetRole) {
+    var role = targetRole === "目标岗位待确认" ? "目标岗位" : targetRole;
+    return [
+      "阅读 1 到 2 个" + role + "岗位描述，补充高频关键词。",
+      "优化 1 组简历经历，补充结果、数字和个人贡献。",
+      "推进 1 个项目任务或技能练习，并保留可展示成果。",
+      "练习 1 个面试问题，整理成 STAR 回答。",
+      "记录今天完成项、卡点和明天第一步。"
+    ];
+  }
+
+  function previewPlanPhases(targetRole) {
+    var role = targetRole === "目标岗位待确认" ? "目标岗位" : targetRole;
+    return [
+      {
+        horizon: "0-1个月",
+        title: "定位与材料准备",
+        goal: "明确" + role + "要求，完成可投递简历和项目证据清单。",
+        status: "待推进",
+        actions: ["分析 10 个目标岗位 JD", "完成 1 版简历", "整理 2 个项目 STAR 讲述"],
+        kpis: ["岗位关键词清单", "可投递简历", "项目证据清单"],
+        subStages: [{ period: "第 1 周", title: "岗位拆解", goal: "完成目标岗位分析", actions: ["每天分析 2 个 JD", "补充项目证据"] }]
+      },
+      {
+        horizon: "1-3个月",
+        title: "能力补齐与项目验证",
+        goal: "围绕" + role + "补齐核心技能并形成项目成果。",
+        status: "待推进",
+        actions: ["完成核心技能计划", "交付 1-2 个项目", "形成项目复盘"],
+        kpis: ["项目成果", "技能短板清单"],
+        subStages: [{ period: "第 2-8 周", title: "技能和项目推进", goal: "形成可展示成果", actions: ["每日技能练习", "每日推进项目任务"] }]
+      },
+      {
+        horizon: "3-12个月",
+        title: "投递面试与机会转化",
+        goal: "建立稳定投递节奏，持续复盘面试反馈。",
+        status: "待推进",
+        actions: ["每周投递岗位", "每周模拟面试", "根据反馈更新简历"],
+        kpis: ["投递记录", "面试复盘", "offer 或实习机会"],
+        subStages: [{ period: "每周循环", title: "投递复盘", goal: "保持节奏并提升转化", actions: ["投递 5-10 个岗位", "复盘 1 次面试"] }]
+      }
+    ];
   }
 
   function normalizeRoles(value) {
@@ -1940,6 +4070,20 @@
       }
     }
     return "";
+  }
+
+  function shortText(value, limit) {
+    var text = trim(value);
+    var max = limit || 160;
+    return text.length > max ? text.slice(0, max - 1) + "…" : text;
+  }
+
+  function isDisplayChinese(value) {
+    var text = trim(value);
+    if (!text) {
+      return false;
+    }
+    return /[\u4e00-\u9fff]/.test(text) || !/[A-Za-z]{4,}/.test(text);
   }
 
   function trim(value) {
@@ -1973,6 +4117,162 @@
     }
     if (type === "info") {
       state.messageTimer = window.setTimeout(hideMessage, 5000);
+    }
+  }
+
+  function showConfirmDialog(title, text, confirmText, onConfirm) {
+    hideConfirmDialog();
+    var previousFocus = document.activeElement;
+    var overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    overlay.innerHTML =
+      '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogText">' +
+      '<div class="confirm-copy"><strong id="confirmDialogTitle">' + escapeHtml(title) + '</strong>' +
+      '<span id="confirmDialogText">' + escapeHtml(text) + '</span></div>' +
+      '<div class="confirm-actions">' +
+      '<button type="button" class="secondary" data-confirm-cancel>取消</button>' +
+      '<button type="button" class="danger" data-confirm-ok>' + escapeHtml(confirmText || "确认") + '</button>' +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    var cancel = overlay.querySelector("[data-confirm-cancel]");
+    var ok = overlay.querySelector("[data-confirm-ok]");
+    function close() {
+      hideConfirmDialog();
+      document.removeEventListener("keydown", onKeydown);
+      if (previousFocus && typeof previousFocus.focus === "function") {
+        previousFocus.focus();
+      }
+    }
+    function onKeydown(event) {
+      if (event.key === "Escape") {
+        close();
+      }
+    }
+    overlay.addEventListener("click", function (event) {
+      if (event.target === overlay) {
+        close();
+      }
+    });
+    cancel.addEventListener("click", close);
+    ok.addEventListener("click", function () {
+      close();
+      if (typeof onConfirm === "function") {
+        onConfirm();
+      }
+    });
+    document.addEventListener("keydown", onKeydown);
+    ok.focus();
+  }
+
+  function showResourceDetailDialog(key) {
+    var detail = resourceDetail(key);
+    if (!detail) {
+      showMessage("warning", "资源不可用", "未找到对应的资源内容。");
+      return;
+    }
+    hideConfirmDialog();
+    var previousFocus = document.activeElement;
+    var overlay = document.createElement("div");
+    overlay.className = "confirm-overlay resource-overlay";
+    overlay.innerHTML =
+      '<div class="confirm-dialog resource-dialog" role="dialog" aria-modal="true" aria-labelledby="resourceDialogTitle">' +
+      '<div class="confirm-copy"><strong id="resourceDialogTitle">' + escapeHtml(detail.title) + '</strong>' +
+      '<span>' + escapeHtml(detail.summary) + '</span></div>' +
+      '<div class="resource-detail-body">' + detail.sections.map(function (section) {
+        return '<section><h4>' + escapeHtml(section.title) + '</h4><ul>' + section.items.map(function (item) {
+          return '<li>' + escapeHtml(item) + '</li>';
+        }).join("") + '</ul></section>';
+      }).join("") + '</div>' +
+      '<div class="confirm-actions">' +
+      '<button type="button" class="secondary" data-confirm-cancel>关闭</button>' +
+      (detail.route ? '<button type="button" data-resource-route="' + escapeAttr(detail.route) + '">' + escapeHtml(detail.actionText || "进入相关工具") + '</button>' : '') +
+      '</div></div>';
+    document.body.appendChild(overlay);
+    var cancel = overlay.querySelector("[data-confirm-cancel]");
+    var route = overlay.querySelector("[data-resource-route]");
+    function close() {
+      hideConfirmDialog();
+      document.removeEventListener("keydown", onKeydown);
+      if (previousFocus && typeof previousFocus.focus === "function") {
+        previousFocus.focus();
+      }
+    }
+    function onKeydown(event) {
+      if (event.key === "Escape") {
+        close();
+      }
+    }
+    overlay.addEventListener("click", function (event) {
+      if (event.target === overlay) {
+        close();
+      }
+    });
+    cancel.addEventListener("click", close);
+    if (route) {
+      route.addEventListener("click", function () {
+        var targetRoute = route.getAttribute("data-resource-route");
+        close();
+        navigateToRoute(targetRoute);
+      });
+    }
+    document.addEventListener("keydown", onKeydown);
+    cancel.focus();
+  }
+
+  function resourceDetail(key) {
+    var details = {
+      "resume-evidence": {
+        title: "简历证据清单",
+        summary: "把经历先整理成可验证证据，再写成简历要点。",
+        route: "resume-diagnosis",
+        actionText: "去简历诊断",
+        sections: [
+          { title: "先收集", items: ["目标岗位 JD 中反复出现的能力词。", "课程、项目、实习、竞赛、开源或作品中能证明这些能力的材料。", "每段经历对应的任务、动作、结果和可量化指标。"] },
+          { title: "再改写", items: ["用动词开头描述你做了什么。", "补上技术栈、业务场景或协作对象。", "尽量写出结果，例如效率、规模、准确率、用户量或交付物。"] },
+          { title: "检查", items: ["一条经历只服务一个核心能力。", "删除泛泛的形容词，保留证据和结果。", "和目标岗位无关的内容放到次要位置。"] }
+        ]
+      },
+      "weekly-focus": {
+        title: "本周求职行动重点",
+        summary: "把求职推进拆成一周内能完成的三个动作。",
+        route: "career-plan",
+        actionText: "查看路径规划",
+        sections: [
+          { title: "第 1 步", items: ["选定一个本周主攻岗位，不要同时追太多方向。", "保存 3 条代表性 JD，提取共同能力词。"] },
+          { title: "第 2 步", items: ["按能力词修改一版简历。", "至少补充一个项目或实习的结果指标。"] },
+          { title: "第 3 步", items: ["完成一次模拟面试。", "记录 2 个回答卡住的问题，并写下下一轮改进动作。"] }
+        ]
+      },
+      "interview-practice": {
+        title: "面试练习前的回答结构",
+        summary: "用固定结构减少临场组织语言的成本。",
+        route: "interview",
+        actionText: "开始模拟面试",
+        sections: [
+          { title: "STAR 框架", items: ["Situation：一句话交代背景。", "Task：说明你负责解决什么问题。", "Action：讲清楚你的关键动作和取舍。", "Result：用结果、指标或复盘收尾。"] },
+          { title: "项目题", items: ["先讲目标和边界，再讲架构或流程。", "准备一个技术难点、一个协作难点、一个复盘点。"] },
+          { title: "行为题", items: ["准备失败经历、冲突经历、主动推进经历。", "回答时避免只讲态度，要给具体场景。"] }
+        ]
+      },
+      "software-engineer-path": {
+        title: "软件工程师路径",
+        summary: "面向后端、Web、数据和 AI 应用岗位的基础成长路线。",
+        route: "career-plan",
+        actionText: "查看路径规划",
+        sections: [
+          { title: "基础能力", items: ["数据结构与算法、计算机网络、数据库、操作系统。", "至少掌握一门主力语言和对应工程框架。"] },
+          { title: "项目能力", items: ["完成一个可部署的业务系统。", "补充登录、权限、存储、日志、测试和部署说明。"] },
+          { title: "求职准备", items: ["把项目写成问题、方案、结果三段。", "围绕目标岗位准备高频八股和项目追问。"] }
+        ]
+      }
+    };
+    return details[key] || null;
+  }
+
+  function hideConfirmDialog() {
+    var existing = document.querySelector(".confirm-overlay");
+    if (existing && existing.parentNode) {
+      existing.parentNode.removeChild(existing);
     }
   }
 

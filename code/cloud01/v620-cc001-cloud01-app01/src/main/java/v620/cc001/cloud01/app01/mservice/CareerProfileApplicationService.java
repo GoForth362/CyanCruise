@@ -166,8 +166,17 @@ public class CareerProfileApplicationService {
         if (hasText(request.getEducationStage())) {
             draft.setEducationStage(request.getEducationStage().trim());
         }
+        if (hasText(request.getSchool())) {
+            draft.setSchool(request.getSchool().trim());
+        }
+        if (hasText(request.getMajor())) {
+            draft.setMajor(request.getMajor().trim());
+        }
         if (hasText(request.getSchoolMajor())) {
             draft.setSchoolMajor(request.getSchoolMajor().trim());
+            if (!hasText(draft.getMajor())) {
+                draft.setMajor(request.getSchoolMajor().trim());
+            }
         }
         if (hasText(request.getResumeStatus())) {
             draft.setResumeStatus(request.getResumeStatus().trim());

@@ -15,6 +15,7 @@ public class AssessmentScaleDto implements Serializable {
     private String title;
     private String description;
     private String version;
+    private Integer questionCount;
     private List<AssessmentQuestionDto> questions = new ArrayList<AssessmentQuestionDto>();
 
     public Long getScaleId() {
@@ -47,6 +48,14 @@ public class AssessmentScaleDto implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public Integer getQuestionCount() {
+        return questionCount;
+    }
+
+    public void setQuestionCount(Integer questionCount) {
+        this.questionCount = questionCount;
     }
 
     public List<AssessmentQuestionDto> getQuestions() {

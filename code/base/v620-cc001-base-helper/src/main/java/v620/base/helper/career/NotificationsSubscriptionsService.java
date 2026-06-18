@@ -113,7 +113,7 @@ public class NotificationsSubscriptionsService {
         if (safeHighlights.isEmpty()) {
             summary.setDelivered(Boolean.FALSE);
             summary.setStatus(NotificationConstants.RESULT_SKIPPED);
-            summary.setSummary("Not enough recent CareerLoop activity to build a weekly report.");
+            summary.setSummary("Not enough recent CyanCruise activity to build a weekly report.");
             return summary;
         }
         summary.setDelivered(Boolean.TRUE);

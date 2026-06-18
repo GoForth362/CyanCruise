@@ -3,7 +3,7 @@ package v620.cc001.cloud01.app01.mservice;
 import v620.cc001.base.common.dto.career.FileConstants;
 
 /**
- * Configuration for CareerLoop file operations backed by Cosmic file service.
+ * Configuration for CyanCruise file operations backed by Cosmic file service.
  */
 public class CosmicFileAdapterConfig {
 

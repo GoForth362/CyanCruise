@@ -33,7 +33,7 @@ public class IdentityAwareCareerLoopWebApiBoundary {
         CosmicIdentityContextDto context = resolver.resolve();
         String status = helper.userStatus(context, explicitUserId);
         if (!CosmicIdentityConstants.STATUS_OK.equals(status)) {
-            throw new IdentityBoundaryException(status, "CareerLoop user identity rejected: " + status);
+            throw new IdentityBoundaryException(status, "CyanCruise user identity rejected: " + status);
         }
         return helper.resolvedUserId(context);
     }
@@ -42,7 +42,7 @@ public class IdentityAwareCareerLoopWebApiBoundary {
         CosmicIdentityContextDto context = resolver.resolve();
         String status = helper.adminStatus(context, explicitAdminId);
         if (!CosmicIdentityConstants.STATUS_OK.equals(status)) {
-            throw new IdentityBoundaryException(status, "CareerLoop admin identity rejected: " + status);
+            throw new IdentityBoundaryException(status, "CyanCruise admin identity rejected: " + status);
         }
         return helper.resolvedAdminId(context);
     }

@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CareerLoop resource feed response for webapp consumption.
+ * CyanCruise resource feed response for webapp consumption.
  */
 public class CareerResourceFeedDto implements Serializable {
 

@@ -41,6 +41,11 @@ public class ConfigurableCosmicIdentityResolver implements CareerLoopIdentityRes
         CosmicIdentityContextDto identity = new CosmicIdentityContextDto();
         identity.setUserId(userId);
         identity.setAdminId(adminId);
+        String displayName = firstText(context, java.util.Arrays.asList(
+                "displayName", "userName", "username", "name", "nickName", "nickname",
+                "operatorName", "personName"));
+        identity.setDisplayName(displayName);
+        identity.setUserName(firstText(context, java.util.Arrays.asList("userName", "username", "name")));
         identity.setOrgId(firstText(context, config.getOrgIdFields()));
         identity.setRoles(resolveRoles(context));
         identity.setIp(text(context.get("ip")));

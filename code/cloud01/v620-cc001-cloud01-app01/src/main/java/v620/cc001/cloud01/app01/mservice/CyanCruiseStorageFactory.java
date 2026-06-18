@@ -35,4 +35,8 @@ public final class CyanCruiseStorageFactory {
     public static AssistantChatStorage assistantChatStorage() {
         return new PostgresqlAssistantChatStorage(config());
     }
+
+    public static AssessmentResultStorage assessmentResultStorage() {
+        return new PostgresqlAssessmentResultStorage(config());
+    }
 }

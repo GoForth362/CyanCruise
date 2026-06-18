@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * Lightweight card for CareerLoop resource entries.
+ * Lightweight card for CyanCruise resource entries.
  */
 public class CareerResourceCardDto implements Serializable {
 

@@ -153,7 +153,7 @@ public class NotificationsSubscriptionsApplicationService {
             NotificationPushRequest request = new NotificationPushRequest();
             request.setUserId(safeUserId);
             request.setType(NotificationConstants.TYPE_WEEKLY_REPORT);
-            request.setTitle("Weekly CareerLoop report");
+            request.setTitle("Weekly CyanCruise report");
             request.setContent(summary.getSummary());
             request.setLink("index.html#career-plan");
             pushBestEffort(request);

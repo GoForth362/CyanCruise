@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CyanCruise 工作台</title>
-  <link rel="stylesheet" href="assets/styles.css?v=20260604-cyancruise-v19">
+  <link rel="stylesheet" href="assets/styles.css?v=20260617-cyancruise-v63">
 </head>
 <body>
   <main class="shell">
@@ -29,10 +29,7 @@
 
     <nav class="route-nav" id="routeNav" aria-label="CyanCruise 页面导航"></nav>
 
-    <section id="messagePanel" class="message-panel" aria-live="polite">
-      <strong>等待加载</strong>
-      <span>打开页面后将按当前身份和 hash route 渲染页面状态。</span>
-    </section>
+    <section id="messagePanel" class="message-panel hidden" aria-live="polite"></section>
 
     <section class="status-grid" aria-label="主循环状态">
       <article class="status-card">
@@ -57,8 +54,13 @@
       </article>
     </section>
 
-    <section id="pageHost" class="page-host" aria-live="polite"></section>
+    <section id="pageHost" class="page-host" aria-live="polite">
+      <section class="state-card warning">
+        <h3>正在加载</h3>
+        <p>正在识别平台身份并加载首页数据。</p>
+      </section>
+    </section>
   </main>
-  <script src="assets/app.js?v=20260604-cyancruise-v19"></script>
+  <script src="assets/app.js?v=20260617-cyancruise-v63"></script>
 </body>
 </html>

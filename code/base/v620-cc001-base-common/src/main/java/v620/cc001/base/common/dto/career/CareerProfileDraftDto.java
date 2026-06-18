@@ -12,6 +12,8 @@ public class CareerProfileDraftDto implements Serializable {
 
     private String identityType;
     private String educationStage;
+    private String school;
+    private String major;
     private String schoolMajor;
     private String resumeStatus;
     private String targetRole;
@@ -34,6 +36,22 @@ public class CareerProfileDraftDto implements Serializable {
 
     public void setEducationStage(String educationStage) {
         this.educationStage = educationStage;
+    }
+
+    public String getSchool() {
+        return school;
+    }
+
+    public void setSchool(String school) {
+        this.school = school;
+    }
+
+    public String getMajor() {
+        return major;
+    }
+
+    public void setMajor(String major) {
+        this.major = major;
     }
 
     public String getSchoolMajor() {

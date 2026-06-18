@@ -31,7 +31,7 @@ public class InMemoryCareerFileStorage implements CareerFileStorage {
         if (!previewAvailable) {
             return null;
         }
-        return "https://careerloop.local/files/" + objectKey + "?ttl=" + ttlSeconds;
+        return "https://cyancruise.local/files/" + objectKey + "?ttl=" + ttlSeconds;
     }
 
     public boolean delete(String objectKey) {

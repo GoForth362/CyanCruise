@@ -77,11 +77,44 @@ class AssessmentApplicationServiceTest {
         CareerUserProfileDto profile = profileService.getProfile("user-2");
 
         assertEquals("ENTP", result.getResultSummary());
+        assertEquals(Long.valueOf(1L), result.getRecordId());
         assertEquals("ENTP", snapshot.getAssessment().getSummary());
+        assertEquals(Long.valueOf(1L), snapshot.getAssessment().getLastRecordId());
         assertEquals(Long.valueOf(100L), snapshot.getAssessment().getScaleId());
         assertEquals("MBTI", snapshot.getAssessment().getScaleTitle());
+        assertFalse(snapshot.getAssessment().getSuggestedRoles().isEmpty());
         assertNotNull(snapshot.getAssessment().getCompletedAt());
         assertTrue(profile.getReadiness().getHasAssessment().booleanValue());
+    }
+
+    @Test
+    void catalogSubmitLoadsServerSideScaleAndListsRecordsNewestFirst() {
+        CareerProfileStorage storage = new FileCareerProfileStorage(tempDir);
+        AssessmentApplicationService assessmentService = new AssessmentApplicationService(
+                new AssessmentScoringService(),
+                new InMemoryAssessmentCatalog(),
+                new InMemoryAssessmentResultStorage(),
+                profileService(storage));
+
+        AssessmentSubmitRequest request = answers(answer(100101L, 100101L), answer(100102L, 100201L),
+                answer(100103L, 100301L), answer(100104L, 100401L),
+                answer(100105L, 100502L), answer(100106L, 100602L),
+                answer(100107L, 100702L), answer(100108L, 100802L),
+                answer(100109L, 100901L), answer(100110L, 101001L),
+                answer(100111L, 101101L), answer(100112L, 101201L),
+                answer(100113L, 101302L), answer(100114L, 101402L),
+                answer(100115L, 101502L), answer(100116L, 101602L));
+        request.setScaleId(Long.valueOf(1001L));
+
+        AssessmentScoreResult first = assessmentService.submit("user-catalog", request);
+        AssessmentScoreResult second = assessmentService.submit("user-catalog", request);
+
+        assertEquals("ENTP", first.getResultSummary());
+        assertEquals(Long.valueOf(1001L), first.getScaleId());
+        assertEquals(Integer.valueOf(4), first.getDimensionCounts().get("N"));
+        assertEquals(16, first.getAnswers().size());
+        assertEquals(Long.valueOf(2L), assessmentService.listResults("user-catalog").get(0).getRecordId());
+        assertEquals(second.getRecordId(), storage.loadSnapshot("user-catalog").getAssessment().getLastRecordId());
     }
 
     @Test

@@ -44,6 +44,8 @@ class EmploymentInsightsResourcesWebApiTest {
         assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, insight.getStatus());
         assertEquals("Chengdu University of Technology", insight.getSchool());
         assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, resources.getStatus());
-        assertFalse(resources.getCareerPaths().isEmpty());
+        assertFalse(resources.getArticles().isEmpty());
+        assertFalse(resources.getConsultations().isEmpty());
+        assertFalse(resources.getVideos().isEmpty());
     }
 }

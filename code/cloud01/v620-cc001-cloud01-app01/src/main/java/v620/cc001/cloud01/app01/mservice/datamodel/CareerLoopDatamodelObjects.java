@@ -1,7 +1,7 @@
 package v620.cc001.cloud01.app01.mservice.datamodel;
 
 /**
- * Object and field names for the CareerLoop Cosmic datamodel adapter layer.
+ * Object and field names for the CyanCruise Cosmic datamodel adapter layer.
  */
 public final class CareerLoopDatamodelObjects {
 

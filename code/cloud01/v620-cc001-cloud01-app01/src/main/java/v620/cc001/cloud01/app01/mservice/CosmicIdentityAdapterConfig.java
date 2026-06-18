@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Configuration for resolving CareerLoop identity from Cosmic platform context.
+ * Configuration for resolving CyanCruise identity from Cosmic platform context.
  */
 public class CosmicIdentityAdapterConfig {
 

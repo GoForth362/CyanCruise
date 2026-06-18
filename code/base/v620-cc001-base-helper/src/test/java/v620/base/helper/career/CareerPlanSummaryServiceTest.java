@@ -25,6 +25,7 @@ class CareerPlanSummaryServiceTest {
         assertEquals(Boolean.FALSE, summary.getHasPlan());
         assertEquals(CareerPlanHealth.MISSING, summary.getPlanHealth());
         assertTrue(summary.getWeeklyFocus().isEmpty());
+        assertTrue(summary.getPhases().isEmpty());
     }
 
     @Test
@@ -76,6 +77,9 @@ class CareerPlanSummaryServiceTest {
         assertEquals(Integer.valueOf(2), withRole.getVersion());
         assertFalse(withRole.getMilestones().isEmpty());
         assertFalse(withRole.getWeeklyFocus().isEmpty());
+        assertFalse(withRole.getPhases().isEmpty());
+        assertFalse(withRole.getDailySuggestions().isEmpty());
+        assertEquals("RULE_FALLBACK", withRole.getPlanningMode());
         assertEquals("互联网行业职位", fallback.getTargetRole());
     }
 
