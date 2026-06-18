@@ -17,22 +17,6 @@ CyanCruise 面向求职与升学场景，围绕“认识自己、明确方向、
 - **AI 助手**：通过可替换的 AI Provider、工具调用和规则兜底提供对话与分析能力。
 - **平台治理**：适配 Cosmic 身份上下文、权限边界、WebAPI 和平台菜单挂载。
 
-## CareerLoop
-
-```text
-目标岗位
-   ↓
-用户画像与职业测评
-   ↓
-简历准备与诊断
-   ↓
-今日行动与阶段计划
-   ↓
-模拟面试与反馈
-   ↓
-画像更新并进入下一轮成长循环
-```
-
 ## 技术架构
 
 | 层级 | 职责 | 主要位置 |
@@ -86,19 +70,6 @@ node --check webapp\isv\v620\cyancruise\assets\app.js
 ```powershell
 openspec validate --all --strict
 ```
-
-## 开发方式
-
-项目采用 OpenSpec 进行规格驱动开发。涉及 IPD 迁移或业务能力重构时，先在 `openspec/changes/<change-id>/` 中完成中文 proposal、spec、design 和 tasks，再进行实现与验证。
-
-迁移关注以下内容：
-
-1. 业务规则与数据语义。
-2. 流程、状态和接口契约。
-3. Cosmic 数据模型、身份、权限及平台能力适配。
-4. JDK 8 与 KDDT/Cosmic 模板约束。
-
-详细资料见 [`docs/`](docs/) 和 [`openspec/specs/`](openspec/specs/)。
 
 ## 项目状态
 
