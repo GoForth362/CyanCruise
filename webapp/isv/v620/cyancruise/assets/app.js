@@ -20,6 +20,10 @@
     ensurePlan: "/cc001/career-plan/ensure",
     interviews: "/cc001/interview/list",
     startInterview: "/cc001/interview/start",
+    guidedInterviewStart: "/cc001/interview/guided/start",
+    guidedInterviewAnswer: "/cc001/interview/guided/answer",
+    guidedInterviewFinish: "/cc001/interview/guided/finish",
+    interviewMessages: "/cc001/interview/messages",
     assistantSend: "/cc001/assistant-chat/send",
     assistantSessions: "/cc001/assistant-chat/session/list",
     employmentInsight: "/cc001/career-employment/insight/get",
@@ -126,6 +130,11 @@
     plan: null,
     planEnsuring: false,
     interviews: null,
+    activeInterview: null,
+    interviewMessages: [],
+    interviewReport: null,
+    interviewBusy: false,
+    interviewError: null,
     employmentResources: null,
     employmentResourcesLoading: false,
     employmentResourcesError: null,
@@ -335,6 +344,8 @@
       renderTodayPage(item);
     } else if (item.key === "assessment") {
       renderAssessmentPage(item);
+    } else if (item.key === "interview") {
+      renderInterviewPage(item);
     } else if (item.key === "career-resources") {
       renderCareerResourcesPage(item);
     } else {
@@ -3244,6 +3255,104 @@
     renderShell(item, body);
   }
 
+  function renderInterviewPage(item) {
+    var body = "";
+    if (state.interviewError) body += statePanel("暂时没有完成操作", state.interviewError, "warning");
+    if (state.interviewReport) {
+      body += renderInterviewReport(state.interviewReport);
+    } else if (state.activeInterview) {
+      body += renderInterviewRoom();
+    } else {
+      body += renderInterviewSetup();
+    }
+    body += renderInterviewHistory();
+    renderShell(item, body);
+  }
+
+  function renderInterviewSetup() {
+    var role = firstText(getValue(state.snapshot, "preferences.targetRole"), getValue(state.snapshot, "resume.targetJob"), "");
+    var resumes = normalizeArray(state.resumes);
+    return '<section class="panel full interview-setup"><h3>开始一次模拟面试</h3>' +
+      '<p>系统会结合目标岗位、你选择的简历和个人情况提问。当前提供文字练习。</p>' +
+      '<label>目标岗位<input id="interviewPosition" value="' + escapeAttr(role) + '" placeholder="例如：后端开发工程师"></label>' +
+      '<label>使用的简历<select id="interviewResume"><option value="">暂不使用简历</option>' + resumes.map(function (resume) {
+        return '<option value="' + escapeAttr(resume.resumeId) + '">' + escapeHtml(firstText(resume.title, "简历 " + resume.resumeId)) + '</option>';
+      }).join("") + '</select></label>' +
+      '<label>练习难度<select id="interviewDifficulty"><option value="Easy">入门</option><option value="Normal" selected>常规</option><option value="Hard">进阶</option></select></label>' +
+      '<div class="actions-row"><button type="button" data-interview-action="start" ' + (state.interviewBusy ? 'disabled' : '') + '>' +
+      (state.interviewBusy ? "正在准备" : "开始练习") + '</button></div></section>';
+  }
+
+  function renderInterviewRoom() {
+    var session = state.activeInterview;
+    return '<section class="panel full interview-room"><div class="section-heading"><div><h3>' + escapeHtml(firstText(session.positionName, "模拟面试")) +
+      '</h3><p class="section-note">一次只回答一个问题。尽量说明具体情境、你的行动和结果。</p></div></div>' +
+      '<div class="interview-messages">' + normalizeArray(state.interviewMessages).map(function (message) {
+        var user = String(message.role).toUpperCase() === "USER";
+        return '<article class="interview-message ' + (user ? "candidate" : "interviewer") + '"><strong>' +
+          (user ? "我的回答" : "面试官") + '</strong><p>' + escapeHtml(message.content) + '</p></article>';
+      }).join("") + '</div>' +
+      '<label>你的回答<textarea id="interviewAnswer" rows="5" placeholder="在这里写下你的回答"></textarea></label>' +
+      '<div class="actions-row"><button type="button" data-interview-action="answer" ' + (state.interviewBusy ? 'disabled' : '') + '>提交回答</button>' +
+      '<button type="button" class="secondary" data-interview-action="finish" ' + (state.interviewBusy ? 'disabled' : '') + '>结束并查看复盘</button></div></section>';
+  }
+
+  function renderInterviewReport(report) {
+    var radar = report.radarScore || {};
+    return '<section class="panel full interview-report"><h3>本次练习复盘</h3><div class="metric-value">' + escapeHtml(firstText(report.overallScore, 0)) + ' 分</div>' +
+      '<p>' + escapeHtml(firstText(report.textSummary, "复盘已经生成。")) + '</p>' +
+      listPanel("做得好的地方", report.strengths, "完成更多回答后，这里会出现更具体的优点。") +
+      listPanel("下一步改进", report.improvements, "暂无改进建议。") +
+      '<p class="section-note">表达清晰度 ' + escapeHtml(firstText(radar.expression, 0)) + ' · 思路条理 ' + escapeHtml(firstText(radar.logic, 0)) +
+      ' · 岗位能力 ' + escapeHtml(firstText(radar.technical, 0)) + ' · 临场应对 ' + escapeHtml(firstText(radar.pressureResistance, 0)) +
+      ' · 沟通效果 ' + escapeHtml(firstText(radar.communication, 0)) + '</p>' +
+      '<div class="actions-row"><button type="button" data-interview-action="reset">再练一次</button></div></section>';
+  }
+
+  function renderInterviewHistory() {
+    var history = normalizeArray(state.interviews);
+    return '<section class="panel full"><h3>练习记录</h3>' + (history.length ? history.map(function (entry) {
+      return '<article class="list-row"><div><strong>' + escapeHtml(firstText(entry.positionName, "目标岗位待确认")) + '</strong><p>' +
+        escapeHtml(entry.status === "COMPLETED" ? "已完成" : "进行中") + (entry.finalScore != null ? " · " + entry.finalScore + " 分" : "") +
+        '</p></div><button type="button" class="secondary" data-interview-action="open" data-interview-id="' + escapeAttr(entry.interviewId) + '">查看</button></article>';
+    }).join("") : '<p class="empty-copy">还没有练习记录。完成一次回答后，这里会保留复盘。</p>') + '</section>';
+  }
+
+  function handleInterviewAction(target) {
+    var action = target.getAttribute("data-interview-action");
+    if (state.interviewBusy) return;
+    state.interviewError = null;
+    if (action === "reset") { state.activeInterview = null; state.interviewMessages = []; state.interviewReport = null; renderPage(pageByKey.interview); return; }
+    if (action === "open") { openInterview(target.getAttribute("data-interview-id")); return; }
+    var draftPosition = action === "start" ? valueOf("interviewPosition") : "";
+    var draftResumeId = action === "start" ? valueOf("interviewResume") : "";
+    var draftDifficulty = action === "start" ? valueOf("interviewDifficulty") : "Normal";
+    var draftAnswer = action === "answer" ? valueOf("interviewAnswer") : "";
+    state.interviewBusy = true; renderPage(pageByKey.interview);
+    var call;
+    if (action === "start") {
+      call = post(endpoints.guidedInterviewStart, { userId: state.identity.userId, request: { positionName: draftPosition, resumeId: draftResumeId ? Number(draftResumeId) : null, difficulty: draftDifficulty, mode: "TEXT" } }).then(function (result) {
+        state.activeInterview = result.session; state.interviewMessages = [result.openingMessage]; state.interviews = [result.session].concat(normalizeArray(state.interviews));
+      });
+    } else if (action === "answer") {
+      if (!draftAnswer) { state.interviewBusy = false; state.interviewError = "请先写下你的回答。"; renderPage(pageByKey.interview); return; }
+      call = post(endpoints.guidedInterviewAnswer, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId, answer: draftAnswer }).then(function (result) {
+        state.interviewMessages.push(result.userMessage, result.interviewerMessage); state.activeInterview = result.session;
+      });
+    } else {
+      call = post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId }).then(function (report) { state.interviewReport = report; });
+    }
+    call.catch(function (error) { state.interviewError = error.message || "模拟面试暂时不可用，请稍后重试。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
+  }
+
+  function openInterview(interviewId) {
+    var session = normalizeArray(state.interviews).filter(function (item) { return String(item.interviewId) === String(interviewId); })[0];
+    if (!session) return;
+    state.activeInterview = session; state.interviewReport = session.report || null; state.interviewBusy = true; renderPage(pageByKey.interview);
+    post(endpoints.interviewMessages, { userId: state.identity.userId, interviewId: session.interviewId }).then(function (messages) { state.interviewMessages = normalizeArray(messages); })
+      .catch(function (error) { state.interviewError = error.message || "无法读取练习记录。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
+  }
+
   function renderFeatureShell(item, title, summary, innerHtml) {
     els.pageHost.innerHTML =
       '<header class="feature-page-header">' +
@@ -3321,6 +3430,8 @@
   }
 
   function handlePageHostClick(event) {
+    var interviewTarget = findAttributeTarget(event.target, "data-interview-action");
+    if (interviewTarget) { event.preventDefault(); event.stopPropagation(); handleInterviewAction(interviewTarget); return; }
     var planHorizonTarget = findPlanHorizonTarget(event.target);
     if (planHorizonTarget) {
       event.preventDefault();
@@ -3399,6 +3510,14 @@
       return;
     }
     navigateToRoute(target.getAttribute("data-link"));
+  }
+
+  function findAttributeTarget(node, attribute) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute(attribute) != null) return node.disabled ? null : node;
+      node = node.parentNode;
+    }
+    return null;
   }
 
   function retryDiagnosisResumeList() {

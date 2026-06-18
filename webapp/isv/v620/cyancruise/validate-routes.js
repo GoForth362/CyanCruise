@@ -65,6 +65,10 @@ const requiredApis = [
   "/cc001/career-plan/ensure",
   "/cc001/interview/list",
   "/cc001/interview/start",
+  "/cc001/interview/guided/start",
+  "/cc001/interview/guided/answer",
+  "/cc001/interview/guided/finish",
+  "/cc001/interview/messages",
   "/cc001/assistant-chat/send",
   "/cc001/assistant-chat/session/list"
 ];

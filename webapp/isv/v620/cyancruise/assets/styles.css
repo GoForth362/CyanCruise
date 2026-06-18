@@ -1673,3 +1673,13 @@ h4 {
     height: 48px;
   }
 }
+.interview-setup label,
+.interview-room label { display: grid; gap: 8px; margin: 16px 0; }
+.interview-setup input,
+.interview-setup select,
+.interview-room textarea { width: 100%; box-sizing: border-box; }
+.interview-messages { display: grid; gap: 12px; margin: 18px 0; }
+.interview-message { max-width: 82%; padding: 14px 16px; border-radius: 16px; background: #f4f7fb; }
+.interview-message.candidate { margin-left: auto; background: #e6f8f4; }
+.interview-message p { margin: 6px 0 0; white-space: pre-wrap; }
+.interview-report .metric-value { margin: 12px 0; font-size: 2rem; font-weight: 700; color: #167b68; }

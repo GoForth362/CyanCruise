@@ -989,6 +989,42 @@
           "userIdRequired": true,
           "dto": "InterviewStartRequest -> InterviewSessionDto",
           "fallback": "Show start unavailable state."
+        },
+        {
+          "name": "guided interview start",
+          "method": "POST",
+          "path": "/cc001/interview/guided/start",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "InterviewStartResultDto",
+          "fallback": "使用中文基础问题开始文字练习。"
+        },
+        {
+          "name": "guided interview answer",
+          "method": "POST",
+          "path": "/cc001/interview/guided/answer",
+          "body": ["userId", "interviewId", "answer"],
+          "userIdRequired": true,
+          "dto": "InterviewTurnResultDto",
+          "fallback": "保存回答并返回中文基础追问。"
+        },
+        {
+          "name": "guided interview finish",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "根据有效回答生成基础复盘。"
+        },
+        {
+          "name": "interview messages",
+          "method": "POST",
+          "path": "/cc001/interview/messages",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewMessageDto>",
+          "fallback": "提示练习记录暂时无法读取。"
         }
       ]
     },
@@ -1174,8 +1210,8 @@
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "Show no interview history or start unavailable state.",
-      "deploymentNotes": "Voice and digital-human interview are not part of this mount."
+      "fallback": "AI 暂不可用时使用中文基础问题和基础复盘继续文字练习。",
+      "deploymentNotes": "复用简历、目标岗位、用户画像和 AI 网关；语音、数字人和身体语言不在本挂载范围。"
     },
     {
       "mountKey": "cyancruise-career-plan",

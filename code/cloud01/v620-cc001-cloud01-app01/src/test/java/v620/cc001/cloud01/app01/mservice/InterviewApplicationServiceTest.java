@@ -106,6 +106,26 @@ class InterviewApplicationServiceTest {
         }));
     }
 
+    @Test
+    void guidedInterviewFallsBackAndCachesReportWithoutConfiguredAi() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
+        ResumeApplicationService resumeService = new ResumeApplicationService(new InMemoryResumeStorage(), profileService);
+        InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
+                new InterviewCoreService(), resumeService, new InterviewAiService(null));
+
+        v620.cc001.base.common.dto.career.InterviewStartResultDto started = service.startGuided("guided-user", startRequest("测试工程师"));
+        assertTrue(started.getOpeningMessage().getContent().contains("测试工程师"));
+
+        v620.cc001.base.common.dto.career.InterviewTurnResultDto turn = service.answer("guided-user", started.getSession().getInterviewId(), "我通过自动化测试减少了重复验证时间。");
+        assertEquals(3, service.getMessages("guided-user", started.getSession().getInterviewId()).size());
+        assertEquals(InterviewConstants.ROLE_AI, turn.getInterviewerMessage().getRole());
+
+        InterviewReportDto first = service.finishAndReport("guided-user", started.getSession().getInterviewId());
+        InterviewReportDto cached = service.finishAndReport("guided-user", started.getSession().getInterviewId());
+        assertEquals(first.getOverallScore(), cached.getOverallScore());
+        assertEquals(InterviewConstants.STATUS_COMPLETED, service.get("guided-user", started.getSession().getInterviewId()).getStatus());
+    }
+
     private InterviewApplicationService service(InterviewStorage storage,
                                                 CareerProfileApplicationService profileService) {
         return new InterviewApplicationService(storage, profileService, new InterviewCoreService());
