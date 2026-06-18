@@ -285,3 +285,15 @@
 | 迁移内容 | JDK 8 DTO、folder/key/url 归一、扩展名保留、空文件拒绝、TTL clamp、文本限长 20000 字、内存型可替换文件存储边界、纯文本默认抽取 adapter、Cosmic WebAPI、webapp route/API map 和静态入口卡片 |
 | 暂不迁移 | Spring Multipart、Aliyun OSS SDK、PDFBox、Flyway SQL、Java 17 `readAllBytes`、真实生产密钥、CDN 策略、病毒扫描、OCR、Office 在线预览、Vue/uni-app 上传运行时和小程序文件选择 UI |
 | 验证方式 | helper 聚焦测试、应用服务/WebAPI 聚焦测试、`node webapp\isv\v620\careerloop\validate-routes.js`、`node --check webapp\isv\v620\careerloop\assets\app.js`、OpenSpec 严格校验、JDK 8 `.\gradlew.bat clean build` |
+## 简历 PDF 正文提取
+
+| 项目 | 内容 |
+| --- | --- |
+| OpenSpec change | `enable-resume-pdf-text-extraction` |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\utils\PdfTextExtractor.java`、`ResumeDiagnosisController.java`、`backend\pom.xml` |
+| CyanCruise 目标 | `code/cloud01/v620-cc001-cloud01-app01/` 文件提取器、文件服务和简历诊断应用服务；`code/base/v620-cc001-base-common/` 提取状态；`webapp/isv/v620/cyancruise` 上传与诊断交互 |
+| 数据映射 | PDF bytes -> PDFBox 纯文本 -> `FileTextExtractionResult.text` -> `ResumeRecordDto.parsedContent`；正文最多 20,000 字 |
+| 新增依赖 | `org.apache.pdfbox:pdfbox:2.0.31`；JDK 标准库和当前 BOS provider 不提供 PDF 解析，版本沿用 IPD 已验证的 JDK 8 兼容 2.x API |
+| 暂不迁移 | 扫描件 OCR、图片识别、复杂版面和表格结构化、IPD Spring/OSS/AI 运行时 |
+| 验证 | OpenSpec strict、PDF/file/resume/diagnosis focused tests、前端语法与 route 校验、JDK 8 `gradlew.bat` 构建 |
+| 部署 | `app.js` 静态版本更新为 `20260618-cyancruise-v71`，需要重新部署静态资源和 cloud app 依赖 |

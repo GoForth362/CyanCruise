@@ -29,18 +29,19 @@ public class AiGatewayResumeDiagnosisAnalyzer implements ResumeDiagnosisAnalyzer
     }
 
     private String prompt(ResumeDiagnosisRequest request, String resumeText) {
-        String jd = request == null ? "" : request.getJobDescription();
+        String jobRequirements = request == null ? "" : request.getJobDescription();
         String targetJob = request == null ? "" : request.getTargetJob();
         String profile = request == null ? "" : request.getProfileContext();
-        return "请诊断简历并只返回 JSON。字段必须包含 overallScore,strengths,weaknesses,suggestions,revisionSuggestions。"
+        return "请诊断简历并只返回 JSON。字段必须包含 overallScore,scoreBreakdown,strengths,weaknesses,suggestions,revisionSuggestions。"
+                + " scoreBreakdown 必须包含内容完整度25分、目标岗位匹配30分、经历证据30分、表达清晰度15分，每项包含name,score,maxScore,reason，四项得分之和等于overallScore。"
                 + " revisionSuggestions 是数组，每项包含 suggestionId,issueType,priority,resumeSection,problem,action,rewriteExample,evidence,targetKeywords,status,contextSource。"
-                + " 建议必须围绕目标岗位/JD，给出可执行改写方向。\nTARGET_JOB:\n"
+                + " 建议必须结合目标岗位和岗位要求，指出简历中的具体问题、修改动作和参考写法。所有用户可见文字使用普通中文，不使用行业缩写。\n目标岗位：\n"
                 + (targetJob == null ? "" : targetJob)
-                + "\nPROFILE_CONTEXT:\n"
+                + "\n用户画像：\n"
                 + (profile == null ? "" : profile)
-                + "\nJD:\n"
-                + (jd == null ? "" : jd)
-                + "\nRESUME:\n"
+                + "\n岗位要求：\n"
+                + (jobRequirements == null ? "" : jobRequirements)
+                + "\n简历正文：\n"
                 + (resumeText == null ? "" : resumeText);
     }
 }

@@ -2,6 +2,7 @@ package v620.base.helper.career;
 
 import v620.cc001.base.common.dto.career.ResumeDiagnosisConstants;
 import v620.cc001.base.common.dto.career.ResumeDiagnosisResultDto;
+import v620.cc001.base.common.dto.career.ResumeDiagnosisScoreItemDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordStatusDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
@@ -66,6 +67,7 @@ public class ResumeDiagnosisService {
                 result.setStrengths(extractJsonArray(json, "strengths"));
                 result.setWeaknesses(extractJsonArray(json, "weaknesses"));
                 result.setSuggestions(extractJsonArray(json, "suggestions"));
+                result.setScoreBreakdown(extractScoreBreakdown(json));
                 result.setRevisionSuggestions(extractRevisionSuggestions(json));
                 applyRevisionFallback(result, analysis);
                 return result;
@@ -272,6 +274,26 @@ public class ResumeDiagnosisService {
             }
         }
         return suggestions;
+    }
+
+    private List<ResumeDiagnosisScoreItemDto> extractScoreBreakdown(String json) {
+        String array = extractJsonArrayBody(json, "scoreBreakdown");
+        List<ResumeDiagnosisScoreItemDto> items = new ArrayList<ResumeDiagnosisScoreItemDto>();
+        for (String object : extractJsonObjects(array)) {
+            String name = extractJsonString(object, "name");
+            Integer score = extractJsonInt(object, "score");
+            Integer maxScore = extractJsonInt(object, "maxScore");
+            if (!hasText(name) || score == null || maxScore == null) {
+                continue;
+            }
+            ResumeDiagnosisScoreItemDto item = new ResumeDiagnosisScoreItemDto();
+            item.setName(name);
+            item.setScore(Integer.valueOf(clamp(score.intValue(), 0, maxScore.intValue())));
+            item.setMaxScore(Integer.valueOf(Math.max(0, maxScore.intValue())));
+            item.setReason(extractJsonString(object, "reason"));
+            items.add(item);
+        }
+        return items;
     }
 
     private ResumeRevisionSuggestionDto parseRevisionSuggestion(String json, int index) {

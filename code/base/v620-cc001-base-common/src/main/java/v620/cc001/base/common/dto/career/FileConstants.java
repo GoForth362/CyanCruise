@@ -10,6 +10,8 @@ public final class FileConstants {
     public static final String STATUS_SKIPPED = "SKIPPED";
     public static final String STATUS_UNAVAILABLE = "UNAVAILABLE";
     public static final String STATUS_FILE_EMPTY = "FILE_EMPTY";
+    public static final String STATUS_TEXT_EMPTY = "TEXT_EMPTY";
+    public static final String STATUS_UNSUPPORTED = "UNSUPPORTED";
     public static final String STATUS_MALFORMED_REFERENCE = "MALFORMED_REFERENCE";
 
     public static final String PROVIDER_LOCAL = "local-memory";

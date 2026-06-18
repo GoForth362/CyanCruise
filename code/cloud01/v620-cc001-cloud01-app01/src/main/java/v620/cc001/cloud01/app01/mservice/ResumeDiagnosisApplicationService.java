@@ -7,6 +7,8 @@ import v620.cc001.base.common.dto.career.ResumeDiagnosisResultDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordStatusDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.ResumeUpdateRequest;
+import v620.cc001.base.common.dto.career.FileConstants;
+import v620.cc001.base.common.dto.career.FileTextExtractionResult;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
 import v620.cc001.cloud01.app01.mservice.ai.DefaultAiGateway;
@@ -24,6 +26,7 @@ public class ResumeDiagnosisApplicationService {
     private final ResumeDiagnosisAnalyzer analyzer;
     private final ResumeDiagnosisService helper;
     private final CareerProfileApplicationService profileApplicationService;
+    private final FileUploadPreviewApplicationService fileApplicationService;
 
     public ResumeDiagnosisApplicationService() {
         this(new ResumeApplicationService(),
@@ -46,11 +49,22 @@ public class ResumeDiagnosisApplicationService {
                                              ResumeDiagnosisAnalyzer analyzer,
                                              ResumeDiagnosisService helper,
                                              CareerProfileApplicationService profileApplicationService) {
+        this(resumeApplicationService, storage, analyzer, helper, profileApplicationService,
+                new FileUploadPreviewApplicationService());
+    }
+
+    public ResumeDiagnosisApplicationService(ResumeApplicationService resumeApplicationService,
+                                             ResumeDiagnosisStorage storage,
+                                             ResumeDiagnosisAnalyzer analyzer,
+                                             ResumeDiagnosisService helper,
+                                             CareerProfileApplicationService profileApplicationService,
+                                             FileUploadPreviewApplicationService fileApplicationService) {
         this.resumeApplicationService = resumeApplicationService;
         this.storage = storage;
         this.analyzer = analyzer;
         this.helper = helper;
         this.profileApplicationService = profileApplicationService;
+        this.fileApplicationService = fileApplicationService;
     }
 
     public ResumeDiagnosisResultDto diagnose(String userId, ResumeDiagnosisRequest request) {
@@ -64,6 +78,9 @@ public class ResumeDiagnosisApplicationService {
         String text = trimToNull(safeRequest.getResumeText());
         if (text == null && resume != null) {
             text = trimToNull(resume.getParsedContent());
+        }
+        if (text == null && resume != null && hasText(resume.getFileKey())) {
+            text = extractAndSaveResumeText(safeUserId, resume, contextSources);
         }
         if (text == null) {
             throw new IllegalArgumentException("resume content is empty or could not be parsed");
@@ -81,6 +98,25 @@ public class ResumeDiagnosisApplicationService {
             resumeApplicationService.update(safeUserId, result.getResumeId(), update);
         }
         return result;
+    }
+
+    private String extractAndSaveResumeText(String userId,
+                                            ResumeRecordDto resume,
+                                            List<String> contextSources) {
+        FileTextExtractionResult extraction = fileApplicationService.extractText(resume.getFileKey());
+        String text = extraction == null ? null : trimToNull(extraction.getText());
+        if (extraction != null && FileConstants.STATUS_OK.equals(extraction.getStatus()) && text != null) {
+            ResumeUpdateRequest update = new ResumeUpdateRequest();
+            update.setParsedContent(text);
+            resumeApplicationService.update(userId, resume.getResumeId(), update);
+            contextSources.add("resume.fileText");
+            return text;
+        }
+        String status = extraction == null ? FileConstants.STATUS_UNAVAILABLE : extraction.getStatus();
+        if (FileConstants.STATUS_TEXT_EMPTY.equals(status)) {
+            throw new IllegalArgumentException("PDF 中没有可读取的文字，可能是扫描件；请粘贴简历正文后再诊断");
+        }
+        throw new IllegalArgumentException("PDF 正文读取失败，请稍后重试或粘贴简历正文");
     }
 
     public ResumeKeywordStatusDto getKeywordStatus(String userId, Long resumeId) {
@@ -126,7 +162,7 @@ public class ResumeDiagnosisApplicationService {
         List<String> sources = new ArrayList<String>();
         if (resume != null) {
             sources.add("resume:" + resume.getResumeId());
-            if (!hasText(request.getTargetJob()) && hasText(resume.getTargetJob())) {
+            if (hasText(resume.getTargetJob())) {
                 request.setTargetJob(resume.getTargetJob());
                 sources.add("resume.targetJob");
             }

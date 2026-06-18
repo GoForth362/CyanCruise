@@ -114,12 +114,12 @@
     resumeSubmitting: false,
     resumeMessage: null,
     resumeListError: null,
+    diagnosisResumeListLoading: false,
     diagnosisLoading: false,
     diagnosisResult: null,
     diagnosisDraft: null,
     diagnosisMessage: null,
     selectedDiagnosisResumeId: null,
-    revisionStatuses: {},
     fileMessage: null,
     messageTimer: null,
     previewUrls: {},
@@ -211,6 +211,7 @@
   function bindEvents() {
     window.addEventListener("hashchange", handleRouteChange);
     els.pageHost.addEventListener("click", handlePageHostClick);
+    els.pageHost.addEventListener("change", handlePageHostChange);
     els.saveUserIdButton.addEventListener("click", saveDevelopmentUser);
     els.userIdInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
@@ -532,12 +533,12 @@
     employment.platformLink = true;
     study.platformLink = true;
     if (goal === "employment") {
-      return [employment, plan, today, assessment];
+      return [employment, today, plan, assessment];
     }
     if (goal === "study") {
-      return [study, plan, today, assessment];
+      return [study, today, plan, assessment];
     }
-    return [employment, plan, today, assessment, study];
+    return [employment, today, plan, assessment, study];
   }
 
   function homeRecommendedFeatures(goal) {
@@ -1225,8 +1226,9 @@
   }
 
   function renderResumePage(item) {
-    var target = resumeTargetDefault();
-    var leftPanels = [resumeFormPanel(target), resumeFilePanel()].join("");
+    var leftPanels = [
+      resumeFormPanel()
+    ].join("");
     var rightPanels = resumeListPanel();
     var body = '<div class="resume-layout"><div class="resume-main">' + leftPanels + '</div><aside class="resume-records">' + rightPanels + '</aside></div>';
     if (isDebugMode()) {
@@ -1238,31 +1240,34 @@
         ["文件下载", endpoints.fileDownload]
       ]);
     }
-    if (state.resumeMessage) {
-      body = statePanel("简历状态", state.resumeMessage.text, state.resumeMessage.type) + body;
-    }
     renderShell(item, body);
     bindResumeEvents();
   }
 
-  function resumeFormPanel(target) {
+  function resumeFormPanel() {
     var draft = state.resumeDraft || {};
     var submitLabel = state.resumeSubmitting ? "创建中..." : "创建简历";
     var submitDisabled = state.resumeSubmitting ? " disabled" : "";
     var fileKey = firstText(draft.fileKey, "");
-    var fileKeyControl = isDebugMode()
+    var fileText = state.fileMessage
+      ? state.fileMessage.text
+      : (fileKey ? "PDF 已上传并关联到当前简历。" : "请选择 PDF，系统会读取正文并关联到当前简历。");
+    var fileType = state.fileMessage ? state.fileMessage.type : "empty";
+    var fileKeyControl = (isDebugMode()
       ? field("resumeFileKey", "文件 key", "text", fileKey)
-      : '<input id="resumeFileKey" type="hidden" value="' + escapeAttr(fileKey) + '"><p class="form-note full">文件状态：' + escapeHtml(fileKey ? "已关联 PDF" : "可先上传 PDF，也可只创建简历信息") + '</p>';
-    return '<section class="panel"><h3>创建简历记录</h3>' +
+      : '<input id="resumeFileKey" type="hidden" value="' + escapeAttr(fileKey) + '">') +
+      '<div class="resume-upload-field full"><span class="label">上传简历</span>' +
+      '<div class="resume-upload-row"><input id="resumeFileInput" type="file" accept=".pdf,application/pdf" aria-label="选择简历 PDF">' +
+      '<button type="button" class="secondary" id="uploadResumeFileButton">上传 PDF</button></div>' +
+      '<p class="form-note ' + escapeHtml(fileType) + '">' + escapeHtml(fileText) + '</p></div>';
+    return '<section class="panel"><h3>创建简历</h3>' +
       '<form class="form-grid" id="resumeForm">' +
-      field("resumeTitle", "简历标题", "text", firstText(draft.title, "后端开发简历")) +
-      field("resumeTargetJob", "目标岗位", "text", firstText(draft.targetJob, target)) +
+      field("resumeTitle", "简历标题", "text", firstText(draft.title, "")) +
+      field("resumeTargetJob", "目标岗位", "text", firstText(draft.targetJob, "")) +
       fileKeyControl +
       '<label class="full">解析内容<textarea id="resumeParsedContent" placeholder="可粘贴简历摘要、技能、项目经历或留空。">' + escapeHtml(draft.parsedContent) + '</textarea></label>' +
       '<div class="full actions-row">' +
       '<button type="submit"' + submitDisabled + ">" + submitLabel + "</button>" +
-      '<button type="button" class="secondary" data-link="resume-diagnosis">去简历诊断</button>' +
-      '<button type="button" class="secondary" id="refreshResumesButton">刷新列表</button>' +
       '</div></form></section>';
   }
 
@@ -1284,7 +1289,7 @@
     var target = firstText(item.targetJob, item.targetRole, "未设置目标岗位");
     var updated = firstText(item.updatedAt, item.createdAt, "时间待同步");
     var score = firstText(item.diagnosisScore, "未诊断");
-    var preview = state.previewUrls[fileKey];
+    var hasFile = fileKey !== "未关联文件";
     return '<article class="item resume-item">' +
       '<div><strong>' + escapeHtml(firstText(item.title, item.resumeName, "简历 " + id)) + '</strong>' +
       '<p>目标岗位：' + escapeHtml(target) + '</p>' +
@@ -1292,38 +1297,19 @@
       (isDebugMode() ? '<p>文件 key：' + escapeHtml(fileKey) + '</p>' : "") +
       '<p>诊断分：' + escapeHtml(score) + ' ｜ 更新时间：' + escapeHtml(updated) + '</p></div>' +
       '<div class="actions-row compact">' +
-      (fileKey === "未关联文件" ? "" : '<button type="button" class="secondary" data-preview-file="' + escapeHtml(fileKey) + '">预览</button>') +
+      '<button type="button" class="secondary"' +
+      (hasFile ? ' data-preview-file="' + escapeAttr(fileKey) + '"' : ' disabled title="请先上传并关联 PDF 文件"') +
+      '>预览</button>' +
       '<button type="button" data-link="resume-diagnosis">去诊断</button>' +
       '<button type="button" class="secondary danger" data-delete-resume="' + escapeHtml(id) + '">删除</button>' +
       '</div>' +
       "</article>";
   }
 
-  function resumeFilePanel() {
-    var defaultText = isDebugMode()
-      ? "文件上传是可选增强；也可以手工填写 fileKey 后直接创建简历元数据。"
-      : "可以先选择 PDF 上传，系统会自动关联到本次简历。";
-    var text = state.fileMessage ? state.fileMessage.text : defaultText;
-    var type = state.fileMessage ? state.fileMessage.type : "empty";
-    return '<section class="panel"><h3>可选文件上传</h3>' +
-      '<div class="form-grid">' +
-      '<label class="full">选择小文件<input id="resumeFileInput" type="file"></label>' +
-      '<div class="full actions-row"><button type="button" class="secondary" id="uploadResumeFileButton">上传</button></div>' +
-      '</div>' +
-      '<p class="panel-note ' + escapeHtml(type) + '">' + escapeHtml(text) + '</p>' +
-      '</section>';
-  }
-
   function bindResumeEvents() {
     var form = $("resumeForm");
     if (form) {
       form.addEventListener("submit", submitResume);
-    }
-    var refresh = $("refreshResumesButton");
-    if (refresh) {
-      refresh.addEventListener("click", function () {
-        refreshResumeList(true);
-      });
     }
     var upload = $("uploadResumeFileButton");
     if (upload) {
@@ -1350,6 +1336,7 @@
     }
     if (!hasUserIdentity()) {
       state.resumeMessage = { type: "warning", text: "创建简历前需要 Cosmic 身份或显式开发身份。" };
+      showMessage("warning", "无法创建简历", state.resumeMessage.text);
       renderPage(pageByKey[state.route]);
       return;
     }
@@ -1357,6 +1344,7 @@
     state.resumeDraft = request;
     if (!request.title && !request.targetJob && !request.fileKey && !request.parsedContent) {
       state.resumeMessage = { type: "warning", text: "请至少填写标题、目标岗位、文件 key 或解析内容中的一项。" };
+      showMessage("warning", "请补充简历信息", state.resumeMessage.text);
       renderPage(pageByKey[state.route]);
       return;
     }
@@ -1368,7 +1356,7 @@
       return;
     }
     state.resumeSubmitting = true;
-    state.resumeMessage = { type: "info", text: "正在创建简历记录。" };
+    state.resumeMessage = { type: "info", text: "正在创建简历。" };
     renderPage(pageByKey[state.route]);
     post(endpoints.resumeCreate, { userId: state.identity.userId, request: request }).then(function () {
       state.resumeMessage = { type: "info", text: "简历记录已创建，列表正在刷新。可继续去简历诊断。" };
@@ -1469,10 +1457,25 @@
         renderPage(pageByKey[state.route]);
         return;
       }
-      state.fileMessage = { type: "info", text: "文件已上传，object key 已填入表单。" };
       state.resumeDraft = state.resumeDraft || {};
       state.resumeDraft.fileKey = objectKey;
+      state.fileMessage = { type: "info", text: "文件已上传，正在检查是否可以读取简历正文。" };
       renderPage(pageByKey[state.route]);
+      return post(endpoints.fileExtractText, { fileUrlOrKey: objectKey }).then(function (extraction) {
+        var extractedText = firstText(extraction && extraction.text, "");
+        if (extraction && extraction.status === "OK" && extractedText) {
+          state.resumeDraft.parsedContent = extractedText;
+          state.fileMessage = { type: "info", text: "文件已上传并提取文本，创建简历后即可直接诊断。" };
+        } else if (extraction && extraction.status === "TEXT_EMPTY") {
+          state.fileMessage = { type: "warning", text: "PDF 已上传，但其中没有可读取的文字，可能是扫描版或纯图片。请在解析内容中粘贴简历正文后再创建。" };
+        } else {
+          state.fileMessage = { type: "warning", text: "PDF 已上传，但正文读取失败。请重试，或在解析内容中粘贴简历正文后再创建。" };
+        }
+        renderPage(pageByKey[state.route]);
+      }, function (error) {
+        state.fileMessage = { type: "warning", text: "文件已上传，但文本提取失败：" + (error.message || "解析服务不可用") + "。可手工粘贴简历正文。" };
+        renderPage(pageByKey[state.route]);
+      });
     }).catch(function (error) {
       state.fileMessage = { type: "warning", text: (error.message || "文件上传失败") + "；可继续手工填写 fileKey 或只创建元数据。" };
       renderPage(pageByKey[state.route]);
@@ -1523,9 +1526,16 @@
   }
 
   function renderResumeDiagnosisPage(item) {
-    if (state.resumes === null && !state.resumeListError && !isFilePreview()) {
+    if (state.resumes === null && !state.resumeListError && !state.diagnosisResumeListLoading && !isFilePreview()) {
+      state.diagnosisResumeListLoading = true;
       refreshResumeList(false).then(function () {
+        state.diagnosisResumeListLoading = false;
         if (state.route === "resume-diagnosis") {
+          if (state.diagnosisMessage && state.diagnosisMessage.text === "正在重新加载简历。") {
+            state.diagnosisMessage = state.resumeListError
+              ? { type: "warning", text: "简历加载失败：" + state.resumeListError }
+              : { type: "info", text: "简历已加载。" };
+          }
           renderPage(pageByKey[state.route]);
         }
       });
@@ -1572,13 +1582,21 @@
     var draft = state.diagnosisDraft || {};
     return {
       resumeId: firstText(draft.resumeId, selected && firstText(selected.resumeId, selected.id), ""),
-      targetJob: firstText(draft.targetJob, selected && selected.targetJob, resumeTargetDefault()),
+      targetJob: firstText(selected && selected.targetJob, ""),
       jobDescription: firstText(draft.jobDescription, ""),
       resumeText: firstText(draft.resumeText, "")
     };
   }
 
   function diagnosisFormPanel(resumes, selected, draft) {
+    if (state.resumes === null && !state.resumeListError) {
+      return statePanel("正在加载简历", "正在读取你已保存的简历，请稍候。", "pending");
+    }
+    if (state.resumeListError) {
+      return '<section class="state-card warning"><h3>简历加载失败</h3><p>' +
+        escapeHtml(state.resumeListError) +
+        '</p><div class="actions-row"><button type="button" id="retryDiagnosisResumesButton">重新加载</button></div></section>';
+    }
     if (!resumes.length) {
       return '<section class="panel"><h3>选择简历</h3><p>还没有真实简历记录。请先创建或上传简历，再回来做诊断和修改。</p>' +
         '<div class="actions-row"><button type="button" data-link="resume">去创建简历</button></div></section>';
@@ -1589,15 +1607,31 @@
       return '<option value="' + escapeAttr(id) + '"' + (String(id) === String(draft.resumeId) ? " selected" : "") + '>' + escapeHtml(label) + '</option>';
     }).join("");
     var selectedFileKey = firstText(selected && selected.fileKey, selected && selected.objectKey, "");
+    var selectedContent = firstText(selected && selected.parsedContent, "");
+    var targetMissing = !firstText(draft.targetJob, "");
+    var needsPdfExtraction = !!selectedFileKey && !selectedContent && !firstText(draft.resumeText, "");
+    var submitText = state.diagnosisLoading
+      ? (needsPdfExtraction ? "正在读取 PDF..." : "诊断中...")
+      : (needsPdfExtraction ? "读取 PDF 并生成诊断" : "生成诊断建议");
+    var contentHint = selectedContent
+      ? "已从简历记录读取到可诊断正文。"
+      : (selectedFileKey
+        ? "当前记录已关联 PDF。点击下方按钮后，系统会先读取 PDF 正文，再生成诊断建议。"
+        : "当前记录只有标题和岗位，没有关联文件或简历正文。请先补充简历文本或重新上传 PDF。");
     return '<section class="panel"><h3>诊断输入</h3>' +
       '<form class="form-grid" id="resumeDiagnosisForm">' +
       '<label>已有简历<select id="diagnosisResumeId">' + options + '</select></label>' +
-      field("diagnosisTargetJob", "目标岗位", "text", draft.targetJob) +
+      '<input id="diagnosisTargetJob" type="hidden" value="' + escapeAttr(draft.targetJob) + '">' +
+      '<div class="diagnosis-target-display"><span class="label">目标岗位</span><strong>' +
+      escapeHtml(targetMissing ? "尚未设置" : draft.targetJob) + '</strong><small>' +
+      escapeHtml(targetMissing ? "请回到简历页补充这份简历的目标岗位" : "来自所选简历，切换简历时会自动更新") + '</small></div>' +
+      '<p class="form-note full">' + escapeHtml(contentHint) + '</p>' +
       '<label class="full">目标岗位要求<textarea id="diagnosisJobDescription" placeholder="粘贴目标岗位的招聘要求或岗位说明，未填写时会使用目标岗位和画像作为上下文。">' + escapeHtml(draft.jobDescription) + '</textarea></label>' +
-      '<label class="full">补充简历文本<textarea id="diagnosisResumeText" placeholder="可选。若已有简历没有解析文本，可在这里粘贴简历内容。">' + escapeHtml(draft.resumeText) + '</textarea></label>' +
+      '<label class="full">简历正文<textarea id="diagnosisResumeText" placeholder="文本型 PDF 会自动读取；扫描版或纯图片 PDF 可在这里粘贴简历文字。">' + escapeHtml(draft.resumeText) + '</textarea></label>' +
       '<div class="full actions-row">' +
-      '<button type="submit"' + (state.diagnosisLoading ? ' disabled aria-disabled="true"' : "") + '>' + (state.diagnosisLoading ? "诊断中..." : "生成诊断建议") + '</button>' +
-      '<button type="button" class="secondary" id="refreshDiagnosisResumesButton">刷新简历</button>' +
+      '<button type="submit"' + (state.diagnosisLoading || targetMissing ? ' disabled aria-disabled="true"' : "") + '>' +
+      (targetMissing ? "请先补充目标岗位" : submitText) + '</button>' +
+      (targetMissing ? '<button type="button" class="secondary" data-link="resume">返回简历页</button>' : "") +
       (selectedFileKey ? '<button type="button" class="secondary" data-preview-file="' + escapeAttr(selectedFileKey) + '">预览文件</button>' : "") +
       '</div>' +
       '</form></section>';
@@ -1614,46 +1648,120 @@
     var plan = result.revisionPlan || {};
     var suggestions = normalizeArray(result.revisionSuggestions);
     var body = '<section class="panel"><h3>诊断结果</h3>' +
-      metricsPanel("优化摘要", [
-        ["诊断分", firstText(result.overallScore, "--")],
+      '<p class="panel-note">当前为基础规则诊断。总分由内容完整度、目标岗位匹配、经历证据和表达清晰度四项组成。</p>' +
+      metricsPanel("诊断概览", [
+        ["诊断总分", firstText(result.overallScore, "--") + " / 100"],
         ["建议数", firstText(plan.totalSuggestions, suggestions.length, 0)],
-        ["高优先级", firstText(plan.highPrioritySuggestions, 0)],
-        ["上下文", firstText(plan.contextSummary, normalizeArray(result.contextSources).join(" / "), "简历文本")]
+        ["优先处理", firstText(plan.highPrioritySuggestions, 0)],
+        ["参考信息", diagnosisContextLabel(result.contextSources)]
       ]) +
+      scoreBreakdownPanel(result.scoreBreakdown, result.overallScore) +
       diagnosisTextLists(result) +
       revisionSuggestionList(suggestions) +
-      '<div class="actions-row"><button type="button" id="rerunDiagnosisButton">再次诊断</button><button type="button" class="secondary" data-link="resume">更新简历记录</button></div>' +
+      '<div class="actions-row"><button type="button" id="rerunDiagnosisButton">再次诊断</button></div>' +
       '</section>';
     return body;
   }
 
   function diagnosisTextLists(result) {
     return '<div class="revision-columns">' +
-      '<div>' + renderTaskList("强项", normalizeArray(result.strengths), "diagnosis-strengths", {}) + '</div>' +
-      '<div>' + renderTaskList("待优化", normalizeArray(result.weaknesses), "diagnosis-weaknesses", {}) + '</div>' +
-      '<div>' + renderTaskList("普通建议", normalizeArray(result.suggestions), "diagnosis-suggestions", {}) + '</div>' +
+      '<div>' + renderDiagnosisInsightList("做得较好", userFacingList(result.strengths), "positive") + '</div>' +
+      '<div>' + renderDiagnosisInsightList("需要改进", userFacingList(result.weaknesses), "warning") + '</div>' +
+      '<div>' + renderDiagnosisInsightList("修改方向", userFacingList(result.suggestions), "action") + '</div>' +
       '</div>';
+  }
+
+  function renderDiagnosisInsightList(title, items, type) {
+    var list = normalizeArray(items).filter(Boolean);
+    if (!list.length) {
+      return "";
+    }
+    return '<section class="diagnosis-insight-group ' + escapeAttr(type) + '"><h4>' + escapeHtml(title) +
+      '</h4><ul class="diagnosis-insight-list">' + list.map(function (item) {
+        return '<li><span class="diagnosis-insight-dot" aria-hidden="true"></span><span>' +
+          escapeHtml(item) + '</span></li>';
+      }).join("") + '</ul></section>';
+  }
+
+  function scoreBreakdownPanel(items, overallScore) {
+    var scores = normalizeArray(items);
+    if (!scores.length) {
+      return '<section class="diagnosis-score-section"><h4>评分标准</h4><p class="panel-note">这条历史诊断只有总分 ' +
+        escapeHtml(firstText(overallScore, "--")) + '，暂无分项评分依据。再次诊断后可查看详细得分。</p></section>';
+    }
+    return '<section class="diagnosis-score-section"><h4>评分标准与本次得分</h4><div class="diagnosis-score-list">' +
+      scores.map(function (item) {
+        var score = Number(item.score || 0);
+        var maxScore = Number(item.maxScore || 0);
+        var percent = maxScore > 0 ? Math.max(0, Math.min(100, Math.round(score * 100 / maxScore))) : 0;
+        return '<div class="diagnosis-score-item"><div class="diagnosis-score-head"><strong>' +
+          escapeHtml(userFacingText(item.name)) + '</strong><span>' + score + ' / ' + maxScore + ' 分</span></div>' +
+          '<div class="diagnosis-score-track"><span style="width:' + percent + '%"></span></div><p>' +
+          escapeHtml(userFacingText(item.reason) || "暂无评分说明") + '</p></div>';
+      }).join("") + '</div></section>';
   }
 
   function revisionSuggestionList(suggestions) {
     if (!suggestions.length) {
       return statePanel("诊断建议", "当前诊断没有返回结构化建议，可查看普通建议后再次诊断。", "empty");
     }
-    return '<div class="item-list revision-list">' + suggestions.map(function (item, index) {
-      var id = firstText(item.suggestionId, "rev-" + (index + 1));
-      var status = state.revisionStatuses[id] || firstText(item.status, "TODO");
+    return '<div class="item-list revision-list">' + suggestions.map(function (item) {
       return '<article class="item revision-item">' +
-        '<div><strong>' + escapeHtml(firstText(item.priority, "MEDIUM")) + " · " + escapeHtml(firstText(item.resumeSection, "experience")) + '</strong>' +
-        '<p>' + escapeHtml(firstText(item.problem, item.action, "补充简历证据")) + '</p>' +
-        '<p>动作：' + escapeHtml(firstText(item.action, "围绕目标岗位补充经历证据")) + '</p>' +
-        '<p>示例：' + escapeHtml(firstText(item.rewriteExample, "用动作、技术、指标和个人贡献重写经历。")) + '</p>' +
-        '<p>关键词：' + escapeHtml(normalizeArray(item.targetKeywords).join(" / ") || "待提取") + '</p>' +
-        '<p>状态：' + escapeHtml(status) + '</p></div>' +
-        '<div class="actions-row compact">' +
-        '<button type="button" class="secondary" data-revision-status="' + escapeAttr(id) + '" data-status-value="DONE">已处理</button>' +
-        '<button type="button" class="secondary" data-revision-status="' + escapeAttr(id) + '" data-status-value="SKIPPED">暂不处理</button>' +
-        '</div></article>';
+        '<div><strong>' + escapeHtml(priorityLabel(item.priority)) + " · " + escapeHtml(resumeSectionLabel(item.resumeSection)) + '</strong>' +
+        '<p class="revision-problem">问题：' + escapeHtml(userFacingText(firstText(item.problem, item.action, "需要补充简历证据"))) + '</p>' +
+        '<p>怎么改：' + escapeHtml(userFacingText(firstText(item.action, "围绕目标岗位补充经历证据"))) + '</p>' +
+        '<p>参考写法：' + escapeHtml(userFacingText(firstText(item.rewriteExample, "用具体行动、方法、结果和个人贡献重写经历。"))) + '</p>' +
+        '<p>建议补充：' + escapeHtml(userFacingList(item.targetKeywords).join(" / ") || "与目标岗位相关的真实证据") + '</p></div></article>';
     }).join("") + '</div>';
+  }
+
+  function diagnosisContextLabel(sources) {
+    var labels = normalizeArray(sources).map(function (source) {
+      var value = String(source || "");
+      if (value.indexOf("resume:") === 0) return "当前简历";
+      if (value === "resume.targetJob") return "简历目标岗位";
+      if (value === "resume.fileText") return "PDF 简历正文";
+      if (value === "profile.assessment") return "职业测评";
+      if (value === "profile.snapshot") return "用户画像";
+      if (value === "profile.preferences.targetRole") return "画像目标岗位";
+      if (value === "profile.resume.targetJob") return "画像中的简历岗位";
+      if (value === "request.jobDescription") return "岗位要求";
+      if (value === "targetJob") return "目标岗位";
+      return "";
+    }).filter(Boolean);
+    return uniqueValues(labels).join("、") || "简历正文";
+  }
+
+  function priorityLabel(value) {
+    var key = String(value || "").toUpperCase();
+    return key === "HIGH" ? "优先处理" : key === "LOW" ? "可以完善" : "建议处理";
+  }
+
+  function resumeSectionLabel(value) {
+    var labels = { projects: "项目经历", experience: "工作或实践经历", skills: "技能说明", summary: "整体内容", education: "教育背景" };
+    return labels[String(value || "").toLowerCase()] || "简历内容";
+  }
+
+  function userFacingList(values) {
+    return normalizeArray(values).map(userFacingText).filter(Boolean);
+  }
+
+  function userFacingText(value) {
+    return String(value || "")
+      .replace(/\bJD\b/gi, "岗位要求")
+      .replace(/resume\.targetJob/g, "简历目标岗位")
+      .replace(/profile\.assessment/g, "职业测评")
+      .replace(/targetJob/g, "目标岗位")
+      .replace(/\bTODO\b/g, "待处理");
+  }
+
+  function uniqueValues(values) {
+    var seen = {};
+    return values.filter(function (value) {
+      if (seen[value]) return false;
+      seen[value] = true;
+      return true;
+    });
   }
 
   function bindResumeDiagnosisEvents() {
@@ -1665,14 +1773,16 @@
     if (select) {
       select.addEventListener("change", function () {
         state.selectedDiagnosisResumeId = select.value;
-        state.diagnosisDraft = readDiagnosisDraft();
+        state.diagnosisDraft = { resumeId: select.value, targetJob: "", jobDescription: "", resumeText: "" };
+        state.diagnosisResult = null;
+        state.diagnosisMessage = null;
         renderPage(pageByKey[state.route]);
       });
     }
-    var refresh = $("refreshDiagnosisResumesButton");
-    if (refresh) {
-      refresh.addEventListener("click", function () {
-        refreshResumeList(true);
+    var retry = $("retryDiagnosisResumesButton");
+    if (retry) {
+      retry.addEventListener("click", function () {
+        retryDiagnosisResumeList();
       });
     }
     var rerun = $("rerunDiagnosisButton");
@@ -1685,13 +1795,6 @@
     for (var i = 0; i < previews.length; i += 1) {
       previews[i].addEventListener("click", function (event) {
         previewResumeFile(event.currentTarget.getAttribute("data-preview-file"));
-      });
-    }
-    var statusButtons = els.pageHost.querySelectorAll("[data-revision-status]");
-    for (var j = 0; j < statusButtons.length; j += 1) {
-      statusButtons[j].addEventListener("click", function (event) {
-        state.revisionStatuses[event.currentTarget.getAttribute("data-revision-status")] = event.currentTarget.getAttribute("data-status-value");
-        renderPage(pageByKey[state.route]);
       });
     }
   }
@@ -1711,10 +1814,27 @@
     var draft = readDiagnosisDraft();
     state.diagnosisDraft = draft;
     state.selectedDiagnosisResumeId = draft.resumeId;
+    if (!draft.targetJob) {
+      state.diagnosisMessage = { type: "warning", text: "所选简历尚未设置目标岗位，请先回到简历页补充。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
     if (!draft.resumeId && !draft.resumeText) {
       state.diagnosisMessage = { type: "warning", text: "请选择已有简历，或粘贴简历文本。" };
       renderPage(pageByKey[state.route]);
       return;
+    }
+    var selected = selectedDiagnosisResume(normalizeArray(state.resumes));
+    if (!firstText(draft.resumeText, selected && selected.parsedContent, "")) {
+      var selectedFileKey = firstText(selected && selected.fileKey, selected && selected.objectKey, "");
+      if (!selectedFileKey) {
+        state.diagnosisMessage = {
+          type: "warning",
+          text: "所选简历只有标题和岗位，数据库中没有文件或简历正文。请在下方粘贴简历文本，或回到简历页上传 PDF 后重新创建记录。"
+        };
+        renderPage(pageByKey[state.route]);
+        return;
+      }
     }
     if (isFilePreview()) {
       state.diagnosisResult = previewDiagnosisResult(draft);
@@ -1723,20 +1843,40 @@
       return;
     }
     state.diagnosisLoading = true;
-    state.diagnosisMessage = { type: "info", text: "正在生成简历诊断建议。" };
+    state.diagnosisMessage = {
+      type: "info",
+      text: firstText(draft.resumeText, selected && selected.parsedContent, "")
+        ? "正在生成简历诊断建议。"
+        : "正在读取 PDF 正文，读取成功后会继续生成诊断建议。"
+    };
     renderPage(pageByKey[state.route]);
     post(endpoints.resumeDiagnosis, { userId: state.identity.userId, request: diagnosisRequest(draft) }).then(function (result) {
       state.diagnosisResult = result || {};
+      syncDiagnosisScoreToResumeList(draft.resumeId, state.diagnosisResult.overallScore);
       state.diagnosisMessage = { type: "info", text: "诊断完成。可按优先级处理建议后再次诊断。" };
-      return refreshSnapshotAfterResume();
+      return Promise.all([refreshSnapshotAfterResume(), refreshResumeList(false)]);
     }).then(function () {
       state.diagnosisLoading = false;
+      if (state.resumeListError) {
+        state.diagnosisMessage = { type: "warning", text: "诊断已完成，简历记录将在列表恢复后自动更新。" };
+      }
       renderPage(pageByKey[state.route]);
     }).catch(function (error) {
       state.diagnosisLoading = false;
       state.diagnosisMessage = { type: "warning", text: error.message || "简历诊断暂不可用，请稍后重试。" };
       showMessage("error", "简历诊断失败", state.diagnosisMessage.text);
       renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function syncDiagnosisScoreToResumeList(resumeId, score) {
+    if (!resumeId || score === undefined || score === null) {
+      return;
+    }
+    normalizeArray(state.resumes).forEach(function (resume) {
+      if (String(firstText(resume && resume.resumeId, resume && resume.id, "")) === String(resumeId)) {
+        resume.diagnosisScore = score;
+      }
     });
   }
 
@@ -1959,7 +2099,7 @@
         var taskId = scopeKey + "." + index + "." + sanitizeKey(item);
         var checked = !!(progressState.checked && progressState.checked[taskId]);
         return '<li class="route-task-item' + (checked ? " done" : "") + '">' +
-          '<label class="route-task-toggle" data-plan-task="' + escapeAttr(taskId) + '"><input type="checkbox" data-plan-task="' + escapeAttr(taskId) + '"' + (checked ? " checked" : "") + '>' +
+          '<label class="route-task-toggle"><input type="checkbox" data-plan-task="' + escapeAttr(taskId) + '"' + (checked ? " checked" : "") + '>' +
           '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item) + '</span></label></li>';
       }).join("") + '</ul></div>';
   }
@@ -1973,7 +2113,7 @@
       list.map(function (item) {
         var checked = !!(progressState.checked && progressState.checked[item.taskId]);
         return '<li class="route-task-item' + (checked ? " done" : "") + '">' +
-          '<label class="route-task-toggle" data-plan-task="' + escapeAttr(item.taskId) + '"><input type="checkbox" data-plan-task="' + escapeAttr(item.taskId) + '"' + (checked ? " checked" : "") + '>' +
+          '<label class="route-task-toggle"><input type="checkbox" data-plan-task="' + escapeAttr(item.taskId) + '"' + (checked ? " checked" : "") + '>' +
           '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item.text) + '</span></label></li>';
       }).join("") + '</ul></div>';
   }
@@ -3188,13 +3328,6 @@
       updatePlanHorizon(planHorizonTarget.getAttribute("data-plan-horizon"));
       return;
     }
-    var planTaskTarget = findPlanTaskTarget(event.target);
-    if (planTaskTarget) {
-      event.preventDefault();
-      event.stopPropagation();
-      togglePlanTask(planTaskTarget.getAttribute("data-plan-task"));
-      return;
-    }
     var planFocusTarget = findPlanFocusTarget(event.target);
     if (planFocusTarget) {
       event.preventDefault();
@@ -3268,6 +3401,24 @@
     navigateToRoute(target.getAttribute("data-link"));
   }
 
+  function retryDiagnosisResumeList() {
+    state.diagnosisMessage = { type: "info", text: "正在重新加载简历。" };
+    state.resumeListError = null;
+    state.resumes = null;
+    renderPage(pageByKey[state.route]);
+  }
+
+  function handlePageHostChange(event) {
+    var target = event.target;
+    if (!target || !target.getAttribute || target.type !== "checkbox") {
+      return;
+    }
+    var taskId = target.getAttribute("data-plan-task");
+    if (taskId) {
+      setPlanTaskChecked(taskId, target.checked);
+    }
+  }
+
   function findPageLinkTarget(node) {
     while (node && node !== els.pageHost) {
       if (node.getAttribute && (node.getAttribute("data-link") || node.getAttribute("data-back-route"))) {
@@ -3328,16 +3479,6 @@
     return null;
   }
 
-  function findPlanTaskTarget(node) {
-    while (node && node !== els.pageHost) {
-      if (node.getAttribute && node.getAttribute("data-plan-task")) {
-        return node.disabled ? null : node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
   function findPlanFocusTarget(node) {
     while (node && node !== els.pageHost) {
       if (node.getAttribute && node.getAttribute("data-plan-focus")) {
@@ -3358,14 +3499,14 @@
     return null;
   }
 
-  function togglePlanTask(taskId) {
+  function setPlanTaskChecked(taskId, checked) {
     if (!taskId) {
       return;
     }
     var plan = state.plan && !state.plan.unavailable ? state.plan : {};
     var targetRole = employmentTargetRole(plan);
     var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
-    progressState.checked[taskId] = !progressState.checked[taskId];
+    progressState.checked[taskId] = !!checked;
     persistPlanProgress(plan, targetRole, progressState);
     updateOverviewCards();
     renderPage(pageByKey[state.route]);

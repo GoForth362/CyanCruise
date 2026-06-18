@@ -611,7 +611,7 @@
           "body": ["fileUrlOrKey"],
           "userIdRequired": false,
           "dto": "FileTextExtractionResult",
-          "fallback": "Return empty text and keep diagnosis metadata flow available."
+          "fallback": "Return explicit empty, unsupported, unavailable, or failed status without inventing document text."
         }
       ]
     },
@@ -637,8 +637,8 @@
           "path": "/cc001/resume-diagnosis/analyze",
           "body": ["userId", "request"],
           "userIdRequired": true,
-          "dto": "ResumeDiagnosisRequest -> ResumeDiagnosisResultDto with revision suggestions",
-          "fallback": "Show diagnosis unavailable while preserving selected resume, target role, and job requirements."
+          "dto": "ResumeDiagnosisRequest -> ResumeDiagnosisResultDto with PDF text extraction and revision suggestions",
+          "fallback": "When saved text is empty, extract the owned PDF first; preserve inputs and show a retry or scanned-document message on failure."
         },
         {
           "name": "keyword status",

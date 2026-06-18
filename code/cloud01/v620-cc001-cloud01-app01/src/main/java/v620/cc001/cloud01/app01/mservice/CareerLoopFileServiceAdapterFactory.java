@@ -19,13 +19,13 @@ public final class CareerLoopFileServiceAdapterFactory {
                                                                  CosmicFileAdapterConfig config,
                                                                  FileUploadPreviewService helper) {
         CosmicCareerFileStorage storage = new CosmicCareerFileStorage(provider, config, helper);
-        CosmicFileTextExtractor extractor = new CosmicFileTextExtractor(provider, config);
+        PdfBoxFileTextExtractor extractor = new PdfBoxFileTextExtractor();
         return new FileUploadPreviewApplicationService(storage, extractor, helper);
     }
 
     public static FileUploadPreviewApplicationService localInMemory() {
         return new FileUploadPreviewApplicationService(new InMemoryCareerFileStorage(),
-                new PlainTextFileTextExtractor(),
+                new PdfBoxFileTextExtractor(),
                 new FileUploadPreviewService());
     }
 }

@@ -170,16 +170,32 @@ public class FileUploadPreviewApplicationService {
         }
         try {
             String text = textExtractor.extract(download.getBytes(), download.getObjectKey());
+            if (text == null || text.trim().length() == 0) {
+                String status = isPdf(download.getObjectKey())
+                        ? FileConstants.STATUS_TEXT_EMPTY
+                        : FileConstants.STATUS_UNSUPPORTED;
+                String message = isPdf(download.getObjectKey())
+                        ? "PDF 中没有可读取的文字，可能是扫描件或纯图片文件"
+                        : "当前文件类型不支持正文提取";
+                return helper.textResult(download.getObjectKey(), "", status, message);
+            }
             FileTextExtractionResult result = helper.textResult(download.getObjectKey(), text, FileConstants.STATUS_OK, "extracted");
+            result.setProvider(download.getProvider());
             if (textExtractor instanceof CosmicFileTextExtractor) {
                 result.setProvider(((CosmicFileTextExtractor) textExtractor).providerName());
             }
             return result;
+        } catch (FileTextExtractionException ex) {
+            return helper.textResult(download.getObjectKey(), "", ex.getStatus(), ex.getMessage());
         } catch (FileAdapterUnavailableException ex) {
             return helper.textResult(download.getObjectKey(), "", ex.getStatus(), ex.getMessage());
         } catch (Exception ex) {
             return helper.textResult(download.getObjectKey(), "", FileConstants.STATUS_FAILED, ex.toString());
         }
+    }
+
+    private boolean isPdf(String objectKey) {
+        return objectKey != null && objectKey.toLowerCase().endsWith(".pdf");
     }
 
     private FileUploadResult uploadFailure(String status, String message) {

@@ -16,6 +16,7 @@ public class ResumeDiagnosisResultDto implements Serializable {
     private List<String> strengths = new ArrayList<String>();
     private List<String> weaknesses = new ArrayList<String>();
     private List<String> suggestions = new ArrayList<String>();
+    private List<ResumeDiagnosisScoreItemDto> scoreBreakdown = new ArrayList<ResumeDiagnosisScoreItemDto>();
     private List<ResumeRevisionSuggestionDto> revisionSuggestions = new ArrayList<ResumeRevisionSuggestionDto>();
     private ResumeRevisionPlanDto revisionPlan;
     private List<String> contextSources = new ArrayList<String>();
@@ -60,6 +61,15 @@ public class ResumeDiagnosisResultDto implements Serializable {
 
     public void setSuggestions(List<String> suggestions) {
         this.suggestions = suggestions == null ? new ArrayList<String>() : suggestions;
+    }
+
+    public List<ResumeDiagnosisScoreItemDto> getScoreBreakdown() {
+        return scoreBreakdown;
+    }
+
+    public void setScoreBreakdown(List<ResumeDiagnosisScoreItemDto> scoreBreakdown) {
+        this.scoreBreakdown = scoreBreakdown == null
+                ? new ArrayList<ResumeDiagnosisScoreItemDto>() : scoreBreakdown;
     }
 
     public List<ResumeRevisionSuggestionDto> getRevisionSuggestions() {
