@@ -1250,15 +1250,6 @@ h4 {
   overflow-wrap: anywhere;
 }
 
-.feature-status {
-  position: absolute;
-  right: 12px;
-  top: 10px;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .assessment-list-section {
   padding-top: 2px;
 }

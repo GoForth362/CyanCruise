@@ -7,8 +7,12 @@ import v620.cc001.base.common.dto.career.ResumeDiagnosisResultDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordStatusDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.ResumeUpdateRequest;
+import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
 import v620.cc001.cloud01.app01.mservice.ai.DefaultAiGateway;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Application boundary for migrated resume diagnosis.
@@ -19,6 +23,7 @@ public class ResumeDiagnosisApplicationService {
     private final ResumeDiagnosisStorage storage;
     private final ResumeDiagnosisAnalyzer analyzer;
     private final ResumeDiagnosisService helper;
+    private final CareerProfileApplicationService profileApplicationService;
 
     public ResumeDiagnosisApplicationService() {
         this(new ResumeApplicationService(),
@@ -33,10 +38,19 @@ public class ResumeDiagnosisApplicationService {
                                              ResumeDiagnosisStorage storage,
                                              ResumeDiagnosisAnalyzer analyzer,
                                              ResumeDiagnosisService helper) {
+        this(resumeApplicationService, storage, analyzer, helper, new CareerProfileApplicationService());
+    }
+
+    public ResumeDiagnosisApplicationService(ResumeApplicationService resumeApplicationService,
+                                             ResumeDiagnosisStorage storage,
+                                             ResumeDiagnosisAnalyzer analyzer,
+                                             ResumeDiagnosisService helper,
+                                             CareerProfileApplicationService profileApplicationService) {
         this.resumeApplicationService = resumeApplicationService;
         this.storage = storage;
         this.analyzer = analyzer;
         this.helper = helper;
+        this.profileApplicationService = profileApplicationService;
     }
 
     public ResumeDiagnosisResultDto diagnose(String userId, ResumeDiagnosisRequest request) {
@@ -46,6 +60,7 @@ public class ResumeDiagnosisApplicationService {
         if (safeRequest.getResumeId() != null) {
             resume = resumeApplicationService.get(safeUserId, safeRequest.getResumeId());
         }
+        List<String> contextSources = applyProfileContext(safeUserId, safeRequest, resume);
         String text = trimToNull(safeRequest.getResumeText());
         if (text == null && resume != null) {
             text = trimToNull(resume.getParsedContent());
@@ -57,6 +72,8 @@ public class ResumeDiagnosisApplicationService {
         ResumeDiagnosisResultDto result = helper.parseAnalysis(rawAnalysis);
         result.setResumeId(safeRequest.getResumeId());
         result.setRawAnalysis(rawAnalysis);
+        result.setContextSources(contextSources);
+        result.setRevisionPlan(helper.buildRevisionPlan(result.getRevisionSuggestions(), contextSources));
         if (result.getResumeId() != null) {
             storage.saveDiagnosis(result);
             ResumeUpdateRequest update = new ResumeUpdateRequest();
@@ -105,6 +122,75 @@ public class ResumeDiagnosisApplicationService {
         return storage.loadDiagnosis(resumeId);
     }
 
+    private List<String> applyProfileContext(String userId, ResumeDiagnosisRequest request, ResumeRecordDto resume) {
+        List<String> sources = new ArrayList<String>();
+        if (resume != null) {
+            sources.add("resume:" + resume.getResumeId());
+            if (!hasText(request.getTargetJob()) && hasText(resume.getTargetJob())) {
+                request.setTargetJob(resume.getTargetJob());
+                sources.add("resume.targetJob");
+            }
+        }
+        UserProfileSnapshot snapshot = null;
+        try {
+            snapshot = profileApplicationService.getSnapshot(userId);
+        } catch (Exception ignored) {
+        }
+        if (snapshot != null) {
+            UserProfileSnapshot.PreferencesBlock preferences = snapshot.getPreferences();
+            UserProfileSnapshot.ResumeBlock resumeBlock = snapshot.getResume();
+            UserProfileSnapshot.AssessmentBlock assessment = snapshot.getAssessment();
+            if (!hasText(request.getTargetJob()) && preferences != null && hasText(preferences.getTargetRole())) {
+                request.setTargetJob(preferences.getTargetRole());
+                sources.add("profile.preferences.targetRole");
+            }
+            if (!hasText(request.getTargetJob()) && resumeBlock != null && hasText(resumeBlock.getTargetJob())) {
+                request.setTargetJob(resumeBlock.getTargetJob());
+                sources.add("profile.resume.targetJob");
+            }
+            if (!hasText(request.getProfileContext())) {
+                request.setProfileContext(profileContext(snapshot));
+                if (hasText(request.getProfileContext())) {
+                    sources.add("profile.snapshot");
+                }
+            }
+            if (assessment != null && hasText(assessment.getSummary())) {
+                sources.add("profile.assessment");
+            }
+        }
+        if (hasText(request.getJobDescription())) {
+            sources.add("request.jobDescription");
+        }
+        if (hasText(request.getTargetJob())) {
+            sources.add("targetJob");
+        }
+        return sources;
+    }
+
+    private String profileContext(UserProfileSnapshot snapshot) {
+        StringBuilder builder = new StringBuilder();
+        UserProfileSnapshot.PreferencesBlock preferences = snapshot.getPreferences();
+        UserProfileSnapshot.AssessmentBlock assessment = snapshot.getAssessment();
+        UserProfileSnapshot.OnboardingBlock onboarding = snapshot.getOnboarding();
+        if (preferences != null && hasText(preferences.getTargetRole())) {
+            append(builder, "targetRole=" + preferences.getTargetRole());
+        }
+        if (assessment != null && hasText(assessment.getSummary())) {
+            append(builder, "assessment=" + assessment.getSummary());
+        }
+        if (onboarding != null && hasText(onboarding.getStage())) {
+            append(builder, "stage=" + onboarding.getStage());
+        }
+        return builder.length() == 0 ? null : builder.toString();
+    }
+
+    private void append(StringBuilder builder, String text) {
+        if (builder.length() > 0) {
+            builder.append("; ");
+        }
+        builder.append(text);
+    }
+
     private ResumeRecordDto requireOwned(String userId, Long resumeId) {
         return resumeApplicationService.get(requireUserId(userId), resumeId);
     }
@@ -130,6 +216,10 @@ public class ResumeDiagnosisApplicationService {
         }
         String trimmed = value.trim();
         return trimmed.length() == 0 ? null : trimmed;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && value.trim().length() > 0;
     }
 
     private String limitText(String value) {

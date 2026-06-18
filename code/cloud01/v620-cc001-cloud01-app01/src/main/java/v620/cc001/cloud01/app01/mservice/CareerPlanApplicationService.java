@@ -39,21 +39,32 @@ public class CareerPlanApplicationService {
     }
 
     public CareerPlanSummaryDto getSummary(String userId) {
-        return summaryService.summarize(storage.load(requireUserId(userId)), LocalDateTime.now());
+        String safeUserId = requireUserId(userId);
+        CareerPlanRecordDto existing = storage.load(safeUserId);
+        if (existing == null) {
+            return summaryService.summarize(null, LocalDateTime.now());
+        }
+        CareerUserProfileDto profile = resolveProfile(safeUserId);
+        CareerPlanRecordDto current = refreshPlanWhenTargetChanged(safeUserId, existing, profile, LocalDateTime.now());
+        return summaryService.summarize(current, LocalDateTime.now());
     }
 
     public CareerPlanSummaryDto ensurePlan(String userId) {
         String safeUserId = requireUserId(userId);
         CareerPlanRecordDto existing = storage.load(safeUserId);
+        CareerUserProfileDto profile = resolveProfile(safeUserId);
         if (existing != null) {
+            CareerPlanRecordDto current = refreshPlanWhenTargetChanged(safeUserId, existing, profile, LocalDateTime.now());
+            if (current != existing) {
+                return summaryService.summarize(current, LocalDateTime.now());
+            }
             if (existing.getPhases() == null || existing.getPhases().isEmpty()) {
-                CareerPlanRecordDto enriched = summaryService.enrichStructuredPlan(existing, resolveProfile(safeUserId), LocalDateTime.now());
+                CareerPlanRecordDto enriched = summaryService.enrichStructuredPlan(existing, profile, LocalDateTime.now());
                 storage.save(safeUserId, enriched);
                 return summaryService.summarize(enriched, LocalDateTime.now());
             }
             return summaryService.summarize(existing, LocalDateTime.now());
         }
-        CareerUserProfileDto profile = resolveProfile(safeUserId);
         String targetRole = resolveTargetRole(profile);
         CareerPlanRecordDto created = createPlanWithGenerator(safeUserId, targetRole, profile, LocalDateTime.now());
         storage.save(safeUserId, created);
@@ -112,6 +123,17 @@ public class CareerPlanApplicationService {
         return summaryService.defaultPlan(userId, targetRole, profile, now);
     }
 
+    private CareerPlanRecordDto refreshPlanWhenTargetChanged(String userId, CareerPlanRecordDto existing,
+                                                             CareerUserProfileDto profile, LocalDateTime now) {
+        String profileTargetRole = resolveTargetRole(profile);
+        if (!hasText(profileTargetRole) || sameText(existing.getTargetRole(), profileTargetRole)) {
+            return existing;
+        }
+        CareerPlanRecordDto refreshed = createPlanWithGenerator(userId, profileTargetRole, profile, now);
+        storage.save(userId, refreshed);
+        return refreshed;
+    }
+
     private CareerUserProfileDto resolveProfile(String userId) {
         return profileApplicationService.getProfile(userId);
     }
@@ -136,5 +158,12 @@ public class CareerPlanApplicationService {
 
     private boolean hasText(String value) {
         return value != null && value.trim().length() > 0;
+    }
+
+    private boolean sameText(String first, String second) {
+        if (!hasText(first) || !hasText(second)) {
+            return false;
+        }
+        return first.trim().equals(second.trim());
     }
 }

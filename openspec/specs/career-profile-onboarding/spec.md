@@ -4,7 +4,7 @@
 定义 CyanCruise 如何采集 onboarding 信息、维护跨工具职业画像快照，并派生统一职业画像，为后续 CareerLoop 能力提供输入。
 ## Requirements
 ### Requirement: 维护跨工具用户画像快照
-系统 SHALL 维护一个用户画像快照，并为测评、简历、面试、偏好和 onboarding 保持彼此独立的 block，使每个迁移能力可以只更新自己的 block，而不会覆盖无关数据。快照合并 helper SHALL 有聚焦测试，验证无关 block 被保留，并验证空白目标岗位输入不会清除已有偏好。测评结果 SHALL 能够合并进 assessment block，且不覆盖 onboarding 或 preference 数据。
+系统 SHALL 维护一个用户画像快照，并为测评、简历、面试、偏好和 onboarding 保持彼此独立的 block，使每个迁移能力可以只更新自己的 block，而不会覆盖无关数据。快照合并 helper SHALL 有聚焦测试，验证无关 block 被保留，并验证空白目标岗位输入不会清除已有偏好。测评结果 SHALL 能够合并进 assessment block，记录最近测评记录、量表、摘要、推荐岗位和完成时间，且不覆盖 onboarding 或 preference 数据。
 
 #### Scenario: 将 onboarding 合并到已有快照
 - **WHEN** 已有测评或简历数据的用户提交 onboarding 数据
@@ -21,6 +21,10 @@
 #### Scenario: 将测评合并到已有快照
 - **WHEN** 已有 onboarding 和 preferences 的用户提交测评结果数据
 - **THEN** 系统更新 assessment block，并保留 onboarding 和 preferences
+
+#### Scenario: 测评结果记录推荐岗位
+- **WHEN** 用户完成职业测评并产生推荐岗位
+- **THEN** 系统在 assessment block 中保存 `suggestedRoles`，供统一画像目标岗位兜底规则使用
 
 ### Requirement: 采集 onboarding 输入字段
 onboarding block SHALL 采集身份类型、阶段、痛点、自报简历状态、简历准备状态、时间线、教育经历、每周可投入时间、优先帮助项、推荐入口和完成时间戳。
@@ -177,3 +181,25 @@ PostgreSQL 画像持久化 SHALL 按用户归属隔离所有画像快照、facts
 #### Scenario: 不泄露其他用户画像
 - **WHEN** 用户 A 和用户 B 都有画像数据
 - **THEN** 读取用户 A 的画像存储数据 SHALL NOT 返回用户 B 的快照、facts、草稿或派生画像载荷
+
+### Requirement: 简历诊断消费画像上下文
+职业画像能力 SHALL 为简历诊断提供可选上下文，包括目标岗位、求职阶段、测评摘要、偏好、最新真实简历状态和缺失信号。该上下文 SHALL 可被 WebAPI 和页面读取，但 SHALL NOT 暴露敏感凭据或客户私有配置。
+
+#### Scenario: 提供目标岗位上下文
+- **WHEN** 用户画像中存在目标岗位或偏好岗位
+- **THEN** 简历诊断页面和诊断服务 MAY 将该岗位作为默认诊断目标
+
+#### Scenario: 提供缺失信号
+- **WHEN** 用户缺少测评、目标岗位或真实简历记录
+- **THEN** 画像上下文 SHALL 返回可解释的缺失信号，用于页面提示下一步补齐动作
+
+### Requirement: 简历诊断结果刷新画像
+简历诊断完成诊断后，系统 SHALL 将最新诊断分数、关键建议摘要和真实简历状态同步到用户画像 resume block，并保持统一画像能够反映“简历需要优化”或“简历已达到推荐阈值”等状态。
+
+#### Scenario: 分数低于阈值
+- **WHEN** 最新简历诊断分数低于推荐阈值
+- **THEN** 画像 SHALL 反映简历仍需优化，并可供今日任务推荐继续使用
+
+#### Scenario: 分数达到阈值
+- **WHEN** 再次诊断后分数达到推荐阈值
+- **THEN** 画像 SHALL 更新最新分数，并降低“简历缺口”类缺失信号优先级

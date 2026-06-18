@@ -11,6 +11,7 @@ public class ResumeDiagnosisRequest implements Serializable {
 
     private Long resumeId;
     private String resumeText;
+    private String targetJob;
     private String jobDescription;
     private String profileContext;
 
@@ -28,6 +29,14 @@ public class ResumeDiagnosisRequest implements Serializable {
 
     public void setResumeText(String resumeText) {
         this.resumeText = resumeText;
+    }
+
+    public String getTargetJob() {
+        return targetJob;
+    }
+
+    public void setTargetJob(String targetJob) {
+        this.targetJob = targetJob;
     }
 
     public String getJobDescription() {

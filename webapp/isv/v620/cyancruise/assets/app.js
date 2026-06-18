@@ -56,10 +56,10 @@
     page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
     page("today-action", "今日行动", "entry-only", "user", "根据路径规划拆解每天应该推进的事项。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
-    page("resume-home", "简历", "available", "user", "简历制作和简历修改入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+    page("resume-home", "简历", "available", "user", "简历制作和简历诊断入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
-    page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumeDiagnosis", "keywordStatus"]),
+    page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumes", "snapshot", "filePreview", "resumeDiagnosis", "keywordStatus"]),
     page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
     page("interview-home", "面试", "available", "user", "全景仿真面试和模拟面试入口。", ["interviews", "startInterview"]),
     page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
@@ -75,7 +75,7 @@
     ["CyanCruise 首页", "#workbench", "已接入"],
     ["就业", "#employment-home", "已接入"],
     ["简历 / 简历制作", "#resume-home", "已接入"],
-    ["简历 / 简历修改", "#resume-diagnosis", "已接入"],
+    ["简历 / 简历诊断", "#resume-diagnosis", "已接入"],
     ["面试 / 全景仿真面试", "#interview-home", "已接入"],
     ["面试 / 模拟面试", "#interview", "已接入"],
     ["深造", "#further-study-home", "规划中"],
@@ -86,13 +86,13 @@
   var featureGroups = {
     "employment-home": [
       feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
-      feature("简历修改", "改", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
+      feature("简历诊断", "诊", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
       feature("全景仿真面试", "仿", "按目标岗位进入真实面试流程练习", "interview", "已接入"),
       feature("模拟面试", "面", "查看面试历史并开始模拟练习", "interview", "已接入")
     ],
     "resume-home": [
       feature("简历制作", "简", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
-      feature("简历修改", "改", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
+      feature("简历诊断", "诊", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
     ],
     "interview-home": [
       feature("全景仿真面试", "仿", "沿用 IPD 模拟面试流程，按目标岗位进入练习", "interview", "已接入"),
@@ -114,6 +114,12 @@
     resumeSubmitting: false,
     resumeMessage: null,
     resumeListError: null,
+    diagnosisLoading: false,
+    diagnosisResult: null,
+    diagnosisDraft: null,
+    diagnosisMessage: null,
+    selectedDiagnosisResumeId: null,
+    revisionStatuses: {},
     fileMessage: null,
     messageTimer: null,
     previewUrls: {},
@@ -320,6 +326,8 @@
       renderOnboarding(item);
     } else if (item.key === "resume") {
       renderResumePage(item);
+    } else if (item.key === "resume-diagnosis") {
+      renderResumeDiagnosisPage(item);
     } else if (item.key === "career-plan") {
       renderCareerPlanPage(item);
     } else if (item.key === "today-action") {
@@ -516,7 +524,7 @@
   }
 
   function homeRouteFeatures(goal) {
-    var employment = feature("就业", "就", "进入简历制作、简历修改、全景仿真面试和模拟面试", "employment-home", "已接入");
+    var employment = feature("就业", "就", "进入简历制作、简历诊断、全景仿真面试和模拟面试", "employment-home", "已接入");
     var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划智能体", "further-study-home", "规划中");
     var plan = feature("路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划智能体", "career-plan", "规划中");
     var assessment = feature("职业测评", "测", "通过答题分析人格、性格和偏好，补全用户画像", "assessment", "规划中");
@@ -538,7 +546,7 @@
     }
     return [
       feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
-      feature("简历修改", "改", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
+      feature("简历诊断", "诊", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
       feature("模拟面试", "面", "从岗位目标开始面试练习", "interview", "已接入")
     ];
   }
@@ -1079,10 +1087,10 @@
       return "围绕目标岗位梳理项目、实习、课程和竞赛证据，再写入简历要点。";
     }
     if (summary === "Pick one target role, one resume improvement and one interview drill.") {
-      return "选择一个目标岗位、完成一次简历修改、安排一次模拟面试，并记录反馈。";
+      return "选择一个目标岗位、完成一次简历诊断、安排一次模拟面试，并记录反馈。";
     }
     if (summary === "Practice answer structure before a real interview.") {
-      return "用 STAR、项目复盘和岗位能力关键词整理模拟面试回答。";
+      return "用项目复盘和岗位能力关键词整理模拟面试回答。";
     }
     if (summary === "Core route for backend, web, data and AI application roles.") {
       return "面向后端、Web、数据和 AI 应用岗位的基础成长路线。";
@@ -1514,6 +1522,283 @@
     });
   }
 
+  function renderResumeDiagnosisPage(item) {
+    if (state.resumes === null && !state.resumeListError && !isFilePreview()) {
+      refreshResumeList(false).then(function () {
+        if (state.route === "resume-diagnosis") {
+          renderPage(pageByKey[state.route]);
+        }
+      });
+    }
+    var resumes = normalizeArray(state.resumes);
+    var selected = selectedDiagnosisResume(resumes);
+    var draft = diagnosisDraft(selected);
+    var body = "";
+    if (state.diagnosisMessage) {
+      body += statePanel("简历诊断状态", state.diagnosisMessage.text, state.diagnosisMessage.type);
+    }
+    body += '<section class="feature-section resume-revision-grid">' +
+      diagnosisFormPanel(resumes, selected, draft) +
+      diagnosisResultPanel() +
+      '</section>';
+    if (isDebugMode()) {
+      body += metricsPanel("接口契约", [
+        ["简历列表", endpoints.resumes],
+        ["简历诊断", endpoints.resumeDiagnosis],
+        ["关键词状态", endpoints.keywordStatus],
+        ["画像快照", endpoints.snapshot],
+        ["文件预览", endpoints.filePreview]
+      ]);
+    }
+    renderFeatureShell(item, "简历诊断", "基于已有简历、目标岗位和画像上下文生成诊断与优化建议。", body);
+    bindResumeDiagnosisEvents();
+  }
+
+  function selectedDiagnosisResume(resumes) {
+    var selectedId = firstText(state.selectedDiagnosisResumeId, getValue(state.diagnosisDraft, "resumeId"));
+    if (!selectedId && resumes.length) {
+      selectedId = firstText(resumes[0].resumeId, resumes[0].id);
+      state.selectedDiagnosisResumeId = selectedId;
+    }
+    for (var i = 0; i < resumes.length; i += 1) {
+      if (String(firstText(resumes[i].resumeId, resumes[i].id, "")) === String(selectedId)) {
+        return resumes[i];
+      }
+    }
+    return resumes.length ? resumes[0] : null;
+  }
+
+  function diagnosisDraft(selected) {
+    var draft = state.diagnosisDraft || {};
+    return {
+      resumeId: firstText(draft.resumeId, selected && firstText(selected.resumeId, selected.id), ""),
+      targetJob: firstText(draft.targetJob, selected && selected.targetJob, resumeTargetDefault()),
+      jobDescription: firstText(draft.jobDescription, ""),
+      resumeText: firstText(draft.resumeText, "")
+    };
+  }
+
+  function diagnosisFormPanel(resumes, selected, draft) {
+    if (!resumes.length) {
+      return '<section class="panel"><h3>选择简历</h3><p>还没有真实简历记录。请先创建或上传简历，再回来做诊断和修改。</p>' +
+        '<div class="actions-row"><button type="button" data-link="resume">去创建简历</button></div></section>';
+    }
+    var options = resumes.map(function (resume) {
+      var id = firstText(resume.resumeId, resume.id, "");
+      var label = firstText(resume.title, resume.resumeName, "简历 " + id);
+      return '<option value="' + escapeAttr(id) + '"' + (String(id) === String(draft.resumeId) ? " selected" : "") + '>' + escapeHtml(label) + '</option>';
+    }).join("");
+    var selectedFileKey = firstText(selected && selected.fileKey, selected && selected.objectKey, "");
+    return '<section class="panel"><h3>诊断输入</h3>' +
+      '<form class="form-grid" id="resumeDiagnosisForm">' +
+      '<label>已有简历<select id="diagnosisResumeId">' + options + '</select></label>' +
+      field("diagnosisTargetJob", "目标岗位", "text", draft.targetJob) +
+      '<label class="full">目标岗位要求<textarea id="diagnosisJobDescription" placeholder="粘贴目标岗位的招聘要求或岗位说明，未填写时会使用目标岗位和画像作为上下文。">' + escapeHtml(draft.jobDescription) + '</textarea></label>' +
+      '<label class="full">补充简历文本<textarea id="diagnosisResumeText" placeholder="可选。若已有简历没有解析文本，可在这里粘贴简历内容。">' + escapeHtml(draft.resumeText) + '</textarea></label>' +
+      '<div class="full actions-row">' +
+      '<button type="submit"' + (state.diagnosisLoading ? ' disabled aria-disabled="true"' : "") + '>' + (state.diagnosisLoading ? "诊断中..." : "生成诊断建议") + '</button>' +
+      '<button type="button" class="secondary" id="refreshDiagnosisResumesButton">刷新简历</button>' +
+      (selectedFileKey ? '<button type="button" class="secondary" data-preview-file="' + escapeAttr(selectedFileKey) + '">预览文件</button>' : "") +
+      '</div>' +
+      '</form></section>';
+  }
+
+  function diagnosisResultPanel() {
+    var result = state.diagnosisResult;
+    if (state.diagnosisLoading) {
+      return statePanel("正在诊断", "正在结合简历、目标岗位和画像上下文生成诊断建议。", "pending");
+    }
+    if (!result) {
+      return statePanel("等待诊断", "选择已有简历并填写目标岗位或岗位要求后，生成可执行的优化建议。", "empty");
+    }
+    var plan = result.revisionPlan || {};
+    var suggestions = normalizeArray(result.revisionSuggestions);
+    var body = '<section class="panel"><h3>诊断结果</h3>' +
+      metricsPanel("优化摘要", [
+        ["诊断分", firstText(result.overallScore, "--")],
+        ["建议数", firstText(plan.totalSuggestions, suggestions.length, 0)],
+        ["高优先级", firstText(plan.highPrioritySuggestions, 0)],
+        ["上下文", firstText(plan.contextSummary, normalizeArray(result.contextSources).join(" / "), "简历文本")]
+      ]) +
+      diagnosisTextLists(result) +
+      revisionSuggestionList(suggestions) +
+      '<div class="actions-row"><button type="button" id="rerunDiagnosisButton">再次诊断</button><button type="button" class="secondary" data-link="resume">更新简历记录</button></div>' +
+      '</section>';
+    return body;
+  }
+
+  function diagnosisTextLists(result) {
+    return '<div class="revision-columns">' +
+      '<div>' + renderTaskList("强项", normalizeArray(result.strengths), "diagnosis-strengths", {}) + '</div>' +
+      '<div>' + renderTaskList("待优化", normalizeArray(result.weaknesses), "diagnosis-weaknesses", {}) + '</div>' +
+      '<div>' + renderTaskList("普通建议", normalizeArray(result.suggestions), "diagnosis-suggestions", {}) + '</div>' +
+      '</div>';
+  }
+
+  function revisionSuggestionList(suggestions) {
+    if (!suggestions.length) {
+      return statePanel("诊断建议", "当前诊断没有返回结构化建议，可查看普通建议后再次诊断。", "empty");
+    }
+    return '<div class="item-list revision-list">' + suggestions.map(function (item, index) {
+      var id = firstText(item.suggestionId, "rev-" + (index + 1));
+      var status = state.revisionStatuses[id] || firstText(item.status, "TODO");
+      return '<article class="item revision-item">' +
+        '<div><strong>' + escapeHtml(firstText(item.priority, "MEDIUM")) + " · " + escapeHtml(firstText(item.resumeSection, "experience")) + '</strong>' +
+        '<p>' + escapeHtml(firstText(item.problem, item.action, "补充简历证据")) + '</p>' +
+        '<p>动作：' + escapeHtml(firstText(item.action, "围绕目标岗位补充经历证据")) + '</p>' +
+        '<p>示例：' + escapeHtml(firstText(item.rewriteExample, "用动作、技术、指标和个人贡献重写经历。")) + '</p>' +
+        '<p>关键词：' + escapeHtml(normalizeArray(item.targetKeywords).join(" / ") || "待提取") + '</p>' +
+        '<p>状态：' + escapeHtml(status) + '</p></div>' +
+        '<div class="actions-row compact">' +
+        '<button type="button" class="secondary" data-revision-status="' + escapeAttr(id) + '" data-status-value="DONE">已处理</button>' +
+        '<button type="button" class="secondary" data-revision-status="' + escapeAttr(id) + '" data-status-value="SKIPPED">暂不处理</button>' +
+        '</div></article>';
+    }).join("") + '</div>';
+  }
+
+  function bindResumeDiagnosisEvents() {
+    var form = $("resumeDiagnosisForm");
+    if (form) {
+      form.addEventListener("submit", submitResumeDiagnosis);
+    }
+    var select = $("diagnosisResumeId");
+    if (select) {
+      select.addEventListener("change", function () {
+        state.selectedDiagnosisResumeId = select.value;
+        state.diagnosisDraft = readDiagnosisDraft();
+        renderPage(pageByKey[state.route]);
+      });
+    }
+    var refresh = $("refreshDiagnosisResumesButton");
+    if (refresh) {
+      refresh.addEventListener("click", function () {
+        refreshResumeList(true);
+      });
+    }
+    var rerun = $("rerunDiagnosisButton");
+    if (rerun) {
+      rerun.addEventListener("click", function () {
+        submitResumeDiagnosis();
+      });
+    }
+    var previews = els.pageHost.querySelectorAll("[data-preview-file]");
+    for (var i = 0; i < previews.length; i += 1) {
+      previews[i].addEventListener("click", function (event) {
+        previewResumeFile(event.currentTarget.getAttribute("data-preview-file"));
+      });
+    }
+    var statusButtons = els.pageHost.querySelectorAll("[data-revision-status]");
+    for (var j = 0; j < statusButtons.length; j += 1) {
+      statusButtons[j].addEventListener("click", function (event) {
+        state.revisionStatuses[event.currentTarget.getAttribute("data-revision-status")] = event.currentTarget.getAttribute("data-status-value");
+        renderPage(pageByKey[state.route]);
+      });
+    }
+  }
+
+  function submitResumeDiagnosis(event) {
+    if (event && event.preventDefault) {
+      event.preventDefault();
+    }
+    if (state.diagnosisLoading) {
+      return;
+    }
+    if (!hasUserIdentity()) {
+      state.diagnosisMessage = { type: "warning", text: "诊断前需要 Cosmic 身份或显式开发身份。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    var draft = readDiagnosisDraft();
+    state.diagnosisDraft = draft;
+    state.selectedDiagnosisResumeId = draft.resumeId;
+    if (!draft.resumeId && !draft.resumeText) {
+      state.diagnosisMessage = { type: "warning", text: "请选择已有简历，或粘贴简历文本。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    if (isFilePreview()) {
+      state.diagnosisResult = previewDiagnosisResult(draft);
+      state.diagnosisMessage = { type: "info", text: "file:// 预览模式已生成本地诊断示例。" };
+      renderPage(pageByKey[state.route]);
+      return;
+    }
+    state.diagnosisLoading = true;
+    state.diagnosisMessage = { type: "info", text: "正在生成简历诊断建议。" };
+    renderPage(pageByKey[state.route]);
+    post(endpoints.resumeDiagnosis, { userId: state.identity.userId, request: diagnosisRequest(draft) }).then(function (result) {
+      state.diagnosisResult = result || {};
+      state.diagnosisMessage = { type: "info", text: "诊断完成。可按优先级处理建议后再次诊断。" };
+      return refreshSnapshotAfterResume();
+    }).then(function () {
+      state.diagnosisLoading = false;
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      state.diagnosisLoading = false;
+      state.diagnosisMessage = { type: "warning", text: error.message || "简历诊断暂不可用，请稍后重试。" };
+      showMessage("error", "简历诊断失败", state.diagnosisMessage.text);
+      renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function readDiagnosisDraft() {
+    return {
+      resumeId: valueOf("diagnosisResumeId"),
+      targetJob: valueOf("diagnosisTargetJob"),
+      jobDescription: valueOf("diagnosisJobDescription"),
+      resumeText: valueOf("diagnosisResumeText")
+    };
+  }
+
+  function diagnosisRequest(draft) {
+    return {
+      resumeId: draft.resumeId ? Number(draft.resumeId) : null,
+      targetJob: draft.targetJob,
+      jobDescription: draft.jobDescription,
+      resumeText: draft.resumeText,
+      profileContext: profileContextText()
+    };
+  }
+
+  function profileContextText() {
+    var parts = [];
+    var target = resumeTargetDefault();
+    var assessment = firstText(getValue(state.snapshot, "assessment.summary"), getValue(state.snapshot, "assessment.resultSummary"));
+    if (target) {
+      parts.push("targetRole=" + target);
+    }
+    if (assessment) {
+      parts.push("assessment=" + assessment);
+    }
+    return parts.join("; ");
+  }
+
+  function previewDiagnosisResult(draft) {
+    return {
+      resumeId: draft.resumeId,
+      overallScore: 78,
+      strengths: ["已有简历文本和目标岗位输入"],
+      weaknesses: ["项目结果和岗位关键词还可以继续量化"],
+      suggestions: ["优先补充 1 条与目标岗位要求直接相关的项目经历"],
+      contextSources: ["preview", draft.targetJob ? "targetJob" : ""],
+      revisionPlan: {
+        totalSuggestions: 1,
+        highPrioritySuggestions: 1,
+        overallPriority: "HIGH",
+        contextSummary: "preview / targetJob"
+      },
+      revisionSuggestions: [{
+        suggestionId: "preview-rev-1",
+        priority: "HIGH",
+        resumeSection: "projects",
+        problem: "项目经历缺少可量化结果",
+        action: "补充动作、技术、指标和个人贡献",
+        rewriteExample: "使用 Java/Spring 完成核心模块，将响应时间或效率提升写成明确指标。",
+        targetKeywords: ["Java", "Spring", "项目指标"],
+        status: "TODO"
+      }]
+    };
+  }
+
   function openPreviewUrl(previewWindow, url) {
     if (previewWindow && !previewWindow.closed) {
       previewWindow.opener = null;
@@ -1821,14 +2106,16 @@
     }
     linked = linked.concat(collectDailyMicroTasks(weeklyPlan.actions, "weekly-actions", progressState));
     linked = linked.concat(collectDailyMicroTasks(weeklyPlan.deliverables, "weekly-deliverables", progressState));
-    linked = dedupeLinkedTasks(linked).slice(0, 5);
+    linked = orderDailyTasksByProgress(dedupeLinkedTasks(linked), progressState).slice(0, 5);
     if (!linked.length) {
-      linked = defaultDailySuggestions(targetRole).map(function (text, index) {
+      linked = orderDailyTasksByProgress(defaultDailySuggestions(targetRole).map(function (text, index) {
         return { taskId: "daily-suggestions." + index + "." + sanitizeKey(text), text: text };
-      });
+      }), progressState).slice(0, 5);
     }
+    var nextItem = firstPendingDailyTask(linked, progressState);
     return {
       items: linked,
+      nextItem: nextItem,
       summary: activePhase
         ? "今天优先围绕“" + firstText(activePhase.phase.title, "当前阶段") + "”里还没完成的事项推进。"
         : "今天优先处理当前阶段和本周尚未完成的事项。"
@@ -1845,6 +2132,28 @@
       }
     }
     return out;
+  }
+
+  function orderDailyTasksByProgress(items, progressState) {
+    var pending = [];
+    var completed = [];
+    for (var i = 0; i < items.length; i += 1) {
+      if (isPlanTaskChecked(items[i].taskId, progressState)) {
+        completed.push(items[i]);
+      } else {
+        pending.push(items[i]);
+      }
+    }
+    return pending.concat(completed);
+  }
+
+  function firstPendingDailyTask(items, progressState) {
+    for (var i = 0; i < items.length; i += 1) {
+      if (!isPlanTaskChecked(items[i].taskId, progressState)) {
+        return items[i];
+      }
+    }
+    return null;
   }
 
   function collectDailyMicroTasks(items, scopeKey, progressState) {
@@ -1867,7 +2176,7 @@
         "把 1 条简历 bullet 改成“动作 + 方法 + 结果”的表达。"
       ], index, scopeKey);
     }
-    if (containsAny(text, ["岗位", "JD", "招聘", "公司", "关键词"])) {
+    if (containsAny(text, ["岗位", "岗位要求", "招聘", "公司", "关键词"])) {
       return pickMicroTask([
         "看 2 个目标岗位描述，记录 3 个高频能力词。",
         "打开 1 个目标岗位，把任职要求拆成 3 个技能点。",
@@ -1881,9 +2190,9 @@
         "整理 1 个项目截图或链接，作为简历里的可展示证据。"
       ], index, scopeKey);
     }
-    if (containsAny(text, ["面试", "STAR", "复盘", "问答"])) {
+    if (containsAny(text, ["面试", "经历讲述", "复盘", "问答"])) {
       return pickMicroTask([
-        "练 1 个面试问题，用 STAR 写下 4 句话版本。",
+        "练 1 个面试问题，按背景、任务、行动、结果写下 4 句话版本。",
         "复盘 1 个项目问题，准备 1 个追问和对应回答。",
         "录 3 分钟自述，检查是否讲清楚背景、动作和结果。"
       ], index, scopeKey);
@@ -2024,6 +2333,9 @@
     var incoming = nextPlan || {};
     var existing = previousPlan || {};
     var nextPhases = normalizeArray(incoming.phases);
+    if (targetRoleChanged(existing, incoming)) {
+      return incoming;
+    }
     if (!nextPhases.length) {
       return incoming;
     }
@@ -2046,6 +2358,16 @@
       persistPlanProgress(incoming, employmentTargetRole(incoming), progressState);
     }
     return incoming;
+  }
+
+  function targetRoleChanged(previousPlan, nextPlan) {
+    var previousTarget = previousPlan && previousPlan.targetRole;
+    var nextTarget = nextPlan && nextPlan.targetRole;
+    return firstText(previousTarget) && firstText(nextTarget) && !sameTargetRole(previousTarget, nextTarget);
+  }
+
+  function sameTargetRole(first, second) {
+    return trim(first) === trim(second);
   }
 
   function isPhaseCompletedByProgress(phase, index, progressState) {
@@ -3045,6 +3367,7 @@
     var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
     progressState.checked[taskId] = !progressState.checked[taskId];
     persistPlanProgress(plan, targetRole, progressState);
+    updateOverviewCards();
     renderPage(pageByKey[state.route]);
   }
 
@@ -3201,6 +3524,12 @@
   function todayOverviewStatus() {
     if (state.plan && !state.plan.unavailable) {
       var view = buildPlanViewModel();
+      if (view.dailyPlan && view.dailyPlan.nextItem) {
+        return firstText(view.dailyPlan.nextItem.text, "今日可推进");
+      }
+      if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length) {
+        return "今日小事已完成";
+      }
       if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length) {
         var firstDailyItem = view.dailyPlan.items[0];
         return firstText(firstDailyItem && firstDailyItem.text, firstDailyItem, "今日可推进");
@@ -3222,13 +3551,11 @@
   function featureCards(cards) {
     return cards.map(function (card) {
       var linked = !!card.route && pageByKey[card.route] && card.status !== "即将接入";
-      var status = card.status || (linked ? "已接入" : "即将接入");
       var attrs = linked ? ' data-link="' + escapeHtml(card.route) + '"' + (card.platformLink ? ' data-platform-link="true"' : "") : ' disabled aria-disabled="true"';
       var cls = linked ? "feature-card" : "feature-card disabled";
       return '<button type="button" class="' + cls + '"' + attrs + '>' +
         '<span class="feature-icon">' + escapeHtml(card.icon) + '</span>' +
         '<span class="feature-copy"><strong>' + escapeHtml(card.title) + '</strong><small>' + escapeHtml(card.summary) + '</small></span>' +
-        '<span class="feature-status">' + escapeHtml(status) + '</span>' +
         '</button>';
     }).join("");
   }
@@ -3286,16 +3613,21 @@
       preference: valueOf("preference")
     };
     if (isFilePreview()) {
+      var previewPreviousTarget = currentProfileTargetRole();
       localStorage.setItem("cyancruise.previewProfile", JSON.stringify(request));
       state.snapshot = { onboarding: request, preferences: { targetRole: request.targetRole } };
       updateOverviewCards();
+      refreshPlanAfterProfileTargetChange(previewPreviousTarget);
       showMessage("info", "已保存到本地预览", "file:// 模式不调用后端。");
       return;
     }
+    var previousTarget = currentProfileTargetRole();
     post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
       state.snapshot = snapshot;
       updateOverviewCards();
-      renderPage(pageByKey[state.route]);
+      if (!refreshPlanAfterProfileTargetChange(previousTarget)) {
+        renderPage(pageByKey[state.route]);
+      }
       showMessage("info", "已保存", "个人情况已写入职业画像快照。");
     }).catch(function (error) {
       showMessage("error", "保存失败", error.message || "个人情况 WebAPI 暂不可用。");
@@ -3340,25 +3672,57 @@
       preference: ["路线：" + labelForGoal(intent.goal), intent.preference].filter(Boolean).join("；")
     };
     if (!hasUserIdentity() || isFilePreview()) {
+      var previewPreviousTarget = currentProfileTargetRole();
       localStorage.setItem("cyancruise.previewProfile", JSON.stringify(request));
+      state.snapshot = { onboarding: request, preferences: { targetRole: request.targetRole } };
+      updateOverviewCards();
+      refreshPlanAfterProfileTargetChange(previewPreviousTarget);
       localStorage.setItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
       showMessage("info", "已保存", "用户画像草稿已保存到当前浏览器。");
       return;
     }
+    var previousTarget = currentProfileTargetRole();
     post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
       localStorage.setItem("cyancruise.homeIntentSaved", "true");
       localStorage.removeItem("cyancruise.homeIntentEditing");
       localStorage.removeItem("cyancruise.previewProfile");
       state.snapshot = snapshot;
       updateOverviewCards();
-      renderPage(pageByKey[state.route]);
+      if (!refreshPlanAfterProfileTargetChange(previousTarget)) {
+        renderPage(pageByKey[state.route]);
+      }
       showMessage("info", "已保存", "用户画像草稿已写入职业画像。");
     }).catch(function (error) {
       localStorage.setItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
       showMessage("warning", "已本地保存", "平台暂未写入成功，但用户画像草稿已保存在当前浏览器。");
     });
+  }
+
+  function currentProfileTargetRole() {
+    return textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob");
+  }
+
+  function refreshPlanAfterProfileTargetChange(previousTarget) {
+    var nextTarget = currentProfileTargetRole();
+    if (sameTargetRole(previousTarget, nextTarget)) {
+      return false;
+    }
+    state.plan = null;
+    state.planProgress = null;
+    if (!isPlanVisibleRoute()) {
+      return false;
+    }
+    if (!hasUserIdentity() && !isFilePreview()) {
+      return false;
+    }
+    ensureEmploymentPlan();
+    return true;
+  }
+
+  function isPlanVisibleRoute() {
+    return state.route === "employment-home" || state.route === "career-plan" || state.route === "today-action";
   }
 
   function labelForIdentity(identityType) {
@@ -4007,7 +4371,7 @@
       "阅读 1 到 2 个" + role + "岗位描述，补充高频关键词。",
       "优化 1 组简历经历，补充结果、数字和个人贡献。",
       "推进 1 个项目任务或技能练习，并保留可展示成果。",
-      "练习 1 个面试问题，整理成 STAR 回答。",
+      "练习 1 个面试问题，整理成背景、任务、行动、结果清晰的回答。",
       "记录今天完成项、卡点和明天第一步。"
     ];
   }
@@ -4020,9 +4384,9 @@
         title: "定位与材料准备",
         goal: "明确" + role + "要求，完成可投递简历和项目证据清单。",
         status: "待推进",
-        actions: ["分析 10 个目标岗位 JD", "完成 1 版简历", "整理 2 个项目 STAR 讲述"],
+        actions: ["分析 10 个目标岗位要求", "完成 1 版简历", "整理 2 个项目经历讲述"],
         kpis: ["岗位关键词清单", "可投递简历", "项目证据清单"],
-        subStages: [{ period: "第 1 周", title: "岗位拆解", goal: "完成目标岗位分析", actions: ["每天分析 2 个 JD", "补充项目证据"] }]
+        subStages: [{ period: "第 1 周", title: "岗位拆解", goal: "完成目标岗位分析", actions: ["每天分析 2 个岗位要求", "补充项目证据"] }]
       },
       {
         horizon: "1-3个月",
@@ -4227,7 +4591,7 @@
         route: "resume-diagnosis",
         actionText: "去简历诊断",
         sections: [
-          { title: "先收集", items: ["目标岗位 JD 中反复出现的能力词。", "课程、项目、实习、竞赛、开源或作品中能证明这些能力的材料。", "每段经历对应的任务、动作、结果和可量化指标。"] },
+          { title: "先收集", items: ["目标岗位要求中反复出现的能力词。", "课程、项目、实习、竞赛、开源或作品中能证明这些能力的材料。", "每段经历对应的任务、动作、结果和可量化指标。"] },
           { title: "再改写", items: ["用动词开头描述你做了什么。", "补上技术栈、业务场景或协作对象。", "尽量写出结果，例如效率、规模、准确率、用户量或交付物。"] },
           { title: "检查", items: ["一条经历只服务一个核心能力。", "删除泛泛的形容词，保留证据和结果。", "和目标岗位无关的内容放到次要位置。"] }
         ]
@@ -4238,7 +4602,7 @@
         route: "career-plan",
         actionText: "查看路径规划",
         sections: [
-          { title: "第 1 步", items: ["选定一个本周主攻岗位，不要同时追太多方向。", "保存 3 条代表性 JD，提取共同能力词。"] },
+          { title: "第 1 步", items: ["选定一个本周主攻岗位，不要同时追太多方向。", "保存 3 条代表性岗位要求，提取共同能力词。"] },
           { title: "第 2 步", items: ["按能力词修改一版简历。", "至少补充一个项目或实习的结果指标。"] },
           { title: "第 3 步", items: ["完成一次模拟面试。", "记录 2 个回答卡住的问题，并写下下一轮改进动作。"] }
         ]
@@ -4249,7 +4613,7 @@
         route: "interview",
         actionText: "开始模拟面试",
         sections: [
-          { title: "STAR 框架", items: ["Situation：一句话交代背景。", "Task：说明你负责解决什么问题。", "Action：讲清楚你的关键动作和取舍。", "Result：用结果、指标或复盘收尾。"] },
+          { title: "经历讲述框架", items: ["背景：一句话交代当时的场景。", "任务：说明你负责解决什么问题。", "行动：讲清楚你的关键动作和取舍。", "结果：用结果、指标或复盘收尾。"] },
           { title: "项目题", items: ["先讲目标和边界，再讲架构或流程。", "准备一个技术难点、一个协作难点、一个复盘点。"] },
           { title: "行为题", items: ["准备失败经历、冲突经历、主动推进经历。", "回答时避免只讲态度，要给具体场景。"] }
         ]

@@ -25,6 +25,25 @@ class ResumeDiagnosisApplicationServiceTest {
     File tempDir;
 
     @Test
+    void diagnosisResultCarriesRevisionSuggestionsAndContextSources() {
+        CareerProfileStorage profileStorage = new InMemoryCareerProfileStorage();
+        ResumeApplicationService resumeService = resumeService(new InMemoryResumeStorage(), profileStorage);
+        ResumeRecordDto resume = resumeService.create("diagnosis-user-context", request());
+        ResumeDiagnosisApplicationService service = diagnosisService(resumeService, new InMemoryResumeDiagnosisStorage(),
+                "{\"overallScore\":86,\"suggestions\":[\"补充指标\"],\"revisionSuggestions\":[{\"suggestionId\":\"rev-context\",\"priority\":\"HIGH\",\"resumeSection\":\"projects\",\"action\":\"补充项目结果\",\"targetKeywords\":[\"Java\"]}]}");
+        ResumeDiagnosisRequest diagnosisRequest = new ResumeDiagnosisRequest();
+        diagnosisRequest.setResumeId(resume.getResumeId());
+        diagnosisRequest.setJobDescription("Java Redis 项目经验");
+
+        ResumeDiagnosisResultDto result = service.diagnose("diagnosis-user-context", diagnosisRequest);
+
+        assertEquals("rev-context", result.getRevisionSuggestions().get(0).getSuggestionId());
+        assertEquals(Integer.valueOf(1), result.getRevisionPlan().getHighPrioritySuggestions());
+        assertTrue(result.getContextSources().contains("resume:" + resume.getResumeId()));
+        assertTrue(result.getContextSources().contains("request.jobDescription"));
+    }
+
+    @Test
     void diagnosesResumeAndWritesScoreToProfile() {
         CareerProfileStorage profileStorage = new InMemoryCareerProfileStorage();
         ResumeApplicationService resumeService = resumeService(new InMemoryResumeStorage(), profileStorage);

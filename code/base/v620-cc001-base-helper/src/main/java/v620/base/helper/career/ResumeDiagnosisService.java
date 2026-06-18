@@ -5,6 +5,8 @@ import v620.cc001.base.common.dto.career.ResumeDiagnosisResultDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordStatusDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
+import v620.cc001.base.common.dto.career.ResumeRevisionPlanDto;
+import v620.cc001.base.common.dto.career.ResumeRevisionSuggestionDto;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,6 +55,7 @@ public class ResumeDiagnosisService {
         result.setRawAnalysis(analysis);
         if (!hasText(analysis)) {
             result.setOverallScore(Integer.valueOf(ResumeDiagnosisConstants.DEFAULT_SCORE));
+            applyRevisionFallback(result, null);
             return result;
         }
         String json = objectSlice(analysis);
@@ -63,6 +66,8 @@ public class ResumeDiagnosisService {
                 result.setStrengths(extractJsonArray(json, "strengths"));
                 result.setWeaknesses(extractJsonArray(json, "weaknesses"));
                 result.setSuggestions(extractJsonArray(json, "suggestions"));
+                result.setRevisionSuggestions(extractRevisionSuggestions(json));
+                applyRevisionFallback(result, analysis);
                 return result;
             }
         }
@@ -70,7 +75,29 @@ public class ResumeDiagnosisService {
         List<String> suggestions = new ArrayList<String>();
         suggestions.add(analysis);
         result.setSuggestions(suggestions);
+        applyRevisionFallback(result, analysis);
         return result;
+    }
+
+    public ResumeRevisionPlanDto buildRevisionPlan(List<ResumeRevisionSuggestionDto> suggestions, List<String> contextSources) {
+        List<ResumeRevisionSuggestionDto> safeSuggestions =
+                suggestions == null ? new ArrayList<ResumeRevisionSuggestionDto>() : suggestions;
+        ResumeRevisionPlanDto plan = new ResumeRevisionPlanDto();
+        int high = 0;
+        for (ResumeRevisionSuggestionDto suggestion : safeSuggestions) {
+            if (suggestion != null && "HIGH".equalsIgnoreCase(suggestion.getPriority())) {
+                high += 1;
+            }
+        }
+        plan.setTotalSuggestions(Integer.valueOf(safeSuggestions.size()));
+        plan.setHighPrioritySuggestions(Integer.valueOf(high));
+        plan.setOverallPriority(high > 0 ? "HIGH" : safeSuggestions.isEmpty() ? "NONE" : "MEDIUM");
+        plan.setNextAction(safeSuggestions.isEmpty()
+                ? "补充简历文本或目标岗位后再次诊断"
+                : "优先处理高优先级建议，修改后再次诊断验证分数变化");
+        plan.setContextSources(contextSources);
+        plan.setContextSummary(join(contextSources, " / "));
+        return plan;
     }
 
     public int extractFirstScore(String text, int fallback) {
@@ -190,6 +217,211 @@ public class ResumeDiagnosisService {
             return new ArrayList<String>();
         }
         return extractStringValues(matcher.group(1));
+    }
+
+    private void applyRevisionFallback(ResumeDiagnosisResultDto result, String analysis) {
+        if (result.getRevisionSuggestions().isEmpty()) {
+            List<ResumeRevisionSuggestionDto> suggestions = new ArrayList<ResumeRevisionSuggestionDto>();
+            List<String> plainSuggestions = result.getSuggestions();
+            if (plainSuggestions != null && !plainSuggestions.isEmpty()) {
+                for (int i = 0; i < plainSuggestions.size(); i += 1) {
+                    String text = plainSuggestions.get(i);
+                    if (hasText(text)) {
+                        suggestions.add(fallbackSuggestion("rev-" + (i + 1), text, i == 0 ? "HIGH" : "MEDIUM"));
+                    }
+                }
+            } else if (hasText(analysis)) {
+                suggestions.add(fallbackSuggestion("rev-1", analysis, "MEDIUM"));
+            }
+            result.setRevisionSuggestions(suggestions);
+        }
+        if (result.getRevisionPlan() == null) {
+            result.setRevisionPlan(buildRevisionPlan(result.getRevisionSuggestions(), result.getContextSources()));
+        }
+    }
+
+    private ResumeRevisionSuggestionDto fallbackSuggestion(String id, String text, String priority) {
+        ResumeRevisionSuggestionDto suggestion = new ResumeRevisionSuggestionDto();
+        suggestion.setSuggestionId(id);
+        suggestion.setIssueType("CONTENT_EVIDENCE");
+        suggestion.setPriority(priority);
+        suggestion.setResumeSection("experience");
+        suggestion.setProblem("简历内容仍需与目标岗位证据对齐");
+        suggestion.setAction(trim(text, 300));
+        suggestion.setRewriteExample("用“动作 + 技术/方法 + 指标结果 + 个人贡献”重写一条经历。");
+        suggestion.setEvidence(trim(text, 160));
+        suggestion.setStatus("TODO");
+        suggestion.setContextSource("fallback");
+        return suggestion;
+    }
+
+    private List<ResumeRevisionSuggestionDto> extractRevisionSuggestions(String json) {
+        String array = extractJsonArrayBody(json, "revisionSuggestions");
+        if (!hasText(array)) {
+            array = extractJsonArrayBody(json, "revision_suggestions");
+        }
+        List<ResumeRevisionSuggestionDto> suggestions = new ArrayList<ResumeRevisionSuggestionDto>();
+        if (!hasText(array)) {
+            return suggestions;
+        }
+        List<String> objects = extractJsonObjects(array);
+        for (int i = 0; i < objects.size(); i += 1) {
+            ResumeRevisionSuggestionDto suggestion = parseRevisionSuggestion(objects.get(i), i + 1);
+            if (suggestion != null) {
+                suggestions.add(suggestion);
+            }
+        }
+        return suggestions;
+    }
+
+    private ResumeRevisionSuggestionDto parseRevisionSuggestion(String json, int index) {
+        String action = firstText(
+                extractJsonString(json, "action"),
+                extractJsonString(json, "suggestion"),
+                extractJsonString(json, "text"));
+        String problem = firstText(extractJsonString(json, "problem"), extractJsonString(json, "issue"));
+        String rewrite = firstText(extractJsonString(json, "rewriteExample"), extractJsonString(json, "rewrite_example"));
+        if (!hasText(action) && !hasText(problem) && !hasText(rewrite)) {
+            return null;
+        }
+        ResumeRevisionSuggestionDto suggestion = new ResumeRevisionSuggestionDto();
+        suggestion.setSuggestionId(firstText(extractJsonString(json, "suggestionId"), extractJsonString(json, "id"), "rev-" + index));
+        suggestion.setIssueType(firstText(extractJsonString(json, "issueType"), extractJsonString(json, "issue_type"), "CONTENT_EVIDENCE"));
+        suggestion.setPriority(normalizePriority(extractJsonString(json, "priority"), index));
+        suggestion.setResumeSection(firstText(extractJsonString(json, "resumeSection"), extractJsonString(json, "section"), "experience"));
+        suggestion.setProblem(problem);
+        suggestion.setAction(action);
+        suggestion.setRewriteExample(rewrite);
+        suggestion.setEvidence(extractJsonString(json, "evidence"));
+        suggestion.setTargetKeywords(extractJsonArray(json, "targetKeywords"));
+        if (suggestion.getTargetKeywords().isEmpty()) {
+            suggestion.setTargetKeywords(extractJsonArray(json, "target_keywords"));
+        }
+        suggestion.setStatus(firstText(extractJsonString(json, "status"), "TODO"));
+        suggestion.setContextSource(firstText(extractJsonString(json, "contextSource"), extractJsonString(json, "context_source")));
+        suggestion.setUpdatedAt(extractJsonString(json, "updatedAt"));
+        return suggestion;
+    }
+
+    private String extractJsonArrayBody(String json, String field) {
+        Matcher matcher = Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*\\[")
+                .matcher(json == null ? "" : json);
+        if (!matcher.find()) {
+            return null;
+        }
+        int start = matcher.end();
+        int depth = 1;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = start; i < json.length(); i += 1) {
+            char ch = json.charAt(i);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (ch == '\\') {
+                    escaped = true;
+                } else if (ch == '"') {
+                    inString = false;
+                }
+            } else if (ch == '"') {
+                inString = true;
+            } else if (ch == '[') {
+                depth += 1;
+            } else if (ch == ']') {
+                depth -= 1;
+                if (depth == 0) {
+                    return json.substring(start, i);
+                }
+            }
+        }
+        return null;
+    }
+
+    private List<String> extractJsonObjects(String text) {
+        List<String> objects = new ArrayList<String>();
+        if (!hasText(text)) {
+            return objects;
+        }
+        int depth = 0;
+        int start = -1;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = 0; i < text.length(); i += 1) {
+            char ch = text.charAt(i);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (ch == '\\') {
+                    escaped = true;
+                } else if (ch == '"') {
+                    inString = false;
+                }
+            } else if (ch == '"') {
+                inString = true;
+            } else if (ch == '{') {
+                if (depth == 0) {
+                    start = i;
+                }
+                depth += 1;
+            } else if (ch == '}') {
+                depth -= 1;
+                if (depth == 0 && start >= 0) {
+                    objects.add(text.substring(start, i + 1));
+                    start = -1;
+                }
+            }
+        }
+        return objects;
+    }
+
+    private String extractJsonString(String json, String field) {
+        Matcher matcher = Pattern.compile("\"" + Pattern.quote(field) + "\"\\s*:\\s*\"((?:\\\\.|[^\"])*)\"")
+                .matcher(json == null ? "" : json);
+        if (matcher.find()) {
+            return unescape(matcher.group(1));
+        }
+        return null;
+    }
+
+    private String normalizePriority(String value, int index) {
+        String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+        if ("HIGH".equals(normalized) || "MEDIUM".equals(normalized) || "LOW".equals(normalized)) {
+            return normalized;
+        }
+        return index == 1 ? "HIGH" : "MEDIUM";
+    }
+
+    private String firstText(String first, String second) {
+        return hasText(first) ? first : second;
+    }
+
+    private String firstText(String first, String second, String third) {
+        if (hasText(first)) return first;
+        if (hasText(second)) return second;
+        return third;
+    }
+
+    private String trim(String value, int max) {
+        if (value == null) return null;
+        String trimmed = value.trim();
+        return trimmed.length() <= max ? trimmed : trimmed.substring(0, max);
+    }
+
+    private String join(List<String> values, String delimiter) {
+        if (values == null || values.isEmpty()) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (String value : values) {
+            if (!hasText(value)) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(delimiter);
+            }
+            builder.append(value.trim());
+        }
+        return builder.toString();
     }
 
     private List<String> extractStringValues(String text) {

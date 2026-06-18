@@ -30,7 +30,15 @@ public class AiGatewayResumeDiagnosisAnalyzer implements ResumeDiagnosisAnalyzer
 
     private String prompt(ResumeDiagnosisRequest request, String resumeText) {
         String jd = request == null ? "" : request.getJobDescription();
-        return "请诊断简历并只返回 JSON，字段包含 overallScore,strengths,weaknesses,suggestions。\nJD:\n"
+        String targetJob = request == null ? "" : request.getTargetJob();
+        String profile = request == null ? "" : request.getProfileContext();
+        return "请诊断简历并只返回 JSON。字段必须包含 overallScore,strengths,weaknesses,suggestions,revisionSuggestions。"
+                + " revisionSuggestions 是数组，每项包含 suggestionId,issueType,priority,resumeSection,problem,action,rewriteExample,evidence,targetKeywords,status,contextSource。"
+                + " 建议必须围绕目标岗位/JD，给出可执行改写方向。\nTARGET_JOB:\n"
+                + (targetJob == null ? "" : targetJob)
+                + "\nPROFILE_CONTEXT:\n"
+                + (profile == null ? "" : profile)
+                + "\nJD:\n"
                 + (jd == null ? "" : jd)
                 + "\nRESUME:\n"
                 + (resumeText == null ? "" : resumeText);

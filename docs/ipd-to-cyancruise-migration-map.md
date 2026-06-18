@@ -24,7 +24,7 @@
 | 职业测评 | `AssessmentController`、`AssessmentService`、`AssessmentScale/Question/Option/Record/Answer`、`V5/V8/V10` SQL | 量表启用、题目排序、提交答案、生成结果记录 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 DTO、纯 Java 评分内核、画像快照写入和 Cosmic WebAPI 提交入口，含 MBTI/非 MBTI 画像规则测试、应用服务持久化测试与 WebAPI 边界测试；待 datamodel、页面和 AI 解读适配 | P0 | 评分核心、画像集成和 WebAPI 接入已实现：`migrate-assessment-core`、`integrate-assessment-profile-snapshot`、`migrate-assessment-webapi` |
 | 简历基础 | `ResumeController`、`ResumeService`、`Resume`、`FileService` | 保存简历文件 key、用户简历列表、详情、删除 | `datamodel`、`filestorage`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 已完成 JDK 8 DTO、文件型/内存型存储边界、应用服务、Cosmic WebAPI、画像 resume block 同步和聚焦测试；待最终 Cosmic datamodel、文件上传/预览适配 | P0 | 后端基础已实现：`migrate-resume-core` |
 | 文件上传预览 | `FileController`、`FileService`、`FileServiceImpl`、`PdfTextExtractor`、`api/file.ts` | 上传返回 object key、短期预览 URL、认证下载、幂等删除、文本抽取限长 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 已完成文件引用/上传/预览/下载/删除/文本抽取契约、WebAPI、webapp route/API map、入口卡片和 BOS 附件文件服务 provider；PDF/OCR 文本抽取仍后续适配 | P1 | 文件上传预览基础已实现：`migrate-file-upload-preview`；BOS provider follow-up：`enable-bos-file-service-provider` |
-| 简历诊断 | `ResumeDiagnosisController`、`ResumeKeywordService`、`PdfTextExtractor` | 简历文本 + JD 输出匹配和建议 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 诊断解析、关键词抽取规则、可替换诊断/关键词存储边界、应用服务、Cosmic WebAPI、诊断分数回写画像和聚焦测试；待真实 AI 调用、PDF/OSS 文本解析、通知推送、webapp 页面和最终 Cosmic datamodel | P1 | 简历诊断后端基础已实现：`migrate-resume-diagnosis` |
+| 简历诊断 | `ResumeDiagnosisController`、`ResumeKeywordService`、`PdfTextExtractor` | 简历文本 + 岗位要求输出匹配和建议 | `code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 诊断解析、关键词抽取规则、可替换诊断/关键词存储边界、应用服务、Cosmic WebAPI、诊断分数回写画像和聚焦测试；待真实 AI 调用、PDF/OSS 文本解析、通知推送、webapp 页面和最终 Cosmic datamodel | P1 | 简历诊断后端基础已实现：`migrate-resume-diagnosis` |
 | 职业计划 | `CareerPlanService`、`CareerController`、`UserCareerPlan` | 按目标岗位和用户状态生成计划摘要 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java 摘要规则、默认计划、可替换存储边界、应用服务、Cosmic WebAPI、画像 `hasPlan` 和今日行动周重点接入；待 AI 生成、最终 Cosmic datamodel、计划页面和周复盘 | P1 | 职业计划摘要后端基础已实现：`migrate-career-plan-summary` |
 | 模拟面试 | `InterviewController`、`InterviewService`、`Interview/InterviewMessage/InterviewQuestion` | 开始面试、对话、结束、报告、历史 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01`、`webapp` | 完成 JDK 8 DTO、纯 Java helper、会话/消息/报告摘要存储边界、应用服务、Cosmic WebAPI、画像 interview block 同步和聚焦测试；待题库管理、AI 追问/报告生成、语音/身体语言、通知、webapp 页面和最终 Cosmic datamodel | P1 | 模拟面试基础会话与报告已实现：`migrate-interview-core` |
 | 助手聊天 | `ChatController`、`ChatHistoryController`、`AiPersonas`、`AssistantSession/Message` | 多角色提示词共用聊天基础设施、会话历史、消息持久化和上下文组装 | `datamodel`、`code/base`、`code/cloud01/v620-cc001-cloud01-app01` | 完成 JDK 8 DTO、纯 Java persona/helper、聊天生成与上下文可替换边界、会话/消息存储边界、应用服务、Cosmic WebAPI 和聚焦测试；待真实 AI、function calling、SSE、长期记忆摘要生成、事实抽取、webapp 页面和最终 Cosmic datamodel | P1 | 助手聊天后端基础已实现：`migrate-assistant-chat` |
@@ -83,6 +83,21 @@
 | 暂不迁移 | IPD Vue/uni-app 页面、模板库、富文本简历编辑器、在线预览器、完整文件选择体验、大文件上传、PDF/Office/OCR 解析、真实客户 Cosmic 文件 provider 配置、简历版本比较和自动跳转诊断 |
 | 验收方式 | 使用 `index.htm?apiMode=kapi&access_token=<new-token>#resume`，在苍穹 8080 中创建一条简历记录，确认列表刷新后可见、返回工作台简历状态更新、刷新页面后记录仍在，并确认“去简历诊断”按钮只作为显式入口 |
 | 回滚方式 | 回退 `webapp/isv/v620/careerloop` 静态资源到上一版本；后端 `/cc001/resume/*` 和 `/cc001/files/*` 既有契约不变 |
+
+## 简历诊断增强
+
+| 项目 | 内容 |
+| --- | --- |
+| change | `enhance-resume-revision` |
+| 日期 | 2026-06-18 |
+| IPD 来源 | `F:\Project\IPD\backend\src\main\java\com\group1\career\controller\ResumeDiagnosisController.java`、`ResumeGenController.java`、`service\ResumeService.java`、`service\ResumeKeywordService.java`、`service\UserProfileSnapshotService.java`、`service\AgentProfileService.java`、`service\impl\ResumeServiceImpl.java`、`service\impl\ResumeKeywordServiceImpl.java`、`utils\PdfTextExtractor.java`、`F:\Project\IPD\frontend\src\api\resume.ts`、`api\file.ts`、`api\user.ts`、`pages\resume-ai\index.vue`、`pages\resume\index.vue` |
+| CyanCruise 目标 | `webapp/isv/v620/cyancruise` 的 `resume-diagnosis` 页面、`code/base/v620-cc001-base-common/` 的结构化诊断建议 DTO、`code/base/v620-cc001-base-helper/` 的诊断/建议解析 helper、`code/cloud01/v620-cc001-cloud01-app01/` 的诊断应用服务与 AI/fallback analyzer、`openspec/changes/enhance-resume-revision/` |
+| 数据/接口映射 | IPD `Resume.resumeId/userId/title/targetJob/fileUrl/parsedContent/diagnosisScore` 映射为 CyanCruise `ResumeRecordDto.resumeId/userId/title/targetJob/fileKey/parsedContent/diagnosisScore`；IPD `ResumeProfileKeyword.category/label/weight/evidence/status` 映射为 `ResumeKeywordDto`/`ResumeKeywordStatusDto`；IPD 用户画像 resume/preferences/assessment 语义映射为 `UserProfileSnapshot.ResumeBlock`、`PreferencesBlock`、`AssessmentBlock`；IPD 普通优化建议文本映射为 `ResumeRevisionSuggestionDto` 和 `ResumeRevisionPlanDto` |
+| 迁移内容 | 在既有 `/cc001/resume-diagnosis/analyze` 上扩展结构化诊断建议、建议优先级、证据、目标关键词、上下文来源和优化计划摘要；页面支持选择已有简历、读取画像默认目标岗位、填写岗位要求、生成建议、标记本次会话处理状态和再次诊断 |
+| 暂不迁移 | IPD Spring Boot Controller、JPA Repository、Flyway/MySQL SQL、Vue/uni-app/Pinia/Vite/uView、PDFBox/OSS SDK 运行时、富文本简历编辑器、模板库、PDF 导出、版本 diff、自动改写并覆盖原简历、长期保存“已采纳/已忽略”状态 |
+| 验证方式 | `openspec validate enhance-resume-revision --strict`；`:v620-cc001-base-helper:test --tests v620.base.helper.career.ResumeDiagnosisServiceTest`；`:v620-cc001-cloud01-app01:test --tests v620.cc001.cloud01.app01.mservice.ResumeDiagnosisApplicationServiceTest`；`node --check webapp\isv\v620\cyancruise\assets\app.js`；`node webapp\isv\v620\cyancruise\validate-routes.js` |
+| 部署说明 | 修改了 `webapp/isv/v620/cyancruise/assets/app.js` 和 `index.html` 静态资源版本号 `20260618-cyancruise-v65`，需要重新部署/同步 CyanCruise 静态资源；后端新增 DTO/service 行为需随 Java 包构建发布 |
+| 回滚方式 | 回退本 change 修改的 Java DTO/helper/service/analyzer 与 `webapp/isv/v620/cyancruise` 静态资源；既有 `/cc001/resume/*`、`/cc001/files/*`、`/cc001/resume-diagnosis/analyze` 基础契约保持兼容 |
 
 ## Cosmic datamodel 正式适配
 
