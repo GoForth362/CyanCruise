@@ -1064,7 +1064,7 @@
           "body": ["userId", "request"],
           "userIdRequired": true,
           "dto": "InterviewStartResultDto",
-          "fallback": "使用中文基础问题开始文字练习。"
+          "fallback": "使用中文基础问题开始最多七题的逐题练习。"
         },
         {
           "name": "guided interview answer",

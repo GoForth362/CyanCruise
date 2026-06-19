@@ -126,6 +126,28 @@ class InterviewApplicationServiceTest {
         assertEquals(InterviewConstants.STATUS_COMPLETED, service.get("guided-user", started.getSession().getInterviewId()).getStatus());
     }
 
+    @Test
+    void guidedInterviewStopsAfterSevenAnswers() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
+        InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
+                new InterviewCoreService(), new ResumeApplicationService(new InMemoryResumeStorage(), profileService),
+                new InterviewAiService(null));
+        InterviewSessionDto session = service.startGuided("seven-answer-user", startRequest("产品经理")).getSession();
+
+        v620.cc001.base.common.dto.career.InterviewTurnResultDto last = null;
+        for (int index = 1; index <= InterviewConstants.MAX_AI_INTERVIEW_QUESTIONS; index++) {
+            last = service.answer("seven-answer-user", session.getInterviewId(), "第" + index + "次有效回答");
+        }
+
+        assertTrue(last.getInterviewerMessage().getContent().contains("7 道题已经完成"));
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                service.answer("seven-answer-user", session.getInterviewId(), "第八次回答");
+            }
+        }));
+        assertEquals(Integer.valueOf(7), service.finishAndReport("seven-answer-user", session.getInterviewId()).getTotalQuestions());
+    }
+
     private InterviewApplicationService service(InterviewStorage storage,
                                                 CareerProfileApplicationService profileService) {
         return new InterviewApplicationService(storage, profileService, new InterviewCoreService());

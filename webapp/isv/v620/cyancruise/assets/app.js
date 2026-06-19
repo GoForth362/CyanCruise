@@ -136,6 +136,11 @@
     interviewReport: null,
     interviewBusy: false,
     interviewError: null,
+    interviewCurrentQuestion: null,
+    interviewAnswerCount: 0,
+    interviewRecognition: null,
+    interviewListening: false,
+    interviewDraft: "",
     panoramaStream: null,
     panoramaSession: null,
     panoramaQuestion: null,
@@ -297,6 +302,7 @@
     if (previous === "interview-panorama" && key !== "interview-panorama") {
       stopPanoramaMedia();
     }
+    if (previous === "interview" && key !== "interview") stopAiInterviewSpeech();
     if (!pageByKey[key]) {
       state.route = "workbench";
       showMessage("warning", "未知页面", "未找到 route: " + key + "，已回到工作台。");
@@ -3384,28 +3390,44 @@
 
   function renderInterviewRoom() {
     var session = state.activeInterview;
-    return '<section class="panel full interview-room"><div class="section-heading"><div><h3>' + escapeHtml(firstText(session.positionName, "模拟面试")) +
-      '</h3><p class="section-note">一次只回答一个问题。尽量说明具体情境、你的行动和结果。</p></div></div>' +
-      '<div class="interview-messages">' + normalizeArray(state.interviewMessages).map(function (message) {
-        var user = String(message.role).toUpperCase() === "USER";
-        return '<article class="interview-message ' + (user ? "candidate" : "interviewer") + '"><strong>' +
-          (user ? "我的回答" : "面试官") + '</strong><p>' + escapeHtml(message.content) + '</p></article>';
-      }).join("") + '</div>' +
-      '<label>你的回答<textarea id="interviewAnswer" rows="5" placeholder="在这里写下你的回答"></textarea></label>' +
-      '<div class="actions-row"><button type="button" data-interview-action="answer" ' + (state.interviewBusy ? 'disabled' : '') + '>提交回答</button>' +
-      '<button type="button" class="secondary" data-interview-action="finish" ' + (state.interviewBusy ? 'disabled' : '') + '>结束并查看复盘</button></div></section>';
+    var questionNumber = Math.min(state.interviewAnswerCount + 1, 7);
+    return '<section class="ai-question-workspace full"><div class="ai-question-card">' +
+      '<div class="ai-question-head"><span>面试题目</span><strong>' + questionNumber + '/7</strong></div>' +
+      '<blockquote>' + escapeHtml(firstText(state.interviewCurrentQuestion, "正在准备问题……")) + '</blockquote>' +
+      '<p class="question-role">目标岗位：' + escapeHtml(firstText(session.positionName, "待确认岗位")) + '</p></div>' +
+      '<div class="ai-answer-card"><h3>回答当前问题</h3><p>可使用语音转文字，也可以直接输入。提交后进入下一题。</p>' +
+      '<button type="button" class="voice-answer-button' + (state.interviewListening ? ' listening' : '') + '" data-interview-action="speech" ' +
+      (state.interviewBusy ? 'disabled' : '') + '><span>麦</span>' + (state.interviewListening ? "正在识别，点击停止" : "开始语音回答") + '</button>' +
+      '<label>回答内容<textarea id="interviewAnswer" rows="6" placeholder="请回答当前问题；语音识别结果会显示在这里">' + escapeHtml(state.interviewDraft || "") + '</textarea></label>' +
+      (state.interviewError ? '<p class="interview-inline-error">' + escapeHtml(state.interviewError) + '</p>' : '') +
+      '<div class="actions-row"><button type="button" data-interview-action="answer" ' + (state.interviewBusy ? 'disabled' : '') + '>' +
+      (state.interviewAnswerCount >= 6 ? "提交并生成复盘" : "提交回答，进入下一题") + '</button>' +
+      (state.interviewAnswerCount > 0 ? '<button type="button" class="secondary" data-interview-action="finish" ' + (state.interviewBusy ? 'disabled' : '') + '>提前结束并评分</button>' : '') +
+      '</div></div></section>';
   }
 
   function renderInterviewReport(report) {
     var radar = report.radarScore || {};
-    return '<section class="panel full interview-report"><h3>本次练习复盘</h3><div class="metric-value">' + escapeHtml(firstText(report.overallScore, 0)) + ' 分</div>' +
-      '<p>' + escapeHtml(firstText(report.textSummary, "复盘已经生成。")) + '</p>' +
-      listPanel("做得好的地方", report.strengths, "完成更多回答后，这里会出现更具体的优点。") +
-      listPanel("下一步改进", report.improvements, "暂无改进建议。") +
-      '<p class="section-note">表达清晰度 ' + escapeHtml(firstText(radar.expression, 0)) + ' · 思路条理 ' + escapeHtml(firstText(radar.logic, 0)) +
-      ' · 岗位能力 ' + escapeHtml(firstText(radar.technical, 0)) + ' · 临场应对 ' + escapeHtml(firstText(radar.pressureResistance, 0)) +
-      ' · 沟通效果 ' + escapeHtml(firstText(radar.communication, 0)) + '</p>' +
+    return '<section class="panel full interview-report ai-score-report"><div class="score-report-head"><div><span class="resource-type">面试结果</span><h3>本次 AI 模拟面试复盘</h3></div>' +
+      '<div class="score-ring"><strong>' + escapeHtml(firstText(report.overallScore, 0)) + '</strong><span>分</span></div></div>' +
+      '<p class="score-summary">' + escapeHtml(firstText(report.textSummary, "复盘已经生成。")) + '</p>' +
+      '<div class="score-dimensions">' + scoreDimension("表达清晰度", radar.expression) + scoreDimension("思路条理", radar.logic) +
+      scoreDimension("岗位能力", radar.technical) + scoreDimension("临场应对", radar.pressureResistance) + scoreDimension("沟通效果", radar.communication) + '</div>' +
+      '<div class="report-advice-grid">' + renderAdviceList("做得好的地方", report.strengths, "完成更多回答后会出现具体评价。", "strength") +
+      renderAdviceList("改进方向", report.improvements, "暂无改进建议。", "improvement") + '</div>' +
       '<div class="actions-row"><button type="button" data-interview-action="reset">再练一次</button></div></section>';
+  }
+
+  function scoreDimension(label, value) {
+    var score = Math.max(0, Math.min(100, Number(value) || 0));
+    return '<div class="score-dimension"><div><span>' + escapeHtml(label) + '</span><strong>' + score + '</strong></div><i><b style="width:' + score + '%"></b></i></div>';
+  }
+
+  function renderAdviceList(title, items, emptyText, tone) {
+    var list = normalizeArray(items);
+    return '<section class="report-advice ' + tone + '"><h3>' + escapeHtml(title) + '</h3>' + (list.length ? list.map(function (item) {
+      return '<article><strong>' + escapeHtml(firstText(item.title, title)) + '</strong><p>' + escapeHtml(firstText(item.detail, item.summary, "")) + '</p></article>';
+    }).join("") : '<p>' + escapeHtml(emptyText) + '</p>') + '</section>';
   }
 
   function renderInterviewHistory() {
@@ -3574,7 +3596,8 @@
     var action = target.getAttribute("data-interview-action");
     if (state.interviewBusy) return;
     state.interviewError = null;
-    if (action === "reset") { state.activeInterview = null; state.interviewMessages = []; state.interviewReport = null; renderPage(pageByKey.interview); return; }
+    if (action === "speech") { toggleAiInterviewSpeech(); return; }
+    if (action === "reset") { stopAiInterviewSpeech(); state.activeInterview = null; state.interviewMessages = []; state.interviewReport = null; state.interviewCurrentQuestion = null; state.interviewAnswerCount = 0; state.interviewDraft = ""; renderPage(pageByKey.interview); return; }
     if (action === "open") { openInterview(target.getAttribute("data-interview-id")); return; }
     var draftPosition = action === "start" ? valueOf("interviewPosition") : "";
     var draftResumeId = action === "start" ? valueOf("interviewResume") : "";
@@ -3584,12 +3607,20 @@
     var call;
     if (action === "start") {
       call = post(endpoints.guidedInterviewStart, { userId: state.identity.userId, request: { positionName: draftPosition, resumeId: draftResumeId ? Number(draftResumeId) : null, difficulty: draftDifficulty, mode: "TEXT" } }).then(function (result) {
-        state.activeInterview = result.session; state.interviewMessages = [result.openingMessage]; state.interviews = [result.session].concat(normalizeArray(state.interviews));
+        state.activeInterview = result.session; state.interviewMessages = [result.openingMessage]; state.interviewCurrentQuestion = result.openingMessage.content;
+        state.interviewAnswerCount = 0; state.interviewDraft = ""; state.interviews = [result.session].concat(normalizeArray(state.interviews));
       });
     } else if (action === "answer") {
       if (!draftAnswer) { state.interviewBusy = false; state.interviewError = "请先写下你的回答。"; renderPage(pageByKey.interview); return; }
+      stopAiInterviewSpeech();
       call = post(endpoints.guidedInterviewAnswer, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId, answer: draftAnswer }).then(function (result) {
         state.interviewMessages.push(result.userMessage, result.interviewerMessage); state.activeInterview = result.session;
+        state.interviewAnswerCount += 1; state.interviewDraft = "";
+        if (state.interviewAnswerCount >= 7) {
+          return post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId })
+            .then(function (report) { state.interviewReport = report; state.activeInterview.status = "COMPLETED"; state.activeInterview.finalScore = report.overallScore; });
+        }
+        state.interviewCurrentQuestion = result.interviewerMessage.content;
       });
     } else {
       call = post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId }).then(function (report) { state.interviewReport = report; });
@@ -3597,12 +3628,41 @@
     call.catch(function (error) { state.interviewError = error.message || "模拟面试暂时不可用，请稍后重试。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
   }
 
+  function toggleAiInterviewSpeech() {
+    if (state.interviewListening) { stopAiInterviewSpeech(); renderPage(pageByKey.interview); return; }
+    var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      state.interviewError = "当前浏览器不支持语音转文字，请直接输入回答。";
+      renderPage(pageByKey.interview); var fallbackInput = document.getElementById("interviewAnswer"); if (fallbackInput) fallbackInput.focus(); return;
+    }
+    var recognition = new Recognition(); recognition.lang = "zh-CN"; recognition.continuous = true; recognition.interimResults = true;
+    recognition.onresult = function (event) {
+      var text = ""; for (var i = 0; i < event.results.length; i += 1) text += event.results[i][0].transcript;
+      state.interviewDraft = text; var input = document.getElementById("interviewAnswer"); if (input) input.value = text;
+    };
+    recognition.onerror = function () { state.interviewListening = false; state.interviewError = "语音识别暂时不可用，请直接输入回答。"; renderPage(pageByKey.interview); };
+    recognition.onend = function () { state.interviewListening = false; };
+    state.interviewRecognition = recognition; state.interviewListening = true;
+    try { recognition.start(); } catch (error) { state.interviewListening = false; }
+    renderPage(pageByKey.interview);
+  }
+
+  function stopAiInterviewSpeech() {
+    if (state.interviewRecognition) { try { state.interviewRecognition.stop(); } catch (error) {} }
+    state.interviewRecognition = null; state.interviewListening = false;
+  }
+
   function openInterview(interviewId) {
     var session = normalizeArray(state.interviews).filter(function (item) { return String(item.interviewId) === String(interviewId); })[0];
     if (!session) return;
     state.activeInterview = session; state.interviewReport = session.report || null; state.interviewBusy = true; renderPage(pageByKey.interview);
     if (state.route !== "interview") window.location.hash = "interview";
-    post(endpoints.interviewMessages, { userId: state.identity.userId, interviewId: session.interviewId }).then(function (messages) { state.interviewMessages = normalizeArray(messages); })
+    post(endpoints.interviewMessages, { userId: state.identity.userId, interviewId: session.interviewId }).then(function (messages) {
+      state.interviewMessages = normalizeArray(messages);
+      state.interviewAnswerCount = state.interviewMessages.filter(function (message) { return String(message.role).toUpperCase() === "USER"; }).length;
+      var questions = state.interviewMessages.filter(function (message) { return String(message.role).toUpperCase() === "AI"; });
+      state.interviewCurrentQuestion = questions.length ? questions[questions.length - 1].content : null;
+    })
       .catch(function (error) { state.interviewError = error.message || "无法读取练习记录。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
   }
 

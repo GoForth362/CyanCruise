@@ -73,11 +73,18 @@ public class InterviewApplicationService {
         if (!InterviewConstants.STATUS_ONGOING.equals(session.getStatus())) {
             throw new IllegalArgumentException("本次练习已经结束，不能继续回答");
         }
+        List<InterviewMessageDto> existingMessages = getMessages(userId, interviewId);
+        int existingAnswers = answerCount(existingMessages);
+        if (existingAnswers >= InterviewConstants.MAX_AI_INTERVIEW_QUESTIONS) {
+            throw new IllegalArgumentException("本次面试的 7 道题已经全部完成");
+        }
         InterviewMessageRequest request = new InterviewMessageRequest(); request.setRole(InterviewConstants.ROLE_USER); request.setContent(answer);
         InterviewMessageDto userMessage = appendMessage(userId, interviewId, request);
         List<InterviewMessageDto> messages = getMessages(userId, interviewId);
         int answers = answerCount(messages);
-        String question = aiService.question(session.getPositionName(), session.getDifficulty(), null, null,
+        String question = answers >= InterviewConstants.MAX_AI_INTERVIEW_QUESTIONS
+                ? "本次面试的 7 道题已经完成，正在为你生成复盘。"
+                : aiService.question(session.getPositionName(), session.getDifficulty(), null, null,
                 transcript(messages), answers, false);
         InterviewMessageDto interviewer = appendAiMessage(session, question);
         InterviewTurnResultDto result = new InterviewTurnResultDto();
