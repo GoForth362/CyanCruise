@@ -587,7 +587,8 @@
     return [
       feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
       feature("简历诊断", "诊", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
-      feature("模拟面试", "面", "从岗位目标开始面试练习", "interview", "已接入")
+      feature("全景仿真面试", "仿", "开启摄像头，在沉浸式环境中进行面对面练习", "interview-panorama", "已接入"),
+      feature("AI 模拟面试", "面", "通过逐题问答练习并获得针对性复盘", "interview", "已接入")
     ];
   }
 

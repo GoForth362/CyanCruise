@@ -16,6 +16,9 @@ for (const marker of ["navigator.mediaDevices.getUserMedia", "panoramaCamera", "
 for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-dimensions"]) {
   if (!app.includes(marker)) throw new Error(`Missing seven-question AI interview marker: ${marker}`);
 }
+for (const marker of ['feature("全景仿真面试", "仿"', 'feature("AI 模拟面试", "面"']) {
+  if (!app.includes(marker)) throw new Error(`Missing home interview recommendation marker: ${marker}`);
+}
 
 const requiredRoutes = [
   "workbench",
