@@ -22,6 +22,9 @@ for (const marker of ["panoramaAnswerLimit", "3 * 60", "5 * 60", "8 * 60", "本�
 for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-dimensions"]) {
   if (!app.includes(marker)) throw new Error(`Missing seven-question AI interview marker: ${marker}`);
 }
+for (const marker of ["interviewDelete", "删除面试记录", "删除记录"]) {
+  if (!app.includes(marker)) throw new Error(`Missing interview deletion marker: ${marker}`);
+}
 for (const marker of ['feature("全景仿真面试", "仿"', 'feature("AI 模拟面试", "面"']) {
   if (!app.includes(marker)) throw new Error(`Missing home interview recommendation marker: ${marker}`);
 }
@@ -91,6 +94,7 @@ const requiredApis = [
   "/cc001/interview/guided/answer",
   "/cc001/interview/guided/finish",
   "/cc001/interview/messages",
+  "/cc001/interview/delete",
   "/cc001/assistant-chat/send",
   "/cc001/assistant-chat/session/list"
 ];

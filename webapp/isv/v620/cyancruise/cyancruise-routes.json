@@ -978,6 +978,15 @@
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto>",
           "fallback": "分别显示两种面试方式的空记录状态。"
+        },
+        {
+          "name": "delete AI interview record",
+          "method": "POST",
+          "path": "/cc001/interview/delete",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "String",
+          "fallback": "保留原记录并提示稍后重试。"
         }
       ]
     },
@@ -1048,6 +1057,15 @@
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto>",
           "fallback": "Show no interview history state."
+        },
+        {
+          "name": "delete interview record",
+          "method": "POST",
+          "path": "/cc001/interview/delete",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "String",
+          "fallback": "保留原记录并提示删除失败。"
         },
         {
           "name": "start interview",

@@ -12,6 +12,7 @@ import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
+import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.base.helper.career.CareerProfileBuildService;
 import v620.base.helper.career.CareerProfileSnapshotMergeService;
@@ -216,6 +217,30 @@ class CareerLoopCustomWebApiPluginTest {
         declared.removeAll(routed);
 
         assertTrue(declared.isEmpty(), "custom router missing route map paths: " + declared);
+    }
+
+    @Test
+    void routesInterviewDeleteThroughCustomWebApiContract(@TempDir Path tempDir) {
+        CareerLoopCustomWebApiPlugin plugin = plugin(tempDir,
+                new IdentityAwareCareerLoopWebApiBoundary(new DevelopmentCareerLoopIdentityResolver("api-user")));
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("positionName", "前端开发");
+        request.put("difficulty", "Normal");
+        Map<String, Object> startBody = new HashMap<String, Object>();
+        startBody.put("userId", "api-user");
+        startBody.put("request", request);
+        ApiResult started = plugin.doCustomService(params("/cc001/interview/start", startBody));
+        InterviewSessionDto session = (InterviewSessionDto) started.getData();
+
+        Map<String, Object> deleteBody = new HashMap<String, Object>();
+        deleteBody.put("userId", "api-user");
+        deleteBody.put("interviewId", session.getInterviewId());
+        ApiResult deleted = plugin.doCustomService(params("/cc001/interview/delete", deleteBody));
+        ApiResult listed = plugin.doCustomService(params("/cc001/interview/list", "api-user"));
+
+        assertTrue(deleted.getSuccess());
+        assertEquals("OK", deleted.getData());
+        assertTrue(((java.util.List<?>) listed.getData()).isEmpty());
     }
 
     @Test

@@ -24,6 +24,7 @@
     guidedInterviewAnswer: "/cc001/interview/guided/answer",
     guidedInterviewFinish: "/cc001/interview/guided/finish",
     interviewMessages: "/cc001/interview/messages",
+    interviewDelete: "/cc001/interview/delete",
     assistantSend: "/cc001/assistant-chat/send",
     assistantSessions: "/cc001/assistant-chat/session/list",
     employmentInsight: "/cc001/career-employment/insight/get",
@@ -65,8 +66,8 @@
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumes", "snapshot", "filePreview", "resumeDiagnosis", "keywordStatus"]),
     page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
-    page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并分别查看练习记录。", ["interviews"]),
-    page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
+    page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并分别查看练习记录。", ["interviews", "interviewDelete"]),
+    page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish", "interviewDelete"]),
     page("interview-panorama", "全景仿真面试", "available", "user", "在沉浸式面试环境中使用摄像头与 AI 面试官面对面练习。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
@@ -3448,8 +3449,9 @@
       var completed = entry.status === "COMPLETED" || entry.finalScore != null || !!entry.report;
       return '<article class="list-row"><div><strong>' + escapeHtml(firstText(entry.positionName, "目标岗位待确认")) + '</strong><p>' +
         escapeHtml(completed ? "已完成" : "进行中") + (entry.finalScore != null ? " · " + entry.finalScore + " 分" : "") +
-        '</p></div>' + (route === "interview" ? '<button type="button" class="secondary" data-interview-action="open" data-interview-id="' +
-        escapeAttr(entry.interviewId) + '">' + (completed ? "查看结果" : "继续面试") + '</button>' : '<span class="chip">全景记录</span>') + '</article>';
+        '</p></div>' + (route === "interview" ? '<div class="actions-row compact"><button type="button" class="secondary" data-interview-action="open" data-interview-id="' +
+        escapeAttr(entry.interviewId) + '">' + (completed ? "查看结果" : "继续面试") + '</button>' +
+        '<button type="button" class="secondary danger" data-interview-action="delete" data-interview-id="' + escapeAttr(entry.interviewId) + '">删除记录</button></div>' : '<span class="chip">全景记录</span>') + '</article>';
     }).join("") : '<p class="empty-copy">' + escapeHtml(emptyText) + '</p>') + '</section>';
   }
 
@@ -3686,6 +3688,7 @@
     if (action === "speech") { toggleAiInterviewSpeech(); return; }
     if (action === "reset") { stopAiInterviewSpeech(); state.activeInterview = null; state.interviewMessages = []; state.interviewReport = null; state.interviewCurrentQuestion = null; state.interviewAnswerCount = 0; state.interviewDraft = ""; renderPage(pageByKey.interview); return; }
     if (action === "open") { openInterview(target.getAttribute("data-interview-id")); return; }
+    if (action === "delete") { deleteInterviewRecord(target.getAttribute("data-interview-id")); return; }
     var draftPosition = action === "start" ? valueOf("interviewPosition") : "";
     var draftResumeId = action === "start" ? valueOf("interviewResume") : "";
     var draftDifficulty = action === "start" ? valueOf("interviewDifficulty") : "Normal";
@@ -3715,6 +3718,39 @@
       });
     }
     call.catch(function (error) { state.interviewError = error.message || "模拟面试暂时不可用，请稍后重试。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
+  }
+
+  function deleteInterviewRecord(interviewId) {
+    if (!interviewId) return;
+    showConfirmDialog("删除面试记录", "删除后，本次面试的问题、回答和复盘都会移除，且无法恢复。", "删除记录", function () {
+      performDeleteInterviewRecord(interviewId);
+    });
+  }
+
+  function performDeleteInterviewRecord(interviewId) {
+    if (isFilePreview()) {
+      removeInterviewFromPage(interviewId); renderPage(pageByKey[state.route]); return;
+    }
+    state.interviewBusy = true; renderPage(pageByKey[state.route]);
+    post(endpoints.interviewDelete, { userId: state.identity.userId, interviewId: Number(interviewId) }).then(function () {
+      removeInterviewFromPage(interviewId);
+      showMessage("info", "面试记录已删除", "本次面试的问题、回答和复盘已从记录中移除。");
+    }).catch(function (error) {
+      state.interviewError = error.message || "面试记录删除失败，请稍后重试。";
+      showMessage("error", "删除失败", state.interviewError);
+    }).then(function () {
+      state.interviewBusy = false; renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function removeInterviewFromPage(interviewId) {
+    state.interviews = normalizeArray(state.interviews).filter(function (entry) {
+      return String(entry.interviewId) !== String(interviewId);
+    });
+    if (state.activeInterview && String(state.activeInterview.interviewId) === String(interviewId)) {
+      stopAiInterviewSpeech(); state.activeInterview = null; state.interviewMessages = []; state.interviewReport = null;
+      state.interviewCurrentQuestion = null; state.interviewAnswerCount = 0; state.interviewDraft = ""; state.interviewError = null;
+    }
   }
 
   function toggleAiInterviewSpeech() {

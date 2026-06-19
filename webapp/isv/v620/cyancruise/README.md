@@ -50,7 +50,7 @@
 | 就业 / 简历 / AI简历诊断 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-diagnosis` | 已接入 |
 | 就业 / 面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-home` | 两种面试入口与分类记录 |
 | 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-panorama` | 沉浸式环境、摄像头预览、按难度自动计时与 AI 问答已接入 |
-| 就业 / 面试 / AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 七题逐题问答、语音辅助与复盘已接入 |
+| 就业 / 面试 / AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 七题逐题问答、语音辅助、复盘与记录删除已接入 |
 | 深造 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=further-study-home` | 规划入口 |
 | 深造 / 考研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-exam` | 规划入口 |
 | 深造 / 保研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-recommendation` | 规划入口 |

@@ -193,6 +193,10 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(interviewWebApi.messages(extractUserId(body),
                         longObject(value(body, "interviewId"))));
             }
+            if ("/cc001/interview/delete".equals(path)) {
+                return ApiResult.success(interviewWebApi.delete(extractUserId(body),
+                        longObject(value(body, "interviewId"))));
+            }
             if ("/cc001/assistant-chat/send".equals(path)) {
                 return ApiResult.success(assistantWebApi.send(extractUserId(body), extractAssistantChatRequest(body)));
             }
