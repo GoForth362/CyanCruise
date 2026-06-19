@@ -149,6 +149,7 @@
     panoramaCameraState: "idle",
     panoramaBusy: false,
     panoramaError: null,
+    panoramaNotice: null,
     panoramaRecognition: null,
     panoramaAnswering: false,
     panoramaSeconds: 0,
@@ -3329,6 +3330,7 @@
     var role = firstText(getValue(state.snapshot, "preferences.targetRole"), getValue(state.snapshot, "resume.targetJob"), "");
     var resumes = normalizeArray(state.resumes);
     var cameraReady = !!state.panoramaStream;
+    var cameraFallback = state.panoramaCameraState === "fallback";
     return '<section class="panorama-experience panorama-preparation full"><div class="panorama-overlay">' +
       '<div class="panorama-topbar"><div><span class="resource-type">沉浸式练习</span><h3>全景仿真面试</h3>' +
       '<p>面试画面只在当前浏览器中实时预览，不会上传或保存视频。</p></div>' +
@@ -3336,17 +3338,19 @@
       '<div class="panorama-setup-grid"><div class="panorama-camera-card">' +
       (cameraReady ? '<video id="panoramaCamera" autoplay muted playsinline aria-label="摄像头实时预览"></video>' :
         '<div class="panorama-camera-placeholder"><span class="camera-glyph">摄</span><strong>' +
-        (state.panoramaCameraState === "requesting" ? "正在请求摄像头权限" : "启用摄像头后可预览面试画面") + '</strong></div>') +
-      '<span class="panorama-privacy-badge">仅本地预览</span></div>' +
+        (state.panoramaCameraState === "requesting" ? "正在请求摄像头权限" : cameraFallback ? "无摄像头模式" : "启用摄像头后可预览面试画面") + '</strong></div>') +
+      '<span class="panorama-privacy-badge">' + (cameraFallback ? "摄像头未连接" : "仅本地预览") + '</span></div>' +
       '<div class="panorama-settings"><label>目标岗位<input id="panoramaPosition" value="' + escapeAttr(role) + '" placeholder="例如：产品经理"></label>' +
       '<label>使用的简历<select id="panoramaResume"><option value="">暂不使用简历</option>' + resumes.map(function (resume) {
         return '<option value="' + escapeAttr(resume.resumeId) + '">' + escapeHtml(firstText(resume.title, "简历 " + resume.resumeId)) + '</option>';
       }).join("") + '</select></label>' +
       '<label>练习难度<select id="panoramaDifficulty"><option value="Easy">入门</option><option value="Normal" selected>常规</option><option value="Hard">进阶</option></select></label>' +
       (state.panoramaError ? '<p class="panorama-error">' + escapeHtml(state.panoramaError) + '</p>' : '') +
+      (state.panoramaNotice ? '<p class="panorama-notice">' + escapeHtml(state.panoramaNotice) + '</p>' : '') +
       '<div class="actions-row"><button type="button" data-panorama-action="camera" ' + (state.panoramaCameraState === "requesting" ? "disabled" : "") + '>' +
       (cameraReady ? "重新连接摄像头" : "启用摄像头和麦克风") + '</button>' +
-      '<button type="button" data-panorama-action="start" ' + (!cameraReady || state.panoramaBusy ? "disabled" : "") + '>' +
+      ((!cameraReady && !cameraFallback && state.panoramaCameraState !== "requesting") ? '<button type="button" class="secondary" data-panorama-action="fallback">无摄像头继续</button>' : '') +
+      '<button type="button" data-panorama-action="start" ' + ((!cameraReady && !cameraFallback) || state.panoramaBusy ? "disabled" : "") + '>' +
       (state.panoramaBusy ? "正在准备面试" : "进入面试房间") + '</button></div></div></div></div></section>';
   }
 
@@ -3355,8 +3359,9 @@
     return '<section class="panorama-experience panorama-live full"><div class="panorama-overlay">' +
       '<div class="panorama-question"><span>' + (state.panoramaAnswerCount + 1) + '</span><p>' + escapeHtml(state.panoramaQuestion || "正在准备问题……") + '</p></div>' +
       '<div class="panorama-live-stage"><div class="panorama-ai-presence"><span class="ai-pulse"></span><strong>AI 面试官</strong><small>正在与你面对面交流</small></div>' +
-      '<div class="panorama-video-frame"><video id="panoramaCamera" autoplay muted playsinline aria-label="摄像头实时预览"></video>' +
-      '<span class="panorama-live-badge">摄像头已连接 · 仅本地预览</span></div></div>' +
+      '<div class="panorama-video-frame">' + (state.panoramaStream ? '<video id="panoramaCamera" autoplay muted playsinline aria-label="摄像头实时预览"></video>' :
+      '<div class="panorama-camera-off"><span>摄像头未连接</span><strong>你仍可继续完成 AI 面试</strong></div>') +
+      '<span class="panorama-live-badge">' + (state.panoramaStream ? "摄像头已连接 · 仅本地预览" : "无摄像头模式") + '</span></div></div>' +
       '<div class="panorama-answer-panel"><div class="panorama-timer"><small>答题时间</small><strong id="panoramaTimer">' + formatPanoramaTime(state.panoramaSeconds) + '</strong></div>' +
       '<label>语音识别结果（可修改）<textarea id="panoramaAnswer" rows="3" placeholder="点击开始回答；浏览器不支持语音识别时可直接输入">' + escapeHtml(transcript) + '</textarea></label>' +
       '<div class="actions-row"><button type="button" data-panorama-action="listen" ' + (state.panoramaBusy ? "disabled" : "") + '>' +
@@ -3458,6 +3463,7 @@
   function handlePanoramaAction(target) {
     var action = target.getAttribute("data-panorama-action");
     if (action === "camera") { startPanoramaCamera(); return; }
+    if (action === "fallback") { usePanoramaWithoutCamera(); return; }
     if (action === "start") { startPanoramaInterview(); return; }
     if (action === "listen") { startPanoramaAnswer(); return; }
     if (action === "answer") { submitPanoramaAnswer(); return; }
@@ -3466,28 +3472,73 @@
   }
 
   function startPanoramaCamera() {
-    state.panoramaError = null;
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      state.panoramaCameraState = "unavailable";
-      state.panoramaError = "当前浏览器无法使用摄像头，请使用支持摄像头权限的现代浏览器，并确认页面通过安全连接打开。";
-      renderPage(pageByKey["interview-panorama"]); return;
-    }
+    state.panoramaError = null; state.panoramaNotice = null;
     stopPanoramaMedia();
     state.panoramaCameraState = "requesting";
     renderPage(pageByKey["interview-panorama"]);
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true })
+    requestPanoramaMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true })
       .then(function (stream) {
         state.panoramaStream = stream; state.panoramaCameraState = "ready"; state.panoramaError = null;
       }).catch(function (error) {
-        state.panoramaCameraState = "denied";
-        state.panoramaError = error && error.name === "NotAllowedError" ?
-          "没有获得摄像头或麦克风权限。请在浏览器地址栏中允许权限后重试。" :
-          "无法连接摄像头或麦克风，请检查设备是否被其他程序占用。";
+        state.panoramaCameraState = error && error.name === "NotAllowedError" ? "denied" : "unavailable";
+        state.panoramaError = panoramaCameraFailureMessage(error);
       }).then(function () { renderPage(pageByKey["interview-panorama"]); });
   }
 
+  function requestPanoramaMedia(constraints) {
+    var candidates = panoramaMediaCandidates();
+    function attempt(index, lastError) {
+      if (index >= candidates.length) return Promise.reject(lastError || { name: "UnsupportedError" });
+      try {
+        return candidates[index](constraints).catch(function (error) { return attempt(index + 1, error); });
+      } catch (error) {
+        return attempt(index + 1, error);
+      }
+    }
+    return attempt(0, null);
+  }
+
+  function panoramaMediaCandidates() {
+    var candidates = []; var seen = [];
+    reachableWindows().forEach(function (sourceWindow) {
+      var sourceNavigator;
+      try { sourceNavigator = sourceWindow.navigator; } catch (error) { return; }
+      if (!sourceNavigator || seen.indexOf(sourceNavigator) >= 0) return;
+      seen.push(sourceNavigator);
+      if (sourceNavigator.mediaDevices && sourceNavigator.mediaDevices.getUserMedia) {
+        candidates.push(function (constraints) { return sourceNavigator.mediaDevices.getUserMedia.call(sourceNavigator.mediaDevices, constraints); });
+      }
+      var legacy = sourceNavigator.getUserMedia || sourceNavigator.webkitGetUserMedia || sourceNavigator.mozGetUserMedia;
+      if (legacy) {
+        candidates.push(function (constraints) {
+          return new Promise(function (resolve, reject) { legacy.call(sourceNavigator, constraints, resolve, reject); });
+        });
+      }
+    });
+    return candidates;
+  }
+
+  function panoramaCameraFailureMessage(error) {
+    if (window.isSecureContext === false) {
+      return "当前页面不是安全连接，浏览器禁止网页调用摄像头。你可以改用 HTTPS，或选择“无摄像头继续”完成面试。";
+    }
+    if (error && error.name === "NotAllowedError") {
+      return "摄像头或麦克风权限被浏览器或苍穹页面阻止。允许权限后可重试，也可以选择“无摄像头继续”。";
+    }
+    if (error && (error.name === "NotReadableError" || error.name === "TrackStartError")) {
+      return "摄像头可能正被其他程序占用。关闭占用程序后重试，或选择“无摄像头继续”。";
+    }
+    return "当前环境无法连接摄像头。系统已保留无摄像头模式，你仍可以完成 AI 面试。";
+  }
+
+  function usePanoramaWithoutCamera() {
+    stopPanoramaMedia(); state.panoramaCameraState = "fallback"; state.panoramaError = null;
+    state.panoramaNotice = "已切换为无摄像头模式。AI 提问、回答、计时和复盘仍可正常使用。";
+    renderPage(pageByKey["interview-panorama"]);
+  }
+
   function startPanoramaInterview() {
-    if (!state.panoramaStream || state.panoramaBusy) return;
+    if ((!state.panoramaStream && state.panoramaCameraState !== "fallback") || state.panoramaBusy) return;
     var position = valueOf("panoramaPosition");
     var resumeId = valueOf("panoramaResume");
     var difficulty = valueOf("panoramaDifficulty");
@@ -3562,7 +3613,7 @@
 
   function resetPanoramaInterview() {
     stopPanoramaMedia(); state.panoramaSession = null; state.panoramaQuestion = null; state.panoramaTranscript = "";
-    state.panoramaReport = null; state.panoramaError = null; state.panoramaAnswerCount = 0; state.panoramaSeconds = 0;
+    state.panoramaReport = null; state.panoramaError = null; state.panoramaNotice = null; state.panoramaAnswerCount = 0; state.panoramaSeconds = 0;
     state.panoramaCameraState = "idle"; renderPage(pageByKey["interview-panorama"]);
   }
 

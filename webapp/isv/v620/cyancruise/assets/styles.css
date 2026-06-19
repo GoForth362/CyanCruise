@@ -1701,6 +1701,9 @@ h4 {
 .panorama-settings label, .panorama-answer-panel label { display: grid; gap: 8px; margin-bottom: 16px; color: rgba(255,255,255,.85); }
 .panorama-settings input, .panorama-settings select, .panorama-answer-panel textarea { width: 100%; box-sizing: border-box; border-color: rgba(255,255,255,.24); background: rgba(255,255,255,.94); color: #162033; }
 .panorama-error { padding: 10px 12px; border-radius: 10px; color: #ffe2dc; background: rgba(164, 51, 37, .35); }
+.panorama-notice { padding: 10px 12px; border-radius: 10px; color: #d8fff7; background: rgba(31, 137, 119, .32); }
+.panorama-camera-off { height: 100%; min-height: 390px; display: grid; place-content: center; gap: 10px; text-align: center; color: rgba(255,255,255,.72); background: linear-gradient(145deg, rgba(10,17,34,.72), rgba(19,45,58,.68)); }
+.panorama-camera-off strong { color: #d8fff7; }
 .panorama-question { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; padding: 18px 22px; border-radius: 16px; background: rgba(255,255,255,.94); color: #11182b; }
 .panorama-question span { flex: 0 0 auto; min-width: 42px; padding: 8px 10px; border-radius: 10px; text-align: center; font-weight: 700; color: #fff; background: #131b32; }
 .panorama-question p { margin: 4px 0 0; font-size: 1.08rem; line-height: 1.75; }

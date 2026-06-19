@@ -10,8 +10,11 @@ const app = fs.readFileSync(appPath, "utf8");
 if (!fs.existsSync(panoramaImagePath)) {
   throw new Error("Missing panoramic interview room image asset");
 }
-for (const marker of ["navigator.mediaDevices.getUserMedia", "panoramaCamera", "SpeechRecognition", "mode: \"VOICE\""]) {
+for (const marker of ["mediaDevices.getUserMedia", "panoramaCamera", "SpeechRecognition", "mode: \"VOICE\""]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic interview implementation marker: ${marker}`);
+}
+for (const marker of ["panoramaMediaCandidates", "无摄像头继续", "window.isSecureContext"]) {
+  if (!app.includes(marker)) throw new Error(`Missing panoramic camera compatibility marker: ${marker}`);
 }
 for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-dimensions"]) {
   if (!app.includes(marker)) throw new Error(`Missing seven-question AI interview marker: ${marker}`);

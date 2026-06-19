@@ -1289,7 +1289,7 @@
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "摄像头或语音转文字不可用时显示可恢复提示，语音不支持时允许手工输入。",
+      "fallback": "摄像头不可用时允许无摄像头继续；语音转文字不可用时允许手工输入。",
       "deploymentNotes": "需要 HTTPS、浏览器摄像头和麦克风权限；媒体流仅本地预览，不上传、不保存、不进行身体语言分析。"
     },
     {
