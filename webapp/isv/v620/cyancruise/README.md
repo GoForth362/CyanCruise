@@ -49,7 +49,7 @@
 | 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume` | 已接入 |
 | 就业 / 简历 / AI简历诊断 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-diagnosis` | 已接入 |
 | 就业 / 面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-home` | 两种面试入口与分类记录 |
-| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-panorama` | 独立页面，采集流程待迁入 |
+| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-panorama` | 沉浸式环境、摄像头预览与 AI 问答已接入 |
 | 就业 / 面试 / AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 文字问答与复盘已接入 |
 | 深造 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=further-study-home` | 规划入口 |
 | 深造 / 考研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-exam` | 规划入口 |
@@ -66,7 +66,7 @@
 /ierp/isv/v620/cyancruise/index.htm?ccRoute=interview
 ```
 
-当前阶段就业发布四个核心入口：简历制作、简历诊断、全景仿真面试、模拟面试。模拟面试已支持复用目标岗位、简历和个人情况完成文字提问、逐轮回答、结束复盘与历史查看；AI 暂不可用时使用基础问题和基础复盘继续流程。深造只提供考研、保研、留学方向入口，后续接入规划能力。简历微课、数字人面试、真题库和面试微课等能力暂不配置到平台菜单。
+当前阶段就业发布四个核心入口：简历制作、简历诊断、全景仿真面试、AI 模拟面试。全景仿真面试支持沉浸式环境、摄像头与麦克风本地预览、答题计时、浏览器语音转文字和 AI 逐轮提问；视频不会上传或保存。AI 模拟面试提供纯文字问答与复盘。深造只提供考研、保研、留学方向入口，后续接入规划能力。
 
 ## 调试模式
 

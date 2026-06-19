@@ -3,8 +3,16 @@ const path = require("path");
 
 const routePath = path.join(__dirname, "cyancruise-routes.json");
 const appPath = path.join(__dirname, "assets", "app.js");
+const panoramaImagePath = path.join(__dirname, "assets", "images", "panorama-interview-room-v1.png");
 const routeMap = JSON.parse(fs.readFileSync(routePath, "utf8"));
 const app = fs.readFileSync(appPath, "utf8");
+
+if (!fs.existsSync(panoramaImagePath)) {
+  throw new Error("Missing panoramic interview room image asset");
+}
+for (const marker of ["navigator.mediaDevices.getUserMedia", "panoramaCamera", "SpeechRecognition", "mode: \"VOICE\""]) {
+  if (!app.includes(marker)) throw new Error(`Missing panoramic interview implementation marker: ${marker}`);
+}
 
 const requiredRoutes = [
   "workbench",

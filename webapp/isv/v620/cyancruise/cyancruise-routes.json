@@ -995,7 +995,34 @@
           "body": ["userId"],
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto> filtered by VOICE/PANORAMA",
-          "fallback": "显示全景仿真面试独立空记录和能力边界。"
+          "fallback": "摄像头不可用时显示授权提示，并保留全景仿真面试历史。"
+        },
+        {
+          "name": "start panoramic interview",
+          "method": "POST",
+          "path": "/cc001/interview/guided/start",
+          "body": ["userId", "request(mode=VOICE)"],
+          "userIdRequired": true,
+          "dto": "InterviewStartResultDto",
+          "fallback": "不创建会话并提示用户检查摄像头权限。"
+        },
+        {
+          "name": "submit panoramic answer",
+          "method": "POST",
+          "path": "/cc001/interview/guided/answer",
+          "body": ["userId", "interviewId", "answer"],
+          "userIdRequired": true,
+          "dto": "InterviewTurnResultDto",
+          "fallback": "保留识别文字并允许用户重试。"
+        },
+        {
+          "name": "finish panoramic interview",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "保留会话并提示复盘暂时不可用。"
         }
       ]
     },
@@ -1262,8 +1289,8 @@
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "显示全景仿真面试独立记录和能力边界。",
-      "deploymentNotes": "不复用 AI 文字面试页面；语音、摄像头和行为表现采集待后续迁移。"
+      "fallback": "摄像头或语音转文字不可用时显示可恢复提示，语音不支持时允许手工输入。",
+      "deploymentNotes": "需要 HTTPS、浏览器摄像头和麦克风权限；媒体流仅本地预览，不上传、不保存、不进行身体语言分析。"
     },
     {
       "mountKey": "cyancruise-career-plan",

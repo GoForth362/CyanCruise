@@ -16,7 +16,7 @@
 
 **Non-Goals:**
 
-- 不迁移语音识别/合成、数字人、摄像头、身体语言评分或音视频文件。
+- 不迁移服务端语音识别/合成、数字人、身体语言评分、音视频上传或音视频文件持久化。
 - 不迁移题库管理、AI 批量出题、题目审核、贡献与点赞。
 - 不引入 Spring、JPA、Flyway、Vue、uni-app 或外部 AI SDK。
 - 不改变现有存储表结构，不实现新的文件上传能力。
@@ -50,6 +50,10 @@
 7. 面试中心与两种面试方式使用独立路由
 
    `interview-home` 只展示“AI 模拟面试”和“全景仿真面试”的选择入口及分类历史；`interview` 承载 AI 文字面试；`interview-panorama` 承载全景仿真面试。现有 `TEXT` 或空模式记录归入 AI 模拟面试，`VOICE` 或 `PANORAMA` 记录归入全景仿真面试。当前 change 不实现全景采集流程，只提供独立页面、既有记录和清晰的能力边界提示。
+
+8. 全景页面使用本地摄像头预览与浏览器语音转文字
+
+   全景页面通过 `navigator.mediaDevices.getUserMedia` 请求摄像头和麦克风权限，将媒体流绑定到本地 `<video>`，不上传或持久化视频。支持 `SpeechRecognition`/`webkitSpeechRecognition` 时，将用户语音转成可编辑文字并复用既有 AI 面试回答接口；不支持时允许手工输入。生成的会议室贴图仅作为沉浸式背景，不包含人物、文字或品牌。
 
 ## Risks / Trade-offs
 

@@ -67,7 +67,7 @@
     page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
     page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并分别查看练习记录。", ["interviews"]),
     page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
-    page("interview-panorama", "全景仿真面试", "available", "user", "查看全景仿真面试记录和当前能力边界。", ["interviews"]),
+    page("interview-panorama", "全景仿真面试", "available", "user", "在沉浸式面试环境中使用摄像头与 AI 面试官面对面练习。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
     page("employment-insight", "就业洞察", "available", "user", "按学校、专业和目标岗位查看就业洞察。", ["employmentInsight"]),
@@ -92,7 +92,7 @@
     "employment-home": [
       feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
       feature("简历诊断", "诊", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
-      feature("全景仿真面试", "仿", "进入独立的全景仿真面试页面并查看历史", "interview-panorama", "独立入口"),
+      feature("全景仿真面试", "仿", "开启摄像头，在沉浸式环境中进行面对面练习", "interview-panorama", "已接入"),
       feature("AI 模拟面试", "面", "通过文字问答练习并获得针对性复盘", "interview", "已接入")
     ],
     "resume-home": [
@@ -100,7 +100,7 @@
       feature("简历诊断", "诊", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
     ],
     "interview-home": [
-      feature("全景仿真面试", "仿", "进入全景仿真面试并查看该类型记录", "interview-panorama", "独立入口"),
+      feature("全景仿真面试", "仿", "开启摄像头进入沉浸式面试房间", "interview-panorama", "已接入"),
       feature("AI 模拟面试", "面", "进入 AI 文字问答练习并查看该类型记录", "interview", "已接入")
     ],
     "further-study-home": [
@@ -136,6 +136,19 @@
     interviewReport: null,
     interviewBusy: false,
     interviewError: null,
+    panoramaStream: null,
+    panoramaSession: null,
+    panoramaQuestion: null,
+    panoramaTranscript: "",
+    panoramaReport: null,
+    panoramaCameraState: "idle",
+    panoramaBusy: false,
+    panoramaError: null,
+    panoramaRecognition: null,
+    panoramaAnswering: false,
+    panoramaSeconds: 0,
+    panoramaTimer: null,
+    panoramaAnswerCount: 0,
     employmentResources: null,
     employmentResourcesLoading: false,
     employmentResourcesError: null,
@@ -220,6 +233,7 @@
 
   function bindEvents() {
     window.addEventListener("hashchange", handleRouteChange);
+    window.addEventListener("beforeunload", stopPanoramaMedia);
     els.pageHost.addEventListener("click", handlePageHostClick);
     els.pageHost.addEventListener("change", handlePageHostChange);
     els.saveUserIdButton.addEventListener("click", saveDevelopmentUser);
@@ -280,6 +294,9 @@
   function handleRouteChange() {
     var key = normalizeRoute(window.location.hash);
     var previous = state.route;
+    if (previous === "interview-panorama" && key !== "interview-panorama") {
+      stopPanoramaMedia();
+    }
     if (!pageByKey[key]) {
       state.route = "workbench";
       showMessage("warning", "未知页面", "未找到 route: " + key + "，已回到工作台。");
@@ -3293,11 +3310,62 @@
 
   function renderPanoramaInterviewPage(item) {
     var history = normalizeArray(state.interviews).filter(isPanoramaInterview);
-    var body = '<section class="panel full panorama-intro"><h3>全景仿真面试</h3>' +
-      '<p>这是独立于 AI 文字问答的面试方式。摄像头、语音和行为表现采集尚未迁入 CyanCruise，当前不会跳转到 AI 模拟面试表单。</p>' +
-      '<div class="actions-row"><button type="button" class="secondary" data-link="interview-home">返回面试中心</button></div></section>' +
-      renderInterviewHistoryList("全景仿真面试记录", history, "还没有全景仿真面试记录。后续接入全景采集流程后，新记录会显示在这里。", "interview-panorama");
+    var body = state.panoramaReport ? renderPanoramaReport() : state.panoramaSession ? renderPanoramaRoom() : renderPanoramaPreparation();
+    if (!state.panoramaSession && !state.panoramaReport) {
+      body += renderInterviewHistoryList("全景仿真面试记录", history, "还没有全景仿真面试记录。", "interview-panorama");
+    }
     renderShell(item, body);
+    attachPanoramaCamera();
+  }
+
+  function renderPanoramaPreparation() {
+    var role = firstText(getValue(state.snapshot, "preferences.targetRole"), getValue(state.snapshot, "resume.targetJob"), "");
+    var resumes = normalizeArray(state.resumes);
+    var cameraReady = !!state.panoramaStream;
+    return '<section class="panorama-experience panorama-preparation full"><div class="panorama-overlay">' +
+      '<div class="panorama-topbar"><div><span class="resource-type">沉浸式练习</span><h3>全景仿真面试</h3>' +
+      '<p>面试画面只在当前浏览器中实时预览，不会上传或保存视频。</p></div>' +
+      '<button type="button" class="secondary" data-link="interview-home">返回面试中心</button></div>' +
+      '<div class="panorama-setup-grid"><div class="panorama-camera-card">' +
+      (cameraReady ? '<video id="panoramaCamera" autoplay muted playsinline aria-label="摄像头实时预览"></video>' :
+        '<div class="panorama-camera-placeholder"><span class="camera-glyph">摄</span><strong>' +
+        (state.panoramaCameraState === "requesting" ? "正在请求摄像头权限" : "启用摄像头后可预览面试画面") + '</strong></div>') +
+      '<span class="panorama-privacy-badge">仅本地预览</span></div>' +
+      '<div class="panorama-settings"><label>目标岗位<input id="panoramaPosition" value="' + escapeAttr(role) + '" placeholder="例如：产品经理"></label>' +
+      '<label>使用的简历<select id="panoramaResume"><option value="">暂不使用简历</option>' + resumes.map(function (resume) {
+        return '<option value="' + escapeAttr(resume.resumeId) + '">' + escapeHtml(firstText(resume.title, "简历 " + resume.resumeId)) + '</option>';
+      }).join("") + '</select></label>' +
+      '<label>练习难度<select id="panoramaDifficulty"><option value="Easy">入门</option><option value="Normal" selected>常规</option><option value="Hard">进阶</option></select></label>' +
+      (state.panoramaError ? '<p class="panorama-error">' + escapeHtml(state.panoramaError) + '</p>' : '') +
+      '<div class="actions-row"><button type="button" data-panorama-action="camera" ' + (state.panoramaCameraState === "requesting" ? "disabled" : "") + '>' +
+      (cameraReady ? "重新连接摄像头" : "启用摄像头和麦克风") + '</button>' +
+      '<button type="button" data-panorama-action="start" ' + (!cameraReady || state.panoramaBusy ? "disabled" : "") + '>' +
+      (state.panoramaBusy ? "正在准备面试" : "进入面试房间") + '</button></div></div></div></div></section>';
+  }
+
+  function renderPanoramaRoom() {
+    var transcript = state.panoramaTranscript || "";
+    return '<section class="panorama-experience panorama-live full"><div class="panorama-overlay">' +
+      '<div class="panorama-question"><span>' + (state.panoramaAnswerCount + 1) + '</span><p>' + escapeHtml(state.panoramaQuestion || "正在准备问题……") + '</p></div>' +
+      '<div class="panorama-live-stage"><div class="panorama-ai-presence"><span class="ai-pulse"></span><strong>AI 面试官</strong><small>正在与你面对面交流</small></div>' +
+      '<div class="panorama-video-frame"><video id="panoramaCamera" autoplay muted playsinline aria-label="摄像头实时预览"></video>' +
+      '<span class="panorama-live-badge">摄像头已连接 · 仅本地预览</span></div></div>' +
+      '<div class="panorama-answer-panel"><div class="panorama-timer"><small>答题时间</small><strong id="panoramaTimer">' + formatPanoramaTime(state.panoramaSeconds) + '</strong></div>' +
+      '<label>语音识别结果（可修改）<textarea id="panoramaAnswer" rows="3" placeholder="点击开始回答；浏览器不支持语音识别时可直接输入">' + escapeHtml(transcript) + '</textarea></label>' +
+      '<div class="actions-row"><button type="button" data-panorama-action="listen" ' + (state.panoramaBusy ? "disabled" : "") + '>' +
+      (state.panoramaAnswering ? "正在聆听" : "开始回答") + '</button>' +
+      '<button type="button" data-panorama-action="answer" ' + (state.panoramaBusy ? "disabled" : "") + '>回答完毕</button>' +
+      '<button type="button" class="secondary" data-panorama-action="finish" ' + (state.panoramaBusy ? "disabled" : "") + '>结束面试</button></div>' +
+      (state.panoramaError ? '<p class="panorama-error">' + escapeHtml(state.panoramaError) + '</p>' : '') + '</div></div></section>';
+  }
+
+  function renderPanoramaReport() {
+    var report = state.panoramaReport || {};
+    return '<section class="panel full interview-report panorama-report"><h3>全景仿真面试复盘</h3>' +
+      '<div class="metric-value">' + escapeHtml(firstText(report.overallScore, 0)) + ' 分</div><p>' +
+      escapeHtml(firstText(report.textSummary, "本次全景仿真面试已经完成。")) + '</p>' +
+      '<div class="actions-row"><button type="button" data-panorama-action="reset">再练一次</button>' +
+      '<button type="button" class="secondary" data-link="interview-home">返回面试中心</button></div></section>';
   }
 
   function renderInterviewSetup() {
@@ -3362,6 +3430,144 @@
   function isPanoramaInterview(entry) {
     var mode = String(entry && entry.mode || "").toUpperCase();
     return mode === "VOICE" || mode === "PANORAMA";
+  }
+
+  function handlePanoramaAction(target) {
+    var action = target.getAttribute("data-panorama-action");
+    if (action === "camera") { startPanoramaCamera(); return; }
+    if (action === "start") { startPanoramaInterview(); return; }
+    if (action === "listen") { startPanoramaAnswer(); return; }
+    if (action === "answer") { submitPanoramaAnswer(); return; }
+    if (action === "finish") { finishPanoramaInterview(); return; }
+    if (action === "reset") { resetPanoramaInterview(); }
+  }
+
+  function startPanoramaCamera() {
+    state.panoramaError = null;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      state.panoramaCameraState = "unavailable";
+      state.panoramaError = "当前浏览器无法使用摄像头，请使用支持摄像头权限的现代浏览器，并确认页面通过安全连接打开。";
+      renderPage(pageByKey["interview-panorama"]); return;
+    }
+    stopPanoramaMedia();
+    state.panoramaCameraState = "requesting";
+    renderPage(pageByKey["interview-panorama"]);
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true })
+      .then(function (stream) {
+        state.panoramaStream = stream; state.panoramaCameraState = "ready"; state.panoramaError = null;
+      }).catch(function (error) {
+        state.panoramaCameraState = "denied";
+        state.panoramaError = error && error.name === "NotAllowedError" ?
+          "没有获得摄像头或麦克风权限。请在浏览器地址栏中允许权限后重试。" :
+          "无法连接摄像头或麦克风，请检查设备是否被其他程序占用。";
+      }).then(function () { renderPage(pageByKey["interview-panorama"]); });
+  }
+
+  function startPanoramaInterview() {
+    if (!state.panoramaStream || state.panoramaBusy) return;
+    var position = valueOf("panoramaPosition");
+    var resumeId = valueOf("panoramaResume");
+    var difficulty = valueOf("panoramaDifficulty");
+    state.panoramaBusy = true; state.panoramaError = null;
+    renderPage(pageByKey["interview-panorama"]);
+    post(endpoints.guidedInterviewStart, { userId: state.identity.userId, request: {
+      positionName: position, resumeId: resumeId ? Number(resumeId) : null, difficulty: difficulty, mode: "VOICE"
+    }}).then(function (result) {
+      state.panoramaSession = result.session; state.panoramaQuestion = result.openingMessage.content;
+      state.panoramaAnswerCount = 0; state.panoramaTranscript = "";
+      state.interviews = [result.session].concat(normalizeArray(state.interviews));
+    }).catch(function (error) {
+      state.panoramaError = error.message || "全景面试暂时无法开始，请稍后重试。";
+    }).then(function () { state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]); });
+  }
+
+  function startPanoramaAnswer() {
+    if (state.panoramaAnswering || state.panoramaBusy) return;
+    state.panoramaError = null; state.panoramaAnswering = true; state.panoramaSeconds = 0;
+    startPanoramaTimer();
+    var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) {
+      state.panoramaError = "当前浏览器不支持语音转文字，请直接在回答框中输入内容。摄像头预览仍会继续。";
+      renderPage(pageByKey["interview-panorama"]);
+      var fallbackInput = document.getElementById("panoramaAnswer"); if (fallbackInput) fallbackInput.focus();
+      return;
+    }
+    var recognition = new Recognition();
+    recognition.lang = "zh-CN"; recognition.continuous = true; recognition.interimResults = true;
+    recognition.onresult = function (event) {
+      var text = "";
+      for (var i = 0; i < event.results.length; i += 1) text += event.results[i][0].transcript;
+      state.panoramaTranscript = text;
+      var input = document.getElementById("panoramaAnswer"); if (input) input.value = text;
+    };
+    recognition.onerror = function () {
+      state.panoramaError = "语音识别暂时不可用，你可以继续手工输入回答。";
+      state.panoramaAnswering = false; renderPage(pageByKey["interview-panorama"]);
+    };
+    recognition.onend = function () { state.panoramaAnswering = false; };
+    state.panoramaRecognition = recognition;
+    try { recognition.start(); } catch (error) { state.panoramaAnswering = false; }
+    renderPage(pageByKey["interview-panorama"]);
+  }
+
+  function submitPanoramaAnswer() {
+    if (!state.panoramaSession || state.panoramaBusy) return;
+    var answer = valueOf("panoramaAnswer");
+    if (!answer) { state.panoramaError = "请先完成本题回答，再进入下一题。"; renderPage(pageByKey["interview-panorama"]); return; }
+    stopPanoramaRecognition(); stopPanoramaTimer();
+    state.panoramaBusy = true; state.panoramaTranscript = answer; state.panoramaError = null;
+    renderPage(pageByKey["interview-panorama"]);
+    post(endpoints.guidedInterviewAnswer, { userId: state.identity.userId, interviewId: state.panoramaSession.interviewId, answer: answer })
+      .then(function (result) {
+        state.panoramaSession = result.session; state.panoramaQuestion = result.interviewerMessage.content;
+        state.panoramaAnswerCount += 1; state.panoramaTranscript = ""; state.panoramaSeconds = 0;
+      }).catch(function (error) { state.panoramaError = error.message || "回答提交失败，请稍后重试。"; })
+      .then(function () { state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]); });
+  }
+
+  function finishPanoramaInterview() {
+    if (!state.panoramaSession || state.panoramaBusy) return;
+    if (!state.panoramaAnswerCount) { state.panoramaError = "请至少完成一道回答后再结束面试。"; renderPage(pageByKey["interview-panorama"]); return; }
+    stopPanoramaRecognition(); stopPanoramaTimer(); state.panoramaBusy = true;
+    post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.panoramaSession.interviewId })
+      .then(function (report) {
+        state.panoramaReport = report; state.panoramaSession.report = report; state.panoramaSession.status = "COMPLETED";
+        state.panoramaSession.finalScore = report.overallScore; stopPanoramaMedia();
+      }).catch(function (error) { state.panoramaError = error.message || "暂时无法生成复盘，请稍后重试。"; })
+      .then(function () { state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]); });
+  }
+
+  function resetPanoramaInterview() {
+    stopPanoramaMedia(); state.panoramaSession = null; state.panoramaQuestion = null; state.panoramaTranscript = "";
+    state.panoramaReport = null; state.panoramaError = null; state.panoramaAnswerCount = 0; state.panoramaSeconds = 0;
+    state.panoramaCameraState = "idle"; renderPage(pageByKey["interview-panorama"]);
+  }
+
+  function attachPanoramaCamera() {
+    var video = document.getElementById("panoramaCamera");
+    if (!video || !state.panoramaStream) return;
+    if (video.srcObject !== state.panoramaStream) video.srcObject = state.panoramaStream;
+    var playing = video.play(); if (playing && playing.catch) playing.catch(function () {});
+  }
+
+  function startPanoramaTimer() {
+    stopPanoramaTimer();
+    state.panoramaTimer = window.setInterval(function () {
+      state.panoramaSeconds += 1; var timer = document.getElementById("panoramaTimer");
+      if (timer) timer.textContent = formatPanoramaTime(state.panoramaSeconds);
+    }, 1000);
+  }
+
+  function stopPanoramaTimer() { if (state.panoramaTimer) window.clearInterval(state.panoramaTimer); state.panoramaTimer = null; }
+  function formatPanoramaTime(seconds) { var safe = Math.max(0, Number(seconds) || 0); return String(Math.floor(safe / 60)).padStart(2, "0") + ":" + String(safe % 60).padStart(2, "0"); }
+  function stopPanoramaRecognition() {
+    if (state.panoramaRecognition) { try { state.panoramaRecognition.stop(); } catch (error) {} }
+    state.panoramaRecognition = null; state.panoramaAnswering = false;
+  }
+  function stopPanoramaMedia() {
+    stopPanoramaRecognition(); stopPanoramaTimer();
+    if (state.panoramaStream && state.panoramaStream.getTracks) state.panoramaStream.getTracks().forEach(function (track) { track.stop(); });
+    state.panoramaStream = null;
   }
 
   function handleInterviewAction(target) {
@@ -3478,6 +3684,8 @@
   }
 
   function handlePageHostClick(event) {
+    var panoramaTarget = findAttributeTarget(event.target, "data-panorama-action");
+    if (panoramaTarget) { event.preventDefault(); event.stopPropagation(); handlePanoramaAction(panoramaTarget); return; }
     var interviewTarget = findAttributeTarget(event.target, "data-interview-action");
     if (interviewTarget) { event.preventDefault(); event.stopPropagation(); handleInterviewAction(interviewTarget); return; }
     var planHorizonTarget = findPlanHorizonTarget(event.target);
