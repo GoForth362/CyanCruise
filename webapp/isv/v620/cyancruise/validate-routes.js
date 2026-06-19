@@ -16,6 +16,9 @@ for (const marker of ["mediaDevices.getUserMedia", "panoramaCamera", "SpeechReco
 for (const marker of ["panoramaMediaCandidates", "无摄像头继续", "window.isSecureContext"]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic camera compatibility marker: ${marker}`);
 }
+for (const marker of ["panoramaAnswerLimit", "3 * 60", "5 * 60", "8 * 60", "本题在规定时间内未完成回答"]) {
+  if (!app.includes(marker)) throw new Error(`Missing panoramic answer timing marker: ${marker}`);
+}
 for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-dimensions"]) {
   if (!app.includes(marker)) throw new Error(`Missing seven-question AI interview marker: ${marker}`);
 }

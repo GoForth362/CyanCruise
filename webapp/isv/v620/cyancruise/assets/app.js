@@ -152,6 +152,7 @@
     panoramaNotice: null,
     panoramaRecognition: null,
     panoramaAnswering: false,
+    panoramaDifficulty: "Normal",
     panoramaSeconds: 0,
     panoramaTimer: null,
     panoramaAnswerCount: 0,
@@ -3362,13 +3363,14 @@
       '<div class="panorama-video-frame">' + (state.panoramaStream ? '<video id="panoramaCamera" autoplay muted playsinline aria-label="摄像头实时预览"></video>' :
       '<div class="panorama-camera-off"><span>摄像头未连接</span><strong>你仍可继续完成 AI 面试</strong></div>') +
       '<span class="panorama-live-badge">' + (state.panoramaStream ? "摄像头已连接 · 仅本地预览" : "无摄像头模式") + '</span></div></div>' +
-      '<div class="panorama-answer-panel"><div class="panorama-timer"><small>答题时间</small><strong id="panoramaTimer">' + formatPanoramaTime(state.panoramaSeconds) + '</strong></div>' +
-      '<label>语音识别结果（可修改）<textarea id="panoramaAnswer" rows="3" placeholder="点击开始回答；浏览器不支持语音识别时可直接输入">' + escapeHtml(transcript) + '</textarea></label>' +
+      '<div class="panorama-answer-panel"><div class="panorama-timer"><small>剩余时间</small><strong id="panoramaTimer">' + formatPanoramaTime(state.panoramaSeconds) + '</strong></div>' +
+      '<label>回答内容（可修改）<textarea id="panoramaAnswer" rows="3" placeholder="题目出现后已自动计时；你可以开启语音输入，也可以直接输入">' + escapeHtml(transcript) + '</textarea></label>' +
       '<div class="actions-row"><button type="button" data-panorama-action="listen" ' + (state.panoramaBusy ? "disabled" : "") + '>' +
-      (state.panoramaAnswering ? "正在聆听" : "开始回答") + '</button>' +
+      (state.panoramaAnswering ? "正在聆听" : "开启语音输入") + '</button>' +
       '<button type="button" data-panorama-action="answer" ' + (state.panoramaBusy ? "disabled" : "") + '>回答完毕</button>' +
       '<button type="button" class="secondary" data-panorama-action="finish" ' + (state.panoramaBusy ? "disabled" : "") + '>结束面试</button></div>' +
-      (state.panoramaError ? '<p class="panorama-error">' + escapeHtml(state.panoramaError) + '</p>' : '') + '</div></div></section>';
+      (state.panoramaError ? '<p class="panorama-error">' + escapeHtml(state.panoramaError) + '</p>' : '') +
+      (state.panoramaNotice ? '<p class="panorama-notice">' + escapeHtml(state.panoramaNotice) + '</p>' : '') + '</div></div></section>';
   }
 
   function renderPanoramaReport() {
@@ -3542,6 +3544,7 @@
     var position = valueOf("panoramaPosition");
     var resumeId = valueOf("panoramaResume");
     var difficulty = valueOf("panoramaDifficulty");
+    state.panoramaDifficulty = difficulty || "Normal";
     state.panoramaBusy = true; state.panoramaError = null;
     renderPage(pageByKey["interview-panorama"]);
     post(endpoints.guidedInterviewStart, { userId: state.identity.userId, request: {
@@ -3549,16 +3552,19 @@
     }}).then(function (result) {
       state.panoramaSession = result.session; state.panoramaQuestion = result.openingMessage.content;
       state.panoramaAnswerCount = 0; state.panoramaTranscript = "";
+      state.panoramaSeconds = panoramaAnswerLimit(state.panoramaDifficulty);
       state.interviews = [result.session].concat(normalizeArray(state.interviews));
     }).catch(function (error) {
       state.panoramaError = error.message || "全景面试暂时无法开始，请稍后重试。";
-    }).then(function () { state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]); });
+    }).then(function () {
+      state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]);
+      if (state.panoramaSession && state.panoramaQuestion) startPanoramaTimer();
+    });
   }
 
   function startPanoramaAnswer() {
     if (state.panoramaAnswering || state.panoramaBusy) return;
-    state.panoramaError = null; state.panoramaAnswering = true; state.panoramaSeconds = 0;
-    startPanoramaTimer();
+    state.panoramaError = null; state.panoramaAnswering = true;
     var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) {
       state.panoramaError = "当前浏览器不支持语音转文字，请直接在回答框中输入内容。摄像头预览仍会继续。";
@@ -3584,19 +3590,29 @@
     renderPage(pageByKey["interview-panorama"]);
   }
 
-  function submitPanoramaAnswer() {
+  function submitPanoramaAnswer(timedOut) {
     if (!state.panoramaSession || state.panoramaBusy) return;
     var answer = valueOf("panoramaAnswer");
+    if (!answer && timedOut) answer = "本题在规定时间内未完成回答。";
     if (!answer) { state.panoramaError = "请先完成本题回答，再进入下一题。"; renderPage(pageByKey["interview-panorama"]); return; }
     stopPanoramaRecognition(); stopPanoramaTimer();
     state.panoramaBusy = true; state.panoramaTranscript = answer; state.panoramaError = null;
+    state.panoramaNotice = timedOut ? "本题答题时间已结束，正在自动提交并进入下一题。" : null;
     renderPage(pageByKey["interview-panorama"]);
+    var shouldFinish = false;
     post(endpoints.guidedInterviewAnswer, { userId: state.identity.userId, interviewId: state.panoramaSession.interviewId, answer: answer })
       .then(function (result) {
-        state.panoramaSession = result.session; state.panoramaQuestion = result.interviewerMessage.content;
-        state.panoramaAnswerCount += 1; state.panoramaTranscript = ""; state.panoramaSeconds = 0;
+        state.panoramaSession = result.session; state.panoramaAnswerCount += 1; state.panoramaTranscript = "";
+        shouldFinish = state.panoramaAnswerCount >= 7 || !result.interviewerMessage;
+        state.panoramaQuestion = shouldFinish ? null : result.interviewerMessage.content;
+        state.panoramaSeconds = shouldFinish ? 0 : panoramaAnswerLimit(state.panoramaDifficulty);
       }).catch(function (error) { state.panoramaError = error.message || "回答提交失败，请稍后重试。"; })
-      .then(function () { state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]); });
+      .then(function () {
+        state.panoramaBusy = false;
+        if (shouldFinish) { finishPanoramaInterview(); return; }
+        renderPage(pageByKey["interview-panorama"]);
+        if (!state.panoramaError) startPanoramaTimer();
+      });
   }
 
   function finishPanoramaInterview() {
@@ -3614,6 +3630,7 @@
   function resetPanoramaInterview() {
     stopPanoramaMedia(); state.panoramaSession = null; state.panoramaQuestion = null; state.panoramaTranscript = "";
     state.panoramaReport = null; state.panoramaError = null; state.panoramaNotice = null; state.panoramaAnswerCount = 0; state.panoramaSeconds = 0;
+    state.panoramaDifficulty = "Normal";
     state.panoramaCameraState = "idle"; renderPage(pageByKey["interview-panorama"]);
   }
 
@@ -3626,13 +3643,20 @@
 
   function startPanoramaTimer() {
     stopPanoramaTimer();
+    if (state.panoramaSeconds <= 0) state.panoramaSeconds = panoramaAnswerLimit(state.panoramaDifficulty);
     state.panoramaTimer = window.setInterval(function () {
-      state.panoramaSeconds += 1; var timer = document.getElementById("panoramaTimer");
+      state.panoramaSeconds = Math.max(0, state.panoramaSeconds - 1); var timer = document.getElementById("panoramaTimer");
       if (timer) timer.textContent = formatPanoramaTime(state.panoramaSeconds);
+      if (state.panoramaSeconds <= 0) { stopPanoramaTimer(); submitPanoramaAnswer(true); }
     }, 1000);
   }
 
   function stopPanoramaTimer() { if (state.panoramaTimer) window.clearInterval(state.panoramaTimer); state.panoramaTimer = null; }
+  function panoramaAnswerLimit(difficulty) {
+    if (difficulty === "Easy") return 3 * 60;
+    if (difficulty === "Hard") return 8 * 60;
+    return 5 * 60;
+  }
   function formatPanoramaTime(seconds) { var safe = Math.max(0, Number(seconds) || 0); return String(Math.floor(safe / 60)).padStart(2, "0") + ":" + String(safe % 60).padStart(2, "0"); }
   function stopPanoramaRecognition() {
     if (state.panoramaRecognition) { try { state.panoramaRecognition.stop(); } catch (error) {} }

@@ -987,6 +987,7 @@
       "ipdPaths": ["pages/interview/room", "pages/interview/history"],
       "target": "index.html?ccRoute=interview-panorama",
       "status": "available",
+      "answerTiming": "题目出现后自动倒计时：入门3分钟、常规5分钟、进阶8分钟；超时自动提交或记录未回答。",
       "webApis": [
         {
           "name": "panorama interview history",
