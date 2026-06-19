@@ -31,3 +31,10 @@
 - [x] 5.2 运行 `openspec validate enable-ai-mock-interview --strict` 和全量 OpenSpec strict 校验。
 - [x] 5.3 运行 webapp 路由校验及相关 Gradle 聚焦测试。
 - [x] 5.4 设置 JDK 8 并使用仓库内 `gradlew.bat` 运行 `clean build`。
+
+## 6. 面试方式路由修正
+
+- [x] 6.1 拆分面试中心、AI 模拟面试和全景仿真面试路由，并修正就业页、顶部菜单和面试中心卡片跳转。
+- [x] 6.2 按 `TEXT` 与 `VOICE/PANORAMA` 分类展示两类历史，AI 模拟面试页面只展示文字面试记录。
+- [x] 6.3 为全景仿真面试提供独立边界页面和既有记录，不复用 AI 文字面试表单。
+- [x] 6.4 更新路由契约、缓存版本并完成 OpenSpec、JavaScript 与 webapp 路由校验。

@@ -1683,3 +1683,6 @@ h4 {
 .interview-message.candidate { margin-left: auto; background: #e6f8f4; }
 .interview-message p { margin: 6px 0 0; white-space: pre-wrap; }
 .interview-report .metric-value { margin: 12px 0; font-size: 2rem; font-weight: 700; color: #167b68; }
+.interview-type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.panorama-intro { border-left: 4px solid #6f7ee8; }
+@media (max-width: 760px) { .interview-type-grid { grid-template-columns: 1fr; } }

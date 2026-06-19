@@ -65,8 +65,9 @@
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumes", "snapshot", "filePreview", "resumeDiagnosis", "keywordStatus"]),
     page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
-    page("interview-home", "面试", "available", "user", "全景仿真面试和模拟面试入口。", ["interviews", "startInterview"]),
-    page("interview", "模拟面试", "available", "user", "查看面试历史，并从岗位目标开始练习。", ["interviews", "startInterview"]),
+    page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并分别查看练习记录。", ["interviews"]),
+    page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
+    page("interview-panorama", "全景仿真面试", "available", "user", "查看全景仿真面试记录和当前能力边界。", ["interviews"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
     page("employment-insight", "就业洞察", "available", "user", "按学校、专业和目标岗位查看就业洞察。", ["employmentInsight"]),
@@ -80,8 +81,8 @@
     ["就业", "#employment-home", "已接入"],
     ["简历 / 简历制作", "#resume-home", "已接入"],
     ["简历 / 简历诊断", "#resume-diagnosis", "已接入"],
-    ["面试 / 全景仿真面试", "#interview-home", "已接入"],
-    ["面试 / 模拟面试", "#interview", "已接入"],
+    ["面试 / 全景仿真面试", "#interview-panorama", "独立入口"],
+    ["面试 / AI 模拟面试", "#interview", "已接入"],
     ["深造", "#further-study-home", "规划中"],
     ["深造 / 考研", "#postgraduate-exam", "规划中"],
     ["深造 / 保研", "#postgraduate-recommendation", "规划中"],
@@ -91,16 +92,16 @@
     "employment-home": [
       feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
       feature("简历诊断", "诊", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
-      feature("全景仿真面试", "仿", "按目标岗位进入真实面试流程练习", "interview", "已接入"),
-      feature("模拟面试", "面", "查看面试历史并开始模拟练习", "interview", "已接入")
+      feature("全景仿真面试", "仿", "进入独立的全景仿真面试页面并查看历史", "interview-panorama", "独立入口"),
+      feature("AI 模拟面试", "面", "通过文字问答练习并获得针对性复盘", "interview", "已接入")
     ],
     "resume-home": [
       feature("简历制作", "简", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
       feature("简历诊断", "诊", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
     ],
     "interview-home": [
-      feature("全景仿真面试", "仿", "沿用 IPD 模拟面试流程，按目标岗位进入练习", "interview", "已接入"),
-      feature("模拟面试", "面", "沿用 IPD 面试追问和复盘逻辑，查看历史并开始练习", "interview", "已接入")
+      feature("全景仿真面试", "仿", "进入全景仿真面试并查看该类型记录", "interview-panorama", "独立入口"),
+      feature("AI 模拟面试", "面", "进入 AI 文字问答练习并查看该类型记录", "interview", "已接入")
     ],
     "further-study-home": [
       feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划智能体", "postgraduate-exam", "规划中"),
@@ -328,8 +329,10 @@
     }
     if (item.key === "workbench") {
       renderWorkbench(item);
-    } else if (item.key === "employment-home" || item.key === "resume-home" || item.key === "interview-home" || item.key === "further-study-home") {
+    } else if (item.key === "employment-home" || item.key === "resume-home" || item.key === "further-study-home") {
       renderFeatureHome(item);
+    } else if (item.key === "interview-home") {
+      renderInterviewHub(item);
     } else if (item.key === "postgraduate-exam" || item.key === "postgraduate-recommendation" || item.key === "study-abroad") {
       renderPlannedStudyPage(item);
     } else if (item.key === "onboarding") {
@@ -346,6 +349,8 @@
       renderAssessmentPage(item);
     } else if (item.key === "interview") {
       renderInterviewPage(item);
+    } else if (item.key === "interview-panorama") {
+      renderPanoramaInterviewPage(item);
     } else if (item.key === "career-resources") {
       renderCareerResourcesPage(item);
     } else {
@@ -3269,6 +3274,32 @@
     renderShell(item, body);
   }
 
+  function renderInterviewHub(item) {
+    var aiHistory = normalizeArray(state.interviews).filter(isAiInterview);
+    var panoramaHistory = normalizeArray(state.interviews).filter(isPanoramaInterview);
+    var body = '<section class="feature-section full"><div class="section-heading"><div><h3>选择面试方式</h3>' +
+      '<p class="section-note">两种练习方式使用不同页面，记录也分别保存和展示。</p></div></div>' +
+      '<div class="feature-grid interview-type-grid">' +
+      '<article class="feature-card"><div class="app-icon-tile app-icon-tile--cyan"><span class="icon-glyph">智</span></div>' +
+      '<h3>AI 模拟面试</h3><p>通过文字问答练习岗位表达，结束后获得结构化复盘。</p>' +
+      '<button type="button" data-link="interview">进入 AI 模拟面试</button></article>' +
+      '<article class="feature-card"><div class="app-icon-tile app-icon-tile--candy"><span class="icon-glyph">景</span></div>' +
+      '<h3>全景仿真面试</h3><p>独立的全景面试方式，用于更贴近真实场景的综合练习。</p>' +
+      '<button type="button" data-link="interview-panorama">进入全景仿真面试</button></article></div></section>' +
+      renderInterviewHistoryList("AI 模拟面试记录", aiHistory, "还没有 AI 模拟面试记录。", "interview") +
+      renderInterviewHistoryList("全景仿真面试记录", panoramaHistory, "还没有全景仿真面试记录。", "interview-panorama");
+    renderShell(item, body);
+  }
+
+  function renderPanoramaInterviewPage(item) {
+    var history = normalizeArray(state.interviews).filter(isPanoramaInterview);
+    var body = '<section class="panel full panorama-intro"><h3>全景仿真面试</h3>' +
+      '<p>这是独立于 AI 文字问答的面试方式。摄像头、语音和行为表现采集尚未迁入 CyanCruise，当前不会跳转到 AI 模拟面试表单。</p>' +
+      '<div class="actions-row"><button type="button" class="secondary" data-link="interview-home">返回面试中心</button></div></section>' +
+      renderInterviewHistoryList("全景仿真面试记录", history, "还没有全景仿真面试记录。后续接入全景采集流程后，新记录会显示在这里。", "interview-panorama");
+    renderShell(item, body);
+  }
+
   function renderInterviewSetup() {
     var role = firstText(getValue(state.snapshot, "preferences.targetRole"), getValue(state.snapshot, "resume.targetJob"), "");
     var resumes = normalizeArray(state.resumes);
@@ -3310,12 +3341,27 @@
   }
 
   function renderInterviewHistory() {
-    var history = normalizeArray(state.interviews);
-    return '<section class="panel full"><h3>练习记录</h3>' + (history.length ? history.map(function (entry) {
+    return renderInterviewHistoryList("AI 模拟面试记录", normalizeArray(state.interviews).filter(isAiInterview),
+      "还没有 AI 模拟面试记录。完成一次回答后，这里会保留复盘。", "interview");
+  }
+
+  function renderInterviewHistoryList(title, history, emptyText, route) {
+    return '<section class="panel full"><h3>' + escapeHtml(title) + '</h3>' + (history.length ? history.map(function (entry) {
       return '<article class="list-row"><div><strong>' + escapeHtml(firstText(entry.positionName, "目标岗位待确认")) + '</strong><p>' +
         escapeHtml(entry.status === "COMPLETED" ? "已完成" : "进行中") + (entry.finalScore != null ? " · " + entry.finalScore + " 分" : "") +
-        '</p></div><button type="button" class="secondary" data-interview-action="open" data-interview-id="' + escapeAttr(entry.interviewId) + '">查看</button></article>';
-    }).join("") : '<p class="empty-copy">还没有练习记录。完成一次回答后，这里会保留复盘。</p>') + '</section>';
+        '</p></div>' + (route === "interview" ? '<button type="button" class="secondary" data-interview-action="open" data-interview-id="' +
+        escapeAttr(entry.interviewId) + '">查看</button>' : '<span class="chip">全景记录</span>') + '</article>';
+    }).join("") : '<p class="empty-copy">' + escapeHtml(emptyText) + '</p>') + '</section>';
+  }
+
+  function isAiInterview(entry) {
+    var mode = String(entry && entry.mode || "TEXT").toUpperCase();
+    return mode !== "VOICE" && mode !== "PANORAMA";
+  }
+
+  function isPanoramaInterview(entry) {
+    var mode = String(entry && entry.mode || "").toUpperCase();
+    return mode === "VOICE" || mode === "PANORAMA";
   }
 
   function handleInterviewAction(target) {
@@ -3349,6 +3395,7 @@
     var session = normalizeArray(state.interviews).filter(function (item) { return String(item.interviewId) === String(interviewId); })[0];
     if (!session) return;
     state.activeInterview = session; state.interviewReport = session.report || null; state.interviewBusy = true; renderPage(pageByKey.interview);
+    if (state.route !== "interview") window.location.hash = "interview";
     post(endpoints.interviewMessages, { userId: state.identity.userId, interviewId: session.interviewId }).then(function (messages) { state.interviewMessages = normalizeArray(messages); })
       .catch(function (error) { state.interviewError = error.message || "无法读取练习记录。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
   }
@@ -3412,6 +3459,7 @@
       "resume-diagnosis": "resume-home",
       "interview-home": "employment-home",
       "interview": "interview-home",
+      "interview-panorama": "interview-home",
       "postgraduate-exam": "further-study-home",
       "postgraduate-recommendation": "further-study-home",
       "study-abroad": "further-study-home",
@@ -4516,7 +4564,11 @@
       "pages/resume/index": "resume",
       "pages/resume-ai/index": "resume-diagnosis",
       "pages/assessment/index": "assessment",
-      "pages/interview/index": "interview"
+      "pages/interview/index": "interview-home",
+      "pages/interview/start": "interview",
+      "pages/interview/chat": "interview",
+      "pages/interview/history": "interview-home",
+      "pages/interview/report": "interview"
     };
     return map[normalized] || normalized || "onboarding";
   }
