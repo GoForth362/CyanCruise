@@ -93,7 +93,12 @@ public class InterviewApplicationService {
 
     public InterviewReportDto finishAndReport(String userId, Long interviewId) {
         InterviewSessionDto session = ownedInterview(userId, interviewId);
-        if (session.getReport() != null) return session.getReport();
+        if (session.getReport() != null) {
+            if (InterviewConstants.STATUS_ONGOING.equals(session.getStatus())) {
+                end(userId, interviewId, session.getReport().getOverallScore());
+            }
+            return session.getReport();
+        }
         List<InterviewMessageDto> messages = getMessages(userId, interviewId);
         int answers = answerCount(messages);
         if (answers == 0) throw new IllegalArgumentException("请至少完成一道回答后再查看复盘");

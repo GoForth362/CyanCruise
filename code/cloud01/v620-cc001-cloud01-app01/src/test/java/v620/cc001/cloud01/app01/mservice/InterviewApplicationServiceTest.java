@@ -148,6 +148,20 @@ class InterviewApplicationServiceTest {
         assertEquals(Integer.valueOf(7), service.finishAndReport("seven-answer-user", session.getInterviewId()).getTotalQuestions());
     }
 
+    @Test
+    void cachedReportRepairsOngoingSessionStatus() {
+        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
+                profileService(new InMemoryCareerProfileStorage()));
+        InterviewSessionDto session = service.start("cached-report-user", startRequest("前端开发"));
+        service.saveReport("cached-report-user", session.getInterviewId(), report());
+
+        InterviewReportDto cached = service.finishAndReport("cached-report-user", session.getInterviewId());
+
+        assertEquals(Integer.valueOf(86), cached.getOverallScore());
+        assertEquals(InterviewConstants.STATUS_COMPLETED,
+                service.get("cached-report-user", session.getInterviewId()).getStatus());
+    }
+
     private InterviewApplicationService service(InterviewStorage storage,
                                                 CareerProfileApplicationService profileService) {
         return new InterviewApplicationService(storage, profileService, new InterviewCoreService());

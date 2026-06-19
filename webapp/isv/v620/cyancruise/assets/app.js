@@ -3445,11 +3445,23 @@
 
   function renderInterviewHistoryList(title, history, emptyText, route) {
     return '<section class="panel full"><h3>' + escapeHtml(title) + '</h3>' + (history.length ? history.map(function (entry) {
+      var completed = entry.status === "COMPLETED" || entry.finalScore != null || !!entry.report;
       return '<article class="list-row"><div><strong>' + escapeHtml(firstText(entry.positionName, "目标岗位待确认")) + '</strong><p>' +
-        escapeHtml(entry.status === "COMPLETED" ? "已完成" : "进行中") + (entry.finalScore != null ? " · " + entry.finalScore + " 分" : "") +
+        escapeHtml(completed ? "已完成" : "进行中") + (entry.finalScore != null ? " · " + entry.finalScore + " 分" : "") +
         '</p></div>' + (route === "interview" ? '<button type="button" class="secondary" data-interview-action="open" data-interview-id="' +
-        escapeAttr(entry.interviewId) + '">查看</button>' : '<span class="chip">全景记录</span>') + '</article>';
+        escapeAttr(entry.interviewId) + '">' + (completed ? "查看结果" : "继续面试") + '</button>' : '<span class="chip">全景记录</span>') + '</article>';
     }).join("") : '<p class="empty-copy">' + escapeHtml(emptyText) + '</p>') + '</section>';
+  }
+
+  function syncCompletedInterview(session, report) {
+    if (!session) return;
+    session.status = "COMPLETED"; session.report = report || session.report || null;
+    if (report && report.overallScore != null) session.finalScore = report.overallScore;
+    normalizeArray(state.interviews).forEach(function (entry) {
+      if (String(entry.interviewId) !== String(session.interviewId)) return;
+      entry.status = "COMPLETED"; entry.report = session.report;
+      if (session.finalScore != null) entry.finalScore = session.finalScore;
+    });
   }
 
   function isAiInterview(entry) {
@@ -3621,8 +3633,7 @@
     stopPanoramaRecognition(); stopPanoramaTimer(); state.panoramaBusy = true;
     post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.panoramaSession.interviewId })
       .then(function (report) {
-        state.panoramaReport = report; state.panoramaSession.report = report; state.panoramaSession.status = "COMPLETED";
-        state.panoramaSession.finalScore = report.overallScore; stopPanoramaMedia();
+        state.panoramaReport = report; syncCompletedInterview(state.panoramaSession, report); stopPanoramaMedia();
       }).catch(function (error) { state.panoramaError = error.message || "暂时无法生成复盘，请稍后重试。"; })
       .then(function () { state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]); });
   }
@@ -3694,12 +3705,14 @@
         state.interviewAnswerCount += 1; state.interviewDraft = "";
         if (state.interviewAnswerCount >= 7) {
           return post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId })
-            .then(function (report) { state.interviewReport = report; state.activeInterview.status = "COMPLETED"; state.activeInterview.finalScore = report.overallScore; });
+            .then(function (report) { state.interviewReport = report; syncCompletedInterview(state.activeInterview, report); });
         }
         state.interviewCurrentQuestion = result.interviewerMessage.content;
       });
     } else {
-      call = post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId }).then(function (report) { state.interviewReport = report; });
+      call = post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.activeInterview.interviewId }).then(function (report) {
+        state.interviewReport = report; syncCompletedInterview(state.activeInterview, report);
+      });
     }
     call.catch(function (error) { state.interviewError = error.message || "模拟面试暂时不可用，请稍后重试。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
   }
@@ -3733,11 +3746,17 @@
     if (!session) return;
     state.activeInterview = session; state.interviewReport = session.report || null; state.interviewBusy = true; renderPage(pageByKey.interview);
     if (state.route !== "interview") window.location.hash = "interview";
-    post(endpoints.interviewMessages, { userId: state.identity.userId, interviewId: session.interviewId }).then(function (messages) {
+    var completed = session.status === "COMPLETED" || session.finalScore != null || !!session.report;
+    var reportRequest = completed && !session.report
+      ? post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: session.interviewId })
+      : Promise.resolve(session.report || null);
+    Promise.all([post(endpoints.interviewMessages, { userId: state.identity.userId, interviewId: session.interviewId }), reportRequest]).then(function (results) {
+      var messages = results[0]; var report = results[1];
       state.interviewMessages = normalizeArray(messages);
       state.interviewAnswerCount = state.interviewMessages.filter(function (message) { return String(message.role).toUpperCase() === "USER"; }).length;
       var questions = state.interviewMessages.filter(function (message) { return String(message.role).toUpperCase() === "AI"; });
       state.interviewCurrentQuestion = questions.length ? questions[questions.length - 1].content : null;
+      if (report) { state.interviewReport = report; syncCompletedInterview(session, report); }
     })
       .catch(function (error) { state.interviewError = error.message || "无法读取练习记录。"; }).then(function () { state.interviewBusy = false; renderPage(pageByKey.interview); });
   }
