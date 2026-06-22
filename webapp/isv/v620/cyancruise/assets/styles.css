@@ -1692,8 +1692,17 @@ h4 {
 .interview-history-pager { width: 100%; padding: 16px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); }
 .interview-history-pager .actions-row { margin-left: auto; }
 .interview-record-time { margin-top: 4px; color: var(--muted); font-size: .9rem; }
+.interview-transcript-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 22px; }
+.interview-transcript-head h3 { margin: 6px 0; }
+.interview-transcript-head p { margin: 0; color: var(--muted); }
+.interview-transcript-list { display: grid; gap: 16px; }
+.interview-transcript-pair { padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #f8faf9; }
+.interview-transcript-pair > span { color: #16806f; font-weight: 700; }
+.interview-transcript-pair h4 { margin: 14px 0 6px; }
+.interview-transcript-pair p { margin: 0; line-height: 1.75; white-space: pre-wrap; }
+.interview-transcript-pair .candidate-answer { padding: 12px 14px; border-radius: 10px; background: #eaf7f3; }
 .panorama-intro { border-left: 4px solid #6f7ee8; }
-@media (max-width: 760px) { .interview-type-grid { grid-template-columns: 1fr; } .interview-history-entry, .interview-history-head, .interview-history-pager { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 760px) { .interview-type-grid { grid-template-columns: 1fr; } .interview-history-entry, .interview-history-head, .interview-history-pager, .interview-transcript-head { align-items: flex-start; flex-direction: column; } }
 .panorama-experience { min-height: 680px; overflow: hidden; border-radius: 22px; color: #fff; background: #11182b url("images/panorama-interview-room-v1.png") center/cover no-repeat; box-shadow: 0 24px 60px rgba(8, 15, 32, .24); }
 .panorama-overlay { min-height: 680px; box-sizing: border-box; padding: 28px; background: linear-gradient(180deg, rgba(8, 14, 30, .16), rgba(8, 14, 30, .34)); }
 .panorama-topbar { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 26px; }

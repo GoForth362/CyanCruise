@@ -27,8 +27,11 @@ for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-di
 for (const marker of ["interviewDelete", "删除面试记录", "删除记录"]) {
   if (!app.includes(marker)) throw new Error(`Missing interview deletion marker: ${marker}`);
 }
-for (const marker of ["interviewPage", "interview-history", "interviewHistoryPageNumber", "每页显示 10 条", "interview-history-pager full", "formatInterviewDateTime", "结束时间：尚未结束"]) {
+for (const marker of ["interviewPage", "interview-history", "interviewHistoryPageNumber", "每页查看 10 条记录", "interview-history-pager full", "formatInterviewDateTime", "结束时间：尚未结束"]) {
   if (!app.includes(marker)) throw new Error(`Missing paged interview history marker: ${marker}`);
+}
+for (const marker of ["interviewViewMode", "查看问答", "interviewQuestionAnswerPairs", "面试官问题", "我的回答"]) {
+  if (!app.includes(marker)) throw new Error(`Missing interview transcript marker: ${marker}`);
 }
 for (const marker of [".voice-answer-button:focus", ".voice-answer-button:focus-visible", "background: transparent"]) {
   if (!styles.includes(marker)) throw new Error(`Missing voice answer interaction style: ${marker}`);
