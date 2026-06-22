@@ -83,6 +83,10 @@
 
    `.voice-answer-button` 显式覆盖全局按钮的悬停、点击和焦点背景，始终保持透明外层与清晰文字；键盘焦点使用外轮廓提示，语音识别中的圆形麦克风继续使用独立状态色和动画。
 
+16. AI 面试历史使用独立路由和服务端分页契约
+
+   `interview` 答题页和 `interview-home` 面试中心不再直接渲染 AI 面试记录，只提供进入 `interview-history` 的按钮。新增 `InterviewPageResultDto` 和 `/cc001/interview/page`，服务端按当前用户、`TEXT`（兼容空模式旧记录）和页码筛选，固定每页 10 条。分页在应用服务完成，页面不对全量结果做生产分页；底层记录仍由既有 Cosmic 数据模型或 PostgreSQL `cc_interview_session` 与消息存储持久化，不新增平行数据表。
+
 ## Risks / Trade-offs
 
 - [Risk] AI 返回的 JSON 结构不稳定。→ 使用 `AiJsonHelper` 提取对象、逐字段容错与范围限制，失败时生成本地复盘。

@@ -22,6 +22,7 @@
       "career-plan",
       "interview-home",
       "interview",
+      "interview-history",
       "interview-panorama",
       "assistant",
       "messages",
@@ -40,6 +41,7 @@
       "career-plan",
       "interview-home",
       "interview",
+      "interview-history",
       "interview-panorama",
       "assistant",
       "messages",
@@ -977,16 +979,7 @@
           "body": ["userId"],
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto>",
-          "fallback": "分别显示两种面试方式的空记录状态。"
-        },
-        {
-          "name": "delete AI interview record",
-          "method": "POST",
-          "path": "/cc001/interview/delete",
-          "body": ["userId", "interviewId"],
-          "userIdRequired": true,
-          "dto": "String",
-          "fallback": "保留原记录并提示稍后重试。"
+          "fallback": "显示两种面试入口和全景面试空记录状态，AI 记录由独立分页页承载。"
         }
       ]
     },
@@ -1050,24 +1043,6 @@
       "status": "available",
       "webApis": [
         {
-          "name": "interview list",
-          "method": "POST",
-          "path": "/cc001/interview/list",
-          "body": ["userId"],
-          "userIdRequired": true,
-          "dto": "List<InterviewSessionDto>",
-          "fallback": "Show no interview history state."
-        },
-        {
-          "name": "delete interview record",
-          "method": "POST",
-          "path": "/cc001/interview/delete",
-          "body": ["userId", "interviewId"],
-          "userIdRequired": true,
-          "dto": "String",
-          "fallback": "保留原记录并提示删除失败。"
-        },
-        {
           "name": "start interview",
           "method": "POST",
           "path": "/cc001/interview/start",
@@ -1111,6 +1086,53 @@
           "userIdRequired": true,
           "dto": "List<InterviewMessageDto>",
           "fallback": "提示练习记录暂时无法读取。"
+        }
+      ]
+    },
+    {
+      "key": "interview-history",
+      "title": "AI 模拟面试记录",
+      "ipdPaths": ["pages/interview/history", "pages/interview/report"],
+      "target": "index.html?ccRoute=interview-history",
+      "status": "available",
+      "pageSize": 10,
+      "persistence": "既有 Cosmic/PostgreSQL 面试会话、消息和报告存储",
+      "webApis": [
+        {
+          "name": "paged AI interview history",
+          "method": "POST",
+          "path": "/cc001/interview/page",
+          "body": ["userId", "page", "mode=TEXT"],
+          "userIdRequired": true,
+          "dto": "InterviewPageResultDto",
+          "fallback": "显示记录暂时无法读取并保留返回操作。"
+        },
+        {
+          "name": "interview messages",
+          "method": "POST",
+          "path": "/cc001/interview/messages",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewMessageDto>",
+          "fallback": "提示练习记录暂时无法读取。"
+        },
+        {
+          "name": "read or generate completed report",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "保留记录并提示结果暂时无法读取。"
+        },
+        {
+          "name": "delete interview record",
+          "method": "POST",
+          "path": "/cc001/interview/delete",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "String",
+          "fallback": "保留原记录并提示删除失败。"
         }
       ]
     },
@@ -1298,6 +1320,18 @@
       "identityMode": "production-cosmic-context",
       "fallback": "AI 暂不可用时使用中文基础问题和基础复盘继续文字练习。",
       "deploymentNotes": "复用简历、目标岗位、用户画像和 AI 网关；语音、数字人和身体语言不在本挂载范围。"
+    },
+    {
+      "mountKey": "cyancruise-interview-history",
+      "routeKey": "interview-history",
+      "title": "AI 模拟面试记录",
+      "target": "index.html?ccRoute=interview-history",
+      "audience": "cyancruise-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "显示分页记录读取失败状态。",
+      "deploymentNotes": "复用既有面试数据库记录，后端固定每页返回 10 条文字面试记录。"
     },
     {
       "mountKey": "cyancruise-interview-panorama",

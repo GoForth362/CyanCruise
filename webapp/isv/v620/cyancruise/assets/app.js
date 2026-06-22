@@ -19,6 +19,7 @@
     plan: "/cc001/career-plan/summary",
     ensurePlan: "/cc001/career-plan/ensure",
     interviews: "/cc001/interview/list",
+    interviewPage: "/cc001/interview/page",
     startInterview: "/cc001/interview/start",
     guidedInterviewStart: "/cc001/interview/guided/start",
     guidedInterviewAnswer: "/cc001/interview/guided/answer",
@@ -66,8 +67,9 @@
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumes", "snapshot", "filePreview", "resumeDiagnosis", "keywordStatus"]),
     page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
-    page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并分别查看练习记录。", ["interviews", "interviewDelete"]),
-    page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish", "interviewDelete"]),
+    page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并进入独立记录页。", ["interviews"]),
+    page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
+    page("interview-history", "AI 模拟面试记录", "available", "user", "分页查看已保存的 AI 模拟面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"]),
     page("interview-panorama", "全景仿真面试", "available", "user", "在沉浸式面试环境中使用摄像头与 AI 面试官面对面练习。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
@@ -84,6 +86,7 @@
     ["简历 / 简历诊断", "#resume-diagnosis", "已接入"],
     ["面试 / 全景仿真面试", "#interview-panorama", "独立入口"],
     ["面试 / AI 模拟面试", "#interview", "已接入"],
+    ["面试 / AI 模拟面试记录", "#interview-history", "独立分页"],
     ["深造", "#further-study-home", "规划中"],
     ["深造 / 考研", "#postgraduate-exam", "规划中"],
     ["深造 / 保研", "#postgraduate-recommendation", "规划中"],
@@ -142,6 +145,10 @@
     interviewRecognition: null,
     interviewListening: false,
     interviewDraft: "",
+    interviewHistoryPage: null,
+    interviewHistoryPageNumber: 1,
+    interviewHistoryLoading: false,
+    interviewHistoryError: null,
     panoramaStream: null,
     panoramaSession: null,
     panoramaQuestion: null,
@@ -375,6 +382,8 @@
       renderAssessmentPage(item);
     } else if (item.key === "interview") {
       renderInterviewPage(item);
+    } else if (item.key === "interview-history") {
+      renderInterviewHistoryPage(item);
     } else if (item.key === "interview-panorama") {
       renderPanoramaInterviewPage(item);
     } else if (item.key === "career-resources") {
@@ -3288,7 +3297,8 @@
   }
 
   function renderInterviewPage(item) {
-    var body = "";
+    var body = '<section class="panel full interview-history-entry"><div><h3>面试记录</h3><p class="panel-note">历史记录在独立页面中保存和分页展示。</p></div>' +
+      '<button type="button" class="secondary" data-link="interview-history">查看面试记录</button></section>';
     if (state.interviewError) body += statePanel("暂时没有完成操作", state.interviewError, "warning");
     if (state.interviewReport) {
       body += renderInterviewReport(state.interviewReport);
@@ -3297,12 +3307,10 @@
     } else {
       body += renderInterviewSetup();
     }
-    body += renderInterviewHistory();
     renderShell(item, body);
   }
 
   function renderInterviewHub(item) {
-    var aiHistory = normalizeArray(state.interviews).filter(isAiInterview);
     var panoramaHistory = normalizeArray(state.interviews).filter(isPanoramaInterview);
     var body = '<section class="feature-section full"><div class="section-heading"><div><h3>选择面试方式</h3>' +
       '<p class="section-note">两种练习方式使用不同页面，记录也分别保存和展示。</p></div></div>' +
@@ -3313,7 +3321,8 @@
       '<article class="feature-card"><div class="app-icon-tile app-icon-tile--candy"><span class="icon-glyph">景</span></div>' +
       '<h3>全景仿真面试</h3><p>独立的全景面试方式，用于更贴近真实场景的综合练习。</p>' +
       '<button type="button" data-link="interview-panorama">进入全景仿真面试</button></article></div></section>' +
-      renderInterviewHistoryList("AI 模拟面试记录", aiHistory, "还没有 AI 模拟面试记录。", "interview") +
+      '<section class="panel full interview-history-entry"><div><h3>AI 模拟面试记录</h3><p class="panel-note">在独立页面中每页查看 10 条记录。</p></div>' +
+      '<button type="button" class="secondary" data-link="interview-history">查看面试记录</button></section>' +
       renderInterviewHistoryList("全景仿真面试记录", panoramaHistory, "还没有全景仿真面试记录。", "interview-panorama");
     renderShell(item, body);
   }
@@ -3439,9 +3448,54 @@
     }).join("") : '<p>' + escapeHtml(emptyText) + '</p>') + '</section>';
   }
 
-  function renderInterviewHistory() {
-    return renderInterviewHistoryList("AI 模拟面试记录", normalizeArray(state.interviews).filter(isAiInterview),
-      "还没有 AI 模拟面试记录。完成一次回答后，这里会保留复盘。", "interview");
+  function renderInterviewHistoryPage(item) {
+    if (!state.interviewHistoryPage && !state.interviewHistoryLoading && !state.interviewHistoryError) {
+      loadInterviewHistoryPage(state.interviewHistoryPageNumber, false);
+    }
+    var body = '<section class="panel full interview-history-head"><div><h3>AI 模拟面试记录</h3><p class="panel-note">记录保存在系统中，每页显示 10 条。</p></div>' +
+      '<button type="button" class="secondary" data-link="interview">返回 AI 模拟面试</button></section>';
+    if (state.interviewHistoryLoading) {
+      body += statePanel("正在读取面试记录", "请稍候，正在加载当前页。", "pending");
+    } else if (state.interviewHistoryError) {
+      body += statePanel("面试记录暂时无法读取", state.interviewHistoryError, "warning");
+    } else {
+      var page = state.interviewHistoryPage || {};
+      body += renderInterviewHistoryList("第 " + firstText(page.page, 1) + " 页", normalizeArray(page.items),
+        "还没有 AI 模拟面试记录。完成一次回答后，这里会保留复盘。", "interview");
+      body += renderInterviewHistoryPager(page);
+    }
+    renderShell(item, body);
+  }
+
+  function renderInterviewHistoryPager(page) {
+    var current = Math.max(1, Number(page.page) || 1);
+    var totalPages = Math.max(1, Number(page.totalPages) || 0);
+    var total = Math.max(0, Number(page.total) || 0);
+    return '<nav class="interview-history-pager" aria-label="面试记录分页"><span>共 ' + total + ' 条 · 第 ' + current + ' / ' + totalPages + ' 页</span><div class="actions-row compact">' +
+      '<button type="button" class="secondary" data-interview-action="history-page" data-page="' + (current - 1) + '" ' + (current <= 1 ? 'disabled' : '') + '>上一页</button>' +
+      '<button type="button" class="secondary" data-interview-action="history-page" data-page="' + (current + 1) + '" ' + (current >= totalPages ? 'disabled' : '') + '>下一页</button></div></nav>';
+  }
+
+  function loadInterviewHistoryPage(pageNumber, renderLoading) {
+    var safePage = Math.max(1, Number(pageNumber) || 1);
+    state.interviewHistoryPageNumber = safePage; state.interviewHistoryLoading = true; state.interviewHistoryError = null;
+    if (renderLoading && state.route === "interview-history") renderPage(pageByKey["interview-history"]);
+    var request;
+    if (isFilePreview()) {
+      var all = normalizeArray(state.interviews).filter(isAiInterview); var from = (safePage - 1) * 10;
+      request = Promise.resolve({ items: all.slice(from, from + 10), page: safePage, size: 10, total: all.length, totalPages: Math.ceil(all.length / 10) });
+    } else {
+      request = post(endpoints.interviewPage, { userId: state.identity.userId, page: safePage, mode: "TEXT" });
+    }
+    return request.then(function (result) {
+      state.interviewHistoryPage = result || { items: [], page: safePage, size: 10, total: 0, totalPages: 0 };
+      state.interviewHistoryPageNumber = Number(state.interviewHistoryPage.page) || safePage;
+    }).catch(function (error) {
+      state.interviewHistoryError = error.message || "面试记录暂时无法读取，请稍后重试。";
+    }).then(function () {
+      state.interviewHistoryLoading = false;
+      if (state.route === "interview-history") renderPage(pageByKey["interview-history"]);
+    });
   }
 
   function renderInterviewHistoryList(title, history, emptyText, route) {
@@ -3460,6 +3514,11 @@
     session.status = "COMPLETED"; session.report = report || session.report || null;
     if (report && report.overallScore != null) session.finalScore = report.overallScore;
     normalizeArray(state.interviews).forEach(function (entry) {
+      if (String(entry.interviewId) !== String(session.interviewId)) return;
+      entry.status = "COMPLETED"; entry.report = session.report;
+      if (session.finalScore != null) entry.finalScore = session.finalScore;
+    });
+    normalizeArray(state.interviewHistoryPage && state.interviewHistoryPage.items).forEach(function (entry) {
       if (String(entry.interviewId) !== String(session.interviewId)) return;
       entry.status = "COMPLETED"; entry.report = session.report;
       if (session.finalScore != null) entry.finalScore = session.finalScore;
@@ -3689,6 +3748,7 @@
     if (action === "reset") { stopAiInterviewSpeech(); state.activeInterview = null; state.interviewMessages = []; state.interviewReport = null; state.interviewCurrentQuestion = null; state.interviewAnswerCount = 0; state.interviewDraft = ""; renderPage(pageByKey.interview); return; }
     if (action === "open") { openInterview(target.getAttribute("data-interview-id")); return; }
     if (action === "delete") { deleteInterviewRecord(target.getAttribute("data-interview-id")); return; }
+    if (action === "history-page") { loadInterviewHistoryPage(target.getAttribute("data-page"), true); return; }
     var draftPosition = action === "start" ? valueOf("interviewPosition") : "";
     var draftResumeId = action === "start" ? valueOf("interviewResume") : "";
     var draftDifficulty = action === "start" ? valueOf("interviewDifficulty") : "Normal";
@@ -3698,7 +3758,8 @@
     if (action === "start") {
       call = post(endpoints.guidedInterviewStart, { userId: state.identity.userId, request: { positionName: draftPosition, resumeId: draftResumeId ? Number(draftResumeId) : null, difficulty: draftDifficulty, mode: "TEXT" } }).then(function (result) {
         state.activeInterview = result.session; state.interviewMessages = [result.openingMessage]; state.interviewCurrentQuestion = result.openingMessage.content;
-        state.interviewAnswerCount = 0; state.interviewDraft = ""; state.interviews = [result.session].concat(normalizeArray(state.interviews));
+      state.interviewAnswerCount = 0; state.interviewDraft = ""; state.interviews = [result.session].concat(normalizeArray(state.interviews));
+        state.interviewHistoryPage = null;
       });
     } else if (action === "answer") {
       if (!draftAnswer) { state.interviewBusy = false; state.interviewError = "请先写下你的回答。"; renderPage(pageByKey.interview); return; }
@@ -3735,6 +3796,7 @@
     post(endpoints.interviewDelete, { userId: state.identity.userId, interviewId: Number(interviewId) }).then(function () {
       removeInterviewFromPage(interviewId);
       showMessage("info", "面试记录已删除", "本次面试的问题、回答和复盘已从记录中移除。");
+      if (state.route === "interview-history") return loadInterviewHistoryPage(state.interviewHistoryPageNumber, false);
     }).catch(function (error) {
       state.interviewError = error.message || "面试记录删除失败，请稍后重试。";
       showMessage("error", "删除失败", state.interviewError);
@@ -3747,6 +3809,11 @@
     state.interviews = normalizeArray(state.interviews).filter(function (entry) {
       return String(entry.interviewId) !== String(interviewId);
     });
+    if (state.interviewHistoryPage) {
+      state.interviewHistoryPage.items = normalizeArray(state.interviewHistoryPage.items).filter(function (entry) {
+        return String(entry.interviewId) !== String(interviewId);
+      });
+    }
     if (state.activeInterview && String(state.activeInterview.interviewId) === String(interviewId)) {
       stopAiInterviewSpeech(); state.activeInterview = null; state.interviewMessages = []; state.interviewReport = null;
       state.interviewCurrentQuestion = null; state.interviewAnswerCount = 0; state.interviewDraft = ""; state.interviewError = null;
@@ -3778,7 +3845,8 @@
   }
 
   function openInterview(interviewId) {
-    var session = normalizeArray(state.interviews).filter(function (item) { return String(item.interviewId) === String(interviewId); })[0];
+    var candidates = normalizeArray(state.interviewHistoryPage && state.interviewHistoryPage.items).concat(normalizeArray(state.interviews));
+    var session = candidates.filter(function (item) { return String(item.interviewId) === String(interviewId); })[0];
     if (!session) return;
     state.activeInterview = session; state.interviewReport = session.report || null; state.interviewBusy = true; renderPage(pageByKey.interview);
     if (state.route !== "interview") window.location.hash = "interview";
@@ -3856,6 +3924,7 @@
       "resume-diagnosis": "resume-home",
       "interview-home": "employment-home",
       "interview": "interview-home",
+      "interview-history": "interview",
       "interview-panorama": "interview-home",
       "postgraduate-exam": "further-study-home",
       "postgraduate-recommendation": "further-study-home",
@@ -4966,7 +5035,7 @@
       "pages/interview/index": "interview-home",
       "pages/interview/start": "interview",
       "pages/interview/chat": "interview",
-      "pages/interview/history": "interview-home",
+      "pages/interview/history": "interview-history",
       "pages/interview/report": "interview"
     };
     return map[normalized] || normalized || "onboarding";

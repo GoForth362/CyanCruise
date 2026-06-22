@@ -27,6 +27,9 @@ for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-di
 for (const marker of ["interviewDelete", "删除面试记录", "删除记录"]) {
   if (!app.includes(marker)) throw new Error(`Missing interview deletion marker: ${marker}`);
 }
+for (const marker of ["interviewPage", "interview-history", "interviewHistoryPageNumber", "每页显示 10 条"]) {
+  if (!app.includes(marker)) throw new Error(`Missing paged interview history marker: ${marker}`);
+}
 for (const marker of [".voice-answer-button:focus", ".voice-answer-button:focus-visible", "background: transparent"]) {
   if (!styles.includes(marker)) throw new Error(`Missing voice answer interaction style: ${marker}`);
 }
@@ -48,6 +51,7 @@ const requiredRoutes = [
   "resume-diagnosis",
   "interview-home",
   "interview",
+  "interview-history",
   "interview-panorama",
   "career-plan",
   "assistant",
@@ -94,6 +98,7 @@ const requiredApis = [
   "/cc001/career-plan/summary",
   "/cc001/career-plan/ensure",
   "/cc001/interview/list",
+  "/cc001/interview/page",
   "/cc001/interview/start",
   "/cc001/interview/guided/start",
   "/cc001/interview/guided/answer",
@@ -120,6 +125,7 @@ const requiredPageShellRoutes = [
   "career-plan",
   "interview-home",
   "interview",
+  "interview-history",
   "interview-panorama",
   "assistant",
   "messages",
@@ -139,6 +145,7 @@ const requiredDefaultUserRoutes = [
   "career-plan",
   "interview-home",
   "interview",
+  "interview-history",
   "interview-panorama",
   "assistant",
   "messages",

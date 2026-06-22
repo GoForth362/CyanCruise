@@ -4,6 +4,7 @@ import v620.base.helper.career.InterviewCoreService;
 import v620.cc001.base.common.dto.career.InterviewConstants;
 import v620.cc001.base.common.dto.career.InterviewMessageDto;
 import v620.cc001.base.common.dto.career.InterviewMessageRequest;
+import v620.cc001.base.common.dto.career.InterviewPageResultDto;
 import v620.cc001.base.common.dto.career.InterviewReportDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.InterviewStartResultDto;
@@ -15,6 +16,7 @@ import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
 import v620.cc001.cloud01.app01.mservice.ai.DefaultAiGateway;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -181,6 +183,27 @@ public class InterviewApplicationService {
         return storage.listByUser(requireUserId(userId));
     }
 
+    public InterviewPageResultDto listPage(String userId, int page, String mode) {
+        int safePage = Math.max(1, page);
+        List<InterviewSessionDto> filtered = new ArrayList<InterviewSessionDto>();
+        for (InterviewSessionDto session : storage.listByUser(requireUserId(userId))) {
+            if (matchesPageMode(session, mode)) filtered.add(session);
+        }
+        int size = InterviewConstants.INTERVIEW_HISTORY_PAGE_SIZE;
+        int total = filtered.size();
+        int totalPages = total == 0 ? 0 : (total + size - 1) / size;
+        if (totalPages > 0 && safePage > totalPages) safePage = totalPages;
+        int from = Math.min(total, (safePage - 1) * size);
+        int to = Math.min(total, from + size);
+        InterviewPageResultDto result = new InterviewPageResultDto();
+        result.setItems(new ArrayList<InterviewSessionDto>(filtered.subList(from, to)));
+        result.setPage(Integer.valueOf(safePage));
+        result.setSize(Integer.valueOf(size));
+        result.setTotal(Integer.valueOf(total));
+        result.setTotalPages(Integer.valueOf(totalPages));
+        return result;
+    }
+
     public InterviewSessionDto get(String userId, Long interviewId) {
         return ownedInterview(userId, interviewId);
     }
@@ -189,6 +212,19 @@ public class InterviewApplicationService {
         InterviewSessionDto interview = ownedInterview(userId, interviewId);
         storage.deleteMessages(interview.getInterviewId());
         storage.deleteInterview(interview.getInterviewId());
+    }
+
+    private boolean matchesPageMode(InterviewSessionDto session, String mode) {
+        if (!hasText(mode)) return true;
+        String requested = mode.trim().toUpperCase();
+        String actual = session == null || session.getMode() == null ? "" : session.getMode().trim().toUpperCase();
+        if (InterviewConstants.MODE_TEXT.equals(requested)) {
+            return actual.length() == 0 || InterviewConstants.MODE_TEXT.equals(actual);
+        }
+        if (InterviewConstants.MODE_VOICE.equals(requested)) {
+            return InterviewConstants.MODE_VOICE.equals(actual) || "PANORAMA".equals(actual);
+        }
+        return requested.equals(actual);
     }
 
     private void syncProfile(String userId, InterviewSessionDto interview) {

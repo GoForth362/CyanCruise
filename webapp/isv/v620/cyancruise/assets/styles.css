@@ -1684,8 +1684,14 @@ h4 {
 .interview-message p { margin: 6px 0 0; white-space: pre-wrap; }
 .interview-report .metric-value { margin: 12px 0; font-size: 2rem; font-weight: 700; color: #167b68; }
 .interview-type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.interview-history-entry,
+.interview-history-head,
+.interview-history-pager { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.interview-history-entry h3,
+.interview-history-head h3 { margin: 0 0 6px; }
+.interview-history-pager { padding: 16px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); }
 .panorama-intro { border-left: 4px solid #6f7ee8; }
-@media (max-width: 760px) { .interview-type-grid { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .interview-type-grid { grid-template-columns: 1fr; } .interview-history-entry, .interview-history-head, .interview-history-pager { align-items: flex-start; flex-direction: column; } }
 .panorama-experience { min-height: 680px; overflow: hidden; border-radius: 22px; color: #fff; background: #11182b url("images/panorama-interview-room-v1.png") center/cover no-repeat; box-shadow: 0 24px 60px rgba(8, 15, 32, .24); }
 .panorama-overlay { min-height: 680px; box-sizing: border-box; padding: 28px; background: linear-gradient(180deg, rgba(8, 14, 30, .16), rgba(8, 14, 30, .34)); }
 .panorama-topbar { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 26px; }

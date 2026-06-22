@@ -6,6 +6,7 @@ package v620.cc001.base.common.dto.career;
 public final class InterviewConstants {
 
     public static final int MAX_AI_INTERVIEW_QUESTIONS = 7;
+    public static final int INTERVIEW_HISTORY_PAGE_SIZE = 10;
 
     public static final String STATUS_ONGOING = "ONGOING";
     public static final String STATUS_COMPLETED = "COMPLETED";
