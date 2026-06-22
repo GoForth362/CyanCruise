@@ -3501,9 +3501,13 @@
   function renderInterviewHistoryList(title, history, emptyText, route) {
     return '<section class="panel full">' + (title ? '<h3>' + escapeHtml(title) + '</h3>' : '') + (history.length ? history.map(function (entry) {
       var completed = entry.status === "COMPLETED" || entry.finalScore != null || !!entry.report;
+      var endedAt = formatInterviewDateTime(entry.endedAt);
+      var startedAt = formatInterviewDateTime(entry.startedAt);
+      var timeText = completed ? "结束时间：" + (endedAt || "时间待同步")
+        : "结束时间：尚未结束" + (startedAt ? " · 开始时间：" + startedAt : "");
       return '<article class="list-row"><div><strong>' + escapeHtml(firstText(entry.positionName, "目标岗位待确认")) + '</strong><p>' +
         escapeHtml(completed ? "已完成" : "进行中") + (entry.finalScore != null ? " · " + entry.finalScore + " 分" : "") +
-        '</p></div>' + (route === "interview" ? '<div class="actions-row compact"><button type="button" class="secondary" data-interview-action="open" data-interview-id="' +
+        '</p><p class="interview-record-time">' + escapeHtml(timeText) + '</p></div>' + (route === "interview" ? '<div class="actions-row compact"><button type="button" class="secondary" data-interview-action="open" data-interview-id="' +
         escapeAttr(entry.interviewId) + '">' + (completed ? "查看结果" : "继续面试") + '</button>' +
         '<button type="button" class="secondary danger" data-interview-action="delete" data-interview-id="' + escapeAttr(entry.interviewId) + '">删除记录</button></div>' : '<span class="chip">全景记录</span>') + '</article>';
     }).join("") : '<p class="empty-copy">' + escapeHtml(emptyText) + '</p>') + '</section>';
@@ -3512,18 +3516,43 @@
   function syncCompletedInterview(session, report) {
     if (!session) return;
     session.status = "COMPLETED"; session.report = report || session.report || null;
+    if (!session.endedAt) session.endedAt = new Date();
     if (report && report.overallScore != null) session.finalScore = report.overallScore;
     normalizeArray(state.interviews).forEach(function (entry) {
       if (String(entry.interviewId) !== String(session.interviewId)) return;
       entry.status = "COMPLETED"; entry.report = session.report;
+      if (!entry.endedAt) entry.endedAt = session.endedAt;
       if (session.finalScore != null) entry.finalScore = session.finalScore;
     });
     normalizeArray(state.interviewHistoryPage && state.interviewHistoryPage.items).forEach(function (entry) {
       if (String(entry.interviewId) !== String(session.interviewId)) return;
       entry.status = "COMPLETED"; entry.report = session.report;
+      if (!entry.endedAt) entry.endedAt = session.endedAt;
       if (session.finalScore != null) entry.finalScore = session.finalScore;
     });
   }
+
+  function formatInterviewDateTime(value) {
+    if (!value) return "";
+    var parts;
+    if (Array.isArray(value) && value.length >= 5) {
+      parts = value;
+    } else if (typeof value === "object" && value.year != null) {
+      parts = [value.year, firstText(value.monthValue, value.month, 1), value.dayOfMonth, value.hour, value.minute];
+    } else {
+      var matched = String(value).match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T\s](\d{1,2}):(\d{1,2})/);
+      if (matched) parts = [matched[1], matched[2], matched[3], matched[4], matched[5]];
+    }
+    if (!parts) {
+      var parsed = new Date(value);
+      if (isNaN(parsed.getTime())) return "";
+      parts = [parsed.getFullYear(), parsed.getMonth() + 1, parsed.getDate(), parsed.getHours(), parsed.getMinutes()];
+    }
+    return String(parts[0]) + "-" + padInterviewTime(parts[1]) + "-" + padInterviewTime(parts[2]) +
+      " " + padInterviewTime(parts[3]) + ":" + padInterviewTime(parts[4]);
+  }
+
+  function padInterviewTime(value) { return String(Math.max(0, Number(value) || 0)).padStart(2, "0"); }
 
   function isAiInterview(entry) {
     var mode = String(entry && entry.mode || "TEXT").toUpperCase();
