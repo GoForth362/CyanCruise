@@ -1732,7 +1732,13 @@ h4 {
 .ai-answer-card textarea { width: 100%; box-sizing: border-box; }
 .ai-answer-card .actions-row { justify-content: center; }
 .voice-answer-button { display: grid; place-items: center; gap: 8px; min-width: 150px; margin: 24px auto; color: #1a6e63; background: transparent; border: 0; }
+.voice-answer-button:hover,
+.voice-answer-button:focus,
+.voice-answer-button:active { color: #1a6e63; background: transparent; }
+.voice-answer-button:focus { outline: none; }
+.voice-answer-button:focus-visible { outline: 3px solid rgba(49, 183, 159, .38); outline-offset: 6px; }
 .voice-answer-button span { width: 76px; height: 76px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #75d3c2; box-shadow: 0 10px 30px rgba(55, 186, 164, .28); font-size: 1.25rem; }
+.voice-answer-button:hover span { transform: translateY(-1px); box-shadow: 0 13px 34px rgba(55, 186, 164, .34); }
 .voice-answer-button.listening span { animation: ai-interviewer-pulse 1.4s ease-in-out infinite; background: #f08b72; }
 .interview-inline-error { color: #a43b2d; }
 .score-report-head { display: flex; justify-content: space-between; align-items: center; gap: 24px; }

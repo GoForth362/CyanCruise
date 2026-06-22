@@ -3,9 +3,11 @@ const path = require("path");
 
 const routePath = path.join(__dirname, "cyancruise-routes.json");
 const appPath = path.join(__dirname, "assets", "app.js");
+const stylesPath = path.join(__dirname, "assets", "styles.css");
 const panoramaImagePath = path.join(__dirname, "assets", "images", "panorama-interview-room-v1.png");
 const routeMap = JSON.parse(fs.readFileSync(routePath, "utf8"));
 const app = fs.readFileSync(appPath, "utf8");
+const styles = fs.readFileSync(stylesPath, "utf8");
 
 if (!fs.existsSync(panoramaImagePath)) {
   throw new Error("Missing panoramic interview room image asset");
@@ -24,6 +26,9 @@ for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-di
 }
 for (const marker of ["interviewDelete", "删除面试记录", "删除记录"]) {
   if (!app.includes(marker)) throw new Error(`Missing interview deletion marker: ${marker}`);
+}
+for (const marker of [".voice-answer-button:focus", ".voice-answer-button:focus-visible", "background: transparent"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing voice answer interaction style: ${marker}`);
 }
 for (const marker of ['feature("全景仿真面试", "仿"', 'feature("AI 模拟面试", "面"']) {
   if (!app.includes(marker)) throw new Error(`Missing home interview recommendation marker: ${marker}`);
