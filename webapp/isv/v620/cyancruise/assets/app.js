@@ -3460,7 +3460,7 @@
       body += statePanel("面试记录暂时无法读取", state.interviewHistoryError, "warning");
     } else {
       var page = state.interviewHistoryPage || {};
-      body += renderInterviewHistoryList("第 " + firstText(page.page, 1) + " 页", normalizeArray(page.items),
+      body += renderInterviewHistoryList("", normalizeArray(page.items),
         "还没有 AI 模拟面试记录。完成一次回答后，这里会保留复盘。", "interview");
       body += renderInterviewHistoryPager(page);
     }
@@ -3471,7 +3471,7 @@
     var current = Math.max(1, Number(page.page) || 1);
     var totalPages = Math.max(1, Number(page.totalPages) || 0);
     var total = Math.max(0, Number(page.total) || 0);
-    return '<nav class="interview-history-pager" aria-label="面试记录分页"><span>共 ' + total + ' 条 · 第 ' + current + ' / ' + totalPages + ' 页</span><div class="actions-row compact">' +
+    return '<nav class="interview-history-pager full" aria-label="面试记录分页"><span>共 ' + total + ' 条 · 第 ' + current + ' / ' + totalPages + ' 页</span><div class="actions-row compact">' +
       '<button type="button" class="secondary" data-interview-action="history-page" data-page="' + (current - 1) + '" ' + (current <= 1 ? 'disabled' : '') + '>上一页</button>' +
       '<button type="button" class="secondary" data-interview-action="history-page" data-page="' + (current + 1) + '" ' + (current >= totalPages ? 'disabled' : '') + '>下一页</button></div></nav>';
   }
@@ -3499,7 +3499,7 @@
   }
 
   function renderInterviewHistoryList(title, history, emptyText, route) {
-    return '<section class="panel full"><h3>' + escapeHtml(title) + '</h3>' + (history.length ? history.map(function (entry) {
+    return '<section class="panel full">' + (title ? '<h3>' + escapeHtml(title) + '</h3>' : '') + (history.length ? history.map(function (entry) {
       var completed = entry.status === "COMPLETED" || entry.finalScore != null || !!entry.report;
       return '<article class="list-row"><div><strong>' + escapeHtml(firstText(entry.positionName, "目标岗位待确认")) + '</strong><p>' +
         escapeHtml(completed ? "已完成" : "进行中") + (entry.finalScore != null ? " · " + entry.finalScore + " 分" : "") +

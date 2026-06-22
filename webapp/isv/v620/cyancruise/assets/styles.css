@@ -1689,7 +1689,8 @@ h4 {
 .interview-history-pager { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .interview-history-entry h3,
 .interview-history-head h3 { margin: 0 0 6px; }
-.interview-history-pager { padding: 16px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); }
+.interview-history-pager { width: 100%; padding: 16px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); }
+.interview-history-pager .actions-row { margin-left: auto; }
 .panorama-intro { border-left: 4px solid #6f7ee8; }
 @media (max-width: 760px) { .interview-type-grid { grid-template-columns: 1fr; } .interview-history-entry, .interview-history-head, .interview-history-pager { align-items: flex-start; flex-direction: column; } }
 .panorama-experience { min-height: 680px; overflow: hidden; border-radius: 22px; color: #fff; background: #11182b url("images/panorama-interview-room-v1.png") center/cover no-repeat; box-shadow: 0 24px 60px rgba(8, 15, 32, .24); }
