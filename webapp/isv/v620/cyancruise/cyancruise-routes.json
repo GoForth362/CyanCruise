@@ -20,7 +20,11 @@
       "file-upload-preview",
       "resume-diagnosis",
       "career-plan",
+      "interview-home",
       "interview",
+      "interview-history",
+      "interview-panorama-history",
+      "interview-panorama",
       "assistant",
       "messages",
       "employment-insight",
@@ -36,7 +40,11 @@
       "resume",
       "resume-diagnosis",
       "career-plan",
+      "interview-home",
       "interview",
+      "interview-history",
+      "interview-panorama-history",
+      "interview-panorama",
       "assistant",
       "messages",
       "employment-insight"
@@ -960,8 +968,72 @@
       ]
     },
     {
+      "key": "interview-home",
+      "title": "面试中心",
+      "ipdPaths": ["pages/interview/index", "pages/interview/history"],
+      "target": "index.html?ccRoute=interview-home",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "interview list",
+          "method": "POST",
+          "path": "/cc001/interview/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewSessionDto>",
+          "fallback": "显示两种面试入口和全景面试空记录状态，AI 记录由独立分页页承载。"
+        }
+      ]
+    },
+    {
+      "key": "interview-panorama",
+      "title": "全景仿真面试",
+      "ipdPaths": ["pages/interview/room", "pages/interview/history"],
+      "target": "index.html?ccRoute=interview-panorama",
+      "status": "available",
+      "answerTiming": "题目出现后自动倒计时：入门3分钟、常规5分钟、进阶8分钟；超时自动提交或记录未回答。",
+      "webApis": [
+        {
+          "name": "panorama interview history",
+          "method": "POST",
+          "path": "/cc001/interview/list",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewSessionDto> filtered by VOICE/PANORAMA",
+          "fallback": "摄像头不可用时显示授权提示，并保留全景仿真面试历史。"
+        },
+        {
+          "name": "start panoramic interview",
+          "method": "POST",
+          "path": "/cc001/interview/guided/start",
+          "body": ["userId", "request(mode=VOICE)"],
+          "userIdRequired": true,
+          "dto": "InterviewStartResultDto",
+          "fallback": "不创建会话并提示用户检查摄像头权限。"
+        },
+        {
+          "name": "submit panoramic answer",
+          "method": "POST",
+          "path": "/cc001/interview/guided/answer",
+          "body": ["userId", "interviewId", "answer"],
+          "userIdRequired": true,
+          "dto": "InterviewTurnResultDto",
+          "fallback": "保留识别文字并允许用户重试。"
+        },
+        {
+          "name": "finish panoramic interview",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "保留会话并提示复盘暂时不可用。"
+        }
+      ]
+    },
+    {
       "key": "interview",
-      "title": "模拟面试",
+      "title": "AI 模拟面试",
       "ipdPaths": [
         "pages/interview/index",
         "pages/interview/start",
@@ -973,15 +1045,6 @@
       "status": "available",
       "webApis": [
         {
-          "name": "interview list",
-          "method": "POST",
-          "path": "/cc001/interview/list",
-          "body": ["userId"],
-          "userIdRequired": true,
-          "dto": "List<InterviewSessionDto>",
-          "fallback": "Show no interview history state."
-        },
-        {
           "name": "start interview",
           "method": "POST",
           "path": "/cc001/interview/start",
@@ -989,6 +1052,136 @@
           "userIdRequired": true,
           "dto": "InterviewStartRequest -> InterviewSessionDto",
           "fallback": "Show start unavailable state."
+        },
+        {
+          "name": "guided interview start",
+          "method": "POST",
+          "path": "/cc001/interview/guided/start",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "InterviewStartResultDto",
+          "fallback": "使用中文基础问题开始最多七题的逐题练习。"
+        },
+        {
+          "name": "guided interview answer",
+          "method": "POST",
+          "path": "/cc001/interview/guided/answer",
+          "body": ["userId", "interviewId", "answer"],
+          "userIdRequired": true,
+          "dto": "InterviewTurnResultDto",
+          "fallback": "保存回答并返回中文基础追问。"
+        },
+        {
+          "name": "guided interview finish",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "根据有效回答生成基础复盘。"
+        },
+        {
+          "name": "interview messages",
+          "method": "POST",
+          "path": "/cc001/interview/messages",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewMessageDto>",
+          "fallback": "提示练习记录暂时无法读取。"
+        }
+      ]
+    },
+    {
+      "key": "interview-history",
+      "title": "AI 模拟面试记录",
+      "ipdPaths": ["pages/interview/history", "pages/interview/report"],
+      "target": "index.html?ccRoute=interview-history",
+      "status": "available",
+      "pageSize": 10,
+      "persistence": "既有 Cosmic/PostgreSQL 面试会话、消息和报告存储",
+      "webApis": [
+        {
+          "name": "paged AI interview history",
+          "method": "POST",
+          "path": "/cc001/interview/page",
+          "body": ["userId", "page", "mode=TEXT"],
+          "userIdRequired": true,
+          "dto": "InterviewPageResultDto",
+          "fallback": "显示记录暂时无法读取并保留返回操作。"
+        },
+        {
+          "name": "interview messages",
+          "method": "POST",
+          "path": "/cc001/interview/messages",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewMessageDto>",
+          "fallback": "提示练习记录暂时无法读取。"
+        },
+        {
+          "name": "read or generate completed report",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "保留记录并提示结果暂时无法读取。"
+        },
+        {
+          "name": "delete interview record",
+          "method": "POST",
+          "path": "/cc001/interview/delete",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "String",
+          "fallback": "保留原记录并提示删除失败。"
+        }
+      ]
+    },
+    {
+      "key": "interview-panorama-history",
+      "title": "全景仿真面试记录",
+      "ipdPaths": ["pages/interview/history", "pages/interview/report"],
+      "target": "index.html?ccRoute=interview-panorama-history",
+      "status": "available",
+      "pageSize": 10,
+      "persistence": "既有 Cosmic/PostgreSQL 面试会话、消息和报告存储",
+      "webApis": [
+        {
+          "name": "paged panoramic interview history",
+          "method": "POST",
+          "path": "/cc001/interview/page",
+          "body": ["userId", "page", "mode=VOICE"],
+          "userIdRequired": true,
+          "dto": "InterviewPageResultDto",
+          "fallback": "显示全景记录暂时无法读取并保留返回操作。"
+        },
+        {
+          "name": "panoramic interview messages",
+          "method": "POST",
+          "path": "/cc001/interview/messages",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewMessageDto>",
+          "fallback": "提示全景问答记录暂时无法读取。"
+        },
+        {
+          "name": "read panoramic interview report",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "保留记录并提示结果暂时无法读取。"
+        },
+        {
+          "name": "delete panoramic interview record",
+          "method": "POST",
+          "path": "/cc001/interview/delete",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "String",
+          "fallback": "保留原记录并提示删除失败。"
         }
       ]
     },
@@ -1168,14 +1361,50 @@
     {
       "mountKey": "cyancruise-interview",
       "routeKey": "interview",
-      "title": "模拟面试",
+      "title": "AI 模拟面试",
       "target": "index.html?ccRoute=interview",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "Show no interview history or start unavailable state.",
-      "deploymentNotes": "Voice and digital-human interview are not part of this mount."
+      "fallback": "AI 暂不可用时使用中文基础问题和基础复盘继续文字练习。",
+      "deploymentNotes": "复用简历、目标岗位、用户画像和 AI 网关；语音、数字人和身体语言不在本挂载范围。"
+    },
+    {
+      "mountKey": "cyancruise-interview-history",
+      "routeKey": "interview-history",
+      "title": "AI 模拟面试记录",
+      "target": "index.html?ccRoute=interview-history",
+      "audience": "cyancruise-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "显示分页记录读取失败状态。",
+      "deploymentNotes": "复用既有面试数据库记录，后端固定每页返回 10 条文字面试记录。"
+    },
+    {
+      "mountKey": "cyancruise-interview-panorama",
+      "routeKey": "interview-panorama",
+      "title": "全景仿真面试",
+      "target": "index.html?ccRoute=interview-panorama",
+      "audience": "cyancruise-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "摄像头不可用时允许无摄像头继续；语音转文字不可用时允许手工输入。",
+      "deploymentNotes": "需要 HTTPS、浏览器摄像头和麦克风权限；媒体流仅本地预览，不上传、不保存、不进行身体语言分析。"
+    },
+    {
+      "mountKey": "cyancruise-interview-panorama-history",
+      "routeKey": "interview-panorama-history",
+      "title": "全景仿真面试记录",
+      "target": "index.html?ccRoute=interview-panorama-history",
+      "audience": "cyancruise-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "显示全景分页记录读取失败状态。",
+      "deploymentNotes": "复用既有面试数据库记录，后端固定每页返回 10 条 VOICE/PANORAMA 面试记录。"
     },
     {
       "mountKey": "cyancruise-career-plan",

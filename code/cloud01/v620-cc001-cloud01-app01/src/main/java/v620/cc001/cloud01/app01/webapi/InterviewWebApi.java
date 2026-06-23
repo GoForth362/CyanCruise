@@ -7,9 +7,12 @@ import kd.bos.openapi.common.custom.annotation.ApiRequestBody;
 import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
 import v620.cc001.base.common.dto.career.InterviewMessageDto;
 import v620.cc001.base.common.dto.career.InterviewMessageRequest;
+import v620.cc001.base.common.dto.career.InterviewPageResultDto;
 import v620.cc001.base.common.dto.career.InterviewReportDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
+import v620.cc001.base.common.dto.career.InterviewStartResultDto;
 import v620.cc001.base.common.dto.career.InterviewStartRequest;
+import v620.cc001.base.common.dto.career.InterviewTurnResultDto;
 import v620.cc001.cloud01.app01.mservice.InterviewApplicationService;
 
 import java.util.List;
@@ -29,6 +32,28 @@ public class InterviewWebApi {
 
     InterviewWebApi(InterviewApplicationService applicationService) {
         this.applicationService = applicationService;
+    }
+
+    @ApiPostMapping(value = "/guided/start", desc = "开始文本模拟面试并生成第一题", methodParamNames = {"userId", "request"})
+    public @ApiResponseBody(value = "面试会话与第一题") InterviewStartResultDto guidedStart(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "开始面试请求", required = true) InterviewStartRequest request) {
+        return applicationService.startGuided(userId, request);
+    }
+
+    @ApiPostMapping(value = "/guided/answer", desc = "提交回答并生成下一题", methodParamNames = {"userId", "interviewId", "answer"})
+    public @ApiResponseBody(value = "本轮回答与下一题") InterviewTurnResultDto guidedAnswer(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "面试ID", required = true) Long interviewId,
+            @ApiRequestBody(value = "回答内容", required = true) String answer) {
+        return applicationService.answer(userId, interviewId, answer);
+    }
+
+    @ApiPostMapping(value = "/guided/finish", desc = "结束练习并生成复盘", methodParamNames = {"userId", "interviewId"})
+    public @ApiResponseBody(value = "结构化面试复盘") InterviewReportDto guidedFinish(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "面试ID", required = true) Long interviewId) {
+        return applicationService.finishAndReport(userId, interviewId);
     }
 
     @ApiPostMapping(value = "/start", desc = "开始模拟面试", methodParamNames = {"userId", "request"})
@@ -80,6 +105,14 @@ public class InterviewWebApi {
     public @ApiResponseBody(value = "面试历史") List<InterviewSessionDto> list(
             @ApiRequestBody(value = "用户ID", required = true) String userId) {
         return applicationService.listByUser(userId);
+    }
+
+    @ApiPostMapping(value = "/page", desc = "分页读取用户面试历史", methodParamNames = {"userId", "page", "mode"})
+    public @ApiResponseBody(value = "面试历史分页结果") InterviewPageResultDto page(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "页码", required = true) Integer page,
+            @ApiRequestBody(value = "面试方式", required = false) String mode) {
+        return applicationService.listPage(userId, page == null ? 1 : page.intValue(), mode);
     }
 
     @ApiPostMapping(value = "/get", desc = "读取面试详情", methodParamNames = {"userId", "interviewId"})

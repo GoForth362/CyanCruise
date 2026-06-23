@@ -16,6 +16,7 @@ import v620.cc001.cloud01.app01.mservice.InterviewApplicationService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InterviewWebApiTest {
 
@@ -42,6 +43,18 @@ class InterviewWebApiTest {
             }
         }));
         assertEquals("OK", webApi.delete("api-interview-user", interview.getInterviewId()));
+    }
+
+    @Test
+    void webApiExposesGuidedTextInterviewFlow() {
+        InterviewWebApi webApi = new InterviewWebApi(new InterviewApplicationService(
+                new InMemoryInterviewStorage(), profileService(), new InterviewCoreService()));
+        v620.cc001.base.common.dto.career.InterviewStartResultDto started = webApi.guidedStart("guided-api-user", startRequest());
+        assertTrue(started.getOpeningMessage().getContent().length() > 0);
+        v620.cc001.base.common.dto.career.InterviewTurnResultDto turn = webApi.guidedAnswer(
+                "guided-api-user", started.getSession().getInterviewId(), "我负责过一个课程项目，并按期完成交付。");
+        assertEquals("USER", turn.getUserMessage().getRole());
+        assertTrue(webApi.guidedFinish("guided-api-user", started.getSession().getInterviewId()).getOverallScore().intValue() > 0);
     }
 
     private CareerProfileApplicationService profileService() {

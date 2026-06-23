@@ -7,6 +7,7 @@ import v620.base.helper.career.CareerProfileSnapshotMergeService;
 import v620.base.helper.career.InterviewCoreService;
 import v620.cc001.base.common.dto.career.InterviewConstants;
 import v620.cc001.base.common.dto.career.InterviewMessageRequest;
+import v620.cc001.base.common.dto.career.InterviewPageResultDto;
 import v620.cc001.base.common.dto.career.InterviewRadarScoreDto;
 import v620.cc001.base.common.dto.career.InterviewReportDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
@@ -104,6 +105,87 @@ class InterviewApplicationServiceTest {
                 service.get("interview-user-4", first.getInterviewId());
             }
         }));
+    }
+
+    @Test
+    void guidedInterviewFallsBackAndCachesReportWithoutConfiguredAi() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
+        ResumeApplicationService resumeService = new ResumeApplicationService(new InMemoryResumeStorage(), profileService);
+        InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
+                new InterviewCoreService(), resumeService, new InterviewAiService(null));
+
+        v620.cc001.base.common.dto.career.InterviewStartResultDto started = service.startGuided("guided-user", startRequest("测试工程师"));
+        assertTrue(started.getOpeningMessage().getContent().contains("测试工程师"));
+
+        v620.cc001.base.common.dto.career.InterviewTurnResultDto turn = service.answer("guided-user", started.getSession().getInterviewId(), "我通过自动化测试减少了重复验证时间。");
+        assertEquals(3, service.getMessages("guided-user", started.getSession().getInterviewId()).size());
+        assertEquals(InterviewConstants.ROLE_AI, turn.getInterviewerMessage().getRole());
+
+        InterviewReportDto first = service.finishAndReport("guided-user", started.getSession().getInterviewId());
+        InterviewReportDto cached = service.finishAndReport("guided-user", started.getSession().getInterviewId());
+        assertEquals(first.getOverallScore(), cached.getOverallScore());
+        assertEquals(InterviewConstants.STATUS_COMPLETED, service.get("guided-user", started.getSession().getInterviewId()).getStatus());
+    }
+
+    @Test
+    void guidedInterviewStopsAfterSevenAnswers() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
+        InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
+                new InterviewCoreService(), new ResumeApplicationService(new InMemoryResumeStorage(), profileService),
+                new InterviewAiService(null));
+        InterviewSessionDto session = service.startGuided("seven-answer-user", startRequest("产品经理")).getSession();
+
+        v620.cc001.base.common.dto.career.InterviewTurnResultDto last = null;
+        for (int index = 1; index <= InterviewConstants.MAX_AI_INTERVIEW_QUESTIONS; index++) {
+            last = service.answer("seven-answer-user", session.getInterviewId(), "第" + index + "次有效回答");
+        }
+
+        assertTrue(last.getInterviewerMessage().getContent().contains("7 道题已经完成"));
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                service.answer("seven-answer-user", session.getInterviewId(), "第八次回答");
+            }
+        }));
+        assertEquals(Integer.valueOf(7), service.finishAndReport("seven-answer-user", session.getInterviewId()).getTotalQuestions());
+    }
+
+    @Test
+    void cachedReportRepairsOngoingSessionStatus() {
+        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
+                profileService(new InMemoryCareerProfileStorage()));
+        InterviewSessionDto session = service.start("cached-report-user", startRequest("前端开发"));
+        service.saveReport("cached-report-user", session.getInterviewId(), report());
+
+        InterviewReportDto cached = service.finishAndReport("cached-report-user", session.getInterviewId());
+
+        assertEquals(Integer.valueOf(86), cached.getOverallScore());
+        assertEquals(InterviewConstants.STATUS_COMPLETED,
+                service.get("cached-report-user", session.getInterviewId()).getStatus());
+    }
+
+    @Test
+    void pagesPersistedTextInterviewHistoryTenAtATime() {
+        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
+                profileService(new InMemoryCareerProfileStorage()));
+        for (int index = 1; index <= 12; index++) {
+            service.start("page-history-user", startRequest("前端开发 " + index));
+        }
+        InterviewStartRequest voice = startRequest("全景练习");
+        voice.setMode(InterviewConstants.MODE_VOICE);
+        service.start("page-history-user", voice);
+
+        InterviewPageResultDto first = service.listPage("page-history-user", 1, InterviewConstants.MODE_TEXT);
+        InterviewPageResultDto second = service.listPage("page-history-user", 2, InterviewConstants.MODE_TEXT);
+        InterviewPageResultDto panoramic = service.listPage("page-history-user", 1, InterviewConstants.MODE_VOICE);
+
+        assertEquals(Integer.valueOf(10), Integer.valueOf(first.getItems().size()));
+        assertEquals(Integer.valueOf(12), first.getTotal());
+        assertEquals(Integer.valueOf(2), first.getTotalPages());
+        assertEquals(Integer.valueOf(2), Integer.valueOf(second.getItems().size()));
+        assertEquals(Integer.valueOf(2), second.getPage());
+        assertEquals(Integer.valueOf(1), panoramic.getTotal());
+        assertEquals(Integer.valueOf(1), Integer.valueOf(panoramic.getItems().size()));
+        assertEquals(InterviewConstants.MODE_VOICE, panoramic.getItems().get(0).getMode());
     }
 
     private InterviewApplicationService service(InterviewStorage storage,
