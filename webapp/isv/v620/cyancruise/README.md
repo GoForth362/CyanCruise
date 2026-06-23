@@ -30,6 +30,7 @@
 - `?ccRoute=career-plan`（AI路径规划）
 - `?ccRoute=interview-home`
 - `?ccRoute=interview-history`
+- `?ccRoute=interview-panorama-history`
 - `?ccRoute=interview`
 - `?ccRoute=assistant`
 - `?ccRoute=messages`
@@ -53,6 +54,7 @@
 | 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-panorama` | 沉浸式环境、摄像头预览、按难度自动计时与 AI 问答已接入 |
 | 就业 / 面试 / AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 七题逐题问答、语音辅助、复盘与记录删除已接入 |
 | 就业 / 面试 / AI 模拟面试记录 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-history` | 独立记录页，后端分页且每页 10 条 |
+| 就业 / 面试 / 全景仿真面试记录 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-panorama-history` | 独立记录页，按全景类型分页且每页 10 条 |
 | 深造 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=further-study-home` | 规划入口 |
 | 深造 / 考研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-exam` | 规划入口 |
 | 深造 / 保研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-recommendation` | 规划入口 |

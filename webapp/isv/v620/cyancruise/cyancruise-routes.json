@@ -23,6 +23,7 @@
       "interview-home",
       "interview",
       "interview-history",
+      "interview-panorama-history",
       "interview-panorama",
       "assistant",
       "messages",
@@ -42,6 +43,7 @@
       "interview-home",
       "interview",
       "interview-history",
+      "interview-panorama-history",
       "interview-panorama",
       "assistant",
       "messages",
@@ -1137,6 +1139,53 @@
       ]
     },
     {
+      "key": "interview-panorama-history",
+      "title": "全景仿真面试记录",
+      "ipdPaths": ["pages/interview/history", "pages/interview/report"],
+      "target": "index.html?ccRoute=interview-panorama-history",
+      "status": "available",
+      "pageSize": 10,
+      "persistence": "既有 Cosmic/PostgreSQL 面试会话、消息和报告存储",
+      "webApis": [
+        {
+          "name": "paged panoramic interview history",
+          "method": "POST",
+          "path": "/cc001/interview/page",
+          "body": ["userId", "page", "mode=VOICE"],
+          "userIdRequired": true,
+          "dto": "InterviewPageResultDto",
+          "fallback": "显示全景记录暂时无法读取并保留返回操作。"
+        },
+        {
+          "name": "panoramic interview messages",
+          "method": "POST",
+          "path": "/cc001/interview/messages",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "List<InterviewMessageDto>",
+          "fallback": "提示全景问答记录暂时无法读取。"
+        },
+        {
+          "name": "read panoramic interview report",
+          "method": "POST",
+          "path": "/cc001/interview/guided/finish",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "InterviewReportDto",
+          "fallback": "保留记录并提示结果暂时无法读取。"
+        },
+        {
+          "name": "delete panoramic interview record",
+          "method": "POST",
+          "path": "/cc001/interview/delete",
+          "body": ["userId", "interviewId"],
+          "userIdRequired": true,
+          "dto": "String",
+          "fallback": "保留原记录并提示删除失败。"
+        }
+      ]
+    },
+    {
       "key": "assistant",
       "title": "求职助手",
       "ipdPaths": ["pages/assistant/index", "pages/assistant/history"],
@@ -1344,6 +1393,18 @@
       "identityMode": "production-cosmic-context",
       "fallback": "摄像头不可用时允许无摄像头继续；语音转文字不可用时允许手工输入。",
       "deploymentNotes": "需要 HTTPS、浏览器摄像头和麦克风权限；媒体流仅本地预览，不上传、不保存、不进行身体语言分析。"
+    },
+    {
+      "mountKey": "cyancruise-interview-panorama-history",
+      "routeKey": "interview-panorama-history",
+      "title": "全景仿真面试记录",
+      "target": "index.html?ccRoute=interview-panorama-history",
+      "audience": "cyancruise-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "显示全景分页记录读取失败状态。",
+      "deploymentNotes": "复用既有面试数据库记录，后端固定每页返回 10 条 VOICE/PANORAMA 面试记录。"
     },
     {
       "mountKey": "cyancruise-career-plan",

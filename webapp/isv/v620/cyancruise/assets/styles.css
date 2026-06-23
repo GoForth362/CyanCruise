@@ -1684,9 +1684,28 @@ h4 {
 .interview-message p { margin: 6px 0 0; white-space: pre-wrap; }
 .interview-report .metric-value { margin: 12px 0; font-size: 2rem; font-weight: 700; color: #167b68; }
 .interview-type-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.interview-type-grid .feature-card {
+  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-items: center;
+  align-content: start;
+}
+.interview-type-grid .feature-card > p {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  line-height: 1.7;
+}
+.interview-type-grid .feature-card > button {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 10px;
+  align-self: end;
+}
 .interview-history-entry,
 .interview-history-head,
 .interview-history-pager { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.interview-record-entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.interview-record-entry-grid .interview-history-entry { min-height: 116px; }
 .interview-history-entry h3,
 .interview-history-head h3 { margin: 0 0 6px; }
 .interview-history-pager { width: 100%; padding: 16px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--muted); }
@@ -1702,10 +1721,10 @@ h4 {
 .interview-transcript-pair p { margin: 0; line-height: 1.75; white-space: pre-wrap; }
 .interview-transcript-pair .candidate-answer { padding: 12px 14px; border-radius: 10px; background: #eaf7f3; }
 .panorama-intro { border-left: 4px solid #6f7ee8; }
-@media (max-width: 760px) { .interview-type-grid { grid-template-columns: 1fr; } .interview-history-entry, .interview-history-head, .interview-history-pager, .interview-transcript-head { align-items: flex-start; flex-direction: column; } }
-.panorama-experience { min-height: 680px; overflow: hidden; border-radius: 22px; color: #fff; background: #11182b url("images/panorama-interview-room-v1.png") center/cover no-repeat; box-shadow: 0 24px 60px rgba(8, 15, 32, .24); }
-.panorama-overlay { min-height: 680px; box-sizing: border-box; padding: 28px; background: linear-gradient(180deg, rgba(8, 14, 30, .16), rgba(8, 14, 30, .34)); }
-.panorama-topbar { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 26px; }
+@media (max-width: 760px) { .interview-type-grid, .interview-record-entry-grid { grid-template-columns: 1fr; } .interview-history-entry, .interview-history-head, .interview-history-pager, .interview-transcript-head { align-items: flex-start; flex-direction: column; } }
+.panorama-experience { min-height: 600px; overflow: hidden; border-radius: 22px; color: #fff; background: #11182b url("images/panorama-interview-room-v1.png") center/cover no-repeat; box-shadow: 0 24px 60px rgba(8, 15, 32, .24); }
+.panorama-overlay { min-height: 600px; box-sizing: border-box; padding: 22px; background: linear-gradient(180deg, rgba(8, 14, 30, .16), rgba(8, 14, 30, .34)); }
+.panorama-topbar { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 18px; }
 .panorama-topbar h3 { margin: 6px 0; font-size: 1.8rem; color: #fff; }
 .panorama-topbar p { margin: 0; color: rgba(255,255,255,.8); }
 .panorama-setup-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .75fr); gap: 24px; align-items: stretch; }
@@ -1719,23 +1738,39 @@ h4 {
 .panorama-settings input, .panorama-settings select, .panorama-answer-panel textarea { width: 100%; box-sizing: border-box; border-color: rgba(255,255,255,.24); background: rgba(255,255,255,.94); color: #162033; }
 .panorama-error { padding: 10px 12px; border-radius: 10px; color: #ffe2dc; background: rgba(164, 51, 37, .35); }
 .panorama-notice { padding: 10px 12px; border-radius: 10px; color: #d8fff7; background: rgba(31, 137, 119, .32); }
+.panorama-diagnostic { padding: 12px 14px; border: 1px solid rgba(128, 221, 205, .34); border-radius: 12px; color: rgba(255,255,255,.9); background: rgba(6, 13, 28, .42); }
+.panorama-diagnostic strong { display: block; margin-bottom: 7px; color: #d8fff7; }
+.panorama-diagnostic ul { margin: 0; padding-left: 18px; }
+.panorama-diagnostic li { margin: 5px 0; line-height: 1.55; }
 .panorama-camera-off { height: 100%; min-height: 390px; display: grid; place-content: center; gap: 10px; text-align: center; color: rgba(255,255,255,.84); background: linear-gradient(145deg, rgba(10,17,34,.2), rgba(19,45,58,.16)); backdrop-filter: blur(3px); }
 .panorama-camera-off strong { color: #d8fff7; }
-.panorama-question { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; padding: 18px 22px; border: 1px solid rgba(255,255,255,.26); border-radius: 16px; background: rgba(8, 14, 30, .42); color: #fff; backdrop-filter: blur(7px); text-shadow: 0 1px 2px rgba(0,0,0,.28); }
+.panorama-question { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 14px; padding: 14px 18px; border: 1px solid rgba(255,255,255,.26); border-radius: 16px; background: rgba(8, 14, 30, .42); color: #fff; backdrop-filter: blur(7px); text-shadow: 0 1px 2px rgba(0,0,0,.28); }
 .panorama-question span { flex: 0 0 auto; min-width: 42px; padding: 8px 10px; border-radius: 10px; text-align: center; font-weight: 700; color: #fff; background: #131b32; }
 .panorama-question p { margin: 4px 0 0; font-size: 1.08rem; line-height: 1.75; }
-.panorama-live-stage { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; min-height: 390px; }
-.panorama-ai-presence { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 9px; border: 1px solid rgba(255,255,255,.24); border-radius: 18px; background: rgba(8, 14, 30, .34); text-align: center; backdrop-filter: blur(5px); }
-.panorama-ai-presence small { color: rgba(255,255,255,.66); }
-.ai-pulse { width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #9ff9e9, #20bda4 52%, #0d5f73); box-shadow: 0 0 0 12px rgba(50, 213, 188, .1), 0 0 36px rgba(50, 213, 188, .55); animation: ai-interviewer-pulse 2.2s ease-in-out infinite; }
-@keyframes ai-interviewer-pulse { 50% { transform: scale(1.05); box-shadow: 0 0 0 18px rgba(50, 213, 188, .05), 0 0 48px rgba(50, 213, 188, .72); } }
-.panorama-video-frame { position: relative; min-height: 390px; overflow: hidden; border: 1px solid rgba(255,255,255,.22); border-radius: 18px; background: rgba(9, 15, 30, .18); }
-.panorama-answer-panel { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 18px; align-items: end; margin-top: 20px; }
-.panorama-answer-panel .actions-row { grid-column: 1 / -1; justify-content: flex-end; }
-.panorama-timer { display: grid; place-items: center; min-height: 100px; border-radius: 50%; color: #102033; background: #80ddcd; }
+.panorama-question-audio { align-items: center; }
+.panorama-question-audio p { flex: 1; margin: 0; color: rgba(255,255,255,.88); }
+.panorama-question-audio button { flex: 0 0 auto; }
+.panorama-live-stage { display: grid; grid-template-columns: minmax(260px, .42fr) minmax(0, 1.58fr); gap: 18px; min-height: 430px; }
+.panorama-ai-presence { position: relative; min-height: 430px; overflow: hidden; border: 1px solid rgba(255,255,255,.24); border-radius: 18px; background: rgba(8, 14, 30, .34); text-align: center; backdrop-filter: blur(5px); }
+.panorama-ai-presence img { width: 100%; height: 100%; min-height: 430px; display: block; object-fit: cover; object-position: 50% 30%; transition: transform .28s ease, filter .28s ease; }
+.panorama-ai-presence.speaking img { animation: panorama-interviewer-speaking 1.15s ease-in-out infinite; filter: saturate(1.08) brightness(1.04); }
+.panorama-speaking-rings { position: absolute; inset: 12px; border-radius: 16px; opacity: 0; pointer-events: none; border: 1px solid rgba(128, 221, 205, .42); box-shadow: 0 0 0 0 rgba(128, 221, 205, .22); }
+.panorama-ai-presence.speaking .panorama-speaking-rings { animation: panorama-speaking-rings 1.25s ease-out infinite; opacity: 1; }
+.panorama-ai-caption { position: absolute; inset: auto 0 0; display: grid; gap: 5px; padding: 48px 16px 18px; color: #fff; background: linear-gradient(transparent, rgba(4, 10, 24, .92)); }
+.panorama-ai-presence small { color: rgba(255,255,255,.78); }
+@keyframes panorama-interviewer-speaking { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.018) translateY(-2px); } 70% { transform: scale(1.006); } }
+@keyframes panorama-speaking-rings { 0% { box-shadow: 0 0 0 0 rgba(128, 221, 205, .28); } 100% { box-shadow: 0 0 0 18px rgba(128, 221, 205, 0); } }
+.panorama-video-frame { position: relative; min-height: 430px; overflow: hidden; border: 1px solid rgba(255,255,255,.22); border-radius: 18px; background: rgba(9, 15, 30, .18); }
+.panorama-answer-panel { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 8px 14px; align-items: end; margin-top: 10px; padding: 12px 14px; }
+.panorama-answer-panel .actions-row { grid-column: 2; justify-content: flex-end; margin-top: 2px; }
+.panorama-answer-panel label { gap: 5px; margin-bottom: 0; }
+.panorama-answer-panel textarea { min-height: 70px; max-height: 92px; }
+.panorama-answer-panel .panorama-notice, .panorama-answer-panel .panorama-error { grid-column: 1 / -1; margin-top: 2px; padding: 8px 10px; }
+.panorama-timer { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; width: 104px; height: 104px; min-height: 0; border-radius: 50%; color: #102033; background: #80ddcd; }
+.panorama-timer small, .panorama-timer strong { display: block; margin: 0; line-height: 1.05; }
 .panorama-timer strong { font-size: 1.45rem; }
 .panorama-report { border-top: 5px solid #35bea7; }
-@media (max-width: 900px) { .panorama-setup-grid, .panorama-live-stage { grid-template-columns: 1fr; } .panorama-ai-presence { min-height: 150px; } .panorama-answer-panel { grid-template-columns: 1fr; } .panorama-timer { width: 110px; } }
+@media (max-width: 900px) { .panorama-setup-grid, .panorama-live-stage { grid-template-columns: 1fr; } .panorama-ai-presence, .panorama-ai-presence img { min-height: 300px; } .panorama-answer-panel { grid-template-columns: 1fr; } .panorama-answer-panel .actions-row { grid-column: 1; } .panorama-timer { width: 100px; height: 100px; } }
 .ai-question-workspace { display: grid; gap: 26px; padding: 28px; border-radius: 22px; background: #15182d; }
 .ai-question-card, .ai-answer-card { padding: 30px; border-radius: 18px; background: #fff; box-shadow: 0 18px 45px rgba(5, 9, 25, .18); }
 .ai-question-card { min-height: 310px; }
@@ -1754,9 +1789,13 @@ h4 {
 .voice-answer-button:active { color: #1a6e63; background: transparent; }
 .voice-answer-button:focus { outline: none; }
 .voice-answer-button:focus-visible { outline: 3px solid rgba(49, 183, 159, .38); outline-offset: 6px; }
-.voice-answer-button span { width: 76px; height: 76px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #75d3c2; box-shadow: 0 10px 30px rgba(55, 186, 164, .28); font-size: 1.25rem; }
-.voice-answer-button:hover span { transform: translateY(-1px); box-shadow: 0 13px 34px rgba(55, 186, 164, .34); }
+.voice-answer-button span { width: 76px; height: 76px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: #75d3c2; box-shadow: 0 10px 30px rgba(55, 186, 164, .28); font-size: 1.25rem; transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+.voice-answer-button:hover span,
+.voice-answer-button:focus-visible span { background: #43bca7; transform: translateY(-1px); box-shadow: 0 13px 34px rgba(32, 148, 128, .4); }
+.voice-answer-button:active span { background: #278f7d; transform: translateY(0); box-shadow: 0 7px 20px rgba(27, 124, 108, .38); }
 .voice-answer-button.listening span { animation: ai-interviewer-pulse 1.4s ease-in-out infinite; background: #f08b72; }
+.voice-answer-button.listening:hover span,
+.voice-answer-button.listening:focus-visible span { background: #d96b55; }
 .interview-inline-error { color: #a43b2d; }
 .score-report-head { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
 .score-report-head h3 { margin: 6px 0; }

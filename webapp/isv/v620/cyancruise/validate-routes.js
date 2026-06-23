@@ -5,6 +5,7 @@ const routePath = path.join(__dirname, "cyancruise-routes.json");
 const appPath = path.join(__dirname, "assets", "app.js");
 const stylesPath = path.join(__dirname, "assets", "styles.css");
 const panoramaImagePath = path.join(__dirname, "assets", "images", "panorama-interview-room-v1.png");
+const panoramaInterviewerImagePath = path.join(__dirname, "assets", "images", "ai-interviewer-human-v1.png");
 const routeMap = JSON.parse(fs.readFileSync(routePath, "utf8"));
 const app = fs.readFileSync(appPath, "utf8");
 const styles = fs.readFileSync(stylesPath, "utf8");
@@ -12,11 +13,38 @@ const styles = fs.readFileSync(stylesPath, "utf8");
 if (!fs.existsSync(panoramaImagePath)) {
   throw new Error("Missing panoramic interview room image asset");
 }
+if (!fs.existsSync(panoramaInterviewerImagePath)) {
+  throw new Error("Missing AI interviewer human image asset");
+}
+for (const marker of ["panoramaDeadlineAt", "Date.now()", "ai-interviewer-human-v1.png"]) {
+  if (!app.includes(marker)) throw new Error(`Missing persistent panoramic timer or interviewer marker: ${marker}`);
+}
+for (const marker of ["speechSynthesis", "SpeechSynthesisUtterance", "speakPanoramaQuestion", "panoramaLastSpokenQuestion", "播放题目"]) {
+  if (!app.includes(marker)) throw new Error(`Missing panoramic interviewer speech marker: ${marker}`);
+}
+for (const marker of [".panorama-ai-caption", "min-height: 430px", "gap: 2px", "max-height: 92px", "min-height: 600px"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing panoramic room proportion marker: ${marker}`);
+}
+for (const marker of [".panorama-question-audio", ".panorama-ai-presence.speaking", "@keyframes panorama-interviewer-speaking", "panorama-speaking-rings"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing panoramic interviewer speaking style: ${marker}`);
+}
+for (const marker of [".panorama-ai-presence img", ".panorama-ai-presence.speaking img", "@keyframes panorama-interviewer-speaking"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing panoramic human interviewer style: ${marker}`);
+}
 for (const marker of ["mediaDevices.getUserMedia", "panoramaCamera", "SpeechRecognition", "mode: \"VOICE\""]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic interview implementation marker: ${marker}`);
 }
 for (const marker of ["panoramaMediaCandidates", "无摄像头继续", "window.isSecureContext"]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic camera compatibility marker: ${marker}`);
+}
+for (const marker of ["panoramaMediaDiagnosticTips", "panoramaMediaDiagnostics", "allow=\\\"camera; microphone\\\"", "Permissions-Policy"]) {
+  if (!app.includes(marker)) throw new Error(`Missing panoramic media diagnostic marker: ${marker}`);
+}
+for (const marker of ["window.isSecureContext !== false", "摄像头和麦克风接口"]) {
+  if (!app.includes(marker)) throw new Error(`Missing precise panoramic media diagnostic marker: ${marker}`);
+}
+for (const marker of [".panorama-diagnostic", ".panorama-diagnostic li"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing panoramic media diagnostic style: ${marker}`);
 }
 for (const marker of ["panoramaAnswerLimit", "3 * 60", "5 * 60", "8 * 60", "本题在规定时间内未完成回答"]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic answer timing marker: ${marker}`);
@@ -33,11 +61,29 @@ for (const marker of ["interviewPage", "interview-history", "interviewHistoryPag
 for (const marker of ["interviewViewMode", "查看问答", "interviewQuestionAnswerPairs", "面试官问题", "我的回答"]) {
   if (!app.includes(marker)) throw new Error(`Missing interview transcript marker: ${marker}`);
 }
-for (const marker of [".voice-answer-button:focus", ".voice-answer-button:focus-visible", "background: transparent"]) {
+for (const marker of ['data-interview-action="leave"', "resetActiveInterviewView", "返回 AI 面试中心"]) {
+  if (!app.includes(marker)) throw new Error(`Missing AI interview center return marker: ${marker}`);
+}
+for (const marker of [".voice-answer-button:focus", ".voice-answer-button:focus-visible", ".voice-answer-button:active span", "background: #43bca7", "background: transparent"]) {
   if (!styles.includes(marker)) throw new Error(`Missing voice answer interaction style: ${marker}`);
 }
-for (const marker of ['feature("全景仿真面试", "仿"', 'feature("AI 模拟面试", "面"']) {
-  if (!app.includes(marker)) throw new Error(`Missing home interview recommendation marker: ${marker}`);
+for (const marker of ['feature("面试中心", "面", "选择全景仿真面试或 AI 模拟面试并查看记录", "interview-home"']) {
+  if (!app.includes(marker)) throw new Error(`Missing home interview center recommendation marker: ${marker}`);
+}
+for (const marker of ["interviewSetupDifficulty", "syncInterviewSetupDraftFromPage", "normalizeInterviewDifficulty", 'option value="Easy"']) {
+  if (!app.includes(marker)) throw new Error(`Missing AI interview setup state marker: ${marker}`);
+}
+for (const marker of [".interview-type-grid .feature-card > p", ".interview-type-grid .feature-card > button", "grid-column: 1 / -1"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing interview center card layout marker: ${marker}`);
+}
+for (const marker of ["interview-record-entry-grid", "查看 AI 模拟面试记录", "查看全景仿真面试记录"]) {
+  if (!app.includes(marker) && !styles.includes(marker)) throw new Error(`Missing interview record entry marker: ${marker}`);
+}
+for (const marker of ["interview-panorama-history", "panoramaHistoryPageNumber", "loadPanoramaHistoryPage", 'mode: "VOICE"', "renderPanoramaTranscript", "删除记录"]) {
+  if (!app.includes(marker)) throw new Error(`Missing panoramic interview history marker: ${marker}`);
+}
+for (const removedMarker of ['<h3>面试记录</h3><p class="panel-note">历史记录在独立页面中保存和分页展示。</p>', 'statePanel("暂时没有完成操作"']) {
+  if (app.includes(removedMarker)) throw new Error(`Obsolete AI interview prompt card remains: ${removedMarker}`);
 }
 
 const requiredRoutes = [
@@ -55,6 +101,7 @@ const requiredRoutes = [
   "interview-home",
   "interview",
   "interview-history",
+  "interview-panorama-history",
   "interview-panorama",
   "career-plan",
   "assistant",
@@ -129,6 +176,7 @@ const requiredPageShellRoutes = [
   "interview-home",
   "interview",
   "interview-history",
+  "interview-panorama-history",
   "interview-panorama",
   "assistant",
   "messages",
@@ -149,6 +197,7 @@ const requiredDefaultUserRoutes = [
   "interview-home",
   "interview",
   "interview-history",
+  "interview-panorama-history",
   "interview-panorama",
   "assistant",
   "messages",

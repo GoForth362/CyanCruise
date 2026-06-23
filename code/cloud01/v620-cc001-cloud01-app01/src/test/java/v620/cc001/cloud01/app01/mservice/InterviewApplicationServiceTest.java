@@ -176,12 +176,16 @@ class InterviewApplicationServiceTest {
 
         InterviewPageResultDto first = service.listPage("page-history-user", 1, InterviewConstants.MODE_TEXT);
         InterviewPageResultDto second = service.listPage("page-history-user", 2, InterviewConstants.MODE_TEXT);
+        InterviewPageResultDto panoramic = service.listPage("page-history-user", 1, InterviewConstants.MODE_VOICE);
 
         assertEquals(Integer.valueOf(10), Integer.valueOf(first.getItems().size()));
         assertEquals(Integer.valueOf(12), first.getTotal());
         assertEquals(Integer.valueOf(2), first.getTotalPages());
         assertEquals(Integer.valueOf(2), Integer.valueOf(second.getItems().size()));
         assertEquals(Integer.valueOf(2), second.getPage());
+        assertEquals(Integer.valueOf(1), panoramic.getTotal());
+        assertEquals(Integer.valueOf(1), Integer.valueOf(panoramic.getItems().size()));
+        assertEquals(InterviewConstants.MODE_VOICE, panoramic.getItems().get(0).getMode());
     }
 
     private InterviewApplicationService service(InterviewStorage storage,
