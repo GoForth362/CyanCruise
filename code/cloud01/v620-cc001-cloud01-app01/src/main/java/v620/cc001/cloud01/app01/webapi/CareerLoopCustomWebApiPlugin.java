@@ -16,8 +16,20 @@ import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
 import v620.cc001.base.common.dto.career.FileUploadRequest;
 import v620.cc001.base.common.dto.career.InterviewStartRequest;
+import v620.cc001.base.common.dto.career.PostgraduateMistakeAnalyzeRequest;
+import v620.cc001.base.common.dto.career.PostgraduatePlanRequest;
+import v620.cc001.base.common.dto.career.PostgraduateReexamPrepareRequest;
+import v620.cc001.base.common.dto.career.PostgraduateSchoolRecommendRequest;
+import v620.cc001.base.common.dto.career.RecommendationDocumentPolishRequest;
+import v620.cc001.base.common.dto.career.RecommendationProfileRequest;
+import v620.cc001.base.common.dto.career.RecommendationTutorLetterRequest;
 import v620.cc001.base.common.dto.career.ResumeCreateRequest;
 import v620.cc001.base.common.dto.career.ResumeDiagnosisRequest;
+import v620.cc001.base.common.dto.career.StudyAbroadLanguagePlanRequest;
+import v620.cc001.base.common.dto.career.StudyAbroadProfileRequest;
+import v620.cc001.base.common.dto.career.StudyAbroadSchoolPositionRequest;
+import v620.cc001.base.common.dto.career.StudyAbroadStatementRequest;
+import v620.cc001.base.common.dto.career.StudyAbroadVisaChecklistRequest;
 import v620.cc001.base.common.dto.career.SubscriptionGrantRequest;
 import v620.cc001.base.common.dto.career.SubscriptionSendRequest;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
@@ -52,13 +64,17 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
     private final FileUploadPreviewWebApi fileWebApi;
     private final ResumeDiagnosisWebApi resumeDiagnosisWebApi;
     private final AssessmentWebApi assessmentWebApi;
+    private final PostgraduateWebApi postgraduateWebApi;
+    private final RecommendationWebApi recommendationWebApi;
+    private final StudyAbroadWebApi studyAbroadWebApi;
 
     public CareerLoopCustomWebApiPlugin() {
         this(new CareerLoopIdentityWebApi(), new CareerProfileWebApi(), new CareerAgentWebApi(),
                 new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi(),
                 new AssistantChatWebApi(), new EmploymentInsightsResourcesWebApi(),
                 new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
-                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi());
+                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi(),
+                new PostgraduateWebApi(), new RecommendationWebApi(), new StudyAbroadWebApi());
     }
 
     CareerLoopCustomWebApiPlugin(CareerLoopIdentityWebApi identityWebApi,
@@ -68,7 +84,8 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 new ResumeWebApi(), new CareerPlanWebApi(), new InterviewWebApi(),
                 new AssistantChatWebApi(), new EmploymentInsightsResourcesWebApi(),
                 new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
-                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi());
+                new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi(),
+                new PostgraduateWebApi(), new RecommendationWebApi(), new StudyAbroadWebApi());
     }
 
     CareerLoopCustomWebApiPlugin(CareerLoopIdentityWebApi identityWebApi,
@@ -84,6 +101,28 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                                  FileUploadPreviewWebApi fileWebApi,
                                  ResumeDiagnosisWebApi resumeDiagnosisWebApi,
                                  AssessmentWebApi assessmentWebApi) {
+        this(identityWebApi, profileWebApi, agentWebApi, resumeWebApi, planWebApi, interviewWebApi,
+                assistantWebApi, employmentWebApi, notificationsWebApi, adminWebApi, fileWebApi,
+                resumeDiagnosisWebApi, assessmentWebApi, new PostgraduateWebApi(), new RecommendationWebApi(),
+                new StudyAbroadWebApi());
+    }
+
+    CareerLoopCustomWebApiPlugin(CareerLoopIdentityWebApi identityWebApi,
+                                 CareerProfileWebApi profileWebApi,
+                                 CareerAgentWebApi agentWebApi,
+                                 ResumeWebApi resumeWebApi,
+                                 CareerPlanWebApi planWebApi,
+                                 InterviewWebApi interviewWebApi,
+                                 AssistantChatWebApi assistantWebApi,
+                                 EmploymentInsightsResourcesWebApi employmentWebApi,
+                                 NotificationsSubscriptionsWebApi notificationsWebApi,
+                                 AdminConsoleGovernanceWebApi adminWebApi,
+                                 FileUploadPreviewWebApi fileWebApi,
+                                 ResumeDiagnosisWebApi resumeDiagnosisWebApi,
+                                 AssessmentWebApi assessmentWebApi,
+                                 PostgraduateWebApi postgraduateWebApi,
+                                 RecommendationWebApi recommendationWebApi,
+                                 StudyAbroadWebApi studyAbroadWebApi) {
         this.identityWebApi = identityWebApi;
         this.profileWebApi = profileWebApi;
         this.agentWebApi = agentWebApi;
@@ -97,6 +136,9 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
         this.fileWebApi = fileWebApi;
         this.resumeDiagnosisWebApi = resumeDiagnosisWebApi;
         this.assessmentWebApi = assessmentWebApi;
+        this.postgraduateWebApi = postgraduateWebApi;
+        this.recommendationWebApi = recommendationWebApi;
+        this.studyAbroadWebApi = studyAbroadWebApi;
     }
 
     @ApiPostMapping(value = "/route", desc = "Route CyanCruise custom WebAPI call", methodParamNames = {"params"})
@@ -309,6 +351,58 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(resumeDiagnosisWebApi.keywordStatus(
                         extractUserId(body), longObject(value(body, "resumeId"))));
             }
+            if ("/cc001/postgraduate/school-recommend".equals(path)) {
+                return ApiResult.success(postgraduateWebApi.recommendSchools(
+                        extractUserId(body), extractPostgraduateSchoolRecommendRequest(body)));
+            }
+            if ("/cc001/postgraduate/plan/generate".equals(path)) {
+                return ApiResult.success(postgraduateWebApi.generatePlan(
+                        extractUserId(body), extractPostgraduatePlanRequest(body)));
+            }
+            if ("/cc001/postgraduate/mistake/analyze".equals(path)) {
+                return ApiResult.success(postgraduateWebApi.analyzeMistake(
+                        extractUserId(body), extractPostgraduateMistakeAnalyzeRequest(body)));
+            }
+            if ("/cc001/postgraduate/reexam/prepare".equals(path)) {
+                return ApiResult.success(postgraduateWebApi.prepareReexam(
+                        extractUserId(body), extractPostgraduateReexamPrepareRequest(body)));
+            }
+            if ("/cc001/recommendation/diagnose".equals(path)) {
+                return ApiResult.success(recommendationWebApi.diagnose(
+                        extractUserId(body), extractRecommendationProfileRequest(body)));
+            }
+            if ("/cc001/recommendation/plan/generate".equals(path)) {
+                return ApiResult.success(recommendationWebApi.generatePlan(
+                        extractUserId(body), extractRecommendationProfileRequest(body)));
+            }
+            if ("/cc001/recommendation/document/polish".equals(path)) {
+                return ApiResult.success(recommendationWebApi.polishDocument(
+                        extractUserId(body), extractRecommendationDocumentPolishRequest(body)));
+            }
+            if ("/cc001/recommendation/tutor-letter/generate".equals(path)) {
+                return ApiResult.success(recommendationWebApi.generateTutorLetter(
+                        extractUserId(body), extractRecommendationTutorLetterRequest(body)));
+            }
+            if ("/cc001/study-abroad/profile/diagnose".equals(path)) {
+                return ApiResult.success(studyAbroadWebApi.diagnoseProfile(
+                        extractUserId(body), extractStudyAbroadProfileRequest(body)));
+            }
+            if ("/cc001/study-abroad/language/plan".equals(path)) {
+                return ApiResult.success(studyAbroadWebApi.generateLanguagePlan(
+                        extractUserId(body), extractStudyAbroadLanguagePlanRequest(body)));
+            }
+            if ("/cc001/study-abroad/school/position".equals(path)) {
+                return ApiResult.success(studyAbroadWebApi.positionSchools(
+                        extractUserId(body), extractStudyAbroadSchoolPositionRequest(body)));
+            }
+            if ("/cc001/study-abroad/statement/outline".equals(path)) {
+                return ApiResult.success(studyAbroadWebApi.buildStatementOutline(
+                        extractUserId(body), extractStudyAbroadStatementRequest(body)));
+            }
+            if ("/cc001/study-abroad/visa/checklist".equals(path)) {
+                return ApiResult.success(studyAbroadWebApi.buildVisaChecklist(
+                        extractUserId(body), extractStudyAbroadVisaChecklistRequest(body)));
+            }
             return ApiResult.fail("Unsupported CyanCruise custom WebAPI path: " + path);
         } catch (IdentityBoundaryException ex) {
             return ApiResult.fail(ex.getStatus(), ex.getMessage());
@@ -494,6 +588,229 @@ public class CareerLoopCustomWebApiPlugin implements IBillWebApiPlugin {
             out.setResumeText(textOrNull(values.get("resumeText")));
             out.setJobDescription(textOrNull(values.get("jobDescription")));
             out.setProfileContext(textOrNull(values.get("profileContext")));
+        }
+        return out;
+    }
+
+    private PostgraduateSchoolRecommendRequest extractPostgraduateSchoolRecommendRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof PostgraduateSchoolRecommendRequest) {
+            return (PostgraduateSchoolRecommendRequest) request;
+        }
+        PostgraduateSchoolRecommendRequest out = new PostgraduateSchoolRecommendRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setUndergraduateSchool(textOrNull(values.get("undergraduateSchool")));
+            out.setUndergraduateLevel(textOrNull(values.get("undergraduateLevel")));
+            out.setMajor(textOrNull(values.get("major")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setGpa(textOrNull(firstPresent(values, "gpa", "averageScore")));
+            out.setEnglishLevel(textOrNull(values.get("englishLevel")));
+            out.setPreferredRegion(textOrNull(firstPresent(values, "preferredRegion", "region")));
+            out.setPreference(textOrNull(values.get("preference")));
+        }
+        return out;
+    }
+
+    private PostgraduatePlanRequest extractPostgraduatePlanRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof PostgraduatePlanRequest) {
+            return (PostgraduatePlanRequest) request;
+        }
+        PostgraduatePlanRequest out = new PostgraduatePlanRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setTargetSchool(textOrNull(values.get("targetSchool")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setExamDate(textOrNull(values.get("examDate")));
+            out.setStartDate(textOrNull(values.get("startDate")));
+            out.setWeeklyHours(textOrNull(values.get("weeklyHours")));
+            out.setSubjects(stringList(values.get("subjects")));
+            out.setCurrentStage(textOrNull(values.get("currentStage")));
+        }
+        return out;
+    }
+
+    private PostgraduateMistakeAnalyzeRequest extractPostgraduateMistakeAnalyzeRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof PostgraduateMistakeAnalyzeRequest) {
+            return (PostgraduateMistakeAnalyzeRequest) request;
+        }
+        PostgraduateMistakeAnalyzeRequest out = new PostgraduateMistakeAnalyzeRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setSubject(textOrNull(values.get("subject")));
+            out.setQuestionText(textOrNull(firstPresent(values, "questionText", "question")));
+            out.setWrongAnswer(textOrNull(values.get("wrongAnswer")));
+            out.setTargetExam(textOrNull(values.get("targetExam")));
+        }
+        return out;
+    }
+
+    private PostgraduateReexamPrepareRequest extractPostgraduateReexamPrepareRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof PostgraduateReexamPrepareRequest) {
+            return (PostgraduateReexamPrepareRequest) request;
+        }
+        PostgraduateReexamPrepareRequest out = new PostgraduateReexamPrepareRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setTargetSchool(textOrNull(values.get("targetSchool")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setPreliminaryStatus(textOrNull(firstPresent(values, "preliminaryStatus", "examStatus")));
+            out.setMaterials(stringList(values.get("materials")));
+            out.setResearchExperience(textOrNull(values.get("researchExperience")));
+        }
+        return out;
+    }
+
+    private RecommendationProfileRequest extractRecommendationProfileRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof RecommendationProfileRequest) {
+            return (RecommendationProfileRequest) request;
+        }
+        RecommendationProfileRequest out = new RecommendationProfileRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setGrade(textOrNull(values.get("grade")));
+            out.setSchool(textOrNull(values.get("school")));
+            out.setMajor(textOrNull(values.get("major")));
+            out.setGpa(textOrNull(firstPresent(values, "gpa", "averageScore")));
+            out.setRank(textOrNull(values.get("rank")));
+            out.setEnglishLevel(textOrNull(values.get("englishLevel")));
+            out.setAwards(textOrNull(firstPresent(values, "awards", "competitions")));
+            out.setResearch(textOrNull(values.get("research")));
+            out.setPapers(textOrNull(values.get("papers")));
+            out.setPatentsOrCopyrights(textOrNull(firstPresent(values, "patentsOrCopyrights", "softwareCopyrights")));
+            out.setTargetSchools(textOrNull(values.get("targetSchools")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+        }
+        return out;
+    }
+
+    private RecommendationDocumentPolishRequest extractRecommendationDocumentPolishRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof RecommendationDocumentPolishRequest) {
+            return (RecommendationDocumentPolishRequest) request;
+        }
+        RecommendationDocumentPolishRequest out = new RecommendationDocumentPolishRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setDocumentType(textOrNull(values.get("documentType")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setDraft(textOrNull(values.get("draft")));
+            out.setHighlights(textOrNull(values.get("highlights")));
+        }
+        return out;
+    }
+
+    private RecommendationTutorLetterRequest extractRecommendationTutorLetterRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof RecommendationTutorLetterRequest) {
+            return (RecommendationTutorLetterRequest) request;
+        }
+        RecommendationTutorLetterRequest out = new RecommendationTutorLetterRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setTutorName(textOrNull(values.get("tutorName")));
+            out.setTargetSchool(textOrNull(values.get("targetSchool")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setResearchDirection(textOrNull(firstPresent(values, "researchDirection", "paperKeywords")));
+            out.setPersonalBackground(textOrNull(values.get("personalBackground")));
+            out.setPurpose(textOrNull(values.get("purpose")));
+        }
+        return out;
+    }
+
+    private StudyAbroadProfileRequest extractStudyAbroadProfileRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof StudyAbroadProfileRequest) {
+            return (StudyAbroadProfileRequest) request;
+        }
+        StudyAbroadProfileRequest out = new StudyAbroadProfileRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setCountryOrRegion(textOrNull(firstPresent(values, "countryOrRegion", "country", "region")));
+            out.setTargetDegree(textOrNull(firstPresent(values, "targetDegree", "degree")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setSchool(textOrNull(values.get("school")));
+            out.setMajor(textOrNull(values.get("major")));
+            out.setGpa(textOrNull(firstPresent(values, "gpa", "averageScore")));
+            out.setLanguageScore(textOrNull(firstPresent(values, "languageScore", "englishLevel")));
+            out.setBudget(textOrNull(values.get("budget")));
+            out.setBackground(textOrNull(firstPresent(values, "background", "experience")));
+            out.setPreference(textOrNull(values.get("preference")));
+        }
+        return out;
+    }
+
+    private StudyAbroadLanguagePlanRequest extractStudyAbroadLanguagePlanRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof StudyAbroadLanguagePlanRequest) {
+            return (StudyAbroadLanguagePlanRequest) request;
+        }
+        StudyAbroadLanguagePlanRequest out = new StudyAbroadLanguagePlanRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setExamType(textOrNull(firstPresent(values, "examType", "exam")));
+            out.setCurrentScore(textOrNull(values.get("currentScore")));
+            out.setTargetScore(textOrNull(values.get("targetScore")));
+            out.setExamDate(textOrNull(values.get("examDate")));
+            out.setWeeklyHours(textOrNull(values.get("weeklyHours")));
+            out.setWeakParts(textOrNull(firstPresent(values, "weakParts", "weaknesses")));
+        }
+        return out;
+    }
+
+    private StudyAbroadSchoolPositionRequest extractStudyAbroadSchoolPositionRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof StudyAbroadSchoolPositionRequest) {
+            return (StudyAbroadSchoolPositionRequest) request;
+        }
+        StudyAbroadSchoolPositionRequest out = new StudyAbroadSchoolPositionRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setCountryOrRegion(textOrNull(firstPresent(values, "countryOrRegion", "country", "region")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setGpa(textOrNull(firstPresent(values, "gpa", "averageScore")));
+            out.setLanguageScore(textOrNull(firstPresent(values, "languageScore", "englishLevel")));
+            out.setBudget(textOrNull(values.get("budget")));
+            out.setBackground(textOrNull(firstPresent(values, "background", "experience")));
+            out.setPreference(textOrNull(values.get("preference")));
+        }
+        return out;
+    }
+
+    private StudyAbroadStatementRequest extractStudyAbroadStatementRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof StudyAbroadStatementRequest) {
+            return (StudyAbroadStatementRequest) request;
+        }
+        StudyAbroadStatementRequest out = new StudyAbroadStatementRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
+            out.setProfessorTopic(textOrNull(firstPresent(values, "professorTopic", "projectDirection", "researchDirection")));
+            out.setPersonalStory(textOrNull(values.get("personalStory")));
+            out.setAcademicExperience(textOrNull(firstPresent(values, "academicExperience", "experience")));
+            out.setCareerGoal(textOrNull(firstPresent(values, "careerGoal", "goal")));
+            out.setLanguage(textOrNull(values.get("language")));
+        }
+        return out;
+    }
+
+    private StudyAbroadVisaChecklistRequest extractStudyAbroadVisaChecklistRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof StudyAbroadVisaChecklistRequest) {
+            return (StudyAbroadVisaChecklistRequest) request;
+        }
+        StudyAbroadVisaChecklistRequest out = new StudyAbroadVisaChecklistRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setCountryOrRegion(textOrNull(firstPresent(values, "countryOrRegion", "country", "region")));
+            out.setApplicationSeason(textOrNull(firstPresent(values, "applicationSeason", "season")));
+            out.setAdmissionStatus(textOrNull(values.get("admissionStatus")));
+            out.setMaterialStatus(textOrNull(values.get("materialStatus")));
         }
         return out;
     }
