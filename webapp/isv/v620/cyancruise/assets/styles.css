@@ -1813,3 +1813,103 @@ h4 {
 .report-advice article + article { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(50, 70, 65, .12); }
 .report-advice p { margin: 6px 0 0; line-height: 1.65; }
 @media (max-width: 900px) { .score-dimensions { grid-template-columns: repeat(2, minmax(0, 1fr)); } .report-advice-grid { grid-template-columns: 1fr; } }
+
+.postgraduate-hero-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.postgraduate-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.postgraduate-flow span {
+  min-height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #174d42;
+  background: #eef8f5;
+  font-weight: 700;
+  text-align: center;
+}
+
+.postgraduate-action-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.postgraduate-action-grid button {
+  min-height: 54px;
+  width: 100%;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.postgraduate-result {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.result-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.mini-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.mini-card p {
+  margin: 0;
+  line-height: 1.65;
+}
+
+.simple-list {
+  display: grid;
+  gap: 8px;
+}
+
+.simple-list ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.simple-list li {
+  margin: 5px 0;
+  line-height: 1.6;
+}
+
+.generated-text {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fbfdfc;
+  white-space: pre-wrap;
+  line-height: 1.75;
+  font-family: inherit;
+}
+
+@media (max-width: 900px) {
+  .postgraduate-flow,
+  .postgraduate-action-grid,
+  .result-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

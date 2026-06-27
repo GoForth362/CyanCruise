@@ -49,16 +49,43 @@
     fileDelete: "/cc001/files/delete",
     fileExtractText: "/cc001/files/extract-text",
     resumeDiagnosis: "/cc001/resume-diagnosis/analyze",
-    keywordStatus: "/cc001/resume-diagnosis/keywords/status"
+    keywordStatus: "/cc001/resume-diagnosis/keywords/status",
+    postgraduateSchoolRecommend: "/cc001/postgraduate/school-recommend",
+    postgraduatePlanGenerate: "/cc001/postgraduate/plan/generate",
+    postgraduateMistakeAnalyze: "/cc001/postgraduate/mistake/analyze",
+    postgraduateReexamPrepare: "/cc001/postgraduate/reexam/prepare",
+    recommendationDiagnose: "/cc001/recommendation/diagnose",
+    recommendationPlanGenerate: "/cc001/recommendation/plan/generate",
+    recommendationDocumentPolish: "/cc001/recommendation/document/polish",
+    recommendationTutorLetterGenerate: "/cc001/recommendation/tutor-letter/generate",
+    studyAbroadProfileDiagnose: "/cc001/study-abroad/profile/diagnose",
+    studyAbroadLanguagePlan: "/cc001/study-abroad/language/plan",
+    studyAbroadSchoolPosition: "/cc001/study-abroad/school/position",
+    studyAbroadStatementOutline: "/cc001/study-abroad/statement/outline",
+    studyAbroadVisaChecklist: "/cc001/study-abroad/visa/checklist"
   };
 
   var pages = [
     page("workbench", "CyanCruise 首页", "available", "user", "填写用户画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
     page("employment-home", "就业", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
     page("further-study-home", "深造", "available", "user", "考研、保研和留学方向规划入口。", ["snapshot", "plan"]),
-    page("postgraduate-exam", "考研", "entry-only", "user", "考研规划入口，后续接入规划智能体。", ["plan"]),
-    page("postgraduate-recommendation", "保研", "entry-only", "user", "保研规划入口，后续接入规划智能体。", ["plan"]),
-    page("study-abroad", "留学", "entry-only", "user", "留学规划入口，后续接入规划智能体。", ["plan"]),
+    page("postgraduate", "考研陪伴", "available", "user", "围绕择校、复习计划、错题解析和复试准备完成考研全周期规划。", ["postgraduateSchoolRecommend", "postgraduatePlanGenerate", "postgraduateMistakeAnalyze", "postgraduateReexamPrepare"]),
+    page("postgraduate-school", "择校择专业", "available", "user", "输入本科学校、成绩、英语水平和期望地区，生成稳、冲、保三档择校建议。", ["postgraduateSchoolRecommend"], { defaultNav: false }),
+    page("postgraduate-plan", "复习计划", "available", "user", "按目标院校、考试日期、科目和每周时间生成基础、提高、冲刺三轮计划。", ["postgraduatePlanGenerate"], { defaultNav: false }),
+    page("postgraduate-mistake", "错题解析", "available", "user", "粘贴错题文本，整理答案思路、考点知识树、错因和同类题。", ["postgraduateMistakeAnalyze"], { defaultNav: false }),
+    page("postgraduate-reexam", "复试准备", "available", "user", "围绕目标院校、初试状态、材料和项目经历生成复试准备清单。", ["postgraduateReexamPrepare"], { defaultNav: false }),
+    page("postgraduate-exam", "考研", "entry-only", "user", "旧版考研入口已升级为考研陪伴页面。", ["postgraduateSchoolRecommend"], { defaultNav: false, debugNav: true }),
+    page("postgraduate-recommendation", "保研陪伴", "available", "user", "围绕绩点排名、背景提升、营校投递、材料精修和导师联系完成保研规划。", ["recommendationDiagnose", "recommendationPlanGenerate", "recommendationDocumentPolish", "recommendationTutorLetterGenerate"]),
+    page("recommendation-ranking", "排名监控", "available", "user", "录入绩点、排名、英语和成果，诊断当前保研竞争力与资格风险。", ["recommendationDiagnose"], { defaultNav: false }),
+    page("recommendation-background", "背景提升", "available", "user", "根据当前年级、排名和背景短板生成保研行动计划。", ["recommendationPlanGenerate"], { defaultNav: false }),
+    page("recommendation-material", "材料精修", "available", "user", "围绕自述信、邮件或推荐信要点进行结构化润色。", ["recommendationDocumentPolish"], { defaultNav: false }),
+    page("recommendation-tutor", "导师联系", "available", "user", "根据目标导师方向和个人背景生成导师意向信。", ["recommendationTutorLetterGenerate"], { defaultNav: false }),
+    page("study-abroad", "留学陪伴", "available", "user", "围绕国家地区、语言考试、软实力、选校定位、文书主线和签证网申完成留学申请规划。", ["studyAbroadProfileDiagnose", "studyAbroadLanguagePlan", "studyAbroadSchoolPosition", "studyAbroadStatementOutline", "studyAbroadVisaChecklist"]),
+    page("study-abroad-profile", "国家地区", "available", "user", "确认国家地区、目标学位、成绩、预算和软实力经历，生成留学准备度诊断。", ["studyAbroadProfileDiagnose"], { defaultNav: false }),
+    page("study-abroad-language", "语言考试", "available", "user", "围绕雅思、托福、GRE 等考试生成分阶段备考计划。", ["studyAbroadLanguagePlan"], { defaultNav: false }),
+    page("study-abroad-school", "选校定位", "available", "user", "根据目标地区、专业、成绩、语言和预算生成冲刺、匹配、稳妥三档定位。", ["studyAbroadSchoolPosition"], { defaultNav: false }),
+    page("study-abroad-statement", "文书主线", "available", "user", "围绕个人故事、学术经历和目标项目方向生成个人陈述主线。", ["studyAbroadStatementOutline"], { defaultNav: false }),
+    page("study-abroad-visa", "签证网申", "available", "user", "根据目标国家、申请季、录取状态和材料状态生成签证与网申清单。", ["studyAbroadVisaChecklist"], { defaultNav: false }),
     page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
     page("today-action", "今日行动", "entry-only", "user", "根据路径规划拆解每天应该推进的事项。", ["today"]),
     page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
@@ -90,9 +117,9 @@
     ["面试 / AI 模拟面试记录", "#interview-history", "独立分页"],
     ["面试 / 全景仿真面试记录", "#interview-panorama-history", "独立分页"],
     ["深造", "#further-study-home", "规划中"],
-    ["深造 / 考研", "#postgraduate-exam", "规划中"],
-    ["深造 / 保研", "#postgraduate-recommendation", "规划中"],
-    ["深造 / 留学", "#study-abroad", "规划中"]
+    ["深造 / 考研陪伴", "#postgraduate", "已接入"],
+    ["深造 / 保研陪伴", "#postgraduate-recommendation", "已接入"],
+    ["深造 / 留学陪伴", "#study-abroad", "已接入"]
   ];
   var featureGroups = {
     "employment-home": [
@@ -109,9 +136,9 @@
       feature("AI 模拟面试", "面", "进入 AI 文字问答练习并查看该类型记录", "interview", "已接入")
     ],
     "further-study-home": [
-      feature("考研", "研", "记录目标院校、考试时间线和复习策略，后续接入考研规划智能体", "postgraduate-exam", "规划中"),
-      feature("保研", "保", "记录排名、加分项和目标院校，后续接入保研规划智能体", "postgraduate-recommendation", "规划中"),
-      feature("留学", "留", "记录语言、GPA 和背景提升计划，后续接入留学规划智能体", "study-abroad", "规划中")
+      feature("考研陪伴", "研", "完成择校建议、复习计划、错题解析和复试准备", "postgraduate", "已接入"),
+      feature("保研陪伴", "保", "诊断保研竞争力，精修文书并生成导师意向信", "postgraduate-recommendation", "已接入"),
+      feature("留学陪伴", "留", "拆解语言考试、选校定位、文书主线和签证网申清单", "study-abroad", "已接入")
     ]
   };
   var els = {};
@@ -197,6 +224,25 @@
     assessmentLoading: false,
     assessmentSubmitting: false,
     assessmentError: null,
+    postgraduateSchoolResult: null,
+    postgraduatePlanResult: null,
+    postgraduateMistakeResult: null,
+    postgraduateReexamResult: null,
+    postgraduateLoading: "",
+    postgraduateMessage: null,
+    recommendationDiagnosisResult: null,
+    recommendationPlanResult: null,
+    recommendationPolishResult: null,
+    recommendationTutorLetterResult: null,
+    recommendationLoading: "",
+    recommendationMessage: null,
+    studyAbroadProfileResult: null,
+    studyAbroadLanguageResult: null,
+    studyAbroadSchoolResult: null,
+    studyAbroadStatementResult: null,
+    studyAbroadVisaResult: null,
+    studyAbroadLoading: "",
+    studyAbroadMessage: null,
     scrollPositions: {},
     returnRoutes: {},
     route: "workbench",
@@ -382,8 +428,38 @@
       renderFeatureHome(item);
     } else if (item.key === "interview-home") {
       renderInterviewHub(item);
-    } else if (item.key === "postgraduate-exam" || item.key === "postgraduate-recommendation" || item.key === "study-abroad") {
-      renderPlannedStudyPage(item);
+    } else if (item.key === "postgraduate") {
+      renderPostgraduatePage(item);
+    } else if (item.key === "postgraduate-school") {
+      renderPostgraduateSchoolPage(item);
+    } else if (item.key === "postgraduate-plan") {
+      renderPostgraduatePlanPage(item);
+    } else if (item.key === "postgraduate-mistake") {
+      renderPostgraduateMistakePage(item);
+    } else if (item.key === "postgraduate-reexam") {
+      renderPostgraduateReexamPage(item);
+    } else if (item.key === "postgraduate-recommendation") {
+      renderRecommendationPage(item);
+    } else if (item.key === "recommendation-ranking") {
+      renderRecommendationRankingPage(item);
+    } else if (item.key === "recommendation-background") {
+      renderRecommendationBackgroundPage(item);
+    } else if (item.key === "recommendation-material") {
+      renderRecommendationMaterialPage(item);
+    } else if (item.key === "recommendation-tutor") {
+      renderRecommendationTutorPage(item);
+    } else if (item.key === "study-abroad") {
+      renderStudyAbroadPage(item);
+    } else if (item.key === "study-abroad-profile") {
+      renderStudyAbroadProfilePage(item);
+    } else if (item.key === "study-abroad-language") {
+      renderStudyAbroadLanguagePage(item);
+    } else if (item.key === "study-abroad-school") {
+      renderStudyAbroadSchoolPage(item);
+    } else if (item.key === "study-abroad-statement") {
+      renderStudyAbroadStatementPage(item);
+    } else if (item.key === "study-abroad-visa") {
+      renderStudyAbroadVisaPage(item);
     } else if (item.key === "onboarding") {
       renderOnboarding(item);
     } else if (item.key === "resume") {
@@ -1248,6 +1324,936 @@
       '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度智能体、用户画像智能体和对应规划智能体；当前可以先回到深造页选择方向，或回到首页调整路线信息。</p>' +
       '<div class="actions-row"><button type="button" data-link="further-study-home">返回深造</button><button type="button" class="secondary" data-link="workbench">返回首页</button></div>' +
       '</section>');
+  }
+
+  function renderPostgraduatePage(item) {
+    var loading = state.postgraduateLoading;
+    var message = state.postgraduateMessage
+      ? '<section class="state-card ' + escapeHtml(state.postgraduateMessage.type || "info") + '"><h3>' + escapeHtml(state.postgraduateMessage.title || "提示") + '</h3><p>' + escapeHtml(state.postgraduateMessage.text || "") + '</p></section>'
+      : "";
+    renderFeatureShell(item, item.title, item.summary,
+      message +
+      '<section class="panel full postgraduate-hero-panel">' +
+      '<h3>考研全周期陪伴</h3>' +
+      '<p class="panel-note">先确定目标，再把复习拆成轮次；遇到错题时及时订正，初试后再进入复试材料和导师联系准备。</p>' +
+      '<div class="postgraduate-flow"><span>择校择专业</span><span>复习计划</span><span>错题解析</span><span>复试准备</span></div>' +
+      '</section>' +
+      '<section class="panel full"><h3>智能择校</h3>' +
+      '<form class="form-grid" id="postgraduateSchoolForm">' +
+      field("pgUndergraduateSchool", "本科学校", "text", "") +
+      field("pgUndergraduateLevel", "学校层次", "select", "普通本科", [["985", "985"], ["211", "211 / 双一流"], ["一本", "一本"], ["普通本科", "普通本科"], ["专升本或专科", "专升本或专科"]]) +
+      field("pgGpa", "绩点或平均分", "text", "") +
+      field("pgEnglishLevel", "英语水平", "text", "") +
+      field("pgRegion", "期望地区", "text", "") +
+      field("pgTargetMajor", "目标专业", "text", "") +
+      '<label class="full">备考偏好<textarea id="pgPreference" placeholder="例如：希望稳一点、希望留在华东、专业课想考 408"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "school") + '>生成择校建议</button></div>' +
+      '</form>' + renderSchoolRecommendation(state.postgraduateSchoolResult) + '</section>' +
+      '<section class="panel full"><h3>动态复习计划</h3>' +
+      '<form class="form-grid" id="postgraduatePlanForm">' +
+      field("pgTargetSchool", "目标院校", "text", "") +
+      field("pgPlanMajor", "目标专业", "text", "") +
+      field("pgExamDate", "初试日期", "date", defaultPostgraduateExamDate()) +
+      field("pgWeeklyHours", "每周可投入时间", "text", "30 小时") +
+      '<label class="full">考试科目<textarea id="pgSubjects" placeholder="例如：数学一、英语一、政治、408 计算机专业课">数学一、英语一、政治、专业课</textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "plan") + '>生成复习计划</button></div>' +
+      '</form>' + renderPostgraduatePlan(state.postgraduatePlanResult) + '</section>' +
+      '<section class="panel full"><h3>错题本智能解析</h3>' +
+      '<form class="form-grid" id="postgraduateMistakeForm">' +
+      field("pgMistakeSubject", "科目", "text", "专业课") +
+      '<label class="full">题目文本<textarea id="pgQuestionText" placeholder="粘贴题目文字；当前版本暂不识别照片"></textarea></label>' +
+      '<label class="full">我的错误答案<textarea id="pgWrongAnswer" placeholder="可选，写下当时的错误思路"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "mistake") + '>解析错题</button></div>' +
+      '</form>' + renderMistakeAnalysis(state.postgraduateMistakeResult) + '</section>' +
+      '<section class="panel full"><h3>复试准备</h3>' +
+      '<form class="form-grid" id="postgraduateReexamForm">' +
+      field("pgReexamSchool", "目标院校", "text", "") +
+      field("pgReexamMajor", "目标专业", "text", "") +
+      field("pgPreliminaryStatus", "初试状态", "select", "备考中", [["备考中", "初试前"], ["已初试", "初试已结束"], ["进入复试", "准备复试"]]) +
+      '<label class="full">已有材料<textarea id="pgMaterials" placeholder="例如：简历、成绩单、项目材料、论文、竞赛证明"></textarea></label>' +
+      '<label class="full">科研或项目经历<textarea id="pgResearchExperience" placeholder="简要写下课程设计、科研、竞赛或项目经历"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "reexam") + '>生成复试清单</button></div>' +
+      '</form>' + renderReexamPreparation(state.postgraduateReexamResult) + '</section>');
+    bindPostgraduateForms();
+  }
+
+  function bindPostgraduateForms() {
+    var school = $("postgraduateSchoolForm");
+    if (school) school.addEventListener("submit", submitPostgraduateSchool);
+    var plan = $("postgraduatePlanForm");
+    if (plan) plan.addEventListener("submit", submitPostgraduatePlan);
+    var mistake = $("postgraduateMistakeForm");
+    if (mistake) mistake.addEventListener("submit", submitPostgraduateMistake);
+    var reexam = $("postgraduateReexamForm");
+    if (reexam) reexam.addEventListener("submit", submitPostgraduateReexam);
+  }
+
+  function submitPostgraduateSchool(event) {
+    event.preventDefault();
+    runPostgraduateAction("school", endpoints.postgraduateSchoolRecommend, {
+      userId: state.identity.userId,
+      request: {
+        undergraduateSchool: valueOf("pgUndergraduateSchool"),
+        undergraduateLevel: valueOf("pgUndergraduateLevel"),
+        gpa: valueOf("pgGpa"),
+        englishLevel: valueOf("pgEnglishLevel"),
+        preferredRegion: valueOf("pgRegion"),
+        targetMajor: valueOf("pgTargetMajor"),
+        preference: valueOf("pgPreference")
+      }
+    }, function (result) { state.postgraduateSchoolResult = result; });
+  }
+
+  function submitPostgraduatePlan(event) {
+    event.preventDefault();
+    runPostgraduateAction("plan", endpoints.postgraduatePlanGenerate, {
+      userId: state.identity.userId,
+      request: {
+        targetSchool: valueOf("pgTargetSchool"),
+        targetMajor: valueOf("pgPlanMajor"),
+        examDate: valueOf("pgExamDate"),
+        weeklyHours: valueOf("pgWeeklyHours"),
+        subjects: splitLines(valueOf("pgSubjects"))
+      }
+    }, function (result) { state.postgraduatePlanResult = result; });
+  }
+
+  function submitPostgraduateMistake(event) {
+    event.preventDefault();
+    runPostgraduateAction("mistake", endpoints.postgraduateMistakeAnalyze, {
+      userId: state.identity.userId,
+      request: {
+        subject: valueOf("pgMistakeSubject"),
+        questionText: valueOf("pgQuestionText"),
+        wrongAnswer: valueOf("pgWrongAnswer"),
+        targetExam: "考研"
+      }
+    }, function (result) { state.postgraduateMistakeResult = result; });
+  }
+
+  function submitPostgraduateReexam(event) {
+    event.preventDefault();
+    runPostgraduateAction("reexam", endpoints.postgraduateReexamPrepare, {
+      userId: state.identity.userId,
+      request: {
+        targetSchool: valueOf("pgReexamSchool"),
+        targetMajor: valueOf("pgReexamMajor"),
+        preliminaryStatus: valueOf("pgPreliminaryStatus"),
+        materials: splitLines(valueOf("pgMaterials")),
+        researchExperience: valueOf("pgResearchExperience")
+      }
+    }, function (result) { state.postgraduateReexamResult = result; });
+  }
+
+  function runPostgraduateAction(type, endpoint, body, applyResult) {
+    state.postgraduateLoading = type;
+    state.postgraduateMessage = null;
+    renderPage(pageByKey.postgraduate);
+    post(endpoint, body).then(function (result) {
+      applyResult(result || {});
+      state.postgraduateMessage = { type: "info", title: "已生成", text: "结果已更新，可继续补充信息后再次生成。" };
+    }).catch(function (error) {
+      state.postgraduateMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
+    }).then(function () {
+      state.postgraduateLoading = "";
+      renderPage(pageByKey.postgraduate);
+    });
+  }
+
+  function renderSchoolRecommendation(result) {
+    if (!result) return statePanel("等待择校画像", "填写本科学校、绩点、英语水平、期望地区和目标专业后生成稳、冲、保建议。", "pending");
+    var missing = normalizeArray(result.missingInfo);
+    return '<div class="postgraduate-result">' +
+      '<h4>择校建议</h4><p>' + escapeHtml(result.summary || "已生成择校建议。") + '</p>' +
+      (missing.length ? '<p class="panel-note">建议补充：' + escapeHtml(missing.join("、")) + '</p>' : "") +
+      '<div class="result-card-grid">' + normalizeArray(result.options).map(function (item) {
+        return '<article class="mini-card"><span class="chip">' + escapeHtml(item.tierName || "") + '</span><h4>' + escapeHtml(item.schoolName || "目标院校") + '</h4><p>' + escapeHtml(item.majorName || "") + '</p><p>' + escapeHtml(item.reason || "") + '</p><p class="panel-note">' + escapeHtml(item.risk || "") + '</p>' + simpleListHtml("下一步", item.actions) + '</article>';
+      }).join("") + '</div>' + simpleListHtml("提醒", result.reminders) + '</div>';
+  }
+
+  function renderPostgraduatePlan(result) {
+    if (!result) return statePanel("等待计划信息", "填写目标院校、考试日期和考试科目后生成基础、提高、冲刺三轮计划。", "pending");
+    return '<div class="postgraduate-result"><h4>' + escapeHtml(result.target || "复习计划") + '</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      '<p class="panel-note">初试日期：' + escapeHtml(result.examDate || "未填写") + '，剩余 ' + escapeHtml(result.daysRemaining == null ? "--" : String(result.daysRemaining)) + ' 天</p>' +
+      '<div class="result-card-grid">' + normalizeArray(result.rounds).map(function (round) {
+        return '<article class="mini-card"><h4>' + escapeHtml(round.roundName || "复习轮次") + '</h4><p class="panel-note">' + escapeHtml(round.dateRange || "") + '</p><p>' + escapeHtml(round.goal || "") + '</p>' +
+          simpleListHtml("科目重点", round.subjectFocus) + simpleListHtml("每周任务", round.weeklyTasks) + simpleListHtml("阶段检查", round.checkPoints) +
+          '<p class="panel-note">' + escapeHtml(round.stateAdvice || "") + '</p></article>';
+      }).join("") + '</div>' + simpleListHtml("每日习惯", result.dailyHabits) + '</div>';
+  }
+
+  function renderMistakeAnalysis(result) {
+    if (!result) return statePanel("等待错题文本", "粘贴错题文字后，系统会整理答案思路、知识树、易错原因和同类题。", "pending");
+    return '<div class="postgraduate-result"><h4>' + escapeHtml(result.subject || "错题解析") + '</h4><p>' + escapeHtml(result.explanation || "") + '</p>' +
+      '<p><strong>答案思路：</strong>' + escapeHtml(result.answer || "") + '</p>' +
+      '<div class="result-card-grid">' + normalizeArray(result.knowledgeTree).map(function (node) {
+        return '<article class="mini-card"><h4>' + escapeHtml(node.name || "知识点") + '</h4>' + simpleListHtml("节点", node.children) + '</article>';
+      }).join("") + '</div>' +
+      simpleListHtml("易错原因", result.errorReasons) + simpleListHtml("订正步骤", result.correctionSteps) +
+      '<div class="result-card-grid">' + normalizeArray(result.derivedQuestions).map(function (item) {
+        return '<article class="mini-card"><h4>' + escapeHtml(item.title || "同类题") + '</h4><p>' + escapeHtml(item.hint || "") + '</p><p class="panel-note">' + escapeHtml(item.answerOutline || "") + '</p></article>';
+      }).join("") + '</div></div>';
+  }
+
+  function renderReexamPreparation(result) {
+    if (!result) return statePanel("等待复试信息", "填写目标院校、初试状态和已有材料后生成复试准备清单。", "pending");
+    return '<div class="postgraduate-result"><h4>复试准备清单</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      '<div class="result-card-grid">' + normalizeArray(result.checklist).map(function (item) {
+        return '<article class="mini-card"><span class="chip">' + escapeHtml(item.stage || "") + '</span><h4>' + escapeHtml(item.title || "") + '</h4><p>' + escapeHtml(item.detail || "") + '</p><p class="panel-note">优先级：' + escapeHtml(item.priority || "") + '</p></article>';
+      }).join("") + '</div>' + simpleListHtml("联系导师", result.tutorContactTips) + simpleListHtml("简历准备", result.resumeTips) + simpleListHtml("模拟面试", result.mockInterviewTips) + '</div>';
+  }
+
+  function simpleListHtml(title, items) {
+    var list = normalizeArray(items).filter(Boolean);
+    if (!list.length) return "";
+    return '<div class="simple-list"><strong>' + escapeHtml(title) + '</strong><ul>' + list.map(function (item) {
+      return '<li>' + escapeHtml(item) + '</li>';
+    }).join("") + '</ul></div>';
+  }
+
+  function splitLines(value) {
+    return trim(value).split(/[\n,，、;；]+/).map(function (item) { return trim(item); }).filter(Boolean);
+  }
+
+  function disabledAttr(disabled) {
+    return disabled ? " disabled" : "";
+  }
+
+  function defaultPostgraduateExamDate() {
+    var now = new Date();
+    var year = now.getMonth() >= 11 ? now.getFullYear() + 1 : now.getFullYear();
+    return year + "-12-20";
+  }
+
+  function renderRecommendationPage(item) {
+    var loading = state.recommendationLoading;
+    var message = state.recommendationMessage
+      ? '<section class="state-card ' + escapeHtml(state.recommendationMessage.type || "info") + '"><h3>' + escapeHtml(state.recommendationMessage.title || "提示") + '</h3><p>' + escapeHtml(state.recommendationMessage.text || "") + '</p></section>'
+      : "";
+    renderFeatureShell(item, item.title, item.summary,
+      message +
+      '<section class="panel full postgraduate-hero-panel">' +
+      '<h3>保研信息战与材料精修</h3>' +
+      '<p class="panel-note">先判断自己是否具备资格和优势，再补背景、锁定夏令营/预推免目标，最后把文书、导师邮件和面试表达打磨成一套材料。</p>' +
+      '<div class="postgraduate-flow"><span>排名监控</span><span>背景提升</span><span>材料精修</span><span>导师联系</span></div>' +
+      '</section>' +
+      '<section class="panel full"><h3>背景竞争力诊断</h3>' +
+      '<form class="form-grid" id="recommendationProfileForm">' +
+      field("recGrade", "当前年级", "select", "大三", [["大一", "大一"], ["大二", "大二"], ["大三", "大三"], ["大四", "大四"]]) +
+      field("recSchool", "本科学校", "text", "") +
+      field("recMajor", "本科专业", "text", "") +
+      field("recGpa", "绩点或平均分", "text", "") +
+      field("recRank", "专业排名", "text", "") +
+      field("recEnglish", "英语水平", "text", "") +
+      '<label class="full">竞赛与获奖<textarea id="recAwards" placeholder="例如：数学建模国二、蓝桥杯省一、挑战杯校级"></textarea></label>' +
+      '<label class="full">科研、论文、软著<textarea id="recResearch" placeholder="例如：参与某课题组、论文在投、软件著作权、课程项目"></textarea></label>' +
+      field("recTargetSchools", "目标营校", "text", "") +
+      field("recTargetMajor", "目标专业", "text", "") +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "diagnose") + '>诊断竞争力</button><button type="button" class="secondary" id="recommendationPlanButton"' + disabledAttr(loading === "plan") + '>生成行动计划</button></div>' +
+      '</form>' + renderRecommendationDiagnosis(state.recommendationDiagnosisResult) + renderRecommendationPlan(state.recommendationPlanResult) + '</section>' +
+      '<section class="panel full"><h3>文书润色</h3>' +
+      '<form class="form-grid" id="recommendationPolishForm">' +
+      field("recDocumentType", "文书类型", "select", "个人自述", [["个人自述", "个人自述"], ["联系导师邮件", "联系导师邮件"], ["推荐信要点", "推荐信要点"]]) +
+      field("recPolishMajor", "目标专业", "text", "") +
+      '<label class="full">亮点素材<textarea id="recHighlights" placeholder="例如：数学建模国二、课程排名、项目经历、科研兴趣"></textarea></label>' +
+      '<label class="full">文书初稿<textarea id="recDraft" placeholder="粘贴初稿，系统会按背景、行动、结果、学术潜力的经历讲述框架改写"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "polish") + '>润色文书</button></div>' +
+      '</form>' + renderRecommendationPolish(state.recommendationPolishResult) + '</section>' +
+      '<section class="panel full"><h3>导师意向信</h3>' +
+      '<form class="form-grid" id="recommendationTutorForm">' +
+      field("recTutorName", "导师姓名", "text", "") +
+      field("recTutorSchool", "目标院校", "text", "") +
+      field("recTutorMajor", "目标专业", "text", "") +
+      '<label class="full">导师研究方向或论文关键词<textarea id="recResearchDirection" placeholder="请填真实方向；系统不会替你编造导师论文"></textarea></label>' +
+      '<label class="full">个人背景<textarea id="recPersonalBackground" placeholder="例如：绩点、排名、竞赛、科研、项目和申请动机"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "letter") + '>生成意向信</button></div>' +
+      '</form>' + renderRecommendationLetter(state.recommendationTutorLetterResult) + '</section>');
+    bindRecommendationForms();
+  }
+
+  function bindRecommendationForms() {
+    var profile = $("recommendationProfileForm");
+    if (profile) profile.addEventListener("submit", submitRecommendationDiagnosis);
+    var plan = $("recommendationPlanButton");
+    if (plan) plan.addEventListener("click", submitRecommendationPlan);
+    var polish = $("recommendationPolishForm");
+    if (polish) polish.addEventListener("submit", submitRecommendationPolish);
+    var letter = $("recommendationTutorForm");
+    if (letter) letter.addEventListener("submit", submitRecommendationLetter);
+  }
+
+  function recommendationProfilePayload() {
+    return {
+      grade: valueOf("recGrade"),
+      school: valueOf("recSchool"),
+      major: valueOf("recMajor"),
+      gpa: valueOf("recGpa"),
+      rank: valueOf("recRank"),
+      englishLevel: valueOf("recEnglish"),
+      awards: valueOf("recAwards"),
+      research: valueOf("recResearch"),
+      targetSchools: valueOf("recTargetSchools"),
+      targetMajor: valueOf("recTargetMajor")
+    };
+  }
+
+  function submitRecommendationDiagnosis(event) {
+    event.preventDefault();
+    runRecommendationAction("diagnose", endpoints.recommendationDiagnose, {
+      userId: state.identity.userId,
+      request: recommendationProfilePayload()
+    }, function (result) { state.recommendationDiagnosisResult = result; });
+  }
+
+  function submitRecommendationPlan(event) {
+    event.preventDefault();
+    runRecommendationAction("plan", endpoints.recommendationPlanGenerate, {
+      userId: state.identity.userId,
+      request: recommendationProfilePayload()
+    }, function (result) { state.recommendationPlanResult = result; });
+  }
+
+  function submitRecommendationPolish(event) {
+    event.preventDefault();
+    runRecommendationAction("polish", endpoints.recommendationDocumentPolish, {
+      userId: state.identity.userId,
+      request: {
+        documentType: valueOf("recDocumentType"),
+        targetMajor: valueOf("recPolishMajor"),
+        highlights: valueOf("recHighlights"),
+        draft: valueOf("recDraft")
+      }
+    }, function (result) { state.recommendationPolishResult = result; });
+  }
+
+  function submitRecommendationLetter(event) {
+    event.preventDefault();
+    runRecommendationAction("letter", endpoints.recommendationTutorLetterGenerate, {
+      userId: state.identity.userId,
+      request: {
+        tutorName: valueOf("recTutorName"),
+        targetSchool: valueOf("recTutorSchool"),
+        targetMajor: valueOf("recTutorMajor"),
+        researchDirection: valueOf("recResearchDirection"),
+        personalBackground: valueOf("recPersonalBackground"),
+        purpose: "咨询推免机会和课题组方向"
+      }
+    }, function (result) { state.recommendationTutorLetterResult = result; });
+  }
+
+  function runRecommendationAction(type, endpoint, body, applyResult) {
+    state.recommendationLoading = type;
+    state.recommendationMessage = null;
+    renderPage(pageByKey["postgraduate-recommendation"]);
+    post(endpoint, body).then(function (result) {
+      applyResult(result || {});
+      state.recommendationMessage = { type: "info", title: "已生成", text: "结果已更新，可继续补充信息后再次生成。" };
+    }).catch(function (error) {
+      state.recommendationMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
+    }).then(function () {
+      state.recommendationLoading = "";
+      renderPage(pageByKey["postgraduate-recommendation"]);
+    });
+  }
+
+  function renderRecommendationDiagnosis(result) {
+    if (!result) return statePanel("等待背景信息", "填写绩点、排名、竞赛科研和目标营校后，系统会诊断优势和短板。", "pending");
+    return '<div class="postgraduate-result"><h4>竞争力诊断：' + escapeHtml(result.overallScore == null ? "--" : String(result.overallScore)) + ' 分</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      '<div class="result-card-grid">' + normalizeArray(result.scoreItems).map(function (item) {
+        return '<article class="mini-card"><h4>' + escapeHtml(item.name || "维度") + '</h4><p><strong>' + escapeHtml(item.score == null ? "--" : String(item.score)) + '</strong> / ' + escapeHtml(item.maxScore == null ? "--" : String(item.maxScore)) + '</p><p class="panel-note">' + escapeHtml(item.comment || "") + '</p></article>';
+      }).join("") + '</div>' + simpleListHtml("优势", result.strengths) + simpleListHtml("短板", result.weaknesses) + renderRecommendationActions(result.actions) + simpleListHtml("提醒", result.reminders) + '</div>';
+  }
+
+  function renderRecommendationPlan(result) {
+    if (!result) return "";
+    return '<div class="postgraduate-result"><h4>行动计划</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      renderRecommendationActions(result.timeline) + simpleListHtml("每周重点", result.weeklyFocus) + simpleListHtml("营校策略", result.targetCampTips) + '</div>';
+  }
+
+  function renderRecommendationPolish(result) {
+    if (!result) return statePanel("等待文书初稿", "粘贴自述信、邮件或推荐信要点后，系统会按经历讲述框架改写。", "pending");
+    return '<div class="postgraduate-result"><h4>润色稿</h4><pre class="generated-text">' + escapeHtml(result.polishedText || "") + '</pre>' +
+      simpleListHtml("改写理由", result.rewriteReasons) + simpleListHtml("保留亮点", result.retainedHighlights) + simpleListHtml("建议补充", result.missingInfo) + '</div>';
+  }
+
+  function renderRecommendationLetter(result) {
+    if (!result) return statePanel("等待导师信息", "填写导师姓名、真实研究方向和个人背景后生成意向信。", "pending");
+    return '<div class="postgraduate-result"><h4>邮件标题</h4><p>' + escapeHtml(result.subject || "") + '</p><h4>邮件正文</h4><pre class="generated-text">' + escapeHtml(result.body || "") + '</pre>' +
+      simpleListHtml("附件建议", result.attachments) + simpleListHtml("发送提醒", result.sendTips) + simpleListHtml("需要补充", result.missingInfo) + '</div>';
+  }
+
+  function renderRecommendationActions(actions) {
+    var list = normalizeArray(actions);
+    if (!list.length) return "";
+    return '<div class="result-card-grid">' + list.map(function (item) {
+      return '<article class="mini-card"><span class="chip">' + escapeHtml(item.stage || "") + '</span><h4>' + escapeHtml(item.title || "") + '</h4><p>' + escapeHtml(item.detail || "") + '</p><p class="panel-note">优先级：' + escapeHtml(item.priority || "") + '</p></article>';
+    }).join("") + '</div>';
+  }
+
+  function recommendationMessageHtml() {
+    return state.recommendationMessage
+      ? '<section class="state-card ' + escapeHtml(state.recommendationMessage.type || "info") + '"><h3>' + escapeHtml(state.recommendationMessage.title || "提示") + '</h3><p>' + escapeHtml(state.recommendationMessage.text || "") + '</p></section>'
+      : "";
+  }
+
+  function recommendationBackActions() {
+    return '<div class="actions-row"><button type="button" class="secondary" data-link="postgraduate-recommendation">返回保研陪伴</button><button type="button" class="secondary" data-link="further-study-home">返回深造</button></div>';
+  }
+
+  function recommendationProfileFormHtml(buttonText, loadingType, formId, includePlanButton) {
+    return '<form class="form-grid" id="' + formId + '">' +
+      field("recGrade", "当前年级", "select", "大三", [["大一", "大一"], ["大二", "大二"], ["大三", "大三"], ["大四", "大四"]]) +
+      field("recSchool", "本科学校", "text", "") +
+      field("recMajor", "本科专业", "text", "") +
+      field("recGpa", "绩点或平均分", "text", "") +
+      field("recRank", "专业排名", "text", "") +
+      field("recEnglish", "英语水平", "text", "") +
+      '<label class="full">竞赛与获奖<textarea id="recAwards" placeholder="例如：数学建模国二、蓝桥杯省一、挑战杯校级"></textarea></label>' +
+      '<label class="full">科研、论文、软著<textarea id="recResearch" placeholder="例如：参与课题组、论文在投、软件著作权、课程项目"></textarea></label>' +
+      field("recTargetSchools", "目标营校", "text", "") +
+      field("recTargetMajor", "目标专业", "text", "") +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(state.recommendationLoading === loadingType) + '>' + buttonText + '</button>' +
+      (includePlanButton ? '<button type="button" class="secondary" id="recommendationPlanButton"' + disabledAttr(state.recommendationLoading === "plan") + '>生成行动计划</button>' : "") +
+      '</div></form>';
+  }
+
+  function renderRecommendationPage(item) {
+    renderFeatureShell(item, item.title, item.summary,
+      recommendationMessageHtml() +
+      '<section class="panel full postgraduate-hero-panel">' +
+      '<h3>保研信息战与材料精修</h3>' +
+      '<p class="panel-note">先判断自己是否具备资格和优势，再补背景、锁定夏令营/预推免目标，最后把文书、导师邮件和面试表达打磨成一套材料。</p>' +
+      '<div class="postgraduate-flow"><span>排名监控</span><span>背景提升</span><span>材料精修</span><span>导师联系</span></div>' +
+      '</section>' +
+      '<section class="panel full"><h3>选择一个功能</h3>' +
+      '<div class="postgraduate-action-grid">' +
+      '<button type="button" data-link="recommendation-ranking">排名监控</button>' +
+      '<button type="button" data-link="recommendation-background">背景提升</button>' +
+      '<button type="button" data-link="recommendation-material">材料精修</button>' +
+      '<button type="button" data-link="recommendation-tutor">导师联系</button>' +
+      '</div></section>');
+  }
+
+  function renderRecommendationRankingPage(item) {
+    renderFeatureShell(item, item.title, item.summary,
+      recommendationMessageHtml() +
+      '<section class="panel full"><h3>排名监控</h3>' +
+      '<p class="panel-note">用于判断当前是否接近推免资格边界，以及绩点、排名、英语、竞赛科研中最需要补强的方向。</p>' +
+      recommendationProfileFormHtml("诊断竞争力", "diagnose", "recommendationProfileForm", false) +
+      renderRecommendationDiagnosis(state.recommendationDiagnosisResult) + recommendationBackActions() + '</section>');
+    bindRecommendationForms();
+  }
+
+  function renderRecommendationBackgroundPage(item) {
+    renderFeatureShell(item, item.title, item.summary,
+      recommendationMessageHtml() +
+      '<section class="panel full"><h3>背景提升</h3>' +
+      '<p class="panel-note">根据当前年级、排名稳定性、竞赛科研和目标营校，生成接下来每周该推进的行动清单。</p>' +
+      recommendationProfileFormHtml("生成行动计划", "plan", "recommendationProfileForm", false) +
+      renderRecommendationPlan(state.recommendationPlanResult) + recommendationBackActions() + '</section>');
+    var profile = $("recommendationProfileForm");
+    if (profile) profile.addEventListener("submit", submitRecommendationPlan);
+  }
+
+  function renderRecommendationMaterialPage(item) {
+    var loading = state.recommendationLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      recommendationMessageHtml() +
+      '<section class="panel full"><h3>材料精修</h3>' +
+      '<form class="form-grid" id="recommendationPolishForm">' +
+      field("recDocumentType", "文书类型", "select", "个人自述", [["个人自述", "个人自述"], ["联系导师邮件", "联系导师邮件"], ["推荐信要点", "推荐信要点"]]) +
+      field("recPolishMajor", "目标专业", "text", "") +
+      '<label class="full">亮点素材<textarea id="recHighlights" placeholder="例如：数学建模国二、课程排名、项目经历、科研兴趣"></textarea></label>' +
+      '<label class="full">文书初稿<textarea id="recDraft" placeholder="粘贴初稿，系统会按背景、行动、结果、学术潜力的经历讲述框架改写"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "polish") + '>润色文书</button></div>' +
+      '</form>' + renderRecommendationPolish(state.recommendationPolishResult) + recommendationBackActions() + '</section>');
+    bindRecommendationForms();
+  }
+
+  function renderRecommendationTutorPage(item) {
+    var loading = state.recommendationLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      recommendationMessageHtml() +
+      '<section class="panel full"><h3>导师联系</h3>' +
+      '<form class="form-grid" id="recommendationTutorForm">' +
+      field("recTutorName", "导师姓名", "text", "") +
+      field("recTutorSchool", "目标院校", "text", "") +
+      field("recTutorMajor", "目标专业", "text", "") +
+      '<label class="full">导师研究方向或论文关键词<textarea id="recResearchDirection" placeholder="请填真实方向；系统不会替你编造导师论文"></textarea></label>' +
+      '<label class="full">个人背景<textarea id="recPersonalBackground" placeholder="例如：绩点、排名、竞赛、科研、项目和申请动机"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "letter") + '>生成意向信</button></div>' +
+      '</form>' + renderRecommendationLetter(state.recommendationTutorLetterResult) + recommendationBackActions() + '</section>');
+    bindRecommendationForms();
+  }
+
+  function runRecommendationAction(type, endpoint, body, applyResult) {
+    state.recommendationLoading = type;
+    state.recommendationMessage = null;
+    renderPage(pageByKey[state.route] || pageByKey["postgraduate-recommendation"]);
+    post(endpoint, body).then(function (result) {
+      applyResult(result || {});
+      state.recommendationMessage = { type: "info", title: "已生成", text: "结果已更新，可继续补充信息后再次生成。" };
+    }).catch(function (error) {
+      state.recommendationMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
+    }).then(function () {
+      state.recommendationLoading = "";
+      renderPage(pageByKey[state.route] || pageByKey["postgraduate-recommendation"]);
+    });
+  }
+
+  function postgraduateMessageHtml() {
+    return state.postgraduateMessage
+      ? '<section class="state-card ' + escapeHtml(state.postgraduateMessage.type || "info") + '"><h3>' + escapeHtml(state.postgraduateMessage.title || "提示") + '</h3><p>' + escapeHtml(state.postgraduateMessage.text || "") + '</p></section>'
+      : "";
+  }
+
+  function postgraduateBackActions() {
+    return '<div class="actions-row"><button type="button" class="secondary" data-link="postgraduate">返回考研陪伴</button><button type="button" class="secondary" data-link="further-study-home">返回深造</button></div>';
+  }
+
+  function renderPostgraduatePage(item) {
+    renderFeatureShell(item, item.title, item.summary,
+      postgraduateMessageHtml() +
+      '<section class="panel full postgraduate-hero-panel">' +
+      '<h3>考研全周期陪伴</h3>' +
+      '<p class="panel-note">先确定目标，再把复习拆成轮次；遇到错题时及时订正，初试后再进入复试材料和导师联系准备。</p>' +
+      '<div class="postgraduate-flow"><span>择校择专业</span><span>复习计划</span><span>错题解析</span><span>复试准备</span></div>' +
+      '</section>' +
+      '<section class="panel full"><h3>选择一个功能</h3>' +
+      '<div class="postgraduate-action-grid">' +
+      '<button type="button" data-link="postgraduate-school">择校择专业</button>' +
+      '<button type="button" data-link="postgraduate-plan">复习计划</button>' +
+      '<button type="button" data-link="postgraduate-mistake">错题解析</button>' +
+      '<button type="button" data-link="postgraduate-reexam">复试准备</button>' +
+      '</div></section>');
+  }
+
+  function renderPostgraduateSchoolPage(item) {
+    var loading = state.postgraduateLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      postgraduateMessageHtml() +
+      '<section class="panel full"><h3>择校择专业</h3>' +
+      '<form class="form-grid" id="postgraduateSchoolForm">' +
+      field("pgUndergraduateSchool", "本科学校", "text", "") +
+      field("pgUndergraduateLevel", "学校层次", "select", "普通本科", [["985", "985"], ["211", "211 / 双一流"], ["一本", "一本"], ["普通本科", "普通本科"], ["专升本或专科", "专升本或专科"]]) +
+      field("pgGpa", "绩点或平均分", "text", "") +
+      field("pgEnglishLevel", "英语水平", "text", "") +
+      field("pgRegion", "期望地区", "text", "") +
+      field("pgTargetMajor", "目标专业", "text", "") +
+      '<label class="full">备考偏好<textarea id="pgPreference" placeholder="例如：希望稳一点、希望留在华东、专业课想考 408"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "school") + '>生成择校建议</button></div>' +
+      '</form>' + renderSchoolRecommendation(state.postgraduateSchoolResult) + postgraduateBackActions() + '</section>');
+    bindPostgraduateForms();
+  }
+
+  function renderPostgraduatePlanPage(item) {
+    var loading = state.postgraduateLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      postgraduateMessageHtml() +
+      '<section class="panel full"><h3>复习计划</h3>' +
+      '<form class="form-grid" id="postgraduatePlanForm">' +
+      field("pgTargetSchool", "目标院校", "text", "") +
+      field("pgPlanMajor", "目标专业", "text", "") +
+      field("pgExamDate", "初试日期", "date", defaultPostgraduateExamDate()) +
+      field("pgWeeklyHours", "每周可投入时间", "text", "30 小时") +
+      '<label class="full">考试科目<textarea id="pgSubjects" placeholder="例如：数学一、英语一、政治、408 计算机专业课">数学一、英语一、政治、专业课</textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "plan") + '>生成复习计划</button></div>' +
+      '</form>' + renderPostgraduatePlan(state.postgraduatePlanResult) + postgraduateBackActions() + '</section>');
+    bindPostgraduateForms();
+  }
+
+  function renderPostgraduateMistakePage(item) {
+    var loading = state.postgraduateLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      postgraduateMessageHtml() +
+      '<section class="panel full"><h3>错题解析</h3>' +
+      '<form class="form-grid" id="postgraduateMistakeForm">' +
+      field("pgMistakeSubject", "科目", "text", "专业课") +
+      '<label class="full">题目文本<textarea id="pgQuestionText" placeholder="粘贴题目文字；当前版本暂不识别照片"></textarea></label>' +
+      '<label class="full">我的错误答案<textarea id="pgWrongAnswer" placeholder="可选，写下当时的错误思路"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "mistake") + '>解析错题</button></div>' +
+      '</form>' + renderMistakeAnalysis(state.postgraduateMistakeResult) + postgraduateBackActions() + '</section>');
+    bindPostgraduateForms();
+  }
+
+  function renderPostgraduateReexamPage(item) {
+    var loading = state.postgraduateLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      postgraduateMessageHtml() +
+      '<section class="panel full"><h3>复试准备</h3>' +
+      '<form class="form-grid" id="postgraduateReexamForm">' +
+      field("pgReexamSchool", "目标院校", "text", "") +
+      field("pgReexamMajor", "目标专业", "text", "") +
+      field("pgPreliminaryStatus", "初试状态", "select", "备考中", [["备考中", "初试前"], ["已初试", "初试已结束"], ["进入复试", "准备复试"]]) +
+      '<label class="full">已有材料<textarea id="pgMaterials" placeholder="例如：简历、成绩单、项目材料、论文、竞赛证明"></textarea></label>' +
+      '<label class="full">科研或项目经历<textarea id="pgResearchExperience" placeholder="简要写下课程设计、科研、竞赛或项目经历"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "reexam") + '>生成复试清单</button></div>' +
+      '</form>' + renderReexamPreparation(state.postgraduateReexamResult) + postgraduateBackActions() + '</section>');
+    bindPostgraduateForms();
+  }
+
+  function runPostgraduateAction(type, endpoint, body, applyResult) {
+    state.postgraduateLoading = type;
+    state.postgraduateMessage = null;
+    renderPage(pageByKey[state.route] || pageByKey.postgraduate);
+    post(endpoint, body).then(function (result) {
+      applyResult(result || {});
+      state.postgraduateMessage = { type: "info", title: "已生成", text: "结果已更新，可继续补充信息后再次生成。" };
+    }).catch(function (error) {
+      state.postgraduateMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
+    }).then(function () {
+      state.postgraduateLoading = "";
+      renderPage(pageByKey[state.route] || pageByKey.postgraduate);
+    });
+  }
+
+  function renderStudyAbroadPage(item) {
+    var loading = state.studyAbroadLoading;
+    var message = state.studyAbroadMessage
+      ? '<section class="state-card ' + escapeHtml(state.studyAbroadMessage.type || "info") + '"><h3>' + escapeHtml(state.studyAbroadMessage.title || "提示") + '</h3><p>' + escapeHtml(state.studyAbroadMessage.text || "") + '</p></section>'
+      : "";
+    renderFeatureShell(item, item.title, item.summary,
+      message +
+      '<section class="panel full postgraduate-hero-panel">' +
+      '<h3>留学全流程陪伴</h3>' +
+      '<p class="panel-note">先确认国家地区和语言考试，再把软实力、选校定位、个人陈述和签证网申拆成可执行清单；当前版本使用规则建议，后续可替换为真实 AI 对话和文书批改。</p>' +
+      '<div class="postgraduate-flow"><span>国家地区</span><span>语言考试</span><span>选校定位</span><span>文书主线</span><span>签证网申</span></div>' +
+      '</section>' +
+      '<section class="panel full"><h3>申请准备度诊断</h3>' +
+      '<form class="form-grid" id="studyAbroadProfileForm">' +
+      field("saCountry", "国家或地区", "text", "") +
+      field("saDegree", "目标学位", "select", "硕士", [["本科", "本科"], ["硕士", "硕士"], ["博士", "博士"], ["交换", "交换"]]) +
+      field("saTargetMajor", "目标专业", "text", "") +
+      field("saSchool", "当前学校", "text", "") +
+      field("saMajor", "当前专业", "text", "") +
+      field("saGpa", "绩点或平均分", "text", "") +
+      field("saLanguageScore", "语言成绩", "text", "") +
+      field("saBudget", "预算范围", "text", "") +
+      '<label class="full">软实力经历<textarea id="saBackground" placeholder="例如：科研、课程项目、实习、竞赛、交换、志愿经历"></textarea></label>' +
+      '<label class="full">申请偏好<textarea id="saPreference" placeholder="例如：偏向一年制、希望毕业后就业、需要奖学金、希望城市安全"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "profile") + '>诊断准备度</button></div>' +
+      '</form>' + renderStudyAbroadProfile(state.studyAbroadProfileResult) + '</section>' +
+      '<section class="panel full"><h3>语言考试计划</h3>' +
+      '<form class="form-grid" id="studyAbroadLanguageForm">' +
+      field("saExamType", "考试类型", "select", "雅思", [["雅思", "雅思"], ["托福", "托福"], ["GRE", "GRE"], ["其他", "其他"]]) +
+      field("saCurrentScore", "当前成绩", "text", "") +
+      field("saTargetScore", "目标成绩", "text", "") +
+      field("saExamDate", "考试日期", "date", defaultLanguageExamDate()) +
+      field("saWeeklyHours", "每周可投入时间", "text", "12 小时") +
+      '<label class="full">薄弱单项<textarea id="saWeakParts" placeholder="例如：雅思写作小作文、口语追问、托福听力笔记"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "language") + '>生成语言计划</button></div>' +
+      '</form>' + renderStudyAbroadLanguage(state.studyAbroadLanguageResult) + '</section>' +
+      '<section class="panel full"><h3>选校定位</h3>' +
+      '<form class="form-grid" id="studyAbroadSchoolForm">' +
+      field("saSchoolCountry", "国家或地区", "text", "") +
+      field("saSchoolMajor", "目标专业", "text", "") +
+      field("saSchoolGpa", "绩点或平均分", "text", "") +
+      field("saSchoolLanguage", "语言成绩", "text", "") +
+      field("saSchoolBudget", "预算范围", "text", "") +
+      '<label class="full">背景和偏好<textarea id="saSchoolPreference" placeholder="例如：希望冲 QS 前 50、接受跨专业、预算有限、希望带实习项目"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "school") + '>生成选校梯度</button></div>' +
+      '</form>' + renderStudyAbroadSchools(state.studyAbroadSchoolResult) + '</section>' +
+      '<section class="panel full"><h3>个人陈述主线</h3>' +
+      '<form class="form-grid" id="studyAbroadStatementForm">' +
+      field("saStatementMajor", "目标专业", "text", "") +
+      field("saStatementTopic", "教授课题或项目方向", "text", "") +
+      '<label class="full">个人故事<textarea id="saPersonalStory" placeholder="写一个真实的转折、问题、观察或经历，不需要华丽"></textarea></label>' +
+      '<label class="full">学术或项目经历<textarea id="saAcademicExperience" placeholder="课程项目、科研、论文、实习、竞赛或作品集经历"></textarea></label>' +
+      field("saCareerGoal", "未来目标", "text", "") +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "statement") + '>生成文书主线</button></div>' +
+      '</form>' + renderStudyAbroadStatement(state.studyAbroadStatementResult) + '</section>' +
+      '<section class="panel full"><h3>签证与网申清单</h3>' +
+      '<form class="form-grid" id="studyAbroadVisaForm">' +
+      field("saVisaCountry", "国家或地区", "text", "") +
+      field("saSeason", "申请季", "text", "2026 秋季") +
+      field("saAdmissionStatus", "录取状态", "select", "准备申请", [["准备申请", "准备申请"], ["已投递", "已投递"], ["已拿录取", "已拿录取"], ["已确认入读", "已确认入读"]]) +
+      '<label class="full">材料状态<textarea id="saMaterialStatus" placeholder="例如：护照已办、成绩单待翻译、推荐信两封确认、资金证明未准备"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "visa") + '>生成清单</button></div>' +
+      '</form>' + renderStudyAbroadVisa(state.studyAbroadVisaResult) + '</section>');
+    bindStudyAbroadForms();
+  }
+
+  function bindStudyAbroadForms() {
+    var profile = $("studyAbroadProfileForm");
+    if (profile) profile.addEventListener("submit", submitStudyAbroadProfile);
+    var language = $("studyAbroadLanguageForm");
+    if (language) language.addEventListener("submit", submitStudyAbroadLanguage);
+    var school = $("studyAbroadSchoolForm");
+    if (school) school.addEventListener("submit", submitStudyAbroadSchool);
+    var statement = $("studyAbroadStatementForm");
+    if (statement) statement.addEventListener("submit", submitStudyAbroadStatement);
+    var visa = $("studyAbroadVisaForm");
+    if (visa) visa.addEventListener("submit", submitStudyAbroadVisa);
+  }
+
+  function submitStudyAbroadProfile(event) {
+    event.preventDefault();
+    runStudyAbroadAction("profile", endpoints.studyAbroadProfileDiagnose, {
+      userId: state.identity.userId,
+      request: {
+        countryOrRegion: valueOf("saCountry"),
+        targetDegree: valueOf("saDegree"),
+        targetMajor: valueOf("saTargetMajor"),
+        school: valueOf("saSchool"),
+        major: valueOf("saMajor"),
+        gpa: valueOf("saGpa"),
+        languageScore: valueOf("saLanguageScore"),
+        budget: valueOf("saBudget"),
+        background: valueOf("saBackground"),
+        preference: valueOf("saPreference")
+      }
+    }, function (result) { state.studyAbroadProfileResult = result; });
+  }
+
+  function submitStudyAbroadLanguage(event) {
+    event.preventDefault();
+    runStudyAbroadAction("language", endpoints.studyAbroadLanguagePlan, {
+      userId: state.identity.userId,
+      request: {
+        examType: valueOf("saExamType"),
+        currentScore: valueOf("saCurrentScore"),
+        targetScore: valueOf("saTargetScore"),
+        examDate: valueOf("saExamDate"),
+        weeklyHours: valueOf("saWeeklyHours"),
+        weakParts: valueOf("saWeakParts")
+      }
+    }, function (result) { state.studyAbroadLanguageResult = result; });
+  }
+
+  function submitStudyAbroadSchool(event) {
+    event.preventDefault();
+    runStudyAbroadAction("school", endpoints.studyAbroadSchoolPosition, {
+      userId: state.identity.userId,
+      request: {
+        countryOrRegion: valueOf("saSchoolCountry"),
+        targetMajor: valueOf("saSchoolMajor"),
+        gpa: valueOf("saSchoolGpa"),
+        languageScore: valueOf("saSchoolLanguage"),
+        budget: valueOf("saSchoolBudget"),
+        preference: valueOf("saSchoolPreference")
+      }
+    }, function (result) { state.studyAbroadSchoolResult = result; });
+  }
+
+  function submitStudyAbroadStatement(event) {
+    event.preventDefault();
+    runStudyAbroadAction("statement", endpoints.studyAbroadStatementOutline, {
+      userId: state.identity.userId,
+      request: {
+        targetMajor: valueOf("saStatementMajor"),
+        professorTopic: valueOf("saStatementTopic"),
+        personalStory: valueOf("saPersonalStory"),
+        academicExperience: valueOf("saAcademicExperience"),
+        careerGoal: valueOf("saCareerGoal"),
+        language: "中文"
+      }
+    }, function (result) { state.studyAbroadStatementResult = result; });
+  }
+
+  function submitStudyAbroadVisa(event) {
+    event.preventDefault();
+    runStudyAbroadAction("visa", endpoints.studyAbroadVisaChecklist, {
+      userId: state.identity.userId,
+      request: {
+        countryOrRegion: valueOf("saVisaCountry"),
+        applicationSeason: valueOf("saSeason"),
+        admissionStatus: valueOf("saAdmissionStatus"),
+        materialStatus: valueOf("saMaterialStatus")
+      }
+    }, function (result) { state.studyAbroadVisaResult = result; });
+  }
+
+  function runStudyAbroadAction(type, endpoint, body, applyResult) {
+    state.studyAbroadLoading = type;
+    state.studyAbroadMessage = null;
+    renderPage(pageByKey["study-abroad"]);
+    post(endpoint, body).then(function (result) {
+      applyResult(result || {});
+      state.studyAbroadMessage = { type: "info", title: "已生成", text: "结果已更新；当前为规则版建议，后续可接入真实 AI 进行更细的多轮指导。" };
+    }).catch(function (error) {
+      state.studyAbroadMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
+    }).then(function () {
+      state.studyAbroadLoading = "";
+      renderPage(pageByKey["study-abroad"]);
+    });
+  }
+
+  function renderStudyAbroadProfile(result) {
+    if (!result) return statePanel("等待申请画像", "填写国家地区、语言成绩、预算和经历后，系统会先给出准备度、短板和下一步清单。", "pending");
+    return '<div class="postgraduate-result"><h4>准备度：' + escapeHtml(result.readinessScore == null ? "--" : String(result.readinessScore)) + ' 分</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      simpleListHtml("优势", result.strengths) + simpleListHtml("短板", result.gaps) +
+      renderStudyAbroadChecklist(result.nextActions) + simpleListHtml("提醒", result.reminders) + '</div>';
+  }
+
+  function renderStudyAbroadLanguage(result) {
+    if (!result) return statePanel("等待语言目标", "填写考试类型、当前成绩、目标成绩和考试日期后，系统会生成三轮备考计划。", "pending");
+    return '<div class="postgraduate-result"><h4>语言考试计划</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      renderStudyAbroadChecklist(result.rounds) + simpleListHtml("每周节奏", result.weeklyRoutine) + simpleListHtml("训练提示", result.examinerTips) + '</div>';
+  }
+
+  function renderStudyAbroadSchools(result) {
+    if (!result) return statePanel("等待选校信息", "填写目标地区、专业、成绩、语言和预算后，系统会给出冲刺、匹配、稳妥三档建议。", "pending");
+    return '<div class="postgraduate-result"><h4>选校梯度</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      '<div class="result-card-grid">' + normalizeArray(result.options).map(function (option) {
+        return '<article class="mini-card"><span class="chip">' + escapeHtml(option.tier || "") + '</span><h4>' + escapeHtml(option.schoolName || "目标项目") + '</h4><p>' + escapeHtml(option.program || "") + '</p><p>' + escapeHtml(option.reason || "") + '</p>' + simpleListHtml("准备重点", option.preparation) + '</article>';
+      }).join("") + '</div>' + simpleListHtml("注意", result.cautions) + '</div>';
+  }
+
+  function renderStudyAbroadStatement(result) {
+    if (!result) return statePanel("等待故事素材", "填写个人故事、学术经历和目标项目方向后，系统会生成个人陈述主线和追问清单。", "pending");
+    return '<div class="postgraduate-result"><h4>个人陈述主线</h4><p>' + escapeHtml(result.goldenLine || "") + '</p><h4>提纲</h4><pre class="generated-text">' + escapeHtml(result.outline || "") + '</pre>' +
+      simpleListHtml("继续追问", result.storyQuestions) + simpleListHtml("建议补充", result.missingInfo) + simpleListHtml("写作提醒", result.writingTips) + '</div>';
+  }
+
+  function renderStudyAbroadVisa(result) {
+    if (!result) return statePanel("等待申请阶段", "填写目标国家、申请季、录取状态和材料状态后，系统会生成网申与签证清单。", "pending");
+    return '<div class="postgraduate-result"><h4>签证与网申清单</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
+      renderStudyAbroadChecklist(result.checklist) + simpleListHtml("风险", result.risks) + simpleListHtml("提醒", result.reminders) + '</div>';
+  }
+
+  function renderStudyAbroadChecklist(items) {
+    var list = normalizeArray(items);
+    if (!list.length) return "";
+    return '<div class="result-card-grid">' + list.map(function (item) {
+      return '<article class="mini-card"><span class="chip">' + escapeHtml(item.stage || "") + '</span><h4>' + escapeHtml(item.title || "") + '</h4><p>' + escapeHtml(item.detail || "") + '</p><p class="panel-note">优先级：' + escapeHtml(item.priority || "") + '</p></article>';
+    }).join("") + '</div>';
+  }
+
+  function defaultLanguageExamDate() {
+    var date = new Date();
+    date.setDate(date.getDate() + 90);
+    var month = String(date.getMonth() + 1);
+    var day = String(date.getDate());
+    return date.getFullYear() + "-" + (month.length < 2 ? "0" + month : month) + "-" + (day.length < 2 ? "0" + day : day);
+  }
+
+  function studyAbroadMessageHtml() {
+    return state.studyAbroadMessage
+      ? '<section class="state-card ' + escapeHtml(state.studyAbroadMessage.type || "info") + '"><h3>' + escapeHtml(state.studyAbroadMessage.title || "提示") + '</h3><p>' + escapeHtml(state.studyAbroadMessage.text || "") + '</p></section>'
+      : "";
+  }
+
+  function studyAbroadBackActions() {
+    return '<div class="actions-row"><button type="button" class="secondary" data-link="study-abroad">返回留学陪伴</button><button type="button" class="secondary" data-link="further-study-home">返回深造</button></div>';
+  }
+
+  function renderStudyAbroadPage(item) {
+    renderFeatureShell(item, item.title, item.summary,
+      studyAbroadMessageHtml() +
+      '<section class="panel full postgraduate-hero-panel">' +
+      '<h3>留学全流程陪伴</h3>' +
+      '<p class="panel-note">先确认国家地区和语言考试，再把软实力、选校定位、个人陈述和签证网申拆成可执行清单；当前版本使用规则建议，后续可替换为真实 AI 对话和文书批改。</p>' +
+      '<div class="postgraduate-flow"><span>国家地区</span><span>语言考试</span><span>选校定位</span><span>文书主线</span><span>签证网申</span></div>' +
+      '</section>' +
+      '<section class="panel full"><h3>选择一个功能</h3>' +
+      '<div class="postgraduate-action-grid">' +
+      '<button type="button" data-link="study-abroad-profile">国家地区</button>' +
+      '<button type="button" data-link="study-abroad-language">语言考试</button>' +
+      '<button type="button" data-link="study-abroad-school">选校定位</button>' +
+      '<button type="button" data-link="study-abroad-statement">文书主线</button>' +
+      '<button type="button" data-link="study-abroad-visa">签证网申</button>' +
+      '</div></section>');
+  }
+
+  function renderStudyAbroadProfilePage(item) {
+    var loading = state.studyAbroadLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      studyAbroadMessageHtml() +
+      '<section class="panel full"><h3>国家地区与申请画像</h3>' +
+      '<form class="form-grid" id="studyAbroadProfileForm">' +
+      field("saCountry", "国家或地区", "text", "") +
+      field("saDegree", "目标学位", "select", "硕士", [["本科", "本科"], ["硕士", "硕士"], ["博士", "博士"], ["交换", "交换"]]) +
+      field("saTargetMajor", "目标专业", "text", "") +
+      field("saSchool", "当前学校", "text", "") +
+      field("saMajor", "当前专业", "text", "") +
+      field("saGpa", "绩点或平均分", "text", "") +
+      field("saLanguageScore", "语言成绩", "text", "") +
+      field("saBudget", "预算范围", "text", "") +
+      '<label class="full">软实力经历<textarea id="saBackground" placeholder="例如：科研、课程项目、实习、竞赛、交换、志愿经历"></textarea></label>' +
+      '<label class="full">申请偏好<textarea id="saPreference" placeholder="例如：偏向一年制、希望毕业后就业、需要奖学金、希望城市安全"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "profile") + '>诊断准备度</button></div>' +
+      '</form>' + renderStudyAbroadProfile(state.studyAbroadProfileResult) + studyAbroadBackActions() + '</section>');
+    bindStudyAbroadForms();
+  }
+
+  function renderStudyAbroadLanguagePage(item) {
+    var loading = state.studyAbroadLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      studyAbroadMessageHtml() +
+      '<section class="panel full"><h3>语言考试</h3>' +
+      '<form class="form-grid" id="studyAbroadLanguageForm">' +
+      field("saExamType", "考试类型", "select", "雅思", [["雅思", "雅思"], ["托福", "托福"], ["GRE", "GRE"], ["其他", "其他"]]) +
+      field("saCurrentScore", "当前成绩", "text", "") +
+      field("saTargetScore", "目标成绩", "text", "") +
+      field("saExamDate", "考试日期", "date", defaultLanguageExamDate()) +
+      field("saWeeklyHours", "每周可投入时间", "text", "12 小时") +
+      '<label class="full">薄弱单项<textarea id="saWeakParts" placeholder="例如：雅思写作小作文、口语追问、托福听力笔记"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "language") + '>生成语言计划</button></div>' +
+      '</form>' + renderStudyAbroadLanguage(state.studyAbroadLanguageResult) + studyAbroadBackActions() + '</section>');
+    bindStudyAbroadForms();
+  }
+
+  function renderStudyAbroadSchoolPage(item) {
+    var loading = state.studyAbroadLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      studyAbroadMessageHtml() +
+      '<section class="panel full"><h3>选校定位</h3>' +
+      '<form class="form-grid" id="studyAbroadSchoolForm">' +
+      field("saSchoolCountry", "国家或地区", "text", "") +
+      field("saSchoolMajor", "目标专业", "text", "") +
+      field("saSchoolGpa", "绩点或平均分", "text", "") +
+      field("saSchoolLanguage", "语言成绩", "text", "") +
+      field("saSchoolBudget", "预算范围", "text", "") +
+      '<label class="full">背景和偏好<textarea id="saSchoolPreference" placeholder="例如：希望冲 QS 前 50、接受跨专业、预算有限、希望带实习项目"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "school") + '>生成选校梯度</button></div>' +
+      '</form>' + renderStudyAbroadSchools(state.studyAbroadSchoolResult) + studyAbroadBackActions() + '</section>');
+    bindStudyAbroadForms();
+  }
+
+  function renderStudyAbroadStatementPage(item) {
+    var loading = state.studyAbroadLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      studyAbroadMessageHtml() +
+      '<section class="panel full"><h3>文书主线</h3>' +
+      '<form class="form-grid" id="studyAbroadStatementForm">' +
+      field("saStatementMajor", "目标专业", "text", "") +
+      field("saStatementTopic", "教授课题或项目方向", "text", "") +
+      '<label class="full">个人故事<textarea id="saPersonalStory" placeholder="写一个真实的转折、问题、观察或经历，不需要华丽"></textarea></label>' +
+      '<label class="full">学术或项目经历<textarea id="saAcademicExperience" placeholder="课程项目、科研、论文、实习、竞赛或作品集经历"></textarea></label>' +
+      field("saCareerGoal", "未来目标", "text", "") +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "statement") + '>生成文书主线</button></div>' +
+      '</form>' + renderStudyAbroadStatement(state.studyAbroadStatementResult) + studyAbroadBackActions() + '</section>');
+    bindStudyAbroadForms();
+  }
+
+  function renderStudyAbroadVisaPage(item) {
+    var loading = state.studyAbroadLoading;
+    renderFeatureShell(item, item.title, item.summary,
+      studyAbroadMessageHtml() +
+      '<section class="panel full"><h3>签证网申</h3>' +
+      '<form class="form-grid" id="studyAbroadVisaForm">' +
+      field("saVisaCountry", "国家或地区", "text", "") +
+      field("saSeason", "申请季", "text", "2026 秋季") +
+      field("saAdmissionStatus", "录取状态", "select", "准备申请", [["准备申请", "准备申请"], ["已投递", "已投递"], ["已拿录取", "已拿录取"], ["已确认入读", "已确认入读"]]) +
+      '<label class="full">材料状态<textarea id="saMaterialStatus" placeholder="例如：护照已办、成绩单待翻译、推荐信两封确认、资金证明未准备"></textarea></label>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "visa") + '>生成清单</button></div>' +
+      '</form>' + renderStudyAbroadVisa(state.studyAbroadVisaResult) + studyAbroadBackActions() + '</section>');
+    bindStudyAbroadForms();
+  }
+
+  function runStudyAbroadAction(type, endpoint, body, applyResult) {
+    state.studyAbroadLoading = type;
+    state.studyAbroadMessage = null;
+    renderPage(pageByKey[state.route] || pageByKey["study-abroad"]);
+    post(endpoint, body).then(function (result) {
+      applyResult(result || {});
+      state.studyAbroadMessage = { type: "info", title: "已生成", text: "结果已更新；当前为规则版建议，后续可接入真实 AI 进行更细的多轮指导。" };
+    }).catch(function (error) {
+      state.studyAbroadMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
+    }).then(function () {
+      state.studyAbroadLoading = "";
+      renderPage(pageByKey[state.route] || pageByKey["study-abroad"]);
+    });
   }
 
   function renderOnboarding(item) {
@@ -4278,7 +5284,7 @@
       "interview-history": "interview",
       "interview-panorama": "interview-home",
       "interview-panorama-history": "interview-home",
-      "postgraduate-exam": "further-study-home",
+      "postgraduate": "further-study-home",
       "postgraduate-recommendation": "further-study-home",
       "study-abroad": "further-study-home",
       "today-action": "workbench",
@@ -5401,6 +6407,8 @@
       "pages/resume/index": "resume",
       "pages/resume-ai/index": "resume-diagnosis",
       "pages/assessment/index": "assessment",
+      "postgraduate-exam": "postgraduate",
+      "pages/postgraduate/index": "postgraduate",
       "pages/interview/index": "interview-home",
       "pages/interview/start": "interview",
       "pages/interview/chat": "interview",
@@ -5462,10 +6470,17 @@
   function normalizeRoute(hash) {
     var fromHash = trim(hash || window.location.hash || "").replace(/^#/, "");
     if (fromHash) {
-      return fromHash;
+      return mapLegacyRoute(fromHash);
     }
     var params = new URLSearchParams(window.location.search);
-    return trim(params.get("ccRoute") || params.get("route")) || "workbench";
+    return mapLegacyRoute(trim(params.get("ccRoute") || params.get("route")) || "workbench");
+  }
+
+  function mapLegacyRoute(route) {
+    if (route === "postgraduate-exam") {
+      return "postgraduate";
+    }
+    return route;
   }
 
   function hasUserIdentity() {

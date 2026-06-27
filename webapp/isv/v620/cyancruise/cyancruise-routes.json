@@ -10,9 +10,23 @@
       "workbench",
       "employment-home",
       "further-study-home",
+      "postgraduate",
+      "postgraduate-school",
+      "postgraduate-plan",
+      "postgraduate-mistake",
+      "postgraduate-reexam",
       "postgraduate-exam",
       "postgraduate-recommendation",
+      "recommendation-ranking",
+      "recommendation-background",
+      "recommendation-material",
+      "recommendation-tutor",
       "study-abroad",
+      "study-abroad-profile",
+      "study-abroad-language",
+      "study-abroad-school",
+      "study-abroad-statement",
+      "study-abroad-visa",
       "onboarding",
       "today-action",
       "assessment",
@@ -34,6 +48,7 @@
       "workbench",
       "employment-home",
       "further-study-home",
+      "postgraduate",
       "onboarding",
       "today-action",
       "assessment",
@@ -348,56 +363,411 @@
       ]
     },
     {
+      "key": "postgraduate",
+      "title": "考研陪伴",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=postgraduate",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "postgraduate school recommendation",
+          "method": "POST",
+          "path": "/cc001/postgraduate/school-recommend",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduateSchoolRecommendationResult",
+          "fallback": "Show local form state and ask the user to retry school recommendation."
+        },
+        {
+          "name": "postgraduate plan generation",
+          "method": "POST",
+          "path": "/cc001/postgraduate/plan/generate",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduatePlanResult",
+          "fallback": "Show local form state and ask the user to retry plan generation."
+        },
+        {
+          "name": "postgraduate mistake analysis",
+          "method": "POST",
+          "path": "/cc001/postgraduate/mistake/analyze",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduateMistakeAnalysisResult",
+          "fallback": "Show a clear Chinese error if question text is empty or backend is unavailable."
+        },
+        {
+          "name": "postgraduate reexam preparation",
+          "method": "POST",
+          "path": "/cc001/postgraduate/reexam/prepare",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduateReexamPreparationResult",
+          "fallback": "Show local form state and ask the user to retry re-exam checklist generation."
+        }
+      ]
+    },
+    {
+      "key": "postgraduate-school",
+      "title": "择校择专业",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=postgraduate-school",
+      "status": "available",
+      "parentRoute": "postgraduate",
+      "webApis": [
+        {
+          "name": "postgraduate school recommendation",
+          "method": "POST",
+          "path": "/cc001/postgraduate/school-recommend",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduateSchoolRecommendationResult",
+          "fallback": "Show local form state and ask the user to retry school recommendation."
+        }
+      ]
+    },
+    {
+      "key": "postgraduate-plan",
+      "title": "复习计划",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=postgraduate-plan",
+      "status": "available",
+      "parentRoute": "postgraduate",
+      "webApis": [
+        {
+          "name": "postgraduate plan generation",
+          "method": "POST",
+          "path": "/cc001/postgraduate/plan/generate",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduatePlanResult",
+          "fallback": "Show local form state and ask the user to retry plan generation."
+        }
+      ]
+    },
+    {
+      "key": "postgraduate-mistake",
+      "title": "错题解析",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=postgraduate-mistake",
+      "status": "available",
+      "parentRoute": "postgraduate",
+      "webApis": [
+        {
+          "name": "postgraduate mistake analysis",
+          "method": "POST",
+          "path": "/cc001/postgraduate/mistake/analyze",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduateMistakeAnalysisResult",
+          "fallback": "Show a clear Chinese error if question text is empty or backend is unavailable."
+        }
+      ]
+    },
+    {
+      "key": "postgraduate-reexam",
+      "title": "复试准备",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=postgraduate-reexam",
+      "status": "available",
+      "parentRoute": "postgraduate",
+      "webApis": [
+        {
+          "name": "postgraduate reexam preparation",
+          "method": "POST",
+          "path": "/cc001/postgraduate/reexam/prepare",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduateReexamPreparationResult",
+          "fallback": "Show local form state and ask the user to retry re-exam checklist generation."
+        }
+      ]
+    },
+    {
       "key": "postgraduate-exam",
       "title": "考研",
       "ipdPaths": ["pages/home/index"],
-      "target": "index.html?ccRoute=postgraduate-exam",
+      "target": "index.html?ccRoute=postgraduate",
       "status": "entry-only",
       "webApis": [
         {
-          "name": "career plan summary",
+          "name": "postgraduate school recommendation",
           "method": "POST",
-          "path": "/cc001/career-plan/summary",
-          "body": ["userId"],
+          "path": "/cc001/postgraduate/school-recommend",
+          "body": ["userId", "request"],
           "userIdRequired": true,
-          "dto": "CareerPlanSummaryDto",
-          "fallback": "Show postgraduate exam planning placeholder."
+          "dto": "PostgraduateSchoolRecommendationResult",
+          "fallback": "Redirect legacy postgraduate exam entry to the postgraduate companion page."
         }
       ]
     },
     {
       "key": "postgraduate-recommendation",
-      "title": "保研",
+      "title": "保研陪伴",
       "ipdPaths": ["pages/home/index"],
       "target": "index.html?ccRoute=postgraduate-recommendation",
-      "status": "entry-only",
+      "status": "available",
       "webApis": [
         {
-          "name": "career plan summary",
+          "name": "recommendation competitiveness diagnosis",
           "method": "POST",
-          "path": "/cc001/career-plan/summary",
-          "body": ["userId"],
+          "path": "/cc001/recommendation/diagnose",
+          "body": ["userId", "request"],
           "userIdRequired": true,
-          "dto": "CareerPlanSummaryDto",
-          "fallback": "Show postgraduate recommendation planning placeholder."
+          "dto": "RecommendationDiagnosisResult",
+          "fallback": "Show local form state and ask the user to retry diagnosis."
+        },
+        {
+          "name": "recommendation action plan",
+          "method": "POST",
+          "path": "/cc001/recommendation/plan/generate",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "RecommendationPlanResult",
+          "fallback": "Show local diagnosis state and ask the user to retry plan generation."
+        },
+        {
+          "name": "recommendation document polish",
+          "method": "POST",
+          "path": "/cc001/recommendation/document/polish",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "RecommendationDocumentPolishResult",
+          "fallback": "Show a clear Chinese error if the draft is empty or backend is unavailable."
+        },
+        {
+          "name": "recommendation tutor letter",
+          "method": "POST",
+          "path": "/cc001/recommendation/tutor-letter/generate",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "RecommendationTutorLetterResult",
+          "fallback": "Show local form state and ask the user to retry tutor letter generation."
+        }
+      ]
+    },
+    {
+      "key": "recommendation-ranking",
+      "title": "排名监控",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=recommendation-ranking",
+      "status": "available",
+      "parentRoute": "postgraduate-recommendation",
+      "webApis": [
+        {
+          "name": "recommendation competitiveness diagnosis",
+          "method": "POST",
+          "path": "/cc001/recommendation/diagnose",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "RecommendationDiagnosisResult",
+          "fallback": "Show local form state and ask the user to retry diagnosis."
+        }
+      ]
+    },
+    {
+      "key": "recommendation-background",
+      "title": "背景提升",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=recommendation-background",
+      "status": "available",
+      "parentRoute": "postgraduate-recommendation",
+      "webApis": [
+        {
+          "name": "recommendation action plan",
+          "method": "POST",
+          "path": "/cc001/recommendation/plan/generate",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "RecommendationPlanResult",
+          "fallback": "Show local diagnosis state and ask the user to retry plan generation."
+        }
+      ]
+    },
+    {
+      "key": "recommendation-material",
+      "title": "材料精修",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=recommendation-material",
+      "status": "available",
+      "parentRoute": "postgraduate-recommendation",
+      "webApis": [
+        {
+          "name": "recommendation document polish",
+          "method": "POST",
+          "path": "/cc001/recommendation/document/polish",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "RecommendationDocumentPolishResult",
+          "fallback": "Show a clear Chinese error if the draft is empty or backend is unavailable."
+        }
+      ]
+    },
+    {
+      "key": "recommendation-tutor",
+      "title": "导师联系",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=recommendation-tutor",
+      "status": "available",
+      "parentRoute": "postgraduate-recommendation",
+      "webApis": [
+        {
+          "name": "recommendation tutor letter",
+          "method": "POST",
+          "path": "/cc001/recommendation/tutor-letter/generate",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "RecommendationTutorLetterResult",
+          "fallback": "Show local form state and ask the user to retry tutor letter generation."
         }
       ]
     },
     {
       "key": "study-abroad",
-      "title": "留学",
+      "title": "留学陪伴",
       "ipdPaths": ["pages/home/index"],
       "target": "index.html?ccRoute=study-abroad",
-      "status": "entry-only",
+      "status": "available",
       "webApis": [
         {
-          "name": "career plan summary",
+          "name": "study abroad profile diagnosis",
           "method": "POST",
-          "path": "/cc001/career-plan/summary",
-          "body": ["userId"],
+          "path": "/cc001/study-abroad/profile/diagnose",
+          "body": ["userId", "request"],
           "userIdRequired": true,
-          "dto": "CareerPlanSummaryDto",
-          "fallback": "Show study abroad planning placeholder."
+          "dto": "StudyAbroadProfileDiagnosisResult",
+          "fallback": "Show local form state and ask the user to retry profile diagnosis."
+        },
+        {
+          "name": "study abroad language plan",
+          "method": "POST",
+          "path": "/cc001/study-abroad/language/plan",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadLanguagePlanResult",
+          "fallback": "Show local form state and ask the user to retry language plan generation."
+        },
+        {
+          "name": "study abroad school positioning",
+          "method": "POST",
+          "path": "/cc001/study-abroad/school/position",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadSchoolPositionResult",
+          "fallback": "Show local form state and ask the user to retry school positioning."
+        },
+        {
+          "name": "study abroad statement outline",
+          "method": "POST",
+          "path": "/cc001/study-abroad/statement/outline",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadStatementOutlineResult",
+          "fallback": "Show a clear Chinese error if story material is incomplete or backend is unavailable."
+        },
+        {
+          "name": "study abroad visa checklist",
+          "method": "POST",
+          "path": "/cc001/study-abroad/visa/checklist",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadVisaChecklistResult",
+          "fallback": "Show local form state and ask the user to retry visa checklist generation."
+        }
+      ]
+    },
+    {
+      "key": "study-abroad-profile",
+      "title": "国家地区",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=study-abroad-profile",
+      "status": "available",
+      "parentRoute": "study-abroad",
+      "webApis": [
+        {
+          "name": "study abroad profile diagnosis",
+          "method": "POST",
+          "path": "/cc001/study-abroad/profile/diagnose",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadProfileDiagnosisResult",
+          "fallback": "Show local form state and ask the user to retry profile diagnosis."
+        }
+      ]
+    },
+    {
+      "key": "study-abroad-language",
+      "title": "语言考试",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=study-abroad-language",
+      "status": "available",
+      "parentRoute": "study-abroad",
+      "webApis": [
+        {
+          "name": "study abroad language plan",
+          "method": "POST",
+          "path": "/cc001/study-abroad/language/plan",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadLanguagePlanResult",
+          "fallback": "Show local form state and ask the user to retry language plan generation."
+        }
+      ]
+    },
+    {
+      "key": "study-abroad-school",
+      "title": "选校定位",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=study-abroad-school",
+      "status": "available",
+      "parentRoute": "study-abroad",
+      "webApis": [
+        {
+          "name": "study abroad school positioning",
+          "method": "POST",
+          "path": "/cc001/study-abroad/school/position",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadSchoolPositionResult",
+          "fallback": "Show local form state and ask the user to retry school positioning."
+        }
+      ]
+    },
+    {
+      "key": "study-abroad-statement",
+      "title": "文书主线",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=study-abroad-statement",
+      "status": "available",
+      "parentRoute": "study-abroad",
+      "webApis": [
+        {
+          "name": "study abroad statement outline",
+          "method": "POST",
+          "path": "/cc001/study-abroad/statement/outline",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadStatementOutlineResult",
+          "fallback": "Show a clear Chinese error if story material is incomplete or backend is unavailable."
+        }
+      ]
+    },
+    {
+      "key": "study-abroad-visa",
+      "title": "签证网申",
+      "ipdPaths": ["pages/home/index"],
+      "target": "index.html?ccRoute=study-abroad-visa",
+      "status": "available",
+      "parentRoute": "study-abroad",
+      "webApis": [
+        {
+          "name": "study abroad visa checklist",
+          "method": "POST",
+          "path": "/cc001/study-abroad/visa/checklist",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyAbroadVisaChecklistResult",
+          "fallback": "Show local form state and ask the user to retry visa checklist generation."
         }
       ]
     },
@@ -1251,40 +1621,52 @@
       "deploymentNotes": "Mount as the platform sidebar parent page for postgraduate, recommendation, and study-abroad planning."
     },
     {
+      "mountKey": "cyancruise-postgraduate",
+      "routeKey": "postgraduate",
+      "title": "考研陪伴",
+      "target": "index.html?ccRoute=postgraduate",
+      "audience": "cyancruise-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "user-facing",
+      "identityMode": "production-cosmic-context",
+      "fallback": "Show postgraduate companion page and local recoverable error states.",
+      "deploymentNotes": "Mount as the platform sidebar child page for postgraduate exam companion."
+    },
+    {
       "mountKey": "cyancruise-postgraduate-exam",
       "routeKey": "postgraduate-exam",
       "title": "考研",
-      "target": "index.html?ccRoute=postgraduate-exam",
+      "target": "index.html?ccRoute=postgraduate",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "entry-only",
       "identityMode": "production-cosmic-context",
-      "fallback": "Show postgraduate exam placeholder and return-to-study action.",
-      "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
+      "fallback": "Redirect old postgraduate exam menu to postgraduate companion.",
+      "deploymentNotes": "Compatibility mount for tenants that already configured the old postgraduate-exam route."
     },
     {
       "mountKey": "cyancruise-postgraduate-recommendation",
       "routeKey": "postgraduate-recommendation",
-      "title": "保研",
+      "title": "保研陪伴",
       "target": "index.html?ccRoute=postgraduate-recommendation",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
-      "publishability": "entry-only",
+      "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "Show recommendation placeholder and return-to-study action.",
-      "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
+      "fallback": "Show recommendation companion page and local recoverable error states.",
+      "deploymentNotes": "Mount as the platform sidebar child page for postgraduate recommendation companion."
     },
     {
       "mountKey": "cyancruise-study-abroad",
       "routeKey": "study-abroad",
-      "title": "留学",
+      "title": "留学陪伴",
       "target": "index.html?ccRoute=study-abroad",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
-      "publishability": "entry-only",
+      "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "Show study-abroad placeholder and return-to-study action.",
-      "deploymentNotes": "Publish only if the tenant wants visible planned study child menus before Agent integration."
+      "fallback": "Show study-abroad companion page and local recoverable error states.",
+      "deploymentNotes": "Mount as the platform sidebar child page for study abroad companion."
     },
     {
       "mountKey": "cyancruise-onboarding",
