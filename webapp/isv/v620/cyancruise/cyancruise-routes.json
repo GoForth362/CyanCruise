@@ -4,7 +4,7 @@
   "sourceProject": "F:\\Project\\IPD",
   "targetRoot": "webapp/isv/v620/cyancruise",
   "pageShell": {
-    "change": "migrate-webapp-careerloop-pages",
+    "change": "migrate-webapp-cyancruise-pages",
     "implementation": "static-hash-route-states",
     "visibleUserRoutes": [
       "workbench",
@@ -69,18 +69,35 @@
       "career-resources",
       "admin-console"
     ],
-    "adminRoutes": ["admin-console"],
-    "entryOnlyRoutes": ["assessment", "file-upload-preview", "subscriptions", "weekly-report", "admin-console"],
-    "stateModel": ["loading", "empty", "success", "identity-required", "forbidden", "unavailable", "backend-error", "pending"],
+    "adminRoutes": [
+      "admin-console"
+    ],
+    "entryOnlyRoutes": [
+      "assessment",
+      "file-upload-preview",
+      "subscriptions",
+      "weekly-report",
+      "admin-console"
+    ],
+    "stateModel": [
+      "loading",
+      "empty",
+      "success",
+      "identity-required",
+      "forbidden",
+      "unavailable",
+      "backend-error",
+      "pending"
+    ],
     "runtimeRule": "Page states are rebuilt as CyanCruise static webapp assets and do not require IPD Vue, uni-app, Pinia, Vite, uView, axios interceptors, Spring Boot, JPA, Flyway, or Java 17 runtime code."
   },
   "identity": {
     "production": {
       "mode": "cosmic-platform-context",
-      "user": "Cosmic login context user mapped to CareerLoop userId by platform adapter",
+      "user": "Cosmic login context user mapped to CyanCruise userId by platform adapter",
       "admin": "Cosmic login context user with ADMIN or platform administrator authority mapped to adminId",
       "status": "adapter-required",
-      "backendAdapter": "CareerLoopIdentityResolver -> IdentityAwareCareerLoopWebApiBoundary",
+      "backendAdapter": "CyanCruiseIdentityResolver -> IdentityAwareCyanCruiseWebApiBoundary",
       "adapterEnablement": {
         "property": "cc001.identity.adapter.enabled",
         "enabledValue": "true",
@@ -89,23 +106,59 @@
         "provider": "CosmicIdentityContextProvider"
       },
       "candidateFields": {
-        "userId": ["userId", "personId", "operatorId", "uid"],
-        "adminId": ["adminId", "userId", "operatorId"],
-        "orgId": ["orgId", "organizationId", "deptId"],
-        "roles": ["roles", "roleCodes", "role", "permissionCodes"],
-        "ip": ["ip"],
-        "userAgent": ["userAgent", "ua"]
+        "userId": [
+          "userId",
+          "personId",
+          "operatorId",
+          "uid"
+        ],
+        "adminId": [
+          "adminId",
+          "userId",
+          "operatorId"
+        ],
+        "orgId": [
+          "orgId",
+          "organizationId",
+          "deptId"
+        ],
+        "roles": [
+          "roles",
+          "roleCodes",
+          "role",
+          "permissionCodes"
+        ],
+        "ip": [
+          "ip"
+        ],
+        "userAgent": [
+          "userAgent",
+          "ua"
+        ]
       },
-      "adminAliases": ["ADMIN", "COSMIC_ADMIN", "PLATFORM_ADMIN"],
+      "adminAliases": [
+        "ADMIN",
+        "COSMIC_ADMIN",
+        "PLATFORM_ADMIN"
+      ],
       "disabledBehavior": "Production WebAPI remains identity-required and never falls back to development identity."
     },
     "development": {
       "mode": "explicit-fallback",
-      "sources": ["query:userId", "localStorage:cyancruise.userId", "manual-input"],
+      "sources": [
+        "query:userId",
+        "localStorage:cyancruise.userId",
+        "manual-input"
+      ],
       "rule": "Development fallback must be explicit and must not be treated as production identity."
     },
     "rule": "Do not call user-owned or admin-owned WebAPI without an explicit platform or development identity.",
-    "backendStatuses": ["OK", "IDENTITY_REQUIRED", "FORBIDDEN", "IDENTITY_MISMATCH"],
+    "backendStatuses": [
+      "OK",
+      "IDENTITY_REQUIRED",
+      "FORBIDDEN",
+      "IDENTITY_MISMATCH"
+    ],
     "mismatchRule": "When request userId/adminId conflicts with resolved platform identity, the backend boundary rejects the call before invoking protected services."
   },
   "aiProvider": {
@@ -123,15 +176,29 @@
       "diagnosticsProperty": "cc001.ai.provider.diagnostics.enabled",
       "defaultBehavior": "disabled-safe-ai-unavailable"
     },
-    "requestMapping": ["model", "messages", "tools", "tool_choice", "stream"],
-    "responseMapping": ["content", "finishReason", "toolCalls", "usage", "modelName", "errorCode", "diagnostics"],
+    "requestMapping": [
+      "model",
+      "messages",
+      "tools",
+      "tool_choice",
+      "stream"
+    ],
+    "responseMapping": [
+      "content",
+      "finishReason",
+      "toolCalls",
+      "usage",
+      "modelName",
+      "errorCode",
+      "diagnostics"
+    ],
     "secretRule": "Route metadata records property names and fallback behavior only; endpoint secrets, apiKey values, and Authorization headers must never be stored here.",
     "fallback": "When provider is disabled, incomplete, timed out, or invalid, backend returns AI unavailable or scenario fallback without fake successful AI content."
   },
   "productionReadiness": {
     "change": "migrate-production-readiness-checklist",
     "status": "checklist-defined",
-    "document": "docs/careerloop-production-readiness-checklist.md",
+    "document": "docs/cyancruise-production-readiness-checklist.md",
     "sourceSemantics": [
       "production configuration must use property names and tenant-owned values, never checked-in secrets",
       "health checks must be observable through Cosmic-compatible probes or representative WebAPI checks",
@@ -178,7 +245,9 @@
       {
         "key": "cosmic-file-service",
         "status": "manual-required",
-        "properties": ["cc001.file.adapter.enabled"],
+        "properties": [
+          "cc001.file.adapter.enabled"
+        ],
         "fallback": "unavailable or skipped; never production use of local/in-memory file storage"
       },
       {
@@ -248,7 +317,9 @@
     {
       "key": "workbench",
       "title": "CyanCruise 首页",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=workbench",
       "status": "entry-only",
       "webApis": [
@@ -256,7 +327,9 @@
           "name": "career profile snapshot",
           "method": "POST",
           "path": "/cc001/career-profile/snapshot/get",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "UserProfileSnapshot",
           "fallback": "Show onboarding-required or empty profile state."
@@ -265,7 +338,9 @@
           "name": "career profile draft",
           "method": "POST",
           "path": "/cc001/career-profile/draft/get",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "CareerProfileDraftDto",
           "fallback": "Use local draft fallback and keep the profile form editable."
@@ -274,7 +349,10 @@
           "name": "save career profile draft",
           "method": "POST",
           "path": "/cc001/career-profile/draft/save",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "CareerProfileDraftDto",
           "fallback": "Keep local draft values and show non-blocking save failed state."
@@ -283,7 +361,9 @@
           "name": "clear career profile draft",
           "method": "POST",
           "path": "/cc001/career-profile/draft/clear",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "CareerProfileDraftDto",
           "fallback": "Keep local draft values if backend clear is unavailable."
@@ -292,7 +372,9 @@
           "name": "today action by user",
           "method": "POST",
           "path": "/cc001/career-agent/today/get",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "CareerAgentTodayDto",
           "fallback": "Show recoverable today-action unavailable state."
@@ -302,7 +384,12 @@
     {
       "key": "employment-home",
       "title": "就业",
-      "ipdPaths": ["pages/home/index", "pages/resume/index", "pages/interview/index", "pages/cdut-employment/index"],
+      "ipdPaths": [
+        "pages/home/index",
+        "pages/resume/index",
+        "pages/interview/index",
+        "pages/cdut-employment/index"
+      ],
       "target": "index.html?ccRoute=employment-home",
       "status": "available",
       "webApis": [
@@ -310,7 +397,9 @@
           "name": "resume list",
           "method": "POST",
           "path": "/cc001/resume/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<ResumeDto>",
           "fallback": "Show employment feature cards and empty resume state."
@@ -319,7 +408,9 @@
           "name": "interview list",
           "method": "POST",
           "path": "/cc001/interview/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto>",
           "fallback": "Show employment feature cards and empty interview state."
@@ -328,7 +419,9 @@
           "name": "employment insight",
           "method": "POST",
           "path": "/cc001/career-employment/insight/get",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "EmploymentInsightDto",
           "fallback": "Show employment tools and an inline insight unavailable state."
@@ -337,7 +430,9 @@
           "name": "career resource feed",
           "method": "POST",
           "path": "/cc001/career-employment/resources/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": false,
           "dto": "CareerResourceFeedDto",
           "fallback": "Show employment tools and an inline resources unavailable state."
@@ -347,7 +442,9 @@
     {
       "key": "further-study-home",
       "title": "深造",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=further-study-home",
       "status": "available",
       "webApis": [
@@ -355,17 +452,107 @@
           "name": "career plan summary",
           "method": "POST",
           "path": "/cc001/career-plan/summary",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "CareerPlanSummaryDto",
           "fallback": "Show further-study route cards and planned Agent entry state."
+        },
+        {
+          "name": "further study record list",
+          "method": "POST",
+          "path": "/cc001/further-study/records/list",
+          "body": [
+            "userId",
+            "track",
+            "recordType",
+            "status",
+            "keyword",
+            "limit",
+            "offset"
+          ],
+          "userIdRequired": true,
+          "dto": "List<FurtherStudyRecordSummaryDto>",
+          "fallback": "Show further-study route cards and an empty history state."
+        },
+        {
+          "name": "further study record detail",
+          "method": "POST",
+          "path": "/cc001/further-study/records/detail",
+          "body": [
+            "userId",
+            "recordId"
+          ],
+          "userIdRequired": true,
+          "dto": "FurtherStudyRecordDetailDto",
+          "fallback": "Show a clear record unavailable message."
+        },
+        {
+          "name": "further study record status update",
+          "method": "POST",
+          "path": "/cc001/further-study/records/status/update",
+          "body": [
+            "userId",
+            "recordId",
+            "status",
+            "eventSummary"
+          ],
+          "userIdRequired": true,
+          "dto": "FurtherStudyRecordDetailDto",
+          "fallback": "Keep the previous status and ask the user to retry."
+        },
+        {
+          "name": "further study material save",
+          "method": "POST",
+          "path": "/cc001/further-study/materials/save",
+          "body": [
+            "userId",
+            "track",
+            "recordId",
+            "materialType",
+            "title",
+            "status",
+            "fileKey",
+            "contentJson"
+          ],
+          "userIdRequired": true,
+          "dto": "FurtherStudyMaterialDto",
+          "fallback": "Keep the local material draft and ask the user to retry."
+        },
+        {
+          "name": "further study material list",
+          "method": "POST",
+          "path": "/cc001/further-study/materials/list",
+          "body": [
+            "userId",
+            "track",
+            "recordId"
+          ],
+          "userIdRequired": true,
+          "dto": "List<FurtherStudyMaterialDto>",
+          "fallback": "Show an empty material state."
+        },
+        {
+          "name": "further study record events",
+          "method": "POST",
+          "path": "/cc001/further-study/records/events",
+          "body": [
+            "userId",
+            "recordId"
+          ],
+          "userIdRequired": true,
+          "dto": "List<FurtherStudyEventDto>",
+          "fallback": "Show the record without history details."
         }
       ]
     },
     {
       "key": "postgraduate",
       "title": "考研陪伴",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=postgraduate",
       "status": "available",
       "webApis": [
@@ -373,7 +560,10 @@
           "name": "postgraduate school recommendation",
           "method": "POST",
           "path": "/cc001/postgraduate/school-recommend",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduateSchoolRecommendationResult",
           "fallback": "Show local form state and ask the user to retry school recommendation."
@@ -382,7 +572,10 @@
           "name": "postgraduate plan generation",
           "method": "POST",
           "path": "/cc001/postgraduate/plan/generate",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduatePlanResult",
           "fallback": "Show local form state and ask the user to retry plan generation."
@@ -391,7 +584,10 @@
           "name": "postgraduate mistake analysis",
           "method": "POST",
           "path": "/cc001/postgraduate/mistake/analyze",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduateMistakeAnalysisResult",
           "fallback": "Show a clear Chinese error if question text is empty or backend is unavailable."
@@ -400,7 +596,10 @@
           "name": "postgraduate reexam preparation",
           "method": "POST",
           "path": "/cc001/postgraduate/reexam/prepare",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduateReexamPreparationResult",
           "fallback": "Show local form state and ask the user to retry re-exam checklist generation."
@@ -410,7 +609,9 @@
     {
       "key": "postgraduate-school",
       "title": "择校择专业",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=postgraduate-school",
       "status": "available",
       "parentRoute": "postgraduate",
@@ -419,7 +620,10 @@
           "name": "postgraduate school recommendation",
           "method": "POST",
           "path": "/cc001/postgraduate/school-recommend",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduateSchoolRecommendationResult",
           "fallback": "Show local form state and ask the user to retry school recommendation."
@@ -429,7 +633,9 @@
     {
       "key": "postgraduate-plan",
       "title": "复习计划",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=postgraduate-plan",
       "status": "available",
       "parentRoute": "postgraduate",
@@ -438,7 +644,10 @@
           "name": "postgraduate plan generation",
           "method": "POST",
           "path": "/cc001/postgraduate/plan/generate",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduatePlanResult",
           "fallback": "Show local form state and ask the user to retry plan generation."
@@ -448,7 +657,9 @@
     {
       "key": "postgraduate-mistake",
       "title": "错题解析",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=postgraduate-mistake",
       "status": "available",
       "parentRoute": "postgraduate",
@@ -457,7 +668,10 @@
           "name": "postgraduate mistake analysis",
           "method": "POST",
           "path": "/cc001/postgraduate/mistake/analyze",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduateMistakeAnalysisResult",
           "fallback": "Show a clear Chinese error if question text is empty or backend is unavailable."
@@ -467,7 +681,9 @@
     {
       "key": "postgraduate-reexam",
       "title": "复试准备",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=postgraduate-reexam",
       "status": "available",
       "parentRoute": "postgraduate",
@@ -476,7 +692,10 @@
           "name": "postgraduate reexam preparation",
           "method": "POST",
           "path": "/cc001/postgraduate/reexam/prepare",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduateReexamPreparationResult",
           "fallback": "Show local form state and ask the user to retry re-exam checklist generation."
@@ -486,7 +705,9 @@
     {
       "key": "postgraduate-exam",
       "title": "考研",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=postgraduate",
       "status": "entry-only",
       "webApis": [
@@ -494,7 +715,10 @@
           "name": "postgraduate school recommendation",
           "method": "POST",
           "path": "/cc001/postgraduate/school-recommend",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "PostgraduateSchoolRecommendationResult",
           "fallback": "Redirect legacy postgraduate exam entry to the postgraduate companion page."
@@ -504,7 +728,9 @@
     {
       "key": "postgraduate-recommendation",
       "title": "保研陪伴",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=postgraduate-recommendation",
       "status": "available",
       "webApis": [
@@ -512,7 +738,10 @@
           "name": "recommendation competitiveness diagnosis",
           "method": "POST",
           "path": "/cc001/recommendation/diagnose",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationDiagnosisResult",
           "fallback": "Show local form state and ask the user to retry diagnosis."
@@ -521,7 +750,10 @@
           "name": "recommendation action plan",
           "method": "POST",
           "path": "/cc001/recommendation/plan/generate",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationPlanResult",
           "fallback": "Show local diagnosis state and ask the user to retry plan generation."
@@ -530,7 +762,10 @@
           "name": "recommendation document polish",
           "method": "POST",
           "path": "/cc001/recommendation/document/polish",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationDocumentPolishResult",
           "fallback": "Show a clear Chinese error if the draft is empty or backend is unavailable."
@@ -539,7 +774,10 @@
           "name": "recommendation tutor letter",
           "method": "POST",
           "path": "/cc001/recommendation/tutor-letter/generate",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationTutorLetterResult",
           "fallback": "Show local form state and ask the user to retry tutor letter generation."
@@ -549,7 +787,9 @@
     {
       "key": "recommendation-ranking",
       "title": "排名监控",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=recommendation-ranking",
       "status": "available",
       "parentRoute": "postgraduate-recommendation",
@@ -558,7 +798,10 @@
           "name": "recommendation competitiveness diagnosis",
           "method": "POST",
           "path": "/cc001/recommendation/diagnose",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationDiagnosisResult",
           "fallback": "Show local form state and ask the user to retry diagnosis."
@@ -568,7 +811,9 @@
     {
       "key": "recommendation-background",
       "title": "背景提升",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=recommendation-background",
       "status": "available",
       "parentRoute": "postgraduate-recommendation",
@@ -577,7 +822,10 @@
           "name": "recommendation action plan",
           "method": "POST",
           "path": "/cc001/recommendation/plan/generate",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationPlanResult",
           "fallback": "Show local diagnosis state and ask the user to retry plan generation."
@@ -587,7 +835,9 @@
     {
       "key": "recommendation-material",
       "title": "材料精修",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=recommendation-material",
       "status": "available",
       "parentRoute": "postgraduate-recommendation",
@@ -596,7 +846,10 @@
           "name": "recommendation document polish",
           "method": "POST",
           "path": "/cc001/recommendation/document/polish",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationDocumentPolishResult",
           "fallback": "Show a clear Chinese error if the draft is empty or backend is unavailable."
@@ -606,7 +859,9 @@
     {
       "key": "recommendation-tutor",
       "title": "导师联系",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=recommendation-tutor",
       "status": "available",
       "parentRoute": "postgraduate-recommendation",
@@ -615,7 +870,10 @@
           "name": "recommendation tutor letter",
           "method": "POST",
           "path": "/cc001/recommendation/tutor-letter/generate",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "RecommendationTutorLetterResult",
           "fallback": "Show local form state and ask the user to retry tutor letter generation."
@@ -625,7 +883,9 @@
     {
       "key": "study-abroad",
       "title": "留学陪伴",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=study-abroad",
       "status": "available",
       "webApis": [
@@ -633,7 +893,10 @@
           "name": "study abroad profile diagnosis",
           "method": "POST",
           "path": "/cc001/study-abroad/profile/diagnose",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadProfileDiagnosisResult",
           "fallback": "Show local form state and ask the user to retry profile diagnosis."
@@ -642,7 +905,10 @@
           "name": "study abroad language plan",
           "method": "POST",
           "path": "/cc001/study-abroad/language/plan",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadLanguagePlanResult",
           "fallback": "Show local form state and ask the user to retry language plan generation."
@@ -651,7 +917,10 @@
           "name": "study abroad school positioning",
           "method": "POST",
           "path": "/cc001/study-abroad/school/position",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadSchoolPositionResult",
           "fallback": "Show local form state and ask the user to retry school positioning."
@@ -660,7 +929,10 @@
           "name": "study abroad statement outline",
           "method": "POST",
           "path": "/cc001/study-abroad/statement/outline",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadStatementOutlineResult",
           "fallback": "Show a clear Chinese error if story material is incomplete or backend is unavailable."
@@ -669,7 +941,10 @@
           "name": "study abroad visa checklist",
           "method": "POST",
           "path": "/cc001/study-abroad/visa/checklist",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadVisaChecklistResult",
           "fallback": "Show local form state and ask the user to retry visa checklist generation."
@@ -679,7 +954,9 @@
     {
       "key": "study-abroad-profile",
       "title": "国家地区",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=study-abroad-profile",
       "status": "available",
       "parentRoute": "study-abroad",
@@ -688,7 +965,10 @@
           "name": "study abroad profile diagnosis",
           "method": "POST",
           "path": "/cc001/study-abroad/profile/diagnose",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadProfileDiagnosisResult",
           "fallback": "Show local form state and ask the user to retry profile diagnosis."
@@ -698,7 +978,9 @@
     {
       "key": "study-abroad-language",
       "title": "语言考试",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=study-abroad-language",
       "status": "available",
       "parentRoute": "study-abroad",
@@ -707,7 +989,10 @@
           "name": "study abroad language plan",
           "method": "POST",
           "path": "/cc001/study-abroad/language/plan",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadLanguagePlanResult",
           "fallback": "Show local form state and ask the user to retry language plan generation."
@@ -717,7 +1002,9 @@
     {
       "key": "study-abroad-school",
       "title": "选校定位",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=study-abroad-school",
       "status": "available",
       "parentRoute": "study-abroad",
@@ -726,7 +1013,10 @@
           "name": "study abroad school positioning",
           "method": "POST",
           "path": "/cc001/study-abroad/school/position",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadSchoolPositionResult",
           "fallback": "Show local form state and ask the user to retry school positioning."
@@ -736,7 +1026,9 @@
     {
       "key": "study-abroad-statement",
       "title": "文书主线",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=study-abroad-statement",
       "status": "available",
       "parentRoute": "study-abroad",
@@ -745,7 +1037,10 @@
           "name": "study abroad statement outline",
           "method": "POST",
           "path": "/cc001/study-abroad/statement/outline",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadStatementOutlineResult",
           "fallback": "Show a clear Chinese error if story material is incomplete or backend is unavailable."
@@ -755,7 +1050,9 @@
     {
       "key": "study-abroad-visa",
       "title": "签证网申",
-      "ipdPaths": ["pages/home/index"],
+      "ipdPaths": [
+        "pages/home/index"
+      ],
       "target": "index.html?ccRoute=study-abroad-visa",
       "status": "available",
       "parentRoute": "study-abroad",
@@ -764,7 +1061,10 @@
           "name": "study abroad visa checklist",
           "method": "POST",
           "path": "/cc001/study-abroad/visa/checklist",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "StudyAbroadVisaChecklistResult",
           "fallback": "Show local form state and ask the user to retry visa checklist generation."
@@ -774,7 +1074,9 @@
     {
       "key": "onboarding",
       "title": "个人情况",
-      "ipdPaths": ["pages/onboarding/index"],
+      "ipdPaths": [
+        "pages/onboarding/index"
+      ],
       "target": "index.html?ccRoute=onboarding",
       "status": "available",
       "webApis": [
@@ -782,7 +1084,10 @@
           "name": "save onboarding",
           "method": "POST",
           "path": "/cc001/career-profile/onboarding/save",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "CareerProfileOnboardingRequest -> UserProfileSnapshot",
           "fallback": "Keep the local form values and show save failed state."
@@ -792,7 +1097,9 @@
     {
       "key": "today-action",
       "title": "今日行动",
-      "ipdPaths": ["pages/agent/index"],
+      "ipdPaths": [
+        "pages/agent/index"
+      ],
       "compatibleTargets": [
         "/pages/agent/index",
         "pages/agent/index",
@@ -814,7 +1121,9 @@
           "name": "today action by user",
           "method": "POST",
           "path": "/cc001/career-agent/today/get",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "CareerAgentTodayDto",
           "fallback": "Show waiting-for-complete-profile state without quick actions."
@@ -824,7 +1133,11 @@
     {
       "key": "assessment",
       "title": "职业测评",
-      "ipdPaths": ["pages/assessment/index", "pages/assessment/quiz", "pages/assessment/result"],
+      "ipdPaths": [
+        "pages/assessment/index",
+        "pages/assessment/quiz",
+        "pages/assessment/result"
+      ],
       "target": "index.html?ccRoute=assessment",
       "status": "available",
       "webApis": [
@@ -841,7 +1154,9 @@
           "name": "load assessment questions",
           "method": "POST",
           "path": "/cc001/assessment/questions",
-          "body": ["scaleId"],
+          "body": [
+            "scaleId"
+          ],
           "userIdRequired": false,
           "dto": "AssessmentScaleDto",
           "fallback": "Show assessment question unavailable state."
@@ -850,7 +1165,11 @@
           "name": "submit assessment",
           "method": "POST",
           "path": "/cc001/assessment/submit",
-          "body": ["userId", "scaleId", "answers"],
+          "body": [
+            "userId",
+            "scaleId",
+            "answers"
+          ],
           "userIdRequired": true,
           "dto": "AssessmentSubmitRequest -> AssessmentScoreResult",
           "fallback": "Keep selected answers locally and show recoverable submit failed state."
@@ -859,7 +1178,9 @@
           "name": "list assessment records",
           "method": "POST",
           "path": "/cc001/assessment/records",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<AssessmentScoreResult>",
           "fallback": "Show empty completed assessments state."
@@ -868,7 +1189,10 @@
           "name": "get assessment record",
           "method": "POST",
           "path": "/cc001/assessment/record/get",
-          "body": ["userId", "recordId"],
+          "body": [
+            "userId",
+            "recordId"
+          ],
           "userIdRequired": true,
           "dto": "AssessmentScoreResult",
           "fallback": "Show record unavailable state."
@@ -878,7 +1202,11 @@
     {
       "key": "resume",
       "title": "简历",
-      "ipdPaths": ["pages/resume/index", "pages/resume/template", "api/file.ts"],
+      "ipdPaths": [
+        "pages/resume/index",
+        "pages/resume/template",
+        "api/file.ts"
+      ],
       "target": "index.html?ccRoute=resume",
       "status": "available",
       "webApis": [
@@ -886,7 +1214,9 @@
           "name": "list resumes",
           "method": "POST",
           "path": "/cc001/resume/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<ResumeRecordDto>",
           "fallback": "Show no resume state."
@@ -895,7 +1225,10 @@
           "name": "create resume metadata",
           "method": "POST",
           "path": "/cc001/resume/create",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "ResumeCreateRequest -> ResumeRecordDto",
           "fallback": "Show metadata save unavailable state."
@@ -904,7 +1237,10 @@
           "name": "delete resume metadata",
           "method": "POST",
           "path": "/cc001/resume/delete",
-          "body": ["userId", "resumeId"],
+          "body": [
+            "userId",
+            "resumeId"
+          ],
           "userIdRequired": true,
           "dto": "String",
           "fallback": "Show delete unavailable state and keep record visible until refresh."
@@ -913,7 +1249,9 @@
           "name": "upload resume file",
           "method": "POST",
           "path": "/cc001/files/upload",
-          "body": ["request"],
+          "body": [
+            "request"
+          ],
           "userIdRequired": false,
           "dto": "FileUploadRequest -> FileUploadResult",
           "fallback": "Show upload unavailable and keep resume metadata form editable."
@@ -922,7 +1260,10 @@
           "name": "resume preview url",
           "method": "POST",
           "path": "/cc001/files/preview-url",
-          "body": ["fileUrlOrKey", "ttlSeconds"],
+          "body": [
+            "fileUrlOrKey",
+            "ttlSeconds"
+          ],
           "userIdRequired": false,
           "dto": "FilePreviewUrlResult",
           "fallback": "Show preview unavailable without hiding the resume record."
@@ -950,7 +1291,9 @@
           "name": "upload file",
           "method": "POST",
           "path": "/cc001/files/upload",
-          "body": ["request"],
+          "body": [
+            "request"
+          ],
           "userIdRequired": false,
           "dto": "FileUploadRequest -> FileUploadResult",
           "fallback": "Show upload unavailable state."
@@ -959,7 +1302,10 @@
           "name": "preview file",
           "method": "POST",
           "path": "/cc001/files/preview-url",
-          "body": ["fileUrlOrKey", "ttlSeconds"],
+          "body": [
+            "fileUrlOrKey",
+            "ttlSeconds"
+          ],
           "userIdRequired": false,
           "dto": "FilePreviewUrlResult",
           "fallback": "Show preview unavailable state."
@@ -968,7 +1314,9 @@
           "name": "download file",
           "method": "POST",
           "path": "/cc001/files/download",
-          "body": ["fileUrlOrKey"],
+          "body": [
+            "fileUrlOrKey"
+          ],
           "userIdRequired": false,
           "dto": "FileDownloadResult",
           "fallback": "Show download unavailable state."
@@ -977,7 +1325,9 @@
           "name": "delete file",
           "method": "POST",
           "path": "/cc001/files/delete",
-          "body": ["fileUrlOrKey"],
+          "body": [
+            "fileUrlOrKey"
+          ],
           "userIdRequired": false,
           "dto": "FileDeleteResult",
           "fallback": "Treat delete as best-effort cleanup."
@@ -986,7 +1336,9 @@
           "name": "extract file text",
           "method": "POST",
           "path": "/cc001/files/extract-text",
-          "body": ["fileUrlOrKey"],
+          "body": [
+            "fileUrlOrKey"
+          ],
           "userIdRequired": false,
           "dto": "FileTextExtractionResult",
           "fallback": "Return explicit empty, unsupported, unavailable, or failed status without inventing document text."
@@ -996,7 +1348,9 @@
     {
       "key": "resume-diagnosis",
       "title": "简历诊断",
-      "ipdPaths": ["pages/resume-ai/index"],
+      "ipdPaths": [
+        "pages/resume-ai/index"
+      ],
       "target": "index.html?ccRoute=resume-diagnosis",
       "status": "available",
       "webApis": [
@@ -1004,7 +1358,9 @@
           "name": "resume list for revision",
           "method": "POST",
           "path": "/cc001/resume/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<ResumeRecordDto>",
           "fallback": "Show create-resume action before diagnosis."
@@ -1013,7 +1369,10 @@
           "name": "analyze resume",
           "method": "POST",
           "path": "/cc001/resume-diagnosis/analyze",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "ResumeDiagnosisRequest -> ResumeDiagnosisResultDto with PDF text extraction and revision suggestions",
           "fallback": "When saved text is empty, extract the owned PDF first; preserve inputs and show a retry or scanned-document message on failure."
@@ -1022,7 +1381,10 @@
           "name": "keyword status",
           "method": "POST",
           "path": "/cc001/resume-diagnosis/keywords/status",
-          "body": ["userId", "resumeId"],
+          "body": [
+            "userId",
+            "resumeId"
+          ],
           "userIdRequired": true,
           "dto": "ResumeKeywordStatusDto",
           "fallback": "Show keyword status pending."
@@ -1031,7 +1393,9 @@
           "name": "career profile snapshot for revision context",
           "method": "POST",
           "path": "/cc001/career-profile/snapshot/get",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "UserProfileSnapshot",
           "fallback": "Use the selected resume target job or manual target role."
@@ -1040,7 +1404,10 @@
           "name": "resume file preview",
           "method": "POST",
           "path": "/cc001/files/preview-url",
-          "body": ["fileUrlOrKey", "ttlSeconds"],
+          "body": [
+            "fileUrlOrKey",
+            "ttlSeconds"
+          ],
           "userIdRequired": false,
           "dto": "FilePreviewResult",
           "fallback": "Show file preview unavailable without blocking diagnosis."
@@ -1050,7 +1417,9 @@
     {
       "key": "career-plan",
       "title": "AI路径规划",
-      "ipdPaths": ["pages/map/index"],
+      "ipdPaths": [
+        "pages/map/index"
+      ],
       "target": "index.html?ccRoute=career-plan",
       "status": "entry-only",
       "webApis": [
@@ -1058,7 +1427,9 @@
           "name": "career plan summary",
           "method": "POST",
           "path": "/cc001/career-plan/summary",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "CareerPlanSummaryDto",
           "fallback": "Show AI path planning placeholder."
@@ -1067,7 +1438,9 @@
           "name": "ensure plan",
           "method": "POST",
           "path": "/cc001/career-plan/ensure",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "CareerPlanSummaryDto",
           "fallback": "Show planning Agent pending state."
@@ -1077,7 +1450,10 @@
     {
       "key": "employment-insight",
       "title": "就业洞察",
-      "ipdPaths": ["pages/cdut-employment/index", "pages/cdut-employment/detail"],
+      "ipdPaths": [
+        "pages/cdut-employment/index",
+        "pages/cdut-employment/detail"
+      ],
       "target": "index.html?ccRoute=employment-insight",
       "status": "available",
       "webApis": [
@@ -1085,7 +1461,9 @@
           "name": "employment insight",
           "method": "POST",
           "path": "/cc001/career-employment/insight/get",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "EmploymentInsightDto",
           "fallback": "Show missing identity, unsupported school, no source, or pending verification state without borrowing another school's metrics."
@@ -1095,7 +1473,10 @@
     {
       "key": "career-resources",
       "title": "资源入口",
-      "ipdPaths": ["pages/home/index", "api/home.ts"],
+      "ipdPaths": [
+        "pages/home/index",
+        "api/home.ts"
+      ],
       "target": "index.html?ccRoute=career-resources",
       "status": "available",
       "visibility": {
@@ -1108,7 +1489,9 @@
           "name": "career resource feed",
           "method": "POST",
           "path": "/cc001/career-employment/resources/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": false,
           "dto": "CareerResourceFeedDto",
           "fallback": "Show an empty resources state and keep the workbench navigable."
@@ -1118,7 +1501,11 @@
     {
       "key": "messages",
       "title": "消息中心",
-      "ipdPaths": ["pages/messages/index", "api/notification.ts", "utils/wxSubscribe.ts"],
+      "ipdPaths": [
+        "pages/messages/index",
+        "api/notification.ts",
+        "utils/wxSubscribe.ts"
+      ],
       "target": "index.html?ccRoute=messages",
       "status": "available",
       "webApis": [
@@ -1126,7 +1513,9 @@
           "name": "list notifications",
           "method": "POST",
           "path": "/cc001/notifications/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<NotificationRecordDto>",
           "fallback": "Show message center unavailable or empty state."
@@ -1135,7 +1524,9 @@
           "name": "unread notification count",
           "method": "POST",
           "path": "/cc001/notifications/unread-count",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "NotificationUnreadCountDto",
           "fallback": "Show unread count as 0 with recoverable warning."
@@ -1144,7 +1535,10 @@
           "name": "mark notification read",
           "method": "POST",
           "path": "/cc001/notifications/read",
-          "body": ["userId", "notificationId"],
+          "body": [
+            "userId",
+            "notificationId"
+          ],
           "userIdRequired": true,
           "dto": "NotificationOperationResult",
           "fallback": "Keep local unread state and show operation failed state."
@@ -1153,7 +1547,9 @@
           "name": "mark all notifications read",
           "method": "POST",
           "path": "/cc001/notifications/read-all",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "NotificationOperationResult",
           "fallback": "Keep message list navigable."
@@ -1162,7 +1558,10 @@
           "name": "delete notification",
           "method": "POST",
           "path": "/cc001/notifications/delete",
-          "body": ["userId", "notificationId"],
+          "body": [
+            "userId",
+            "notificationId"
+          ],
           "userIdRequired": true,
           "dto": "NotificationOperationResult",
           "fallback": "Restore deleted item in the UI."
@@ -1172,7 +1571,11 @@
     {
       "key": "subscriptions",
       "title": "订阅授权",
-      "ipdPaths": ["utils/wxSubscribe.ts", "WechatSubscribeController", "WechatSubscribeService"],
+      "ipdPaths": [
+        "utils/wxSubscribe.ts",
+        "WechatSubscribeController",
+        "WechatSubscribeService"
+      ],
       "target": "index.html?ccRoute=subscriptions",
       "status": "entry-only",
       "webApis": [
@@ -1180,7 +1583,9 @@
           "name": "record subscription grant",
           "method": "POST",
           "path": "/cc001/notifications/subscription/grant",
-          "body": ["request"],
+          "body": [
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "SubscriptionGrantRequest -> List<SubscriptionQuotaDto>",
           "fallback": "Ignore grant result best-effort; never block the primary user action."
@@ -1189,7 +1594,9 @@
           "name": "list subscription quota",
           "method": "POST",
           "path": "/cc001/notifications/subscription/quota",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<SubscriptionQuotaDto>",
           "fallback": "Treat quota as unknown and do not request external send."
@@ -1198,7 +1605,9 @@
           "name": "attempt subscription send",
           "method": "POST",
           "path": "/cc001/notifications/subscription/send",
-          "body": ["request"],
+          "body": [
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "SubscriptionSendResult",
           "fallback": "Return skipped/unavailable and keep in-app notification as canonical."
@@ -1208,7 +1617,10 @@
     {
       "key": "weekly-report",
       "title": "周报通知",
-      "ipdPaths": ["WeeklyReportService", "WeeklyReportJob"],
+      "ipdPaths": [
+        "WeeklyReportService",
+        "WeeklyReportJob"
+      ],
       "target": "index.html?ccRoute=weekly-report",
       "status": "entry-only",
       "webApis": [
@@ -1216,7 +1628,10 @@
           "name": "run weekly report",
           "method": "POST",
           "path": "/cc001/notifications/weekly-report/run",
-          "body": ["userId", "highlights"],
+          "body": [
+            "userId",
+            "highlights"
+          ],
           "userIdRequired": true,
           "dto": "WeeklyReportSummaryDto",
           "fallback": "Skip weekly report when activity is insufficient or notification service is unavailable."
@@ -1249,7 +1664,9 @@
           "name": "admin whoami",
           "method": "POST",
           "path": "/cc001/admin/whoami",
-          "body": ["adminId"],
+          "body": [
+            "adminId"
+          ],
           "adminIdRequired": true,
           "dto": "AdminIdentityDto",
           "fallback": "Show identity-required or forbidden state without using a hardcoded admin."
@@ -1258,7 +1675,10 @@
           "name": "organization dashboard",
           "method": "POST",
           "path": "/cc001/admin/organizations/dashboard",
-          "body": ["adminId", "orgId"],
+          "body": [
+            "adminId",
+            "orgId"
+          ],
           "adminIdRequired": true,
           "dto": "AdminOrgDashboardDto",
           "fallback": "Show dashboard unavailable and keep user-facing workbench routes unaffected."
@@ -1267,7 +1687,10 @@
           "name": "organization students",
           "method": "POST",
           "path": "/cc001/admin/organizations/students",
-          "body": ["adminId", "orgId"],
+          "body": [
+            "adminId",
+            "orgId"
+          ],
           "adminIdRequired": true,
           "dto": "List<AdminStudentRowDto>",
           "fallback": "Show empty scoped student list."
@@ -1276,7 +1699,12 @@
           "name": "user governance",
           "method": "POST",
           "path": "/cc001/admin/users/list",
-          "body": ["adminId", "page", "size", "keyword"],
+          "body": [
+            "adminId",
+            "page",
+            "size",
+            "keyword"
+          ],
           "adminIdRequired": true,
           "dto": "AdminPageResult<AdminUserDto>",
           "fallback": "Show user list unavailable."
@@ -1285,7 +1713,11 @@
           "name": "ban user",
           "method": "POST",
           "path": "/cc001/admin/users/ban",
-          "body": ["adminId", "userId", "reason"],
+          "body": [
+            "adminId",
+            "userId",
+            "reason"
+          ],
           "adminIdRequired": true,
           "dto": "AdminOperationResult",
           "fallback": "Keep previous user state and show operation failed."
@@ -1294,7 +1726,11 @@
           "name": "question moderation",
           "method": "POST",
           "path": "/cc001/admin/questions/list",
-          "body": ["adminId", "source", "reviewStatus"],
+          "body": [
+            "adminId",
+            "source",
+            "reviewStatus"
+          ],
           "adminIdRequired": true,
           "dto": "List<AdminQuestionDto>",
           "fallback": "Show moderation queue unavailable."
@@ -1303,7 +1739,10 @@
           "name": "content management",
           "method": "POST",
           "path": "/cc001/admin/content/list",
-          "body": ["adminId", "type"],
+          "body": [
+            "adminId",
+            "type"
+          ],
           "adminIdRequired": true,
           "dto": "List<AdminContentItemDto>",
           "fallback": "Show content management unavailable."
@@ -1312,7 +1751,10 @@
           "name": "admin broadcast",
           "method": "POST",
           "path": "/cc001/admin/broadcast",
-          "body": ["adminId", "request"],
+          "body": [
+            "adminId",
+            "request"
+          ],
           "adminIdRequired": true,
           "dto": "AdminBroadcastRequest -> AdminBroadcastResult",
           "fallback": "Report failed/skipped counts; never affect user-facing workbench."
@@ -1321,7 +1763,9 @@
           "name": "admin analytics",
           "method": "POST",
           "path": "/cc001/admin/analytics/summary",
-          "body": ["adminId"],
+          "body": [
+            "adminId"
+          ],
           "adminIdRequired": true,
           "dto": "AdminAnalyticsSummaryDto",
           "fallback": "Show analytics unavailable."
@@ -1330,7 +1774,11 @@
           "name": "audit log",
           "method": "POST",
           "path": "/cc001/admin/audit-log/list",
-          "body": ["adminId", "page", "size"],
+          "body": [
+            "adminId",
+            "page",
+            "size"
+          ],
           "adminIdRequired": true,
           "dto": "AdminPageResult<AdminAuditLogDto>",
           "fallback": "Show audit log unavailable."
@@ -1340,7 +1788,10 @@
     {
       "key": "interview-home",
       "title": "面试中心",
-      "ipdPaths": ["pages/interview/index", "pages/interview/history"],
+      "ipdPaths": [
+        "pages/interview/index",
+        "pages/interview/history"
+      ],
       "target": "index.html?ccRoute=interview-home",
       "status": "available",
       "webApis": [
@@ -1348,7 +1799,9 @@
           "name": "interview list",
           "method": "POST",
           "path": "/cc001/interview/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto>",
           "fallback": "显示两种面试入口和全景面试空记录状态，AI 记录由独立分页页承载。"
@@ -1358,7 +1811,10 @@
     {
       "key": "interview-panorama",
       "title": "全景仿真面试",
-      "ipdPaths": ["pages/interview/room", "pages/interview/history"],
+      "ipdPaths": [
+        "pages/interview/room",
+        "pages/interview/history"
+      ],
       "target": "index.html?ccRoute=interview-panorama",
       "status": "available",
       "answerTiming": "题目出现后自动倒计时：入门3分钟、常规5分钟、进阶8分钟；超时自动提交或记录未回答。",
@@ -1367,7 +1823,9 @@
           "name": "panorama interview history",
           "method": "POST",
           "path": "/cc001/interview/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<InterviewSessionDto> filtered by VOICE/PANORAMA",
           "fallback": "摄像头不可用时显示授权提示，并保留全景仿真面试历史。"
@@ -1376,7 +1834,10 @@
           "name": "start panoramic interview",
           "method": "POST",
           "path": "/cc001/interview/guided/start",
-          "body": ["userId", "request(mode=VOICE)"],
+          "body": [
+            "userId",
+            "request(mode=VOICE)"
+          ],
           "userIdRequired": true,
           "dto": "InterviewStartResultDto",
           "fallback": "不创建会话并提示用户检查摄像头权限。"
@@ -1385,7 +1846,11 @@
           "name": "submit panoramic answer",
           "method": "POST",
           "path": "/cc001/interview/guided/answer",
-          "body": ["userId", "interviewId", "answer"],
+          "body": [
+            "userId",
+            "interviewId",
+            "answer"
+          ],
           "userIdRequired": true,
           "dto": "InterviewTurnResultDto",
           "fallback": "保留识别文字并允许用户重试。"
@@ -1394,7 +1859,10 @@
           "name": "finish panoramic interview",
           "method": "POST",
           "path": "/cc001/interview/guided/finish",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "InterviewReportDto",
           "fallback": "保留会话并提示复盘暂时不可用。"
@@ -1418,7 +1886,10 @@
           "name": "start interview",
           "method": "POST",
           "path": "/cc001/interview/start",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "InterviewStartRequest -> InterviewSessionDto",
           "fallback": "Show start unavailable state."
@@ -1427,7 +1898,10 @@
           "name": "guided interview start",
           "method": "POST",
           "path": "/cc001/interview/guided/start",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "InterviewStartResultDto",
           "fallback": "使用中文基础问题开始最多七题的逐题练习。"
@@ -1436,7 +1910,11 @@
           "name": "guided interview answer",
           "method": "POST",
           "path": "/cc001/interview/guided/answer",
-          "body": ["userId", "interviewId", "answer"],
+          "body": [
+            "userId",
+            "interviewId",
+            "answer"
+          ],
           "userIdRequired": true,
           "dto": "InterviewTurnResultDto",
           "fallback": "保存回答并返回中文基础追问。"
@@ -1445,7 +1923,10 @@
           "name": "guided interview finish",
           "method": "POST",
           "path": "/cc001/interview/guided/finish",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "InterviewReportDto",
           "fallback": "根据有效回答生成基础复盘。"
@@ -1454,7 +1935,10 @@
           "name": "interview messages",
           "method": "POST",
           "path": "/cc001/interview/messages",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "List<InterviewMessageDto>",
           "fallback": "提示练习记录暂时无法读取。"
@@ -1464,7 +1948,10 @@
     {
       "key": "interview-history",
       "title": "AI 模拟面试记录",
-      "ipdPaths": ["pages/interview/history", "pages/interview/report"],
+      "ipdPaths": [
+        "pages/interview/history",
+        "pages/interview/report"
+      ],
       "target": "index.html?ccRoute=interview-history",
       "status": "available",
       "pageSize": 10,
@@ -1474,7 +1961,11 @@
           "name": "paged AI interview history",
           "method": "POST",
           "path": "/cc001/interview/page",
-          "body": ["userId", "page", "mode=TEXT"],
+          "body": [
+            "userId",
+            "page",
+            "mode=TEXT"
+          ],
           "userIdRequired": true,
           "dto": "InterviewPageResultDto",
           "fallback": "显示记录暂时无法读取并保留返回操作。"
@@ -1483,7 +1974,10 @@
           "name": "interview messages",
           "method": "POST",
           "path": "/cc001/interview/messages",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "List<InterviewMessageDto>",
           "fallback": "提示练习记录暂时无法读取。"
@@ -1492,7 +1986,10 @@
           "name": "read or generate completed report",
           "method": "POST",
           "path": "/cc001/interview/guided/finish",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "InterviewReportDto",
           "fallback": "保留记录并提示结果暂时无法读取。"
@@ -1501,7 +1998,10 @@
           "name": "delete interview record",
           "method": "POST",
           "path": "/cc001/interview/delete",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "String",
           "fallback": "保留原记录并提示删除失败。"
@@ -1511,7 +2011,10 @@
     {
       "key": "interview-panorama-history",
       "title": "全景仿真面试记录",
-      "ipdPaths": ["pages/interview/history", "pages/interview/report"],
+      "ipdPaths": [
+        "pages/interview/history",
+        "pages/interview/report"
+      ],
       "target": "index.html?ccRoute=interview-panorama-history",
       "status": "available",
       "pageSize": 10,
@@ -1521,7 +2024,11 @@
           "name": "paged panoramic interview history",
           "method": "POST",
           "path": "/cc001/interview/page",
-          "body": ["userId", "page", "mode=VOICE"],
+          "body": [
+            "userId",
+            "page",
+            "mode=VOICE"
+          ],
           "userIdRequired": true,
           "dto": "InterviewPageResultDto",
           "fallback": "显示全景记录暂时无法读取并保留返回操作。"
@@ -1530,7 +2037,10 @@
           "name": "panoramic interview messages",
           "method": "POST",
           "path": "/cc001/interview/messages",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "List<InterviewMessageDto>",
           "fallback": "提示全景问答记录暂时无法读取。"
@@ -1539,7 +2049,10 @@
           "name": "read panoramic interview report",
           "method": "POST",
           "path": "/cc001/interview/guided/finish",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "InterviewReportDto",
           "fallback": "保留记录并提示结果暂时无法读取。"
@@ -1548,7 +2061,10 @@
           "name": "delete panoramic interview record",
           "method": "POST",
           "path": "/cc001/interview/delete",
-          "body": ["userId", "interviewId"],
+          "body": [
+            "userId",
+            "interviewId"
+          ],
           "userIdRequired": true,
           "dto": "String",
           "fallback": "保留原记录并提示删除失败。"
@@ -1558,7 +2074,10 @@
     {
       "key": "assistant",
       "title": "求职助手",
-      "ipdPaths": ["pages/assistant/index", "pages/assistant/history"],
+      "ipdPaths": [
+        "pages/assistant/index",
+        "pages/assistant/history"
+      ],
       "target": "index.html?ccRoute=assistant",
       "status": "available",
       "webApis": [
@@ -1566,7 +2085,10 @@
           "name": "send assistant message",
           "method": "POST",
           "path": "/cc001/assistant-chat/send",
-          "body": ["userId", "request"],
+          "body": [
+            "userId",
+            "request"
+          ],
           "userIdRequired": true,
           "dto": "AssistantChatRequest -> AssistantChatResponse",
           "fallback": "Show AI unavailable response from migrated backend."
@@ -1575,7 +2097,9 @@
           "name": "list assistant sessions",
           "method": "POST",
           "path": "/cc001/assistant-chat/session/list",
-          "body": ["userId"],
+          "body": [
+            "userId"
+          ],
           "userIdRequired": true,
           "dto": "List<AssistantChatSessionDto>",
           "fallback": "Show no history state."
@@ -1864,17 +2388,26 @@
   "pendingCapabilities": [
     {
       "name": "真实微信订阅消息发送",
-      "ipdApis": ["WechatSubscribeServiceImpl", "utils/wxSubscribe.ts"],
+      "ipdApis": [
+        "WechatSubscribeServiceImpl",
+        "utils/wxSubscribe.ts"
+      ],
       "reason": "本轮只迁移授权/配额/发送边界；真实微信 access token、模板和小程序运行时等待平台适配。"
     },
     {
       "name": "外部就业内容抓取/全文详情",
-      "ipdPaths": ["pages/cdut-employment/detail", "HomeContentRefreshJob", "CdutEmploymentInsightServiceImpl#refreshSources"],
+      "ipdPaths": [
+        "pages/cdut-employment/detail",
+        "HomeContentRefreshJob",
+        "CdutEmploymentInsightServiceImpl#refreshSources"
+      ],
       "reason": "本轮只迁移只读洞察和资源卡片契约；外部抓取、PDF/HTML 解析和全文内容详情待后续平台适配。"
     },
     {
       "name": "语音/数字人面试",
-      "ipdApis": ["api/bodyLanguage.ts"],
+      "ipdApis": [
+        "api/bodyLanguage.ts"
+      ],
       "reason": "ASR/TTS/身体语言和数字人能力不在本次迁移范围。"
     },
     {

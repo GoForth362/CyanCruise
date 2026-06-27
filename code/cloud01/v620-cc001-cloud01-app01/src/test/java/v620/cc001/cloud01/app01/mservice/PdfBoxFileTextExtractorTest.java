@@ -1,5 +1,10 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.file.impl.PdfBoxFileTextExtractor;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerFileStorage;
+import v620.cc001.cloud01.app01.mservice.application.FileUploadPreviewApplicationService;
+import v620.cc001.cloud01.app01.mservice.file.impl.PdfBoxFileTextExtractor;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerFileStorage;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;

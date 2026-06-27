@@ -1,5 +1,24 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.auth.impl.ConfigurableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.DevelopmentCyanCruiseIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.IdentityAwareCyanCruiseWebApiBoundary;
+import v620.cc001.cloud01.app01.mservice.auth.impl.PlatformCosmicIdentityContextProvider;
+import v620.cc001.cloud01.app01.mservice.auth.impl.RequestContextCosmicLoginContextBridge;
+import v620.cc001.cloud01.app01.mservice.auth.impl.UnavailableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.ConfigurableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicIdentityAdapterConfig;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicIdentityContextProvider;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicLoginContextBridge;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicLoginContextProviderConfig;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicLoginContextProviderFactory;
+import v620.cc001.cloud01.app01.mservice.auth.CyanCruiseIdentityResolverFactory;
+import v620.cc001.cloud01.app01.mservice.auth.impl.DevelopmentCyanCruiseIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.IdentityAwareCyanCruiseWebApiBoundary;
+import v620.cc001.cloud01.app01.mservice.auth.IdentityBoundaryException;
+import v620.cc001.cloud01.app01.mservice.auth.impl.PlatformCosmicIdentityContextProvider;
+import v620.cc001.cloud01.app01.mservice.auth.impl.RequestContextCosmicLoginContextBridge;
+import v620.cc001.cloud01.app01.mservice.auth.impl.UnavailableCosmicIdentityResolver;
 import kd.bos.context.RequestContext;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.CosmicIdentityContextHelper;
@@ -72,7 +91,7 @@ class CosmicLoginContextProviderTest {
 
     @Test
     void factoryKeepsAdapterDisabledUnavailable() {
-        assertTrue(CareerLoopIdentityResolverFactory.production(provider(map("userId", "u1"), enabledProvider()),
+        assertTrue(CyanCruiseIdentityResolverFactory.production(provider(map("userId", "u1"), enabledProvider()),
                 CosmicIdentityAdapterConfig.disabled()) instanceof UnavailableCosmicIdentityResolver);
     }
 
@@ -106,7 +125,7 @@ class CosmicLoginContextProviderTest {
     @Test
     void webApiBoundaryRejectsBodyMismatchAndAllowsCurrentUser() {
         CosmicIdentityContextProvider provider = provider(map("userId", "u1"), enabledProvider());
-        IdentityAwareCareerLoopWebApiBoundary boundary = new IdentityAwareCareerLoopWebApiBoundary(
+        IdentityAwareCyanCruiseWebApiBoundary boundary = new IdentityAwareCyanCruiseWebApiBoundary(
                 new ConfigurableCosmicIdentityResolver(provider, enabledAdapter()));
 
         assertEquals("u1", boundary.requireUser(null));
@@ -120,7 +139,7 @@ class CosmicLoginContextProviderTest {
 
     @Test
     void developmentResolverRemainsSeparate() {
-        CosmicIdentityContextDto identity = new DevelopmentCareerLoopIdentityResolver("dev", null,
+        CosmicIdentityContextDto identity = new DevelopmentCyanCruiseIdentityResolver("dev", null,
                 java.util.Collections.<String>emptyList()).resolve();
 
         assertTrue(helper.isDevelopmentFallback(identity));

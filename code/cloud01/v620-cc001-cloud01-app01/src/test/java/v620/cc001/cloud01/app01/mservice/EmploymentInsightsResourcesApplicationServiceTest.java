@@ -1,5 +1,15 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryEmploymentInsightStorage;
+import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.EmploymentInsightsResourcesApplicationService;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryEmploymentInsightStorage;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.CareerProfileBuildService;
 import v620.base.helper.career.CareerProfileSnapshotMergeService;

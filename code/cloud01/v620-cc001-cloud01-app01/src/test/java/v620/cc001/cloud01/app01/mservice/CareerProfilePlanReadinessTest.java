@@ -1,5 +1,13 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.application.CareerPlanApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.storage.CareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.CareerPlanSummaryService;
 import v620.base.helper.career.CareerProfileBuildService;

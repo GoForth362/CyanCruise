@@ -1,5 +1,10 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.PostgresqlProfileStorageConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;

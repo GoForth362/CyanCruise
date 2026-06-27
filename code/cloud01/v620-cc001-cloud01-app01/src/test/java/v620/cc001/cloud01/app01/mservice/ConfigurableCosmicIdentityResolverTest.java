@@ -1,5 +1,12 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.auth.impl.ConfigurableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.UnavailableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.ConfigurableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicIdentityAdapterConfig;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicIdentityContextProvider;
+import v620.cc001.cloud01.app01.mservice.auth.CyanCruiseIdentityResolverFactory;
+import v620.cc001.cloud01.app01.mservice.auth.impl.UnavailableCosmicIdentityResolver;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.CosmicIdentityContextHelper;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
@@ -105,9 +112,9 @@ class ConfigurableCosmicIdentityResolverTest {
 
     @Test
     void factoryKeepsProductionUnavailableUnlessEnabled() {
-        assertTrue(CareerLoopIdentityResolverFactory.production(provider(map("userId", "u1")),
+        assertTrue(CyanCruiseIdentityResolverFactory.production(provider(map("userId", "u1")),
                 CosmicIdentityAdapterConfig.disabled()) instanceof UnavailableCosmicIdentityResolver);
-        assertTrue(CareerLoopIdentityResolverFactory.production(provider(map("userId", "u1")),
+        assertTrue(CyanCruiseIdentityResolverFactory.production(provider(map("userId", "u1")),
                 enabled()) instanceof ConfigurableCosmicIdentityResolver);
     }
 

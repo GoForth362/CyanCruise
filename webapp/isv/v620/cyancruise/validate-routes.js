@@ -287,8 +287,8 @@ if (!routeMap.identity.mismatchRule || !routeMap.identity.mismatchRule.includes(
 if (!routeMap.sourceEvidence || !routeMap.sourceEvidence.runtimeRule) {
   fail("Route map missing IPD source evidence or runtime rule");
 }
-if (!routeMap.pageShell || routeMap.pageShell.change !== "migrate-webapp-careerloop-pages") {
-  fail("Route map missing migrate-webapp-careerloop-pages pageShell metadata");
+if (!routeMap.pageShell || routeMap.pageShell.change !== "migrate-webapp-cyancruise-pages") {
+  fail("Route map missing migrate-webapp-cyancruise-pages pageShell metadata");
 }
 if (routeMap.pageShell.implementation !== "static-hash-route-states") {
   fail("Page shell implementation must be static-hash-route-states");

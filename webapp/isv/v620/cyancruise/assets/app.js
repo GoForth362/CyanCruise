@@ -1,6 +1,8 @@
 (function () {
   "use strict";
 
+  var APP_VERSION = "20260627-cyancruise-v129";
+
   var endpoints = {
     snapshot: "/cc001/career-profile/snapshot/get",
     draft: "/cc001/career-profile/draft/get",
@@ -62,7 +64,13 @@
     studyAbroadLanguagePlan: "/cc001/study-abroad/language/plan",
     studyAbroadSchoolPosition: "/cc001/study-abroad/school/position",
     studyAbroadStatementOutline: "/cc001/study-abroad/statement/outline",
-    studyAbroadVisaChecklist: "/cc001/study-abroad/visa/checklist"
+    studyAbroadVisaChecklist: "/cc001/study-abroad/visa/checklist",
+    furtherStudyRecordsList: "/cc001/further-study/records/list",
+    furtherStudyRecordDetail: "/cc001/further-study/records/detail",
+    furtherStudyRecordStatusUpdate: "/cc001/further-study/records/status/update",
+    furtherStudyMaterialSave: "/cc001/further-study/materials/save",
+    furtherStudyMaterialList: "/cc001/further-study/materials/list",
+    furtherStudyRecordEvents: "/cc001/further-study/records/events"
   };
 
   var pages = [
@@ -246,7 +254,8 @@
     scrollPositions: {},
     returnRoutes: {},
     route: "workbench",
-    previousRoute: ""
+    previousRoute: "",
+    identityDiagnostic: ""
   };
 
   function page(key, title, status, audience, summary, endpointKeys, options) {
@@ -284,6 +293,9 @@
     bindEvents();
     loadPlatformIdentity().then(function () {
       handleRouteChange();
+      if (state.identityDiagnostic) {
+        showMessage("warning", "\u8eab\u4efd\u8bca\u65ad", state.identityDiagnostic);
+      }
       loadOverview();
     });
   }
@@ -310,6 +322,7 @@
 
   function bindEvents() {
     window.addEventListener("hashchange", handleRouteChange);
+    window.addEventListener("popstate", handleRouteChange);
     window.addEventListener("beforeunload", stopPanoramaMedia);
     els.pageHost.addEventListener("click", handlePageHostClick);
     els.pageHost.addEventListener("change", handlePageHostChange);
@@ -335,7 +348,7 @@
     els.routeNav.addEventListener("click", function (event) {
       var route = event.target && event.target.getAttribute("data-route");
       if (route) {
-        window.location.hash = route;
+        navigateToRoute(route);
       }
     });
   }
@@ -378,16 +391,16 @@
     if (!pageByKey[key]) {
       state.route = "workbench";
       showMessage("warning", "未知页面", "未找到 route: " + key + "，已回到工作台。");
-      if (window.location.hash !== "#workbench") {
-        window.location.hash = "workbench";
-        return;
-      }
+      replaceRouteInLocation("workbench");
     } else {
       if (previous && previous !== key) {
         rememberRouteScroll(previous);
         rememberReturnRoute(key, previous);
       }
       state.route = key;
+      if (needsCanonicalRoute(key)) {
+        replaceRouteInLocation(key);
+      }
     }
     markActiveNav();
     renderPage(pageByKey[state.route]);
@@ -404,7 +417,7 @@
     var params = new URLSearchParams(window.location.search);
     var value = String(params.get("ccDebug") || "").toLowerCase();
     var legacyValue = String(params.get("debug") || "").toLowerCase();
-    if (legacyValue === "careerloop") {
+    if (legacyValue === "cyancruise") {
       return true;
     }
     return value === "1" || value === "true" || value === "yes";
@@ -1247,13 +1260,13 @@
   function resourceDetailKey(item, url) {
     var value = trim(url);
     var id = trim(item && item.id);
-    if (value.indexOf("/careerloop/resources/resume-evidence") >= 0 || value.indexOf("/cyancruise/resources/resume-evidence") >= 0 || id === "article-resume-001") {
+    if (value.indexOf("/cyancruise/resources/resume-evidence") >= 0 || value.indexOf("/cyancruise/resources/resume-evidence") >= 0 || id === "article-resume-001") {
       return "resume-evidence";
     }
-    if (value.indexOf("/careerloop/resources/weekly-focus") >= 0 || value.indexOf("/cyancruise/resources/weekly-focus") >= 0 || id === "tip-plan-001") {
+    if (value.indexOf("/cyancruise/resources/weekly-focus") >= 0 || value.indexOf("/cyancruise/resources/weekly-focus") >= 0 || id === "tip-plan-001") {
       return "weekly-focus";
     }
-    if (value.indexOf("BV1careerloop") >= 0 || value.indexOf("BV1cyancruise") >= 0 || id === "video-interview-001") {
+    if (value.indexOf("BV1cyancruise") >= 0 || value.indexOf("BV1cyancruise") >= 0 || id === "video-interview-001") {
       return "interview-practice";
     }
     if (id === "tip-resume-evidence-001") {
@@ -4732,7 +4745,7 @@
     state.panoramaViewMode = viewMode === "transcript" ? "transcript" : "practice";
     state.panoramaDifficulty = firstText(session.difficulty, "Normal");
     state.panoramaCameraState = "fallback"; state.panoramaBusy = true; state.panoramaError = null; state.panoramaLastSpokenQuestion = null;
-    if (state.route !== "interview-panorama") window.location.hash = "interview-panorama";
+    if (state.route !== "interview-panorama") replaceRouteInLocation("interview-panorama");
     var completed = session.status === "COMPLETED" || session.finalScore != null || !!session.report;
     var reportRequest = completed && !session.report
       ? post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: session.interviewId })
@@ -5204,7 +5217,7 @@
     if (!session) return;
     state.activeInterview = session; state.interviewReport = session.report || null; state.interviewViewMode = viewMode || "practice";
     state.interviewBusy = true; state.interviewMessages = []; renderPage(pageByKey.interview);
-    if (state.route !== "interview") window.location.hash = "interview";
+    if (state.route !== "interview") replaceRouteInLocation("interview");
     var completed = session.status === "COMPLETED" || session.finalScore != null || !!session.report;
     var reportRequest = completed && !session.report
       ? post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: session.interviewId })
@@ -5581,7 +5594,7 @@
     }
     state.route = key;
     if (window.location.hash !== "#" + key) {
-      window.location.hash = key;
+      pushRouteToLocation(key);
     }
     markActiveNav();
     renderPage(pageByKey[key]);
@@ -5601,7 +5614,7 @@
     state.previousRoute = "";
     state.route = key;
     if (window.location.hash !== "#" + key) {
-      window.location.hash = key;
+      pushRouteToLocation(key);
     }
     markActiveNav();
     renderPage(pageByKey[key]);
@@ -5786,7 +5799,7 @@
   }
 
   function readHomeIntent() {
-    migrateLegacyStorageKey("cyancruise.homeIntent", "careerloop.homeIntent");
+    migrateLegacyStorageKey("cyancruise.homeIntent", "cyancruise.homeIntent");
     return parseStorageJson(localStorage, "cyancruise.homeIntent") || {};
   }
 
@@ -6032,7 +6045,7 @@
 
   function resolveCosmicContext() {
     var windows = reachableWindows();
-    var names = ["__CAREERLOOP_COSMIC_CONTEXT__", "__COSMIC_CONTEXT__", "cosmicContext", "kdContext", "KDCONTEXT", "userInfo", "currentUser", "loginUser"];
+    var names = ["__CYANCRUISE_COSMIC_CONTEXT__", "__COSMIC_CONTEXT__", "cosmicContext", "kdContext", "KDCONTEXT", "userInfo", "currentUser", "loginUser"];
     for (var i = 0; i < windows.length; i += 1) {
       for (var j = 0; j < names.length; j += 1) {
         var value = safeReadWindow(windows[i], names[j]);
@@ -6147,9 +6160,9 @@
         source: "query:userId"
       };
     }
-    migrateLegacyStorageKey("cyancruise.userId", "careerloop.userId");
-    migrateLegacyStorageKey("cyancruise.adminId", "careerloop.adminId");
-    migrateLegacyStorageKey("cyancruise.roles", "careerloop.roles");
+    migrateLegacyStorageKey("cyancruise.userId", "cyancruise.userId");
+    migrateLegacyStorageKey("cyancruise.adminId", "cyancruise.adminId");
+    migrateLegacyStorageKey("cyancruise.roles", "cyancruise.roles");
     var stored = trim(localStorage.getItem("cyancruise.userId"));
     return {
       mode: "development",
@@ -6179,6 +6192,7 @@
         displayName: firstText(identity.displayName, identity.userName, identity.username, identity.name, identity.nickName, identity.nickname, userId ? "用户" : ""),
         source: firstText(identity.source, "cc001-identity-current")
       };
+      state.identityDiagnostic = "";
       updateIdentityState();
     }).catch(function (error) {
       showMessage("warning", "平台身份调用失败", error && error.message ? error.message : "identity request failed");
@@ -6226,8 +6240,8 @@
       return resolveKapiV2Request(path, body);
     }
     var appId = firstText(readQueryOrStorage("appId", "cyancruise.kapi.appId"), "cc001");
-    var serviceName = firstText(readQueryOrStorage("serviceName", "cyancruise.kapi.serviceName"), "careerloop");
-    var accessToken = readQueryOrStorage("access_token", "cyancruise.kapi.accessToken");
+    var serviceName = firstText(readQueryOrStorage("serviceName", "cyancruise.kapi.serviceName"), "cyancruise");
+    var accessToken = readKapiAccessToken();
     var url = resolveApiBase() + "/kapi/app/" + encodeURIComponent(appId) + "/" + encodeURIComponent(serviceName) + "/";
     if (accessToken) {
       url += "?access_token=" + encodeURIComponent(accessToken);
@@ -6237,7 +6251,8 @@
       url: url,
       body: {
         path: path,
-        body: body
+        body: body,
+        platformIdentity: kapiPlatformIdentity(accessToken)
       }
     };
   }
@@ -6245,8 +6260,8 @@
   function resolveKapiV2Request(path, body) {
     var cloudId = firstText(readQueryOrStorage("cloudId", "cyancruise.kapi.cloudId"), "v620");
     var appNumber = firstText(readQueryOrStorage("appNumber", "cyancruise.kapi.appNumber"), "v620_cc001");
-    var apiCode = firstText(readQueryOrStorage("apiCode", "cyancruise.kapi.apiCode"), "cc001/careerloop/route");
-    var accessToken = readQueryOrStorage("access_token", "cyancruise.kapi.accessToken");
+    var apiCode = firstText(readQueryOrStorage("apiCode", "cyancruise.kapi.apiCode"), "cc001/cyancruise/route");
+    var accessToken = readKapiAccessToken();
     var url = resolveApiBase() + "/kapi/v2/" + encodeURIComponent(cloudId) + "/" + encodeURIComponent(appNumber) + "/" + encodeApiCode(apiCode);
     if (accessToken) {
       url += "?access_token=" + encodeURIComponent(accessToken);
@@ -6256,9 +6271,57 @@
       url: url,
       body: {
         path: path,
-        body: body
+        body: body,
+        platformIdentity: kapiPlatformIdentity(accessToken)
       }
     };
+  }
+
+  function kapiPlatformIdentity(accessToken) {
+    var token = trim(accessToken);
+    var userId = "";
+    var separator = token.indexOf("_");
+    if (separator > 0) {
+      userId = token.substring(0, separator);
+    }
+    if (!/^[0-9A-Za-z-]{6,64}$/.test(userId)) {
+      return {};
+    }
+    return {
+      userId: userId,
+      currentUserId: userId,
+      operatorId: userId,
+      source: "kapi-access-token-prefix"
+    };
+  }
+
+  function readKapiAccessToken() {
+    return firstText(
+      readQueryOrStorage("access_token", "cyancruise.kapi.accessToken"),
+      readQueryOrStorage("accessToken", "cyancruise.kapi.accessToken"),
+      readQueryOrStorage("token", "cyancruise.kapi.accessToken")
+    );
+  }
+
+  function identityDiagnosticText(identity, error) {
+    var token = readKapiAccessToken();
+    var tokenUser = kapiPlatformIdentity(token).userId || "";
+    var parts = [
+      "app=" + APP_VERSION,
+      "front=" + firstText(state.identity && state.identity.source, "missing"),
+      "apiMode=" + resolveApiMode(),
+      "kapiToken=" + (token ? "yes" : "no"),
+      "tokenUser=" + (tokenUser ? "yes" : "no")
+    ];
+    if (identity) {
+      parts.push("backendStatus=" + firstText(identity.status, "empty"));
+      parts.push("backendSource=" + firstText(identity.source, "empty"));
+      parts.push("backendMessage=" + firstText(identity.message, "empty"));
+    }
+    if (error) {
+      parts.push("error=" + firstText(error.message, String(error)));
+    }
+    return parts.join("; ");
   }
 
   function resolveKapiRouteVersion() {
@@ -6273,20 +6336,42 @@
     var params = new URLSearchParams(window.location.search);
     var fromQuery = trim(params.get("apiMode")).toLowerCase();
     if (fromQuery) {
-      if (fromQuery === "direct") {
-        localStorage.removeItem("cyancruise.apiMode");
+      if (fromQuery === "direct" || fromQuery === "reset") {
+        clearKapiState();
         return "direct";
       }
       localStorage.setItem("cyancruise.apiMode", fromQuery);
       return fromQuery;
     }
-    migrateLegacyStorageKey("cyancruise.apiMode", "careerloop.apiMode");
+    migrateLegacyStorageKey("cyancruise.apiMode", "cyancruise.apiMode");
     var stored = trim(localStorage.getItem("cyancruise.apiMode")).toLowerCase();
     if (stored === "direct") {
-      localStorage.removeItem("cyancruise.apiMode");
-      return "kapi";
+      clearKapiState();
+      return "direct";
     }
-    return firstText(stored, "kapi").toLowerCase();
+    if (stored === "kapi") {
+      if (storedKapiAccessToken()) {
+        return "kapi";
+      }
+      localStorage.removeItem("cyancruise.apiMode");
+      return "direct";
+    }
+    return "direct";
+  }
+
+  function clearKapiState() {
+    localStorage.removeItem("cyancruise.apiMode");
+    localStorage.removeItem("cyancruise.kapi.accessToken");
+    localStorage.removeItem("cyancruise.kapi.appId");
+    localStorage.removeItem("cyancruise.kapi.serviceName");
+    localStorage.removeItem("cyancruise.kapi.cloudId");
+    localStorage.removeItem("cyancruise.kapi.appNumber");
+    localStorage.removeItem("cyancruise.kapi.apiCode");
+    localStorage.removeItem("cyancruise.kapi.routeVersion");
+  }
+
+  function storedKapiAccessToken() {
+    return firstText(localStorage.getItem("cyancruise.kapi.accessToken"));
   }
 
   function readQueryOrStorage(queryKey, storageKey) {
@@ -6307,7 +6392,7 @@
       localStorage.setItem("cyancruise.apiBase", fromQuery);
       return fromQuery.replace(/\/$/, "");
     }
-    migrateLegacyStorageKey("cyancruise.apiBase", "careerloop.apiBase");
+    migrateLegacyStorageKey("cyancruise.apiBase", "cyancruise.apiBase");
     var stored = trim(localStorage.getItem("cyancruise.apiBase"));
     if (stored) {
       return stored.replace(/\/$/, "");
@@ -6316,7 +6401,7 @@
   }
 
   function legacyStorageKey(storageKey) {
-    return storageKey.indexOf("cyancruise.") === 0 ? "careerloop." + storageKey.substring("cyancruise.".length) : "";
+    return storageKey.indexOf("cyancruise.") === 0 ? "cyancruise." + storageKey.substring("cyancruise.".length) : "";
   }
 
   function migrateLegacyStorageKey(storageKey, legacyKey) {
@@ -6421,7 +6506,7 @@
 
   function readPreviewProfile() {
     try {
-      migrateLegacyStorageKey("cyancruise.previewProfile", "careerloop.previewProfile");
+      migrateLegacyStorageKey("cyancruise.previewProfile", "cyancruise.previewProfile");
       var raw = localStorage.getItem("cyancruise.previewProfile");
       if (!raw) {
         return null;
@@ -6467,6 +6552,29 @@
     return node ? trim(node.value) : "";
   }
 
+  function pushRouteToLocation(route) {
+    setRouteInLocation(route, false);
+  }
+
+  function replaceRouteInLocation(route) {
+    setRouteInLocation(route, true);
+  }
+
+  function setRouteInLocation(route, replace) {
+    var key = normalizeRoute(route);
+    var url = new URL(window.location.href);
+    url.searchParams.set("ccRoute", key);
+    url.hash = "";
+    var next = url.pathname + url.search + url.hash;
+    var current = window.location.pathname + window.location.search + window.location.hash;
+    if (next === current) return;
+    if (replace) {
+      window.history.replaceState({ ccRoute: key }, "", next);
+    } else {
+      window.history.pushState({ ccRoute: key }, "", next);
+    }
+  }
+
   function normalizeRoute(hash) {
     var fromHash = trim(hash || window.location.hash || "").replace(/^#/, "");
     if (fromHash) {
@@ -6474,6 +6582,12 @@
     }
     var params = new URLSearchParams(window.location.search);
     return mapLegacyRoute(trim(params.get("ccRoute") || params.get("route")) || "workbench");
+  }
+
+  function needsCanonicalRoute(route) {
+    var params = new URLSearchParams(window.location.search);
+    var fromQuery = trim(params.get("ccRoute") || params.get("route"));
+    return !!window.location.hash || mapLegacyRoute(fromQuery) !== route;
   }
 
   function mapLegacyRoute(route) {

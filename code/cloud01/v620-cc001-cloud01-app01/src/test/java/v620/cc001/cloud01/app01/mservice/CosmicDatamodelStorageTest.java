@@ -1,5 +1,23 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssessmentResultStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerAgentTaskStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicResumeStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssessmentResultStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerAgentTaskStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicResumeStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
 import org.junit.jupiter.api.Test;
 import v620.cc001.base.common.dto.career.AssessmentScoreResult;
 import v620.cc001.base.common.dto.career.AssistantChatMessageDto;
@@ -11,7 +29,7 @@ import v620.cc001.base.common.dto.career.InterviewMessageDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
-import v620.cc001.cloud01.app01.mservice.datamodel.CareerLoopDatamodelObjects;
+import v620.cc001.cloud01.app01.mservice.datamodel.CyanCruiseDatamodelObjects;
 import v620.cc001.cloud01.app01.mservice.datamodel.CosmicDatamodelRecord;
 import v620.cc001.cloud01.app01.mservice.datamodel.InMemoryCosmicDatamodelGateway;
 
@@ -44,8 +62,8 @@ class CosmicDatamodelStorageTest {
         assertEquals(Integer.valueOf(2), storage.loadSnapshot("user-1").getVersion());
         assertEquals("Java backend", storage.loadFacts("user-1").get("target"));
         assertEquals(Integer.valueOf(88), storage.loadProfile("user-1").getCompletenessScore());
-        CosmicDatamodelRecord row = gateway.findOne(CareerLoopDatamodelObjects.USER_PROFILE, null);
-        assertEquals("user-1", row.get(CareerLoopDatamodelObjects.USER_ID));
+        CosmicDatamodelRecord row = gateway.findOne(CyanCruiseDatamodelObjects.USER_PROFILE, null);
+        assertEquals("user-1", row.get(CyanCruiseDatamodelObjects.USER_ID));
         assertEquals("HIGH", row.get("personalization_level"));
     }
 

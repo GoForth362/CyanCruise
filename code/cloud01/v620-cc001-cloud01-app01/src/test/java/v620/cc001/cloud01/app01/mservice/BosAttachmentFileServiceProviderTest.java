@@ -1,5 +1,8 @@
-package v620.cc001.cloud01.app01.mservice;
+package v620.cc001.cloud01.app01.mservice.file.impl;
 
+import v620.cc001.cloud01.app01.mservice.application.FileUploadPreviewApplicationService;
+import v620.cc001.cloud01.app01.mservice.file.*;
+import v620.cc001.cloud01.app01.mservice.file.CosmicFileAdapterConfig;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.FileUploadPreviewService;
 import v620.cc001.base.common.dto.career.FileConstants;

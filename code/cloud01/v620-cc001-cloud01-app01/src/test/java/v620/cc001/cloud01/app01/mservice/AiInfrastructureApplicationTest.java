@@ -1,5 +1,18 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayAssistantChatGenerator;
+import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayCareerPlanGenerator;
+import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.impl.CompatibleEndpointAiProviderAdapter;
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultAiGateway;
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.impl.FakeAiProviderAdapter;
+import v620.cc001.cloud01.app01.mservice.ai.impl.UnavailableAiProviderAdapter;
+import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayAssistantChatGenerator;
+import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayCareerPlanGenerator;
+import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.TaskDecompositionAiService;
 import org.junit.jupiter.api.Test;
 import v620.cc001.base.common.dto.ai.AiChatRequestDto;
 import v620.cc001.base.common.dto.ai.AiChatResponseDto;
@@ -19,10 +32,10 @@ import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
 import v620.cc001.cloud01.app01.mservice.ai.AiProviderConfig;
 import v620.cc001.cloud01.app01.mservice.ai.AiTool;
 import v620.cc001.cloud01.app01.mservice.ai.AiToolRegistry;
-import v620.cc001.cloud01.app01.mservice.ai.CompatibleEndpointAiProviderAdapter;
-import v620.cc001.cloud01.app01.mservice.ai.DefaultAiGateway;
-import v620.cc001.cloud01.app01.mservice.ai.FakeAiProviderAdapter;
-import v620.cc001.cloud01.app01.mservice.ai.UnavailableAiProviderAdapter;
+import v620.cc001.cloud01.app01.mservice.ai.impl.CompatibleEndpointAiProviderAdapter;
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultAiGateway;
+import v620.cc001.cloud01.app01.mservice.ai.impl.FakeAiProviderAdapter;
+import v620.cc001.cloud01.app01.mservice.ai.impl.UnavailableAiProviderAdapter;
 
 import java.net.SocketTimeoutException;
 import java.util.Collections;

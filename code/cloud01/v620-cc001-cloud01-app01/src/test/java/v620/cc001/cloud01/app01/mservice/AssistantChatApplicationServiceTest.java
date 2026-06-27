@@ -1,5 +1,17 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.ai.impl.EmptyAssistantChatContextProvider;
+import v620.cc001.cloud01.app01.mservice.ai.impl.UnavailableAssistantChatGenerator;
+import v620.cc001.cloud01.app01.mservice.storage.impl.FileAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.ai.AssistantChatContextProvider;
+import v620.cc001.cloud01.app01.mservice.ai.AssistantChatGenerator;
+import v620.cc001.cloud01.app01.mservice.ai.impl.EmptyAssistantChatContextProvider;
+import v620.cc001.cloud01.app01.mservice.ai.impl.UnavailableAssistantChatGenerator;
+import v620.cc001.cloud01.app01.mservice.application.AssistantChatApplicationService;
+import v620.cc001.cloud01.app01.mservice.storage.AssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.FileAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssistantChatStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import v620.base.helper.career.AssistantChatHelper;

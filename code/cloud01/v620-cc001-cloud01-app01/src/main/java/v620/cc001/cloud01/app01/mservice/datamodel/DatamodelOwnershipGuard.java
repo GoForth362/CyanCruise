@@ -9,7 +9,7 @@ public final class DatamodelOwnershipGuard {
         if (record == null) {
             throw new IllegalArgumentException(objectName + " not found");
         }
-        String actual = DatamodelFieldMapper.asString(record.get(CareerLoopDatamodelObjects.USER_ID));
+        String actual = DatamodelFieldMapper.asString(record.get(CyanCruiseDatamodelObjects.USER_ID));
         if (!DatamodelFieldMapper.same(expectedUserId, actual)) {
             throw new IllegalArgumentException(objectName + " does not belong to user " + expectedUserId);
         }

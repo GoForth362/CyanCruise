@@ -4,6 +4,19 @@
 
 定义 CareerLoop 主循环在 CyanCruise 中的正式 Cosmic datamodel 对象、字段映射、存储适配边界、替换文件型持久化的分阶段规则和验证要求。
 ## Requirements
+### Requirement: 金蝶业务建模标识风格
+金蝶苍穹业务建模 SHALL 使用与平台限制兼容的对象标识和字段标识风格。对象标识 SHALL 使用 `v620_cc_` 前缀；字段标识 SHALL 使用 `v620_` 前缀，且 SHALL NOT 以 `_id` 结尾。涉及 ID 语义的字段 SHALL 使用 `userid`、`runid`、`scaleid`、`resumeid` 等连续写法，并在建模文档中说明对应的后端逻辑字段。
+
+#### Scenario: 建立包含用户 ID 的业务对象字段
+- **WHEN** 在金蝶苍穹设计器中为业务对象新增“用户 ID”字段
+- **THEN** 字段标识 SHALL 使用 `v620_userid`
+- **AND** 建模文档 SHALL 标注其对应后端逻辑字段为 `user_id`
+
+#### Scenario: 区分金蝶标识和后端逻辑字段
+- **WHEN** 后端 DTO、SQL、PostgreSQL 或 storage adapter 使用 `user_id`、`resume_id` 等 snake_case 字段
+- **THEN** 金蝶业务建模文档 SHALL NOT 直接把这些字段作为苍穹字段标识
+- **AND** 金蝶字段标识 SHALL 使用 `v620_userid`、`v620_resumeid` 等平台兼容写法
+
 ### Requirement: CareerLoop datamodel object map
 系统 SHALL 为 CareerLoop 主循环定义正式 Cosmic datamodel 对象映射，覆盖用户画像、测评、简历、今日行动、职业计划、模拟面试、简历诊断摘要和助手聊天的核心数据语义。
 
@@ -128,4 +141,3 @@ datamodel 适配 SHALL 更新迁移地图，记录 IPD 来源路径、CyanCruise
 #### Scenario: 文件服务边界保持独立
 - **WHEN** 页面需要上传、预览、下载或删除二进制文件
 - **THEN** 该能力 SHALL 继续通过文件服务适配边界处理，不被误认为业务状态 `filestorage` 替换的一部分
-

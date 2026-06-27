@@ -1,5 +1,15 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.UnavailableSubscriptionSender;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
+import v620.cc001.cloud01.app01.mservice.application.AdminConsoleGovernanceApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.NotificationsSubscriptionsApplicationService;
+import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.UnavailableSubscriptionSender;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.AdminConsoleGovernanceService;
 import v620.cc001.base.common.dto.career.AdminBroadcastRequest;
