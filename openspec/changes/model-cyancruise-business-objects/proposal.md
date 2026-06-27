@@ -1,28 +1,37 @@
-# 变更提案：继续 CyanCruise 金蝶业务建模
+# 变更提案：建立 CyanCruise 苍穹业务对象建模规划
 
 ## 背景
 
-CyanCruise 已在金蝶云苍穹中开始建立核心业务对象，目前已有“用户职业画像”基础资料（`tk_v620_cc_user_profile`）和“Agent执行记录”单据（`tk_v620_cc_agent_run`）。下一步需要从 Agent 执行记录布局开始，把表单、列表、分录和校验口径固化下来，并继续建立下一个主循环业务对象。
+CyanCruise 当前已经可以通过外部前端、WebAPI 和 PostgreSQL 运行核心功能，但金蝶苍穹平台中的业务对象仍处于人工逐步建模阶段。已实际建立的对象包括：
+
+- 用户职业画像：基础资料，`v620_cc_user_profile`，表名 `tk_v620_cc_user_profile`
+- Agent执行记录：单据，`v620_cc_agent_run`，表名 `tk_v620_cc_agent_run`
+
+已有建模文档中混入了未实际采用的字段和结构，例如 `v620_billno`、Agent 执行步骤分录、部分驼峰字段命名说明等，容易误导后续手工建模。需要按当前实际建模口径修正文档，并补齐全部待建业务对象规划。
 
 ## 目标
 
-- 完成“Agent执行记录”的表单布局、列表布局、执行步骤分录、操作和校验说明。
-- 新增“职业测评记录”业务对象定义，覆盖字段、答案明细分录、表单布局、列表布局和验证要点。
-- 新增“简历记录”业务对象定义，覆盖文件引用、解析内容、关键词明细、诊断建议、表单布局、列表布局和验证要点。
-- 建立持续建模进度文档，记录已建对象和后续对象顺序。
+- 修正 `datamodel/cyancruise-business-modeling.md`，以已建对象和当前金蝶设计器实际字段标识为准。
+- 明确对象编码统一使用不超过 25 个字符的 `v620_cc_xxx` 短编码，例如 `v620_cc_assess_record`、`v620_cc_study_target`。
+- 明确字段标识统一使用平台保存后的 `v620_xxx` 形式，例如 `v620_userid`、`v620_recordid`、`v620_runid`。
+- 去除当前阶段不需要建立的 `v620_billno` 和 Agent“执行步骤”分录。
+- 补齐职业发展、深造陪伴、Agent 运行管理所需全部业务对象清单。
+- 记录每个对象的对象类型、对象编码、表名、字段、逻辑字段映射和建立顺序。
 
 ## 非目标
 
-- 不直接迁移 IPD 的 Spring Boot、JPA、Flyway、Vue 或 uni-app 实现。
-- 不在本变更中实现新的 Java 存储适配器或 WebAPI。
-- 不替代金蝶设计器中的人工建模操作；本文档作为字段、布局和验证口径的实施依据。
+- 不在本变更中实现 Java 代码、WebAPI 或 Cosmic datamodel adapter。
+- 不迁移 IPD 的 Spring Boot、JPA、Flyway、Vue 或 uni-app 实现。
+- 不要求立即替换当前 PostgreSQL 存储。
+- 不要求一次性在金蝶设计器中完成所有布局美化。
 
 ## 影响范围
 
-- `datamodel/`：新增 CyanCruise 金蝶业务建模进度文档。
-- `openspec/changes/model-cyancruise-business-objects/`：记录本次建模变更的设计、规格和任务。
+- `datamodel/cyancruise-business-modeling.md`
+- `openspec/changes/model-cyancruise-business-objects/`
 
 ## 验证方式
 
-- 使用 `openspec validate model-cyancruise-business-objects --strict` 校验 OpenSpec 变更。
-- 人工核对文档中的对象名、表名、字段标识和用户可见中文名称。
+- 人工核对已建对象是否与设计器一致。
+- 人工核对待建对象字段是否符合当前命名规范。
+- 运行 `openspec validate model-cyancruise-business-objects --strict`。

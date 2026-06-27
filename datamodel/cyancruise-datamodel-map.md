@@ -32,8 +32,8 @@
 
 `cyancruise-business-modeling.md` 记录的是金蝶设计器中连续建立业务对象的字段和布局；本文档记录的是后端存储适配层的对象映射。两者可以共享业务语义，但命名粒度不同：
 
-- 金蝶建模对象优先使用 `tk_v620_cc_` 表名前缀。
-- 金蝶苍穹对象标识统一使用 `v620_cc_` 前缀，例如 `v620_cc_assessment_record`。
+- 金蝶建模对象优先使用 `tk_v620_cc_` 表名前缀，较长对象使用短缩写，例如 `tk_v620_cc_assess_record`、`tk_v620_cc_study_target`。
+- 金蝶苍穹对象编码统一使用不超过 25 个字符的 `v620_cc_` 前缀短编码，例如 `v620_cc_assess_record`、`v620_cc_study_target`。
 - 金蝶苍穹字段标识统一使用 `v620_` 前缀，且不得以 `_id` 结尾；涉及 ID 语义时使用 `userid`、`runid`、`scaleid`、`resumeid` 等连续写法。
 - 存储适配对象沿用 `cc_cl_` 逻辑对象名，便于对应已有 storage boundary。
 - 后端 DTO、SQL、PostgreSQL 和存储适配层 MAY 继续使用 `user_id`、`resume_id` 等 snake_case 逻辑字段；金蝶字段标识 SHALL 在建模文档中标明对应逻辑字段。

@@ -1,356 +1,402 @@
-﻿# CyanCruise 金蝶业务建模进度
+# CyanCruise 金蝶业务对象建模手册
 
-本文记录 CyanCruise 在金蝶云苍穹中的业务对象建模顺序、对象属性、列表和表单布局。对象标识和表名保留英文，用户可见名称、页面分组和操作名称使用中文。
+本文用于指导 CyanCruise 在金蝶云苍穹开发平台中逐个建立业务对象。本文以你在设计器中已经建立的对象为基准修正和补齐，不再沿用历史 CareerLoop 命名，也不要求一次性改造 Java 存储适配器。
 
 ## 建模约定
 
-- 应用：CyanCruise
-- 表名前缀：`tk_v620_cc_`
-- 对象标识前缀：`v620_cc_`
-- 金蝶苍穹对象标识和字段标识统一使用 `v620_` 前缀；字段标识不得以 `_id` 结尾，涉及 ID 语义时使用 `userid`、`runid`、`scaleid`、`resumeid` 这类连续写法。
-- 金蝶苍穹字段名由平台按字段标识自动生成，例如 `v620_userid` 对应 `fk_v620_userid`，一般不手工修改。
-- 后端 DTO、SQL、PostgreSQL 和 OpenSpec 存储适配中的逻辑字段仍可使用 `user_id`、`resume_id` 等 snake_case；金蝶建模字段需要在说明中标注其对应逻辑字段。
-- AI 输出、答案快照、维度分数、上下文和错误详情优先使用大文本或 JSON 文本字段承载；需要列表筛选、排序和权限隔离的字段必须结构化。
-- 新对象默认先完成：字段、单据体/分录、列表、表单布局、基础操作、数据状态和验证说明。
+- 应用名称：`CyanCruise`
+- 用户可见名称使用中文，例如“用户职业画像”“职业测评记录”。
+- 创建业务对象时，“对象编码”优先填写 `v620_cc_xxx` 形式，例如 `v620_cc_user_profile`；金蝶设计器限制对象编码不能超过 25 个字符。
+- 表名使用 `tk_v620_cc_xxx` 形式，例如 `tk_v620_cc_user_profile`。
+- 对象编码和表名都需要控制长度；较长对象使用清晰缩写，例如 `assessment` 缩写为 `assess`，`diagnosis` 缩写为 `diag`，`capability` 缩写为 `cap`，`context` 缩写为 `ctx`，`further_study` 缩写为 `study`。
+- 字段标识以平台保存后的 `v620_xxx` 为准，例如 `v620_userid`、`v620_targetrole`、`v620_runid`。
+- 金蝶设计器不允许字段标识以 `_id` 结尾；涉及 ID 的字段按平台实际保存结果写成 `v620_userid`、`v620_resumeid`、`v620_recordid`。
+- 文档中的“逻辑字段”用于对应现有 Java DTO、PostgreSQL 表或 WebAPI 契约，例如 `user_id`、`target_role`、`result_json`。
+- 当前阶段先建立平台业务对象、字段和基础布局；后续再通过 Java adapter 或同步任务把 PostgreSQL 数据接入苍穹业务对象。
+- AI 原始输入输出、诊断结果、画像详情等结构变化大的内容使用“大文本”保存 JSON；用户归属、状态、类型、目标岗位、时间等查询字段必须结构化。
 
-## 001 用户职业画像
+## 已建对象
 
-- 对象名称：用户职业画像
+### 001 用户职业画像
+
 - 对象类型：基础资料
 - 对象标识：`v620_cc_user_profile`
 - 表名：`tk_v620_cc_user_profile`
-- 建模状态：已建立基础对象，后续按实际页面继续补充字段展示和列表过滤。
+- 建模状态：已建立字段和基础布局。
+- 用途：保存用户长期职业画像汇总，供测评、简历、面试、职业计划、深造陪伴和 Agent 读取。
 
-### 核心字段
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 | 说明 |
+| --- | --- | --- | --- | --- | --- |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` | 用户归属标识。 |
+| `v620_targetrole` | 目标岗位 | 文本，255 | 否 | `target_role` | 用户当前准备的岗位或方向。 |
+| `v620_currentstage` | 当前阶段 | 文本，128 | 否 | `current_stage` | 如求职准备、简历优化、面试准备。 |
+| `v620_personalizationlevel` | 个性化等级 | 文本，64 | 否 | `personalization_level` | low、medium、high 或中文等级。 |
+| `v620_completenessscore` | 完整度分数 | 整数 | 否 | `completeness_score` | 建议 0 到 100。 |
+| `v620_profilejson` | 画像内容 | 大文本 | 否 | `profile_json` | 完整画像 JSON。 |
+| `v620_readinessjson` | 准备度内容 | 大文本 | 否 | `readiness_json` | 准备度、缺口、风险和建议。 |
+| `v620_evidencejson` | 证据内容 | 大文本 | 否 | `evidence_json` | 画像证据和来源。 |
+| `v620_agentsummary` | Agent摘要 | 大文本 | 否 | `agent_summary` | 给人和 Agent 快速读取的中文摘要。 |
+| `v620_lastagentrunid` | 最近Agent执行ID | 文本，128 | 否 | `last_agent_run_id` | 最近一次刷新画像的 Agent 执行记录。 |
 
-| 字段标识 | 名称 | 类型 | 说明 |
-| --- | --- | --- | --- |
-| `v620_number` | 编码 | 文本 | 画像编码，可按用户 ID 或系统规则生成。 |
-| `v620_name` | 名称 | 文本 | 用户可识别的画像名称。 |
-| `v620_userid` | 用户 ID | 文本 | 对应逻辑字段 `user_id`，用于用户数据归属。 |
-| `v620_targetrole` | 目标岗位 | 文本 | 对应逻辑字段 `target_role`，用户当前希望准备的岗位或方向。 |
-| `v620_currentstage` | 当前阶段 | 文本 | 对应逻辑字段 `current_stage`，如“明确方向”“准备简历”“面试练习”。 |
-| `v620_personalizationlevel` | 个性化程度 | 枚举 | 对应逻辑字段 `personalization_level`，建议值：低、中、高。 |
-| `v620_completenessscore` | 完整度 | 整数 | 对应逻辑字段 `completeness_score`，画像完成度分值。 |
-| `v620_profilejson` | 画像详情 | 大文本 | 对应逻辑字段 `profile_json`，存放画像快照的半结构化内容。 |
-| `v620_readinessjson` | 准备度详情 | 大文本 | 对应逻辑字段 `readiness_json`，存放准备度、风险和建议。 |
-| `v620_updatedat` | 更新时间 | 日期时间 | 对应逻辑字段 `updated_at`，最近一次刷新时间。 |
+推荐布局：
 
-## 002 Agent执行记录
+- 第一行：用户标识、目标岗位、当前阶段
+- 第二行：个性化等级、完整度分数、Agent摘要
+- 后续：最近Agent执行ID、画像内容、准备度内容、证据内容
 
-- 对象名称：Agent执行记录
+### 002 Agent执行记录
+
 - 对象类型：单据
 - 对象标识：`v620_cc_agent_run`
 - 表名：`tk_v620_cc_agent_run`
-- 建模状态：从本节布局开始继续完善。
+- 建模状态：已建立字段，布局可后续补齐。
+- 用途：记录每次 Agent 调用的输入、输出、状态、消耗和关联业务对象，支撑排障、审计和运营统计。
 
-### 单据头字段
-
-| 字段标识 | 名称 | 类型 | 必填 | 列表显示 | 说明 |
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `v620_billno` | 单据编号 | 文本 | 是 | 是 | 对应逻辑字段 `billno`，执行记录编号，建议自动编码。 |
-| `v620_userid` | 用户 ID | 文本 | 是 | 是 | 对应逻辑字段 `user_id`，归属用户。 |
-| `v620_agentcode` | 智能体编码 | 文本 | 是 | 是 | 对应逻辑字段 `agent_code`，如今日行动、简历诊断、模拟面试等智能体编码。 |
-| `v620_agentname` | 智能体名称 | 文本 | 是 | 是 | 对应逻辑字段 `agent_name`，用户可读名称。 |
-| `v620_scenecode` | 场景编码 | 文本 | 否 | 是 | 对应逻辑字段 `scene_code`，调用来源场景，如画像、简历、面试。 |
-| `v620_triggertype` | 触发方式 | 枚举 | 是 | 是 | 对应逻辑字段 `trigger_type`，建议值：用户触发、系统触发、定时触发、回调触发。 |
-| `v620_runstatus` | 执行状态 | 枚举 | 是 | 是 | 对应逻辑字段 `run_status`，建议值：待执行、执行中、成功、失败、已取消。 |
-| `v620_startedat` | 开始时间 | 日期时间 | 否 | 是 | 对应逻辑字段 `started_at`，智能体开始执行时间。 |
-| `v620_endedat` | 结束时间 | 日期时间 | 否 | 是 | 对应逻辑字段 `ended_at`，智能体结束执行时间。 |
-| `v620_durationms` | 耗时毫秒 | 整数 | 否 | 是 | 对应逻辑字段 `duration_ms`，用于排查慢调用。 |
-| `v620_modelname` | 模型名称 | 文本 | 否 | 否 | 对应逻辑字段 `model_name`，使用的模型或能力通道。 |
-| `v620_prompttokens` | 输入消耗 | 整数 | 否 | 否 | 对应逻辑字段 `prompt_tokens`，输入 token 数。 |
-| `v620_completiontokens` | 输出消耗 | 整数 | 否 | 否 | 对应逻辑字段 `completion_tokens`，输出 token 数。 |
-| `v620_totaltokens` | 总消耗 | 整数 | 否 | 是 | 对应逻辑字段 `total_tokens`，总 token 数。 |
-| `v620_costmicros` | 成本微单位 | 整数 | 否 | 否 | 对应逻辑字段 `cost_micros`，用于后续成本核算。 |
-| `v620_errorcode` | 错误码 | 文本 | 否 | 是 | 对应逻辑字段 `error_code`，失败时记录稳定错误码。 |
-| `v620_errormessage` | 错误信息 | 大文本 | 否 | 否 | 对应逻辑字段 `error_message`，失败时展示给管理员排查。 |
-| `v620_inputjson` | 输入内容 | 大文本 | 否 | 否 | 对应逻辑字段 `input_json`，请求上下文快照，避免写入敏感凭据。 |
-| `v620_outputjson` | 输出内容 | 大文本 | 否 | 否 | 对应逻辑字段 `output_json`，结果快照或摘要。 |
+| `v620_runid` | 执行ID | 文本，128 | 是 | `run_id` | 一次 Agent 执行的稳定标识。 |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` | 调用归属用户。 |
+| `v620_agenttype` | Agent类型 | 文本，128 | 否 | `agent_type` | 如职业画像、测评解读、简历诊断、考研、保研、留学。 |
+| `v620_businessmodule` | 业务模块 | 文本，128 | 否 | `business_module` | 职业发展、深造陪伴、Agent运行管理等。 |
+| `v620_tasktype` | 任务类型 | 文本，128 | 否 | `task_type` | 画像刷新、测评解读、生成计划、诊断简历等。 |
+| `v620_modelname` | 使用模型 | 文本，128 | 否 | `model_name` | 实际使用的模型或通道。 |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` | pending、running、success、failed、cancelled。 |
+| `v620_bizobject` | 关联业务对象 | 文本，128 | 否 | `biz_object` | 写入或读取的主业务对象标识。 |
+| `v620_bizid` | 关联业务ID | 文本，128 | 否 | `biz_id` | 关联业务记录 ID。 |
+| `v620_inputsummary` | 输入摘要 | 大文本 | 否 | `input_summary` | 输入上下文的中文摘要。 |
+| `v620_outputsummary` | 输出摘要 | 大文本 | 否 | `output_summary` | 输出结果的中文摘要。 |
+| `v620_inputjson` | 输入内容 | 大文本 | 否 | `input_json` | 请求上下文 JSON，不得保存密钥或 token。 |
+| `v620_outputjson` | 输出内容 | 大文本 | 否 | `output_json` | Agent 输出 JSON。 |
+| `v620_errormessage` | 错误信息 | 大文本 | 否 | `error_message` | 失败原因，面向排障。 |
+| `v620_prompttokens` | 输入Token | 整数 | 否 | `prompt_tokens` | 输入 token 数。 |
+| `v620_completiontokens` | 输出Token | 整数 | 否 | `completion_tokens` | 输出 token 数。 |
+| `v620_totaltokens` | 总Token | 整数 | 否 | `total_tokens` | 总 token 数。 |
+| `v620_startedat` | 开始时间 | 长日期/日期时间 | 否 | `started_at` | 执行开始时间。 |
+| `v620_endedat` | 结束时间 | 长日期/日期时间 | 否 | `ended_at` | 执行结束时间。 |
 
-### 单据体：执行步骤
+注意：不需要建立“执行步骤”分录，除非后续你明确要追踪工具调用步骤。当前只保留单据头字段即可。
 
-分录名称：执行步骤
+推荐布局：
 
-| 字段标识 | 名称 | 类型 | 说明 |
-| --- | --- | --- | --- |
-| `v620_seq` | 序号 | 整数 | 对应逻辑字段 `seq`，步骤顺序。 |
-| `v620_stepcode` | 步骤编码 | 文本 | 对应逻辑字段 `step_code`，稳定步骤标识。 |
-| `v620_stepname` | 步骤名称 | 文本 | 对应逻辑字段 `step_name`，用户可读步骤名。 |
-| `v620_stepstatus` | 步骤状态 | 枚举 | 对应逻辑字段 `step_status`，待执行、执行中、成功、失败、跳过。 |
-| `v620_stepstartedat` | 开始时间 | 日期时间 | 对应逻辑字段 `started_at`，步骤开始时间。 |
-| `v620_stependedat` | 结束时间 | 日期时间 | 对应逻辑字段 `ended_at`，步骤结束时间。 |
-| `v620_message` | 执行说明 | 大文本 | 对应逻辑字段 `message`，步骤摘要、失败原因或补充说明。 |
+- 基础信息：执行ID、用户标识、Agent类型、业务模块、任务类型、使用模型、状态
+- 关联业务：关联业务对象、关联业务ID
+- 消耗与时间：输入Token、输出Token、总Token、开始时间、结束时间
+- 输入输出：输入摘要、输出摘要、输入内容、输出内容、错误信息
 
-### 表单布局
+## 本轮已建对象
 
-1. 基本信息
+### 003 职业测评记录
 
-| 左列 | 右列 |
-| --- | --- |
-| 单据编号 | 执行状态 |
-| 用户 ID | 触发方式 |
-| 智能体编码 | 智能体名称 |
-| 场景编码 | 模型名称 |
-
-2. 执行时间与消耗
-
-| 左列 | 右列 |
-| --- | --- |
-| 开始时间 | 结束时间 |
-| 耗时毫秒 | 总消耗 |
-| 输入消耗 | 输出消耗 |
-| 成本微单位 |  |
-
-3. 执行步骤
-
-使用表格分录展示 `执行步骤`，默认列为：序号、步骤名称、步骤状态、开始时间、结束时间、执行说明。
-
-4. 输入输出
-
-使用页签或折叠区展示：
-
-- 输入内容
-- 输出内容
-- 错误信息
-
-### 列表布局
-
-默认列表列：单据编号、用户 ID、智能体名称、场景编码、触发方式、执行状态、开始时间、结束时间、耗时毫秒、总消耗、错误码。
-
-常用过滤条件：
-
-- 用户 ID
-- 智能体名称
-- 场景编码
-- 触发方式
-- 执行状态
-- 开始时间范围
-
-默认排序：开始时间倒序、单据编号倒序。
-
-### 操作和状态
-
-- 新增：一般不面向普通用户开放，主要由后端服务写入。
-- 查看：管理员和排障人员可查看完整输入输出。
-- 重试：仅失败记录可触发，后续需要明确是否复用原输入内容。
-- 取消：仅待执行或执行中记录可触发，当前先作为预留操作。
-
-### 验证要点
-
-- 失败记录必须有 `error_code` 或 `error_message`。
-- `v620_endedat` 早于 `v620_startedat` 时应阻止保存或提示修正。
-- `v620_inputjson` 不得保存 access token、Authorization header、签名 URL 或客户私有凭据。
-
-## 003 职业测评记录
-
-- 对象名称：职业测评记录
 - 对象类型：单据
-- 对象标识：`v620_cc_assessment_record`
-- 表名：`tk_v620_cc_assessment_record`
-- 建模状态：本轮新增对象定义，后续可在苍穹设计器中建立字段和布局。
+- 对象编码：`v620_cc_assess_record`
+- 原逻辑对象名：`assessment_record`
+- 表名：`tk_v620_cc_assess_record`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存用户每一次职业测评提交、结果、推荐岗位和答案快照。
 
-### 单据头字段
-
-| 字段标识 | 名称 | 类型 | 必填 | 列表显示 | 说明 |
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `v620_billno` | 单据编号 | 文本 | 是 | 是 | 对应逻辑字段 `billno`，测评记录编号，建议自动编码。 |
-| `v620_userid` | 用户 ID | 文本 | 是 | 是 | 对应逻辑字段 `user_id`，归属用户。 |
-| `v620_scaleid` | 量表 ID | 文本 | 是 | 是 | 对应逻辑字段 `scale_id`，量表稳定标识。 |
-| `v620_scaletitle` | 量表名称 | 文本 | 是 | 是 | 对应逻辑字段 `scale_title`，如 MBTI、霍兰德兴趣、职业价值观。 |
-| `v620_scaleversion` | 量表版本 | 文本 | 否 | 是 | 对应逻辑字段 `scale_version`，便于题库升级后追溯。 |
-| `v620_status` | 测评状态 | 枚举 | 是 | 是 | 对应逻辑字段 `status`，建议值：草稿、已完成、无效。 |
-| `v620_summary` | 测评摘要 | 文本 | 否 | 是 | 对应逻辑字段 `summary`，用户可读结果摘要。 |
-| `v620_primaryresult` | 主要结果 | 文本 | 否 | 是 | 对应逻辑字段 `primary_result`，如 MBTI 四字母结果或主导维度。 |
-| `v620_completedat` | 完成时间 | 日期时间 | 否 | 是 | 对应逻辑字段 `completed_at`，用户提交完成时间。 |
-| `v620_dimensionjson` | 维度分数 | 大文本 | 否 | 否 | 对应逻辑字段 `dimension_json`，维度计数或评分结果。 |
-| `v620_suggestedrolesjson` | 推荐岗位 | 大文本 | 否 | 否 | 对应逻辑字段 `suggested_roles_json`，推荐岗位列表。 |
-| `v620_answersjson` | 答案快照 | 大文本 | 否 | 否 | 对应逻辑字段 `answers_json`，用户提交答案快照。 |
-| `v620_resultjson` | 完整结果 | 大文本 | 否 | 否 | 对应逻辑字段 `result_json`，完整评分结果和解释。 |
+| `v620_recordid` | 测评记录ID | 文本，128 | 是 | `record_id` | 测评记录稳定标识。 |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` | 用户归属。 |
+| `v620_scaleid` | 量表ID | 文本，128 | 否 | `scale_id` | 测评量表标识。 |
+| `v620_scaletitle` | 量表名称 | 文本，255 | 否 | `scale_title` | 用户可读量表名称。 |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` | draft、completed、invalid。 |
+| `v620_summary` | 测评摘要 | 大文本 | 否 | `summary` | 测评结果摘要。 |
+| `v620_suggestedrolesjson` | 推荐岗位内容 | 大文本 | 否 | `suggested_roles_json` | 推荐岗位 JSON。 |
+| `v620_answersjson` | 答案内容 | 大文本 | 否 | `answers_json` | 用户答案快照。 |
+| `v620_resultjson` | 结果内容 | 大文本 | 否 | `result_json` | 完整评分结果。 |
+| `v620_completedat` | 完成时间 | 长日期/日期时间 | 否 | `completed_at` | 测评完成时间。 |
 
-### 单据体：答案明细
+说明：不需要 `v620_billno`。当前按我们实际操作口径使用 `v620_recordid` 作为测评记录稳定标识。
 
-分录名称：答案明细
+### 004 简历档案
 
-| 字段标识 | 名称 | 类型 | 说明 |
-| --- | --- | --- | --- |
-| `v620_seq` | 序号 | 整数 | 对应逻辑字段 `seq`，题目顺序。 |
-| `v620_questionid` | 题目 ID | 文本 | 对应逻辑字段 `question_id`，题目稳定标识。 |
-| `v620_questiontitle` | 题目 | 文本 | 对应逻辑字段 `question_title`，题目正文摘要。 |
-| `v620_optionid` | 选项 ID | 文本 | 对应逻辑字段 `option_id`，用户选择的选项标识。 |
-| `v620_optiontitle` | 选项 | 文本 | 对应逻辑字段 `option_title`，用户选择的选项文本。 |
-| `v620_dimensioncode` | 维度编码 | 文本 | 对应逻辑字段 `dimension_code`，选项对应的维度。 |
-| `v620_scorevalue` | 分值 | 小数 | 对应逻辑字段 `score_value`，选项得分。 |
-| `v620_isvalid` | 是否有效 | 布尔 | 对应逻辑字段 `is_valid`，非法题目或选项保留快照但不计分。 |
-
-### 表单布局
-
-1. 基本信息
-
-| 左列 | 右列 |
-| --- | --- |
-| 单据编号 | 测评状态 |
-| 用户 ID | 完成时间 |
-| 量表 ID | 量表名称 |
-| 量表版本 | 主要结果 |
-
-2. 测评结果
-
-| 左列 | 右列 |
-| --- | --- |
-| 测评摘要 | 推荐岗位 |
-| 维度分数 | 完整结果 |
-
-3. 答案明细
-
-使用表格分录展示 `答案明细`，默认列为：序号、题目、选项、维度编码、分值、是否有效。
-
-4. 原始快照
-
-使用折叠区展示 `v620_answersjson` 和 `v620_resultjson`，仅管理员或排障人员可见。
-
-### 列表布局
-
-默认列表列：单据编号、用户 ID、量表名称、量表版本、测评状态、主要结果、测评摘要、完成时间。
-
-常用过滤条件：
-
-- 用户 ID
-- 量表名称
-- 测评状态
-- 主要结果
-- 完成时间范围
-
-默认排序：完成时间倒序、单据编号倒序。
-
-### 验证要点
-
-- 已完成记录必须有 `completed_at`、`summary` 或 `primary_result`。
-- 同一条记录的答案明细必须归属于同一 `v620_scaleid`。
-- 非法答案允许保存快照，但 `v620_isvalid` 应为 false，且不得计入 `v620_dimensionjson`。
-- 测评记录写入画像时，只更新画像的测评块，不覆盖目标岗位、简历、面试或职业计划数据。
-
-## 004 简历记录
-
-- 对象名称：简历记录
 - 对象类型：单据
-- 对象标识：`v620_cc_resume`
-- 表名：`tk_v620_cc_resume`
-- 建模状态：本轮新增对象定义，承接现有 `/cc001/resume/*` 契约和 `ResumeRecordDto`。
+- 对象编码：`v620_cc_resume_record`
+- 原逻辑对象名：`resume_record`
+- 表名：`tk_v620_cc_resume_record`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存简历元数据、目标岗位、文件标识、解析内容和最近诊断分数。
 
-### 单据头字段
-
-| 字段标识 | 名称 | 类型 | 必填 | 列表显示 | 说明 |
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 | 说明 |
 | --- | --- | --- | --- | --- | --- |
-| `v620_billno` | 单据编号 | 文本 | 是 | 是 | 对应逻辑字段 `billno`，简历记录编号，建议自动编码。 |
-| `v620_resumeid` | 简历 ID | 整数 | 否 | 是 | 对应 `ResumeRecordDto.resumeId` 和逻辑字段 `resume_id`，由服务端生成或同步。 |
-| `v620_userid` | 用户 ID | 文本 | 是 | 是 | 对应逻辑字段 `user_id`，归属用户。 |
-| `v620_title` | 简历标题 | 文本 | 是 | 是 | 对应逻辑字段 `title`，用户可识别的简历名称。 |
-| `v620_targetjob` | 目标岗位 | 文本 | 否 | 是 | 对应逻辑字段 `target_job`，该份简历面向的岗位或方向。 |
-| `v620_filekey` | 文件标识 | 文本 | 否 | 是 | 对应逻辑字段 `file_key`，平台文件 object key 或稳定文件 ID，不保存临时预览 URL。 |
-| `v620_version` | 简历版本 | 文本 | 否 | 是 | 对应逻辑字段 `version`，默认 `v1.0`，用于后续版本管理。 |
-| `v620_resumestatus` | 简历状态 | 枚举 | 是 | 是 | 对应逻辑字段 `resume_status`，建议值：草稿、已上传、已解析、已诊断、已归档。 |
-| `v620_diagnosisscore` | 诊断分数 | 整数 | 否 | 是 | 对应逻辑字段 `diagnosis_score`，简历诊断综合分，默认 0。 |
-| `v620_createdat` | 创建时间 | 日期时间 | 否 | 是 | 对应逻辑字段 `created_at`，简历记录创建时间。 |
-| `v620_updatedat` | 更新时间 | 日期时间 | 否 | 是 | 对应逻辑字段 `updated_at`，最近一次更新、解析或诊断时间。 |
-| `v620_parsedcontent` | 解析内容 | 大文本 | 否 | 否 | 对应逻辑字段 `parsed_content`，PDF 文本、用户粘贴正文或简历摘要。 |
-| `v620_keywordjson` | 关键词 | 大文本 | 否 | 否 | 对应逻辑字段 `keyword_json`，从简历提取的关键词、证据和权重。 |
-| `v620_diagnosisjson` | 诊断结果 | 大文本 | 否 | 否 | 对应逻辑字段 `diagnosis_json`，最近一次简历诊断完整结果。 |
+| `v620_resumeid` | 简历ID | 文本，128 | 是 | `resume_id` | 简历稳定标识。 |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` | 用户归属。 |
+| `v620_title` | 简历标题 | 文本，255 | 否 | `title` | 简历名称。 |
+| `v620_targetjob` | 目标岗位 | 文本，255 | 否 | `target_job` | 简历面向岗位。 |
+| `v620_filekey` | 文件标识 | 文本，255 | 否 | `file_key` | 文件服务稳定 key，不保存签名 URL。 |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` | draft、uploaded、parsed、diagnosed、archived。 |
+| `v620_diagnosisscore` | 诊断分数 | 整数 | 否 | `diagnosis_score` | 0 到 100。 |
+| `v620_parsedcontent` | 解析内容 | 大文本 | 否 | `parsed_content` | PDF 或文本解析结果。 |
+| `v620_keywordjson` | 关键词内容 | 大文本 | 否 | `keyword_json` | 关键词和证据 JSON。 |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` | 创建时间。 |
+| `v620_updatedat` | 更新时间 | 长日期/日期时间 | 否 | `updated_at` | 更新时间。 |
 
-### 单据体：关键词明细
+### 005 简历诊断
 
-分录名称：关键词明细
+- 对象类型：单据
+- 对象编码：`v620_cc_resume_diag`
+- 原逻辑对象名：`resume_diagnosis`
+- 表名：`tk_v620_cc_resume_diag`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存每次简历诊断的评分、关键词状态和完整诊断结果。
 
-| 字段标识 | 名称 | 类型 | 说明 |
-| --- | --- | --- | --- |
-| `v620_seq` | 序号 | 整数 | 对应逻辑字段 `seq`，关键词顺序。 |
-| `v620_category` | 分类 | 文本 | 对应逻辑字段 `category`，如技能、项目、经历、成果、证书。 |
-| `v620_label` | 关键词 | 文本 | 对应逻辑字段 `label`，简历中提取或诊断建议关注的关键词。 |
-| `v620_weight` | 权重 | 整数 | 对应逻辑字段 `weight`，关键词权重或重要程度。 |
-| `v620_evidence` | 证据 | 大文本 | 对应逻辑字段 `evidence`，简历中支撑该关键词的原文或说明。 |
-| `v620_status` | 状态 | 枚举 | 对应逻辑字段 `status`，建议值：已覆盖、待补充、需改写。 |
-
-### 单据体：诊断建议
-
-分录名称：诊断建议
-
-| 字段标识 | 名称 | 类型 | 说明 |
-| --- | --- | --- | --- |
-| `v620_seq` | 序号 | 整数 | 对应逻辑字段 `seq`，建议顺序。 |
-| `v620_problem` | 问题 | 文本 | 对应逻辑字段 `problem`，简历存在的问题。 |
-| `v620_suggestion` | 建议 | 大文本 | 对应逻辑字段 `suggestion`，面向用户的优化建议。 |
-| `v620_priority` | 优先级 | 枚举 | 对应逻辑字段 `priority`，建议值：高、中、低。 |
-| `v620_relatedsection` | 关联部分 | 文本 | 对应逻辑字段 `related_section`，如项目经历、技能、教育背景、证书。 |
-| `v620_status` | 处理状态 | 枚举 | 对应逻辑字段 `status`，建议值：待处理、已处理、已忽略。 |
-
-### 表单布局
-
-1. 基本信息
-
-| 左列 | 右列 |
-| --- | --- |
-| 单据编号 | 简历状态 |
-| 简历 ID | 用户 ID |
-| 简历标题 | 目标岗位 |
-| 简历版本 | 诊断分数 |
-| 创建时间 | 更新时间 |
-
-2. 文件与正文
-
-| 左列 | 右列 |
-| --- | --- |
-| 文件标识 | 解析内容 |
-
-`v620_filekey` 作为稳定文件引用展示，不在表单中展示临时预览 URL、签名参数或访问凭据。`v620_parsedcontent` 使用大文本区域展示，便于排查 PDF 解析和手工粘贴内容。
-
-3. 关键词明细
-
-使用表格分录展示 `关键词明细`，默认列为：序号、分类、关键词、权重、状态、证据。
-
-4. 诊断建议
-
-使用表格分录展示 `诊断建议`，默认列为：序号、问题、优先级、关联部分、处理状态、建议。
-
-5. 原始结果
-
-使用折叠区展示 `v620_keywordjson` 和 `v620_diagnosisjson`，仅管理员或排障人员可见。
-
-### 列表布局
-
-默认列表列：单据编号、简历 ID、用户 ID、简历标题、目标岗位、简历状态、诊断分数、文件标识、更新时间。
-
-常用过滤条件：
-
-- 用户 ID
-- 简历标题
-- 目标岗位
-- 简历状态
-- 诊断分数范围
-- 更新时间范围
-
-默认排序：更新时间倒序、简历 ID 倒序。
-
-### 操作和状态
-
-- 新增：允许从简历页面或后端服务创建元数据记录。
-- 上传文件：文件能力可用时写入稳定 `file_key`，不可用时不阻断元数据创建。
-- 解析正文：从文件提取文本后写入 `parsed_content`，扫描版或空文本可由用户手工补充。
-- 触发诊断：调用简历诊断能力，更新 `diagnosis_score`、`keyword_json` 和 `diagnosis_json`。
-- 归档：不物理删除用户历史简历，状态改为已归档。
-
-### 验证要点
-
-- 新建记录至少应填写 `v620_title`、`v620_targetjob`、`v620_filekey` 或 `v620_parsedcontent` 中的一项，避免空白简历。
-- `v620_filekey` 只能保存稳定 object key 或平台文件 ID，不得保存 access token、Authorization header、签名 URL 或客户私有凭据。
-- `v620_diagnosisscore` 应在 0 到 100 之间。
-- 同一用户相同 `v620_filekey` 的重复创建应由后端服务合并或覆盖为最新记录，避免列表出现不可解释重复。
-- 简历记录写入画像时，只更新画像的简历块，不覆盖测评、面试、职业计划或新用户引导数据。
-
-## 后续建模顺序建议
-
-| 顺序 | 对象名称 | 对象类型 | 建议表名 | 说明 |
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
 | --- | --- | --- | --- | --- |
-| 005 | 今日任务 | 单据 | `tk_v620_cc_today_task` | 承接今日行动推荐、完成状态和优先级。 |
-| 006 | 职业计划 | 单据 | `tk_v620_cc_career_plan` | 承接目标岗位、里程碑和每周重点。 |
-| 007 | 模拟面试记录 | 单据 | `tk_v620_cc_interview` | 承接面试会话、报告和评分。 |
-| 008 | 求职助手会话 | 单据 | `tk_v620_cc_assistant_session` | 承接助手会话和消息归档。 |
+| `v620_diagnosisid` | 诊断ID | 文本，128 | 是 | `diagnosis_id` |
+| `v620_resumeid` | 简历ID | 文本，128 | 是 | `resume_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_score` | 分数 | 整数 | 否 | `score` |
+| `v620_diagnosisjson` | 诊断内容 | 大文本 | 否 | `diagnosis_json` |
+| `v620_keywordstatusjson` | 关键词状态 | 大文本 | 否 | `keyword_status_json` |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` |
+| `v620_updatedat` | 更新时间 | 长日期/日期时间 | 否 | `updated_at` |
+
+### 006 今日任务
+
+- 对象类型：单据
+- 对象编码：`v620_cc_career_task`
+- 原逻辑对象名：`career_task`
+- 表名：`tk_v620_cc_career_task`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存今日行动推荐、任务状态、优先级和父子任务关系。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_taskid` | 任务ID | 文本，128 | 是 | `task_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_taskkey` | 任务编码 | 文本，128 | 否 | `task_key` |
+| `v620_title` | 任务标题 | 文本，255 | 否 | `title` |
+| `v620_description` | 任务说明 | 大文本 | 否 | `description` |
+| `v620_duedate` | 到期日期 | 日期 | 否 | `due_date` |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` |
+| `v620_priority` | 优先级 | 整数 | 否 | `priority` |
+| `v620_parenttaskid` | 父任务ID | 文本，128 | 否 | `parent_task_id` |
+| `v620_subindex` | 子任务序号 | 整数 | 否 | `sub_index` |
+| `v620_updatedat` | 更新时间 | 长日期/日期时间 | 否 | `updated_at` |
+
+### 007 职业计划
+
+- 对象类型：单据
+- 对象编码：`v620_cc_career_plan`
+- 原逻辑对象名：`career_plan`
+- 表名：`tk_v620_cc_career_plan`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存目标岗位、里程碑、本周重点和计划生成信息。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_planid` | 计划ID | 文本，128 | 是 | `plan_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_targetrole` | 目标岗位 | 文本，255 | 否 | `target_role` |
+| `v620_modelused` | 使用模型 | 文本，128 | 否 | `model_used` |
+| `v620_tokensconsumed` | 消耗量 | 整数 | 否 | `tokens_consumed` |
+| `v620_startstatejson` | 起点状态 | 大文本 | 否 | `start_state_json` |
+| `v620_milestonesjson` | 里程碑内容 | 大文本 | 否 | `milestones_json` |
+| `v620_weeklyfocusjson` | 本周重点 | 大文本 | 否 | `weekly_focus_json` |
+| `v620_version` | 版本号 | 整数 | 否 | `version` |
+| `v620_generatedat` | 生成时间 | 长日期/日期时间 | 否 | `generated_at` |
+| `v620_lastupdatedat` | 更新时间 | 长日期/日期时间 | 否 | `last_updated_at` |
+
+### 008 模拟面试
+
+- 对象类型：单据
+- 对象编码：`v620_cc_interview`
+- 原逻辑对象名：`interview_session`
+- 表名：`tk_v620_cc_interview`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存面试会话主记录、岗位、状态、评分和报告。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_interviewid` | 面试ID | 文本，128 | 是 | `interview_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_resumeid` | 简历ID | 文本，128 | 否 | `resume_id` |
+| `v620_positionname` | 面试岗位 | 文本，255 | 否 | `position_name` |
+| `v620_difficulty` | 难度 | 文本，64 | 否 | `difficulty` |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` |
+| `v620_mode` | 面试模式 | 文本，64 | 否 | `mode` |
+| `v620_finalscore` | 最终分数 | 整数 | 否 | `final_score` |
+| `v620_durationseconds` | 持续秒数 | 整数 | 否 | `duration_seconds` |
+| `v620_reportjson` | 报告内容 | 大文本 | 否 | `report_json` |
+| `v620_startedat` | 开始时间 | 长日期/日期时间 | 否 | `started_at` |
+| `v620_endedat` | 结束时间 | 长日期/日期时间 | 否 | `ended_at` |
+
+### 009 Agent能力定义
+
+- 对象类型：基础资料
+- 对象编码：`v620_cc_agent_cap`
+- 原逻辑对象名：`agent_capability`
+- 表名：`tk_v620_cc_agent_cap`
+- 建模状态：已建立业务对象、字段和基础布局；预置 Agent 记录可后续按运营需要录入。
+- 用途：登记 CyanCruise 中可被主调度 Agent 调用的专项 Agent 能力，不是通用 AI 对话框。具体执行过程仍写入“Agent执行记录”，业务结果写回职业测评记录、简历诊断、职业计划、深造记录等业务对象。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_agentid` | Agent ID | 文本，128 | 是 | `agent_id` |
+| `v620_agentcode` | Agent编码 | 文本，128 | 是 | `agent_code` |
+| `v620_agentname` | Agent名称 | 文本，128 | 是 | `agent_name` |
+| `v620_agentrole` | Agent职责 | 大文本 | 否 | `agent_role` |
+| `v620_businessmodule` | 业务模块 | 文本，128 | 否 | `business_module` |
+| `v620_thinkingflow` | 思维链路 | 大文本 | 否 | `thinking_flow` |
+| `v620_mcptoolsjson` | 关键工具 | 大文本 | 否 | `mcp_tools_json` |
+| `v620_inputschemajson` | 输入契约 | 大文本 | 否 | `input_schema_json` |
+| `v620_outputschemajson` | 输出契约 | 大文本 | 否 | `output_schema_json` |
+| `v620_enabled` | 是否启用 | 开关/布尔 | 否 | `enabled` |
+| `v620_sortorder` | 排序号 | 整数 | 否 | `sort_order` |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` |
+| `v620_updatedat` | 更新时间 | 长日期/日期时间 | 否 | `updated_at` |
+
+建议预置 Agent：
+
+| Agent名称 | 建议编码 | 业务模块 | 职责 |
+| --- | --- | --- | --- |
+| 主调度Agent | `orchestrator` | Agent运行管理 | 识别用户意图，路由到专项 Agent，聚合结果返回。 |
+| 用户画像Agent | `profile` | 职业发展 | 维护专业、年级、GPA、兴趣、目标等用户档案，供其他 Agent 调用。 |
+| 信息检索Agent | `retrieval` | Agent运行管理 | 搜索政策、分数线、行业数据、院校信息等实时信息。 |
+| 学业规划Agent | `academic_planning` | 职业发展 | 根据 GPA、学分、排名等给出选课和提分建议。 |
+| 就业规划Agent | `career_planning` | 职业发展 | 分析专业、兴趣、市场，推荐岗位方向和薪资城市信息。 |
+| 简历优化Agent | `resume_optimization` | 职业发展 | 解析经历，诊断简历问题，按经历讲述框架改写并做岗位针对性优化。 |
+| 面试辅导Agent | `interview_coach` | 职业发展 | 识别面试类型，生成问题，模拟问答并给出改进建议。 |
+| 考研规划Agent | `postgraduate_exam` | 深造陪伴 | 评估初试能力，匹配院校档次，制定备考时间线和科目复习策略。 |
+| 保研规划Agent | `postgraduate_recommendation` | 深造陪伴 | 计算综合排名和加分项，判断保研资格，推荐目标院校和夏令营策略。 |
+| 留学规划Agent | `study_abroad` | 深造陪伴 | 评估语言、GPA、背景，匹配院校档次，规划申请时间线和文书方向。 |
+
+### 010 深造目标
+
+- 对象类型：基础资料或单据。若用户目标会反复调整且需要历史，建议单据；若只维护当前目标，建议基础资料。
+- 对象编码：`v620_cc_study_target`
+- 原逻辑对象名：`further_study_target`
+- 表名：`tk_v620_cc_study_target`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：统一承载考研、保研、留学目标。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_targetid` | 目标ID | 文本，128 | 是 | `target_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_track` | 深造方向 | 文本，64 | 是 | `track` |
+| `v620_targetschool` | 目标学校/项目 | 文本，255 | 否 | `target_school` |
+| `v620_targetmajor` | 目标专业/方向 | 文本，255 | 否 | `target_major` |
+| `v620_targetregion` | 目标地区 | 文本，255 | 否 | `target_region` |
+| `v620_targetstage` | 当前阶段 | 文本，128 | 否 | `target_stage` |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` |
+| `v620_targetjson` | 目标详情 | 大文本 | 否 | `target_json` |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` |
+| `v620_updatedat` | 更新时间 | 长日期/日期时间 | 否 | `updated_at` |
+
+`v620_track` 建议值：考研、保研、留学。代码侧可映射为 `postgraduate_exam`、`postgraduate_recommendation`、`study_abroad`。
+
+### 011 深造记录
+
+- 对象类型：单据
+- 对象编码：`v620_cc_study_record`
+- 原逻辑对象名：`further_study_record`
+- 表名：`tk_v620_cc_study_record`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存考研规划、保研诊断、留学选校等每次生成结果。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_recordid` | 记录ID | 文本，128 | 是 | `record_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_track` | 深造方向 | 文本，64 | 是 | `track` |
+| `v620_recordtype` | 记录类型 | 文本，128 | 是 | `record_type` |
+| `v620_targetid` | 关联目标ID | 文本，128 | 否 | `target_id` |
+| `v620_title` | 标题 | 文本，255 | 否 | `title` |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` |
+| `v620_targetschool` | 目标学校/项目 | 文本，255 | 否 | `target_school` |
+| `v620_targetmajor` | 目标专业/方向 | 文本，255 | 否 | `target_major` |
+| `v620_targetregion` | 目标地区 | 文本，255 | 否 | `target_region` |
+| `v620_examordeadlinedate` | 考试或截止日期 | 日期 | 否 | `exam_or_deadline_date` |
+| `v620_requestjson` | 请求内容 | 大文本 | 否 | `request_json` |
+| `v620_resultjson` | 结果内容 | 大文本 | 否 | `result_json` |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` |
+| `v620_updatedat` | 更新时间 | 长日期/日期时间 | 否 | `updated_at` |
+
+### 012 深造材料
+
+- 对象类型：单据
+- 对象编码：`v620_cc_study_material`
+- 原逻辑对象名：`further_study_material`
+- 表名：`tk_v620_cc_study_material`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存保研文书、导师联系材料、留学个人陈述、签证材料等可持续推进的材料记录。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_materialid` | 材料ID | 文本，128 | 是 | `material_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_track` | 深造方向 | 文本，64 | 是 | `track` |
+| `v620_recordid` | 来源记录ID | 文本，128 | 否 | `record_id` |
+| `v620_materialtype` | 材料类型 | 文本，128 | 是 | `material_type` |
+| `v620_title` | 标题 | 文本，255 | 否 | `title` |
+| `v620_status` | 状态 | 文本，64 | 否 | `status` |
+| `v620_filekey` | 文件标识 | 文本，255 | 否 | `file_key` |
+| `v620_contentjson` | 内容详情 | 大文本 | 否 | `content_json` |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` |
+| `v620_updatedat` | 更新时间 | 长日期/日期时间 | 否 | `updated_at` |
+
+### 013 深造进展记录
+
+- 对象类型：单据
+- 对象编码：`v620_cc_study_event`
+- 原逻辑对象名：`further_study_event`
+- 表名：`tk_v620_cc_study_event`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：保存深造目标、记录和材料的状态变化历史。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_eventid` | 事件ID | 文本，128 | 是 | `event_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_track` | 深造方向 | 文本，64 | 是 | `track` |
+| `v620_recordid` | 来源记录ID | 文本，128 | 否 | `record_id` |
+| `v620_eventtype` | 事件类型 | 文本，128 | 是 | `event_type` |
+| `v620_summary` | 事件摘要 | 文本，500 | 否 | `summary` |
+| `v620_eventjson` | 事件详情 | 大文本 | 否 | `event_json` |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` |
+
+### 014 Agent上下文引用
+
+- 对象类型：单据
+- 对象编码：`v620_cc_agent_ctx_ref`
+- 原逻辑对象名：`agent_context_ref`
+- 表名：`tk_v620_cc_agent_ctx_ref`
+- 建模状态：已建立业务对象、字段和基础布局。
+- 用途：记录一次 Agent 执行读取了哪些业务对象，为排障和可解释性服务。
+
+| 字段标识 | 名称 | 类型 | 必填 | 逻辑字段 |
+| --- | --- | --- | --- | --- |
+| `v620_refid` | 引用ID | 文本，128 | 是 | `ref_id` |
+| `v620_runid` | 执行ID | 文本，128 | 是 | `run_id` |
+| `v620_userid` | 用户标识 | 文本，128 | 是 | `user_id` |
+| `v620_sourceobject` | 来源对象 | 文本，128 | 否 | `source_object` |
+| `v620_sourceid` | 来源ID | 文本，128 | 否 | `source_id` |
+| `v620_sourcesummary` | 来源摘要 | 大文本 | 否 | `source_summary` |
+| `v620_writeback` | 是否写回 | 开关/布尔 | 否 | `write_back` |
+| `v620_createdat` | 创建时间 | 长日期/日期时间 | 否 | `created_at` |
+
+## 已建立顺序
+
+1. 用户职业画像（已建）
+2. Agent执行记录（已建）
+3. 职业测评记录（已建）
+4. 简历档案（已建）
+5. 简历诊断（已建）
+6. 今日任务（已建）
+7. 职业计划（已建）
+8. 模拟面试（已建）
+9. Agent能力定义（已建）
+10. 深造目标（已建）
+11. 深造记录（已建）
+12. 深造材料（已建）
+13. 深造进展记录（已建）
+14. Agent上下文引用（已建）
+
+## 与现有代码的关系
+
+- 当前运行时仍可继续使用 PostgreSQL 存储，不要求立即切换。
+- 上述对象字段用于未来 `Cosmic datamodel adapter` 或数据同步映射。
+- 代码侧 snake_case 逻辑字段和平台侧 `v620_xxx` 字段需要在 adapter 中显式映射。
+- 外部前端链接不受这些布局影响；平台布局主要用于管理员维护、排障、权限和报表。
