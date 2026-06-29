@@ -18,11 +18,21 @@ public class ConfigurableCosmicIdentityResolver implements CyanCruiseIdentityRes
 
     private final CosmicIdentityContextProvider provider;
     private final CosmicIdentityAdapterConfig config;
+    private final CosmicAdminAuthorityResolver adminAuthorityResolver;
 
     public ConfigurableCosmicIdentityResolver(CosmicIdentityContextProvider provider,
                                               CosmicIdentityAdapterConfig config) {
+        this(provider, config, new NoopCosmicAdminAuthorityResolver());
+    }
+
+    public ConfigurableCosmicIdentityResolver(CosmicIdentityContextProvider provider,
+                                              CosmicIdentityAdapterConfig config,
+                                              CosmicAdminAuthorityResolver adminAuthorityResolver) {
         this.provider = provider == null ? new EmptyCosmicIdentityContextProvider() : provider;
         this.config = config == null ? CosmicIdentityAdapterConfig.disabled() : config;
+        this.adminAuthorityResolver = adminAuthorityResolver == null
+                ? new NoopCosmicAdminAuthorityResolver()
+                : adminAuthorityResolver;
     }
 
     public CosmicIdentityContextDto resolve() {
@@ -48,7 +58,9 @@ public class ConfigurableCosmicIdentityResolver implements CyanCruiseIdentityRes
         identity.setDisplayName(displayName);
         identity.setUserName(firstText(context, java.util.Arrays.asList("userName", "username", "name")));
         identity.setOrgId(firstText(context, config.getOrgIdFields()));
-        identity.setRoles(resolveRoles(context));
+        List<String> roles = resolveRoles(context);
+        appendPlatformAdminRole(roles, userId, adminId);
+        identity.setRoles(roles);
         identity.setIp(text(context.get("ip")));
         identity.setUserAgent(firstText(context, java.util.Arrays.asList("userAgent", "ua")));
         identity.setSource(CosmicIdentityConstants.SOURCE_COSMIC_PLATFORM_CONTEXT);
@@ -118,6 +130,32 @@ public class ConfigurableCosmicIdentityResolver implements CyanCruiseIdentityRes
         if (isAdminAlias(safe) && !roles.contains(CosmicIdentityConstants.ROLE_ADMIN)) {
             roles.add(CosmicIdentityConstants.ROLE_ADMIN);
         }
+    }
+
+    private void appendPlatformAdminRole(List<String> roles, String userId, String adminId) {
+        if (!config.isPlatformAdminEnabled() || containsAdminRole(roles)) {
+            return;
+        }
+        try {
+            if (adminAuthorityResolver.isAdmin(userId, adminId)) {
+                appendRole(roles, CosmicIdentityConstants.ROLE_ADMIN);
+                appendRole(roles, CosmicIdentityConstants.ROLE_PLATFORM_ADMIN);
+            }
+        } catch (RuntimeException ignored) {
+            // Platform administrator lookup is best-effort; fail closed.
+        }
+    }
+
+    private boolean containsAdminRole(List<String> roles) {
+        if (roles == null) {
+            return false;
+        }
+        for (String role : roles) {
+            if (isAdminAlias(role)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String text(Object value) {

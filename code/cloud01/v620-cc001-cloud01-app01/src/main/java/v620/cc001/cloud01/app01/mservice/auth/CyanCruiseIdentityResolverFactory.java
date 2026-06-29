@@ -2,6 +2,7 @@ package v620.cc001.cloud01.app01.mservice.auth;
 
 
 import v620.cc001.cloud01.app01.mservice.auth.impl.ConfigurableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.ReflectiveCosmicAdminAuthorityResolver;
 import v620.cc001.cloud01.app01.mservice.auth.impl.UnavailableCosmicIdentityResolver;
 public final class CyanCruiseIdentityResolverFactory {
 
@@ -16,7 +17,8 @@ public final class CyanCruiseIdentityResolverFactory {
     public static CyanCruiseIdentityResolver production(CosmicIdentityContextProvider provider,
                                                         CosmicIdentityAdapterConfig config) {
         if (config != null && config.isEnabled()) {
-            return new ConfigurableCosmicIdentityResolver(provider, config);
+            return new ConfigurableCosmicIdentityResolver(provider, config,
+                    new ReflectiveCosmicAdminAuthorityResolver());
         }
         return new UnavailableCosmicIdentityResolver();
     }

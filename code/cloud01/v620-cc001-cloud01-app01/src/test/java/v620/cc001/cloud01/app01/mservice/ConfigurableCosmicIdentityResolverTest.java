@@ -1,8 +1,7 @@
 package v620.cc001.cloud01.app01.mservice;
 
 import v620.cc001.cloud01.app01.mservice.auth.impl.ConfigurableCosmicIdentityResolver;
-import v620.cc001.cloud01.app01.mservice.auth.impl.UnavailableCosmicIdentityResolver;
-import v620.cc001.cloud01.app01.mservice.auth.impl.ConfigurableCosmicIdentityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicAdminAuthorityResolver;
 import v620.cc001.cloud01.app01.mservice.auth.CosmicIdentityAdapterConfig;
 import v620.cc001.cloud01.app01.mservice.auth.CosmicIdentityContextProvider;
 import v620.cc001.cloud01.app01.mservice.auth.CyanCruiseIdentityResolverFactory;
@@ -102,6 +101,40 @@ class ConfigurableCosmicIdentityResolverTest {
     }
 
     @Test
+    void enrichesAdminRoleFromPlatformAdminAuthority() {
+        CosmicIdentityContextDto context = new ConfigurableCosmicIdentityResolver(
+                provider(map("userId", "2477190919195983874")),
+                enabled(),
+                adminAuthority(true)).resolve();
+
+        assertTrue(context.getRoles().contains(CosmicIdentityConstants.ROLE_ADMIN));
+        assertTrue(context.getRoles().contains(CosmicIdentityConstants.ROLE_PLATFORM_ADMIN));
+        assertTrue(helper.hasAdminRole(context));
+    }
+
+    @Test
+    void doesNotEnrichAdminRoleForRegularPlatformUser() {
+        CosmicIdentityContextDto context = new ConfigurableCosmicIdentityResolver(
+                provider(map("userId", "2477190919195983874")),
+                enabled(),
+                adminAuthority(false)).resolve();
+
+        assertFalse(context.getRoles().contains(CosmicIdentityConstants.ROLE_ADMIN));
+        assertFalse(helper.hasAdminRole(context));
+    }
+
+    @Test
+    void platformAdminLookupFailsClosed() {
+        CosmicIdentityContextDto context = new ConfigurableCosmicIdentityResolver(
+                provider(map("userId", "2477190919195983874")),
+                enabled(),
+                failingAdminAuthority()).resolve();
+
+        assertFalse(context.getRoles().contains(CosmicIdentityConstants.ROLE_ADMIN));
+        assertFalse(helper.hasAdminRole(context));
+    }
+
+    @Test
     void missingContextFailsSafely() {
         CosmicIdentityContextDto context = new ConfigurableCosmicIdentityResolver(provider(Collections.<String, Object>emptyMap()),
                 enabled()).resolve();
@@ -130,6 +163,18 @@ class ConfigurableCosmicIdentityResolverTest {
         }
     }
 
+    @Test
+    void readsPlatformAdminToggleFromSystemProperties() {
+        System.setProperty(CosmicIdentityAdapterConfig.PLATFORM_ADMIN_ENABLED_PROPERTY, "false");
+        try {
+            CosmicIdentityAdapterConfig config = CosmicIdentityAdapterConfig.fromSystemProperties();
+
+            assertFalse(config.isPlatformAdminEnabled());
+        } finally {
+            System.clearProperty(CosmicIdentityAdapterConfig.PLATFORM_ADMIN_ENABLED_PROPERTY);
+        }
+    }
+
     private CosmicIdentityAdapterConfig enabled() {
         CosmicIdentityAdapterConfig config = new CosmicIdentityAdapterConfig();
         config.setEnabled(true);
@@ -140,6 +185,22 @@ class ConfigurableCosmicIdentityResolverTest {
         return new CosmicIdentityContextProvider() {
             public Map<String, Object> currentContext() {
                 return map;
+            }
+        };
+    }
+
+    private CosmicAdminAuthorityResolver adminAuthority(final boolean admin) {
+        return new CosmicAdminAuthorityResolver() {
+            public boolean isAdmin(String userId, String adminId) {
+                return admin;
+            }
+        };
+    }
+
+    private CosmicAdminAuthorityResolver failingAdminAuthority() {
+        return new CosmicAdminAuthorityResolver() {
+            public boolean isAdmin(String userId, String adminId) {
+                throw new RuntimeException("platform unavailable");
             }
         };
     }

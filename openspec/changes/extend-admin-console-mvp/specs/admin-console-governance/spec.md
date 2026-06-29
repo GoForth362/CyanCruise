@@ -52,6 +52,16 @@ Every CyanCruise management WebAPI under `/cc001/admin/*`, except public questio
 - **WHEN** a request body supplies an `adminId` that does not match the resolved Cosmic administrator identity
 - **THEN** the WebAPI SHALL reject the operation and SHALL NOT execute the application service write
 
+#### Scenario: Cosmic administrator group grants management access
+
+- **WHEN** the current Cosmic platform user is recognized by the platform permission service as an administrator or administrator group member
+- **THEN** CyanCruise SHALL enrich the resolved production identity with an `ADMIN` equivalent role before checking `/cc001/admin/*` authorization
+
+#### Scenario: Cosmic administrator lookup is unavailable
+
+- **WHEN** the platform permission service is unavailable, missing, or fails during administrator lookup
+- **THEN** CyanCruise SHALL fail closed and SHALL NOT grant administrator access from the lookup alone
+
 ### Requirement: Admin user-visible Chinese copy
 
 CyanCruise SHALL show management console labels, buttons, empty states, errors, and identity hints in understandable Chinese.

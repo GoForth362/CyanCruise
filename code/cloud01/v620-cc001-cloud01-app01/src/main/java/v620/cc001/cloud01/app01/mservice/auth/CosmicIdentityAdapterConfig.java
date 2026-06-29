@@ -16,6 +16,7 @@ public class CosmicIdentityAdapterConfig {
     public static final String ORG_FIELDS_PROPERTY = "cc001.identity.adapter.org.fields";
     public static final String ROLE_FIELDS_PROPERTY = "cc001.identity.adapter.role.fields";
     public static final String ADMIN_ALIASES_PROPERTY = "cc001.identity.adapter.admin.aliases";
+    public static final String PLATFORM_ADMIN_ENABLED_PROPERTY = "cc001.identity.adapter.platformAdmin.enabled";
     public static final String DIAGNOSTICS_ENABLED_PROPERTY = "cc001.identity.adapter.diagnostics.enabled";
 
     private boolean enabled;
@@ -28,6 +29,7 @@ public class CosmicIdentityAdapterConfig {
     private List<String> adminRoleAliases = list(CosmicIdentityConstants.ROLE_ADMIN,
             CosmicIdentityConstants.ROLE_COSMIC_ADMIN,
             CosmicIdentityConstants.ROLE_PLATFORM_ADMIN);
+    private boolean platformAdminEnabled = true;
     private boolean diagnosticsEnabled = true;
 
     public static CosmicIdentityAdapterConfig disabled() {
@@ -42,6 +44,8 @@ public class CosmicIdentityAdapterConfig {
         config.setOrgIdFields(split(System.getProperty(ORG_FIELDS_PROPERTY), config.getOrgIdFields()));
         config.setRoleFields(split(System.getProperty(ROLE_FIELDS_PROPERTY), config.getRoleFields()));
         config.setAdminRoleAliases(split(System.getProperty(ADMIN_ALIASES_PROPERTY), config.getAdminRoleAliases()));
+        config.setPlatformAdminEnabled(Boolean.parseBoolean(System.getProperty(PLATFORM_ADMIN_ENABLED_PROPERTY,
+                String.valueOf(config.isPlatformAdminEnabled()))));
         config.setDiagnosticsEnabled(Boolean.parseBoolean(
                 System.getProperty(DIAGNOSTICS_ENABLED_PROPERTY, String.valueOf(config.isDiagnosticsEnabled()))));
         return config;
@@ -93,6 +97,14 @@ public class CosmicIdentityAdapterConfig {
 
     public void setAdminRoleAliases(List<String> adminRoleAliases) {
         this.adminRoleAliases = adminRoleAliases;
+    }
+
+    public boolean isPlatformAdminEnabled() {
+        return platformAdminEnabled;
+    }
+
+    public void setPlatformAdminEnabled(boolean platformAdminEnabled) {
+        this.platformAdminEnabled = platformAdminEnabled;
     }
 
     public boolean isDiagnosticsEnabled() {

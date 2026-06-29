@@ -39,6 +39,10 @@ CyanCruise 当前已经存在 `admin-console-governance` 规格、`AdminConsoleG
 
    本次 MVP 只完善管理端调用与交互，不引入新的数据模型或数据库迁移。后续如需接入正式 Cosmic 数据对象或 PostgreSQL 存储，应另开 change 记录映射和验证方式。
 
+## Additional Decision: Cosmic 管理员体系对接
+
+管理端权限优先使用当前 Cosmic 登录身份中的显式角色；当角色为空但已解析到平台用户 ID 时，后端身份解析器 SHALL 通过 Cosmic 权限服务判断当前用户是否为平台管理员或管理员分组成员。该判断采用运行期反射接入 `kd.bos.permission.api.PermissionService.isAdminUser(long)`，并以管理员分组查询作为补充探测；如果平台权限服务不可用或调用失败，系统 SHALL fail closed，不补充 `ADMIN` 角色。
+
 ## Risks / Trade-offs
 
 - 管理端部分数据仍来自现有存储适配或演示数据边界 → 在页面文案中避免承诺完整生产数据，后续按数据对象迁移逐步替换。
