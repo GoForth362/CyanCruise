@@ -98,13 +98,43 @@ The static webapp can call this mode by adding these query parameters once:
 apiMode=kapi&access_token=<token>
 ```
 
-The current accepted local portal URL shape is:
+This KAPI URL shape is for explicit debugging only:
 
 ```text
 http://10.0.0.8:8080/ierp/isv/v620/cyancruise/index.htm?apiMode=kapi&access_token=<new-token>#workbench
 ```
 
-The webapp defaults to `cloudId=v620`, `appNumber=v620_cc001`, `apiCode=cc001/cyancruise/route`, and `kapiRouteVersion=v2`. These can be overridden in the URL if a tenant uses different OpenAPI metadata. Use `kapiRouteVersion=legacy` only for the older `/kapi/app/{appId}/{serviceName}/` route. The values are cached in browser localStorage for later page loads. Without `apiMode=kapi`, the page keeps the older direct `/ierp/cc001/*` contract mode for contract display and non-Cosmic harnesses.
+正式自建应用菜单不要把 `access_token` 放在 URL 中。菜单应使用固定的 server-managed 入口：
+
+```text
+/ierp/isv/v620/cyancruise/index.htm?apiMode=server#workbench
+```
+
+如果现有菜单已经是下面这种形式，也可以继续使用；未显式指定 `apiMode` 时，前端默认会走 server-managed 模式：
+
+```text
+/ierp/isv/v620/cyancruise/index.html?ccRoute=workbench
+```
+
+`apiMode=server` 时，前端默认调用已注册的 `/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route`，请求体是 `{path, body}`。
+不要把前端请求配置成 `/ierp/cc001/cyancruise/server/route`；该地址不是浏览器可直接访问的 KAPI v2 路径，会返回 404。
+如果后续在苍穹 OpenAPI 中单独注册并启用了 `cc001/cyancruise/server/route`，可以通过 URL 参数 `serverApiCode=cc001/cyancruise/server/route` 切换到独立 server-managed route。
+后端会使用 `systemProp.cc001.kapi.token.*` 配置换取并缓存 KAPI token，然后由后端带 token 调用
+`cc001/cyancruise/route`。浏览器、应用菜单、localStorage 都不应保存 KAPI token 或 client secret。
+
+如果本地运行态没有直接暴露 `POST /ierp/cc001/*`，自建应用菜单应使用下面这种外部链接。
+这是本地验证时推荐的“自定义 WebAPI 路由”入口：
+
+```text
+/ierp/isv/v620/cyancruise/index.htm?apiMode=server#workbench
+```
+
+`access_token` 只是 KAPI 调用凭据，不能当作 CyanCruise 用户标识使用。当前用户仍然必须由后端
+Cosmic `RequestContext` 桥接解析；如果页面提示 `IDENTITY_REQUIRED`，先检查
+`cc001.identity.adapter.enabled`、`cc001.identity.login.provider.enabled`、自定义 API 注册和第三方应用授权，
+不要为了绕过问题去改用户数据。
+
+The webapp defaults to server-managed mode. In this mode it posts to the registered KAPI v2 custom WebAPI `cc001/cyancruise/route` and does not require `access_token` in the menu URL. It also keeps `cloudId=v620`, `appNumber=v620_cc001`, `apiCode=cc001/cyancruise/route`, and `kapiRouteVersion=v2` for explicit `apiMode=kapi` debugging. These can be overridden in the URL if a tenant uses different OpenAPI metadata. Use `kapiRouteVersion=legacy` only for the older `/kapi/app/{appId}/{serviceName}/` route. The values are cached in browser localStorage only for explicit `apiMode=kapi` debugging. Direct `/ierp/cc001/*` mode remains for contract display and non-Cosmic harnesses.
 
 For the local validation API details, the successful configuration disabled "third-party application authorization" on the API itself and instead relied on the configured third-party application `CyanCruise` access token plus business object and permission item authorization. If the API keeps rejecting a valid token, recheck the OpenAPI API detail page, the bound business object, and the permission item before changing CyanCruise code.
 

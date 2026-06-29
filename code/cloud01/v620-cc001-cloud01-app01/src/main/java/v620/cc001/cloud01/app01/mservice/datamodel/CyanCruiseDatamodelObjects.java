@@ -1,7 +1,11 @@
 package v620.cc001.cloud01.app01.mservice.datamodel;
 
 /**
- * Object and field names for the CyanCruise Cosmic datamodel adapter layer.
+ * Logical object and field names used by CyanCruise application code.
+ *
+ * <p>The Kingdee business object codes are defined in CyanCruiseBusinessModelMapping.
+ * Keep these logical names stable so existing storage and WebAPI behavior does not
+ * change when the platform object names are adjusted.</p>
  */
 public final class CyanCruiseDatamodelObjects {
 
@@ -18,6 +22,13 @@ public final class CyanCruiseDatamodelObjects {
     public static final String RESUME_DIAGNOSIS = "cc_cl_resume_diagnosis";
     public static final String ASSISTANT_SESSION = "cc_cl_assistant_session";
     public static final String ASSISTANT_MESSAGE = "cc_cl_assistant_message";
+    public static final String AGENT_RUN = "cc_agent_run";
+    public static final String AGENT_CAPABILITY = "cc_agent_capability";
+    public static final String STUDY_TARGET = "cc_study_target";
+    public static final String STUDY_RECORD = "cc_study_record";
+    public static final String STUDY_MATERIAL = "cc_study_material";
+    public static final String STUDY_EVENT = "cc_study_event";
+    public static final String AGENT_CONTEXT_REF = "cc_agent_context_ref";
 
     public static final String ID = "id";
     public static final String USER_ID = "user_id";

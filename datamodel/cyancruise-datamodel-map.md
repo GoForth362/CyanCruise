@@ -37,4 +37,6 @@
 - 金蝶苍穹字段标识统一使用 `v620_` 前缀，且不得以 `_id` 结尾；涉及 ID 语义时使用 `userid`、`runid`、`scaleid`、`resumeid` 等连续写法。
 - 存储适配对象沿用 `cc_cl_` 逻辑对象名，便于对应已有 storage boundary。
 - 后端 DTO、SQL、PostgreSQL 和存储适配层 MAY 继续使用 `user_id`、`resume_id` 等 snake_case 逻辑字段；金蝶字段标识 SHALL 在建模文档中标明对应逻辑字段。
+- Java 代码中的逻辑对象和字段名由 `CyanCruiseBusinessModelMapping` 映射到金蝶业务对象编码与字段标识；需要接入真实 Cosmic 数据模型时，通过 `MappedCosmicDatamodelGateway` 包装底层网关，现有 storage boundary 不直接改名。
+- `id` 是适配层内部主键语义，暂不映射为页面字段；真实 Cosmic 主键由业务对象主实体的 `FId/FID` 处理。
 - 面向用户的页面、按钮、提示和文档说明使用中文；代码标识、表名、字段名和 OpenSpec 关键字保留英文。

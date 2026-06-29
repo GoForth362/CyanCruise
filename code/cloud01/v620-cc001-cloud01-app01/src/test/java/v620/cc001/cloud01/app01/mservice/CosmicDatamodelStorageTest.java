@@ -30,8 +30,10 @@ import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.datamodel.CyanCruiseDatamodelObjects;
+import v620.cc001.cloud01.app01.mservice.datamodel.CyanCruiseBusinessModelMapping;
 import v620.cc001.cloud01.app01.mservice.datamodel.CosmicDatamodelRecord;
 import v620.cc001.cloud01.app01.mservice.datamodel.InMemoryCosmicDatamodelGateway;
+import v620.cc001.cloud01.app01.mservice.datamodel.MappedCosmicDatamodelGateway;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -65,6 +67,30 @@ class CosmicDatamodelStorageTest {
         CosmicDatamodelRecord row = gateway.findOne(CyanCruiseDatamodelObjects.USER_PROFILE, null);
         assertEquals("user-1", row.get(CyanCruiseDatamodelObjects.USER_ID));
         assertEquals("HIGH", row.get("personalization_level"));
+    }
+
+    @Test
+    void mappedGatewayStoresModeledObjectsWithPlatformCodes() {
+        InMemoryCosmicDatamodelGateway rawGateway = new InMemoryCosmicDatamodelGateway();
+        MappedCosmicDatamodelGateway gateway = new MappedCosmicDatamodelGateway(rawGateway);
+        CosmicCareerProfileStorage storage = new CosmicCareerProfileStorage(gateway);
+        CareerUserProfileDto profile = new CareerUserProfileDto();
+        CareerUserProfileDto.TargetRole target = new CareerUserProfileDto.TargetRole();
+        target.setRole("Java backend");
+        profile.setTarget(target);
+        profile.setPersonalizationLevel("HIGH");
+        profile.setCompletenessScore(Integer.valueOf(90));
+
+        storage.saveProfile("mapped-user", profile);
+
+        String platformObject = CyanCruiseBusinessModelMapping.toPlatformObject(CyanCruiseDatamodelObjects.USER_PROFILE);
+        CosmicDatamodelRecord platformRow = rawGateway.findOne(platformObject, null);
+        assertNotNull(platformRow);
+        assertEquals("mapped-user", platformRow.get("v620_userid"));
+        assertEquals("Java backend", platformRow.get("v620_targetrole"));
+        assertEquals(Integer.valueOf(90), platformRow.get("v620_completenessscore"));
+        assertEquals(null, platformRow.get(CyanCruiseDatamodelObjects.USER_ID));
+        assertEquals(Integer.valueOf(90), storage.loadProfile("mapped-user").getCompletenessScore());
     }
 
     @Test

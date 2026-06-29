@@ -35,3 +35,10 @@
 
 - [x] 5.1 运行 `openspec validate model-cyancruise-business-objects --strict`。
 - [x] 5.2 人工核对金蝶设计器中已建对象与文档一致。
+
+## 6. 代码适配补齐
+
+- [x] 6.1 增加 `CyanCruiseBusinessModelMapping`，将现有 storage boundary 的逻辑对象/字段映射到金蝶 `v620_cc_*` 业务对象和 `v620_*` 字段标识。
+- [x] 6.2 增加 `MappedCosmicDatamodelGateway`，在不改动现有前端和业务服务调用的前提下，支持底层网关使用平台对象编码。
+- [x] 6.3 保留现有 `cc_cl_*` 逻辑常量，新增 Agent、深造陪伴等已建业务对象的逻辑常量，避免破坏原有功能。
+- [x] 6.4 补充映射网关回归测试，验证用户职业画像仍能按原接口读写，同时底层记录使用 `v620_cc_user_profile` 和 `v620_userid` 等平台编码。

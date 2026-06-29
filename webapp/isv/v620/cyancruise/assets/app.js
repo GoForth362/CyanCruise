@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "20260627-cyancruise-v129";
+  var APP_VERSION = "20260628-cyancruise-v135";
 
   var endpoints = {
     snapshot: "/cc001/career-profile/snapshot/get",
@@ -70,7 +70,8 @@
     furtherStudyRecordStatusUpdate: "/cc001/further-study/records/status/update",
     furtherStudyMaterialSave: "/cc001/further-study/materials/save",
     furtherStudyMaterialList: "/cc001/further-study/materials/list",
-    furtherStudyRecordEvents: "/cc001/further-study/records/events"
+    furtherStudyRecordEvents: "/cc001/further-study/records/events",
+    serverManagedApiCode: "cc001/cyancruise/route"
   };
 
   var pages = [
@@ -6181,6 +6182,7 @@
     return post(endpoints.identityCurrent, {}).then(function (identity) {
       var userId = firstText(identity.userId, identity.adminId);
       if (!userId || identity.status !== "OK") {
+        state.identityDiagnostic = identityDiagnosticText(identity, null);
         showMessage("warning", "平台身份未就绪", firstText(identity.message, identity.status, "identity response has no userId"));
         return;
       }
@@ -6195,6 +6197,7 @@
       state.identityDiagnostic = "";
       updateIdentityState();
     }).catch(function (error) {
+      state.identityDiagnostic = identityDiagnosticText(null, error);
       showMessage("warning", "平台身份调用失败", error && error.message ? error.message : "identity request failed");
     });
   }
@@ -6212,7 +6215,7 @@
       }
       return response.json();
     }).then(function (payload) {
-      if (request.mode === "kapi" || request.mode === "kapi-v2") {
+      if (request.mode === "kapi" || request.mode === "kapi-v2" || request.mode === "server" || request.mode === "server-kapi-v2") {
         if (payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
           if (!payload.success) {
             throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
@@ -6233,6 +6236,16 @@
 
   function resolveApiRequest(path, body) {
     var mode = resolveApiMode();
+    if (mode === "server" || mode === "server-managed") {
+      return {
+        mode: "server-kapi-v2",
+        url: resolveServerManagedRouteUrl(),
+        body: {
+          path: path,
+          body: body
+        }
+      };
+    }
     if (mode !== "kapi") {
       return { mode: "direct", url: resolveApiBase() + path, body: body };
     }
@@ -6255,6 +6268,13 @@
         platformIdentity: kapiPlatformIdentity(accessToken)
       }
     };
+  }
+
+  function resolveServerManagedRouteUrl() {
+    var cloudId = firstText(readQueryOrStorage("serverCloudId", "cyancruise.server.cloudId"), "v620");
+    var appNumber = firstText(readQueryOrStorage("serverAppNumber", "cyancruise.server.appNumber"), "v620_cc001");
+    var apiCode = firstText(readQueryOrStorage("serverApiCode", "cyancruise.server.apiCode"), endpoints.serverManagedApiCode);
+    return resolveApiBase() + "/kapi/v2/" + encodeURIComponent(cloudId) + "/" + encodeURIComponent(appNumber) + "/" + encodeApiCode(apiCode);
   }
 
   function resolveKapiV2Request(path, body) {
@@ -6310,6 +6330,7 @@
       "app=" + APP_VERSION,
       "front=" + firstText(state.identity && state.identity.source, "missing"),
       "apiMode=" + resolveApiMode(),
+      "serverRoute=" + (resolveApiMode() === "server" || resolveApiMode() === "server-managed" ? "registered-kapi-v2" : "no"),
       "kapiToken=" + (token ? "yes" : "no"),
       "tokenUser=" + (tokenUser ? "yes" : "no")
     ];
@@ -6340,6 +6361,11 @@
         clearKapiState();
         return "direct";
       }
+      if (fromQuery === "server" || fromQuery === "server-managed") {
+        clearKapiTokenState();
+        localStorage.setItem("cyancruise.apiMode", "server");
+        return "server";
+      }
       localStorage.setItem("cyancruise.apiMode", fromQuery);
       return fromQuery;
     }
@@ -6349,18 +6375,25 @@
       clearKapiState();
       return "direct";
     }
+    if (stored === "server" || stored === "server-managed") {
+      return "server";
+    }
     if (stored === "kapi") {
       if (storedKapiAccessToken()) {
         return "kapi";
       }
       localStorage.removeItem("cyancruise.apiMode");
-      return "direct";
+      return "server";
     }
-    return "direct";
+    return "server";
   }
 
   function clearKapiState() {
     localStorage.removeItem("cyancruise.apiMode");
+    clearKapiTokenState();
+  }
+
+  function clearKapiTokenState() {
     localStorage.removeItem("cyancruise.kapi.accessToken");
     localStorage.removeItem("cyancruise.kapi.appId");
     localStorage.removeItem("cyancruise.kapi.serviceName");
@@ -6368,6 +6401,9 @@
     localStorage.removeItem("cyancruise.kapi.appNumber");
     localStorage.removeItem("cyancruise.kapi.apiCode");
     localStorage.removeItem("cyancruise.kapi.routeVersion");
+    localStorage.removeItem("cyancruise.server.cloudId");
+    localStorage.removeItem("cyancruise.server.appNumber");
+    localStorage.removeItem("cyancruise.server.apiCode");
   }
 
   function storedKapiAccessToken() {
@@ -6591,10 +6627,40 @@
   }
 
   function mapLegacyRoute(route) {
-    if (route === "postgraduate-exam") {
-      return "postgraduate";
-    }
-    return route;
+    var legacyRoutes = {
+      "careerloop": "workbench",
+      "home": "workbench",
+      "index": "workbench",
+      "career-home": "employment-home",
+      "employment-guidance": "employment-home",
+      "job-guidance": "employment-home",
+      "resume-center": "resume-home",
+      "resume-create": "resume",
+      "resume-edit": "resume",
+      "resume-revise": "resume",
+      "resume-diagnose": "resume-diagnosis",
+      "interview-center": "interview-home",
+      "guided-interview": "interview",
+      "ai-interview": "interview",
+      "mock-interview": "interview",
+      "panorama-interview": "interview-panorama",
+      "panorama-interview-history": "interview-panorama-history",
+      "deep-study": "further-study-home",
+      "further-study": "further-study-home",
+      "study-home": "further-study-home",
+      "postgraduate-companion": "postgraduate",
+      "postgraduate-exam": "postgraduate",
+      "graduate-exam": "postgraduate",
+      "recommendation-companion": "postgraduate-recommendation",
+      "postgraduate-recommend": "postgraduate-recommendation",
+      "recommendation": "postgraduate-recommendation",
+      "abroad-companion": "study-abroad",
+      "study-abroad-companion": "study-abroad",
+      "career-assessment": "assessment",
+      "daily-action": "today-action",
+      "abroad": "study-abroad"
+    };
+    return legacyRoutes[route] || route;
   }
 
   function hasUserIdentity() {

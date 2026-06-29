@@ -53,6 +53,9 @@ systemProp.cosmic_home=D:/code/kingdee/cosmic/home
 #systemProp.cc001.kapi.token.timeoutSeconds=10
 #systemProp.cc001.kapi.token.cacheSeconds=3300
 #systemProp.cc001.kapi.token.expirySkewSeconds=60
+# Optional. If omitted, CyanCruise derives this from the token endpoint base URL.
+#systemProp.cc001.kapi.route.endpoint=http://10.0.0.8:8080/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route
+#systemProp.cc001.kapi.route.timeoutSeconds=10
 
 #--Performance configuration for gradle build
 org.gradle.parallel=true

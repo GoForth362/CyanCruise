@@ -21,3 +21,11 @@
 - [x] 4.2 Run `node --check webapp\isv\v620\cyancruise\assets\app.js`.
 - [x] 4.3 Run `node webapp\isv\v620\cyancruise\validate-routes.js`.
 - [x] 4.4 Run `openspec validate enable-server-managed-kapi-auth --strict`.
+
+## 5. Server-managed browser proxy
+
+- [x] 5.1 Add a backend server-managed route that receives browser calls without frontend tokens.
+- [x] 5.2 Reuse backend KAPI token acquisition/cache to call the existing `cc001/cyancruise/route` custom WebAPI.
+- [x] 5.3 Preserve current Cosmic login context as CyanCruise user identity and do not infer user identity from KAPI tokens.
+- [x] 5.4 Add `apiMode=server` in the static webapp and keep explicit `apiMode=kapi` only for debugging.
+- [x] 5.5 Update deployment guidance for fixed menu URLs without `access_token`.

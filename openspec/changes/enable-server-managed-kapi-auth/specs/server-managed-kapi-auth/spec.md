@@ -44,3 +44,18 @@ Server-managed KAPI AccessToken SHALL be treated as an OpenAPI calling credentia
 #### Scenario: Production identity is missing
 - **WHEN** no Cosmic login context is available for a protected user-owned WebAPI
 - **THEN** CyanCruise SHALL preserve identity-required behavior instead of trusting the KAPI token configuration as user identity
+
+### Requirement: Server-managed browser route
+CyanCruise SHALL provide a server-managed backend route at KAPI v2 api code `cc001/cyancruise/server/route` that accepts `{path, body}` from the static webapp without requiring the browser to provide `access_token`, `clientSecret`, or any KAPI credential. The backend route SHALL acquire or reuse a cached KAPI AccessToken server-side, call the existing `cc001/cyancruise/route` custom WebAPI, and return the routed business response to the browser.
+
+#### Scenario: Browser calls server-managed route
+- **WHEN** the webapp posts a CyanCruise business path to the server-managed route
+- **THEN** the backend SHALL attach a server-acquired KAPI token only to the backend-to-KAPI request and SHALL NOT include that token in the browser response
+
+#### Scenario: Identity endpoint is requested
+- **WHEN** the webapp requests `/cc001/identity/current` through the server-managed route
+- **THEN** the backend SHALL return the current Cosmic login identity directly and SHALL NOT acquire a KAPI token for that identity check
+
+#### Scenario: Protected route lacks login context
+- **WHEN** a protected business path is requested but the current Cosmic login context is unavailable
+- **THEN** the backend SHALL reject the request with identity-required diagnostics before acquiring or using a KAPI token
