@@ -9,6 +9,11 @@ CyanCruise SHALL provide a management console page in the existing CyanCruise we
 - **WHEN** an authorized administrator opens the `admin-console` route
 - **THEN** the page SHALL show management sections for 总览, 用户管理, 内容管理, 题库审核, 通知公告, and 操作记录
 
+#### Scenario: Admin uses management workspace layout
+
+- **WHEN** an authorized administrator opens the `admin-console` route
+- **THEN** the page SHALL present a management workspace with a persistent navigation area, top account area, spacious content region, and table-oriented panels that follow the CyanCruise user-facing visual style
+
 #### Scenario: Non-admin opens management console
 
 - **WHEN** a signed-in caller without an `ADMIN` equivalent role opens the `admin-console` route

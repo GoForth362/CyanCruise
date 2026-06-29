@@ -476,6 +476,9 @@
     if (!item) {
       return;
     }
+    if (document.body) {
+      document.body.classList.toggle("admin-mode", item.key === "admin-console");
+    }
     if (item.audience === "admin" && !hasAdminRole(state.identity)) {
       renderForbidden(item);
       return;

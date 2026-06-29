@@ -1,7 +1,7 @@
 (function (window, document) {
   "use strict";
 
-  var APP_BOOT_VERSION = "20260630-cyancruise-v141";
+  var APP_BOOT_VERSION = "20260630-cyancruise-v145";
 
   function bootRuntime() {
     var currentScript = document.currentScript;

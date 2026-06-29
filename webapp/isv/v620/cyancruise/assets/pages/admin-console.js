@@ -1,8 +1,17 @@
-(function (window) {
+(function (window, document) {
   "use strict";
 
   var registerPage = window.CYANCRUISE_REGISTER_PAGE_MODULE || function () {};
   var attachRenderer = window.CYANCRUISE_ATTACH_PAGE_RENDERER || function () {};
+
+  var NAV_ITEMS = [
+    ["overview", "数智大屏"],
+    ["users", "用户管理"],
+    ["content", "内容审核"],
+    ["questions", "题库审核"],
+    ["broadcast", "通知公告"],
+    ["audit", "审计日志"]
+  ];
 
   registerPage("admin-console", ["admin-console"], "管理后台");
 
@@ -10,32 +19,52 @@
     var adminService = window.CYANCRUISE_SERVICES && window.CYANCRUISE_SERVICES.admin;
     var identity = context.identity || {};
     var canAdmin = context.hasAdminRole && context.hasAdminRole(identity);
+    setAdminMode(true);
 
     if (!identity.userId && !identity.adminId) {
-      context.renderShell(item, context.statePanel("需要身份", "请先通过 Cosmic 登录进入应用；开发验证可使用 identityMode=development 并设置 userId。", "warning"));
+      renderStandaloneState(context, "需要身份", "请先通过 Cosmic 登录进入应用。");
       return;
     }
     if (!canAdmin) {
-      context.renderShell(item, context.statePanel("无管理员权限", "当前账号可以继续使用用户端，但不能进入管理后台。", "warning"));
+      renderStandaloneState(context, "无管理员权限", "当前账号可以继续使用用户端，但不能进入管理后台。");
       return;
     }
     if (!adminService || typeof adminService.load !== "function") {
-      context.renderShell(item, context.statePanel("管理服务未加载", "前端管理服务暂不可用，请刷新页面后重试。", "warning"));
+      renderStandaloneState(context, "管理服务未加载", "前端管理服务暂不可用，请刷新页面后重试。");
       return;
     }
 
-    context.renderShell(item, context.statePanel("正在加载管理后台", "正在读取用户、内容、题库和操作记录。", "info"));
+    renderStandaloneState(context, "正在加载管理后台", "正在读取用户、内容、题库和操作记录。");
     adminService.load(adminContext(context)).then(function (data) {
       if (!data.authorized) {
-        context.renderShell(item, context.statePanel("无管理员权限", data.message || "当前账号没有管理后台权限。", "warning"));
+        renderStandaloneState(context, "无管理员权限", data.message || "当前账号没有管理后台权限。");
         return;
       }
-      context.renderShell(item, renderConsole(data, context));
-      bindActions(item, context, data);
+      renderAdminApp(item, context, data);
+      bindActions(item, context);
     }).catch(function (error) {
-      context.renderShell(item, context.statePanel("管理后台暂不可用", messageOf(error), "warning"));
+      renderStandaloneState(context, "管理后台暂不可用", messageOf(error));
     });
   });
+
+  function setAdminMode(on) {
+    if (document.body) {
+      document.body.classList.toggle("admin-mode", !!on);
+    }
+  }
+
+  function renderStandaloneState(context, title, text) {
+    if (context.pageHost) {
+      context.pageHost.innerHTML = '<section class="admin-app admin-state-only">' +
+        '<main class="admin-main"><section class="admin-panel admin-state-panel">' +
+        '<h2>' + esc(context, title) + '</h2><p>' + esc(context, text) + '</p>' +
+        '<div class="admin-state-actions"><button type="button" id="adminReturnHomeButton">返回首页</button></div>' +
+        '</section></main></section>';
+      bindPlatformHomeButton(context.pageHost);
+      return;
+    }
+    context.renderShell({ title: "管理后台", summary: "" }, context.statePanel(title, text, "warning"));
+  }
 
   function adminContext(context) {
     return {
@@ -46,158 +75,166 @@
     };
   }
 
-  function renderConsole(data, context) {
-    return '<section class="admin-console">' +
-      '<div class="admin-hero">' +
-      '<div><p class="eyebrow">管理后台</p><h2>平台运营管理</h2><p>管理用户状态、内容展示、题库审核、通知公告和操作记录。</p></div>' +
-      '<div class="admin-identity"><span>当前管理员</span><strong>' + esc(context, data.adminId || "-") + '</strong><small>' + esc(context, roleText(data.whoami)) + '</small></div>' +
-      '</div>' +
-      '<div class="admin-tabs" role="tablist">' +
-      tab("overview", "总览", true) +
-      tab("users", "用户管理", false) +
-      tab("content", "内容管理", false) +
-      tab("questions", "题库审核", false) +
-      tab("broadcast", "通知公告", false) +
-      tab("audit", "操作记录", false) +
-      '</div>' +
-      '<div class="admin-sections">' +
+  function renderAdminApp(item, context, data) {
+    context.pageHost.innerHTML = '<section class="admin-app">' +
+      renderSidebar(context) +
+      '<main class="admin-main">' +
+      renderTopbar(context, data) +
+      '<section class="admin-workspace">' +
       section("overview", true, renderOverview(data, context)) +
       section("users", false, renderUsers(data, context)) +
       section("content", false, renderContent(data, context)) +
       section("questions", false, renderQuestions(data, context)) +
       section("broadcast", false, renderBroadcast(context)) +
       section("audit", false, renderAudit(data, context)) +
-      '</div>' +
-      '</section>';
+      '</section></main></section>';
+  }
+
+  function renderSidebar(context) {
+    return '<aside class="admin-sidebar" aria-label="管理后台导航">' +
+      '<div class="admin-brand"><strong>CyanCruise</strong><span>数智管理后台</span></div>' +
+      '<nav class="admin-side-nav" role="tablist">' +
+      NAV_ITEMS.map(function (item, index) {
+        return '<button type="button" class="admin-nav-item' + (index === 0 ? " active" : "") +
+          '" data-tab="' + item[0] + '"><span class="admin-nav-mark"></span>' + esc(context, item[1]) + '</button>';
+      }).join("") +
+      '</nav></aside>';
+  }
+
+  function renderTopbar(context, data) {
+    var name = first(data.whoami && data.whoami.userName, data.whoami && data.whoami.displayName, data.adminId, "admin");
+    return '<header class="admin-topbar">' +
+      '<div><h2 id="adminSectionTitle">数智大屏</h2><p id="adminSectionSub">查看平台关键指标和数据覆盖情况</p></div>' +
+      '<div class="admin-account"><span>' + esc(context, name) + '</span><button type="button" id="adminReturnHomeButton">返回用户端</button></div>' +
+      '</header>';
   }
 
   function renderOverview(data, context) {
     var dashboard = data.dashboard || {};
     var analytics = data.analytics || {};
-    return '<div class="admin-metrics">' +
-      metric(context, "学生数量", dashboard.studentCount) +
-      metric(context, "面试次数", first(analytics.totalInterviews, dashboard.interviewCount)) +
-      metric(context, "测评次数", analytics.totalAssessments) +
-      metric(context, "用户总数", analytics.totalUsers) +
+    return '<div class="admin-kpi-grid">' +
+      kpi(context, "学生数量", dashboard.studentCount, "已纳入统计的学生") +
+      kpi(context, "面试次数", first(analytics.totalInterviews, dashboard.interviewCount), "模拟面试累计") +
+      kpi(context, "测评次数", analytics.totalAssessments, "能力测评累计") +
+      kpi(context, "用户总数", analytics.totalUsers, "平台注册用户") +
       '</div>' +
-      '<section class="panel full"><h3>数据覆盖</h3><p>' +
-      '报告数量：' + esc(context, first(dashboard.reportCount, 0)) +
-      '，跳过报告：' + esc(context, first(dashboard.skippedReportCount, 0)) +
-      '。近 30 天事件会按后端返回原样展示，未知事件不会导致页面失败。' +
-      '</p></section>';
+      '<section class="admin-panel"><div class="admin-panel-head"><div><h3>数据覆盖</h3><p>报告、事件和后台采集状态</p></div></div>' +
+      '<div class="admin-summary-row">' +
+      '<span>报告数量 <strong>' + esc(context, first(dashboard.reportCount, 0)) + '</strong></span>' +
+      '<span>跳过报告 <strong>' + esc(context, first(dashboard.skippedReportCount, 0)) + '</strong></span>' +
+      '<span>近 30 天事件会按后端返回原样展示</span>' +
+      '</div></section>';
   }
 
   function renderUsers(data, context) {
     var users = data.users && data.users.items || [];
-    if (!users.length) {
-      return empty("暂无用户数据", "接入正式用户存储后，这里会显示用户状态和最近面试情况。", context);
-    }
-    return '<section class="panel full"><h3>用户管理</h3><div class="admin-table-wrap"><table class="admin-table">' +
-      '<thead><tr><th>用户</th><th>学校/专业</th><th>状态</th><th>组织</th><th>操作</th></tr></thead><tbody>' +
-      users.map(function (user) {
+    return panel(context, "用户管理", "管理注册用户和账号状态", '<div class="admin-panel-tools"><input type="search" placeholder="搜索用户名称..."></div>' +
+      (users.length ? table([
+        "用户", "学校/专业", "状态", "组织", "操作"
+      ], users.map(function (user) {
         var status = String(user.status || "ACTIVE");
         var banned = status === "BANNED";
-        return '<tr><td><strong>' + esc(context, first(user.nickname, user.userId)) + '</strong><small>' + esc(context, user.userId) + '</small></td>' +
-          '<td>' + esc(context, first(user.school, "-")) + '<small>' + esc(context, first(user.major, "")) + '</small></td>' +
-          '<td><span class="admin-badge ' + (banned ? "danger" : "ok") + '">' + esc(context, banned ? "已禁用" : "正常") + '</span></td>' +
-          '<td>' + esc(context, first(user.orgId, "-")) + '</td>' +
-          '<td><button type="button" class="admin-action" data-action="' + (banned ? "unban-user" : "ban-user") + '" data-id="' + escAttr(context, user.userId) + '">' + (banned ? "解禁" : "禁用") + '</button></td></tr>';
-      }).join("") +
-      '</tbody></table></div></section>';
+        return [
+          identityCell(context, first(user.nickname, user.userId), user.userId),
+          twoLine(context, first(user.school, "-"), first(user.major, "")),
+          badge(context, banned ? "禁用" : "正常", banned ? "warn" : "ok"),
+          esc(context, first(user.orgId, "-")),
+          actionButton(context, banned ? "unban-user" : "ban-user", user.userId, banned ? "解禁" : "禁用")
+        ];
+      })) : empty("暂无用户数据", "接入正式用户存储后，这里会显示用户状态和最近面试情况。", context)));
   }
 
   function renderContent(data, context) {
     var content = data.content || [];
-    if (!content.length) {
-      return empty("暂无内容数据", "这里用于管理首页文章、视频和资源内容。", context);
-    }
-    return '<section class="panel full"><h3>内容管理</h3><div class="admin-table-wrap"><table class="admin-table">' +
-      '<thead><tr><th>标题</th><th>类型</th><th>展示状态</th><th>操作</th></tr></thead><tbody>' +
-      content.map(function (item) {
-        return '<tr><td><strong>' + esc(context, item.title) + '</strong><small>' + esc(context, first(item.summary, item.contentId)) + '</small></td>' +
-          '<td>' + esc(context, contentType(item.type)) + '</td>' +
-          '<td>' + badge(context, item.pinned ? "已置顶" : "未置顶", item.pinned ? "ok" : "") + " " + badge(context, item.hidden ? "已隐藏" : "展示中", item.hidden ? "danger" : "ok") + '</td>' +
-          '<td><button type="button" class="admin-action" data-action="pin-content" data-id="' + escAttr(context, item.contentId) + '">' + (item.pinned ? "取消置顶" : "置顶") + '</button>' +
-          '<button type="button" class="admin-action" data-action="hide-content" data-id="' + escAttr(context, item.contentId) + '">' + (item.hidden ? "恢复展示" : "隐藏") + '</button></td></tr>';
-      }).join("") +
-      '</tbody></table></div></section>';
+    return panel(context, "内容审核", "管理首页文章、视频和资源展示", "" +
+      (content.length ? table(["标题", "类型", "展示状态", "操作"], content.map(function (item) {
+        return [
+          twoLine(context, item.title, first(item.summary, item.contentId)),
+          esc(context, contentType(item.type)),
+          badge(context, item.pinned ? "置顶" : "未置顶", item.pinned ? "ok" : "") + " " +
+            badge(context, item.hidden ? "隐藏" : "展示中", item.hidden ? "warn" : "ok"),
+          actionButton(context, "pin-content", item.contentId, item.pinned ? "取消置顶" : "置顶") +
+            actionButton(context, "hide-content", item.contentId, item.hidden ? "恢复" : "隐藏")
+        ];
+      })) : empty("暂无内容数据", "这里用于管理首页文章、视频和资源内容。", context)));
   }
 
   function renderQuestions(data, context) {
     var questions = data.questions || [];
-    if (!questions.length) {
-      return empty("暂无题库数据", "这里用于审核用户贡献题、AI 生成题和待发布题目。", context);
-    }
-    return '<section class="panel full"><h3>题库审核</h3><div class="admin-table-wrap"><table class="admin-table">' +
-      '<thead><tr><th>题目</th><th>来源</th><th>状态</th><th>操作</th></tr></thead><tbody>' +
-      questions.map(function (question) {
-        return '<tr><td><strong>' + esc(context, first(question.summary, question.content)) + '</strong><small>' + esc(context, first(question.position, "通用岗位")) + '</small></td>' +
-          '<td>' + esc(context, sourceText(question.source)) + '</td>' +
-          '<td>' + badge(context, reviewText(question.reviewStatus), question.reviewStatus === "REJECTED" ? "danger" : "ok") + '</td>' +
-          '<td><button type="button" class="admin-action" data-action="approve-question" data-id="' + escAttr(context, question.questionId) + '">通过</button>' +
-          '<button type="button" class="admin-action" data-action="reject-question" data-id="' + escAttr(context, question.questionId) + '">驳回</button></td></tr>';
-      }).join("") +
-      '</tbody></table></div></section>';
+    return panel(context, "题库审核", "审核用户贡献题和 AI 生成题", "" +
+      (questions.length ? table(["题目", "来源", "状态", "操作"], questions.map(function (question) {
+        return [
+          twoLine(context, first(question.summary, question.content), first(question.position, "通用岗位")),
+          esc(context, sourceText(question.source)),
+          badge(context, reviewText(question.reviewStatus), question.reviewStatus === "REJECTED" ? "warn" : "ok"),
+          actionButton(context, "approve-question", question.questionId, "通过") +
+            actionButton(context, "reject-question", question.questionId, "驳回")
+        ];
+      })) : empty("暂无题库数据", "这里用于审核用户贡献题、AI 生成题和待发布题目。", context)));
   }
 
   function renderBroadcast(context) {
-    return '<section class="panel full"><h3>通知公告</h3>' +
-      '<div class="admin-form">' +
+    return panel(context, "通知公告", "给用户发送站内公告", '<div class="admin-form">' +
       '<label>接收用户<input id="adminBroadcastUser" placeholder="留空表示发送给所有正常用户"></label>' +
       '<label>标题<input id="adminBroadcastTitle" placeholder="例如：面试练习服务维护通知"></label>' +
-      '<label>内容<textarea id="adminBroadcastContent" rows="4" placeholder="请输入公告内容"></textarea></label>' +
+      '<label>内容<textarea id="adminBroadcastContent" rows="5" placeholder="请输入公告内容"></textarea></label>' +
       '<label>链接<input id="adminBroadcastLink" placeholder="可选，例如 admin-console"></label>' +
-      '<button type="button" class="primary" id="adminBroadcastButton">发送公告</button>' +
-      '</div></section>';
+      '<button type="button" class="admin-primary" id="adminBroadcastButton">发送公告</button>' +
+      '</div>');
   }
 
   function renderAudit(data, context) {
     var logs = data.auditLogs && data.auditLogs.items || [];
-    if (!logs.length) {
-      return empty("暂无操作记录", "管理员进行禁用、审核、置顶、公告等操作后，会在这里留下审计记录。", context);
-    }
-    return '<section class="panel full"><h3>操作记录</h3><div class="admin-table-wrap"><table class="admin-table">' +
-      '<thead><tr><th>动作</th><th>对象</th><th>管理员</th><th>时间</th></tr></thead><tbody>' +
-      logs.map(function (log) {
-        return '<tr><td>' + esc(context, actionText(log.action)) + '</td><td>' + esc(context, first(log.targetType, "-")) + '<small>' + esc(context, first(log.targetId, "")) + '</small></td>' +
-          '<td>' + esc(context, log.adminId) + '</td><td>' + esc(context, first(log.createdAt, "-")) + '</td></tr>';
-      }).join("") +
-      '</tbody></table></div></section>';
+    return panel(context, "审计日志", "查看管理员操作记录", "" +
+      (logs.length ? table(["动作", "对象", "管理员", "时间"], logs.map(function (log) {
+        return [
+          esc(context, actionText(log.action)),
+          twoLine(context, first(log.targetType, "-"), first(log.targetId, "")),
+          esc(context, log.adminId),
+          esc(context, first(log.createdAt, "-"))
+        ];
+      })) : empty("暂无操作记录", "管理员进行禁用、审核、置顶、公告等操作后，会在这里留下审计记录。", context)));
   }
 
-  function bindActions(item, context, data) {
-    var root = context.pageHost && context.pageHost.querySelector(".admin-console");
+  function bindActions(item, context) {
+    var root = context.pageHost && context.pageHost.querySelector(".admin-app");
     var service = window.CYANCRUISE_SERVICES.admin;
-    if (!root || !service) {
-      return;
-    }
-    var tabs = root.querySelectorAll(".admin-tab");
-    for (var i = 0; i < tabs.length; i += 1) {
-      tabs[i].addEventListener("click", function () {
+    if (!root || !service) return;
+    bindPlatformHomeButton(root);
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-nav-item"), function (button) {
+      button.addEventListener("click", function () {
         activateTab(root, this.getAttribute("data-tab"));
       });
-    }
-    var actions = root.querySelectorAll(".admin-action");
-    for (var j = 0; j < actions.length; j += 1) {
-      actions[j].addEventListener("click", function () {
+    });
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-action"), function (button) {
+      button.addEventListener("click", function () {
         runAction(item, context, service, this.getAttribute("data-action"), this.getAttribute("data-id"));
       });
-    }
+    });
     var broadcastButton = root.querySelector("#adminBroadcastButton");
     if (broadcastButton) {
       broadcastButton.addEventListener("click", function () {
-        var request = {
+        service.broadcast(adminContext(context), {
           userId: value(root, "adminBroadcastUser"),
           title: value(root, "adminBroadcastTitle"),
           content: value(root, "adminBroadcastContent"),
           link: value(root, "adminBroadcastLink")
-        };
-        service.broadcast(adminContext(context), request).then(function (result) {
+        }).then(function (result) {
           context.showMessage("info", "公告已发送", "成功 " + first(result.successCount, 0) + " 个，失败 " + first(result.failedCount, 0) + " 个。");
           context.renderPage(item);
         }).catch(function (error) {
           context.showMessage("error", "发送失败", messageOf(error));
         });
+      });
+    }
+  }
+
+  function bindPlatformHomeButton(root) {
+    if (!root) return;
+    var homeButton = root.querySelector("#adminReturnHomeButton");
+    if (homeButton) {
+      homeButton.addEventListener("click", function () {
+        navigatePlatformHome();
       });
     }
   }
@@ -210,9 +247,7 @@
     if (action === "reject-question") call = service.rejectQuestion(adminContext(context), id);
     if (action === "pin-content") call = service.toggleContentPin(adminContext(context), id);
     if (action === "hide-content") call = service.toggleContentHidden(adminContext(context), id);
-    if (!call) {
-      return;
-    }
+    if (!call) return;
     call.then(function () {
       context.showMessage("info", "操作完成", "管理后台数据已更新。");
       context.renderPage(item);
@@ -222,38 +257,65 @@
   }
 
   function activateTab(root, key) {
-    var tabs = root.querySelectorAll(".admin-tab");
-    var sections = root.querySelectorAll(".admin-section");
-    for (var i = 0; i < tabs.length; i += 1) {
-      tabs[i].classList.toggle("active", tabs[i].getAttribute("data-tab") === key);
-    }
-    for (var j = 0; j < sections.length; j += 1) {
-      sections[j].classList.toggle("active", sections[j].getAttribute("data-section") === key);
-    }
-  }
-
-  function tab(key, label, active) {
-    return '<button type="button" class="admin-tab' + (active ? " active" : "") + '" data-tab="' + key + '">' + label + '</button>';
+    var title = {
+      overview: ["数智大屏", "查看平台关键指标和数据覆盖情况"],
+      users: ["用户管理", "管理注册用户和账号状态"],
+      content: ["内容审核", "管理首页文章、视频和资源展示"],
+      questions: ["题库审核", "审核用户贡献题和 AI 生成题"],
+      broadcast: ["通知公告", "给用户发送站内公告"],
+      audit: ["审计日志", "查看管理员操作记录"]
+    }[key] || ["管理后台", ""];
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-nav-item"), function (button) {
+      button.classList.toggle("active", button.getAttribute("data-tab") === key);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-section"), function (section) {
+      section.classList.toggle("active", section.getAttribute("data-section") === key);
+    });
+    root.querySelector("#adminSectionTitle").textContent = title[0];
+    root.querySelector("#adminSectionSub").textContent = title[1];
   }
 
   function section(key, active, html) {
     return '<div class="admin-section' + (active ? " active" : "") + '" data-section="' + key + '">' + html + '</div>';
   }
 
-  function metric(context, label, value) {
-    return '<article class="admin-metric"><span>' + esc(context, label) + '</span><strong>' + esc(context, first(value, 0)) + '</strong></article>';
+  function panel(context, title, subtitle, body) {
+    return '<section class="admin-panel"><div class="admin-panel-head"><div><h3>' + esc(context, title) +
+      '</h3><p>' + esc(context, subtitle) + '</p></div></div>' + body + '</section>';
+  }
+
+  function table(headers, rows) {
+    return '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>' +
+      headers.map(function (head) { return '<th>' + head + '</th>'; }).join("") +
+      '</tr></thead><tbody>' + rows.map(function (row) {
+        return '<tr>' + row.map(function (cell) { return '<td>' + cell + '</td>'; }).join("") + '</tr>';
+      }).join("") + '</tbody></table></div>';
+  }
+
+  function kpi(context, label, value, hint) {
+    return '<article class="admin-kpi"><span>' + esc(context, label) + '</span><strong>' + esc(context, first(value, 0)) +
+      '</strong><small>' + esc(context, hint) + '</small></article>';
+  }
+
+  function identityCell(context, title, detail) {
+    return '<strong class="admin-cell-title">' + esc(context, title) + '</strong><small>' + esc(context, detail) + '</small>';
+  }
+
+  function twoLine(context, title, detail) {
+    return '<strong class="admin-cell-title">' + esc(context, first(title, "-")) + '</strong><small>' + esc(context, detail) + '</small>';
+  }
+
+  function actionButton(context, action, id, label) {
+    return '<button type="button" class="admin-action" data-action="' + escAttr(context, action) +
+      '" data-id="' + escAttr(context, id) + '">' + esc(context, label) + '</button>';
   }
 
   function empty(title, text, context) {
-    return '<section class="state-card"><h3>' + esc(context, title) + '</h3><p>' + esc(context, text) + '</p></section>';
+    return '<div class="admin-empty"><h3>' + esc(context, title) + '</h3><p>' + esc(context, text) + '</p></div>';
   }
 
   function badge(context, text, type) {
     return '<span class="admin-badge ' + (type || "") + '">' + esc(context, text) + '</span>';
-  }
-
-  function roleText(whoami) {
-    return whoami && whoami.status === "OK" ? "已通过管理员身份校验" : "等待管理员身份校验";
   }
 
   function contentType(type) {
@@ -315,4 +377,33 @@
   function messageOf(error) {
     return error && error.message ? error.message : "管理后台请求失败，请稍后重试。";
   }
-}(window));
+
+  function navigatePlatformHome() {
+    var target = platformHomeUrl();
+    try {
+      if (window.top && window.top.location) {
+        window.top.location.href = target;
+        return;
+      }
+    } catch (ignore) {}
+    window.location.href = target;
+  }
+
+  function platformHomeUrl() {
+    var pathname = window.location && window.location.pathname || "";
+    if (pathname.indexOf("/ierp/") === 0 || pathname === "/ierp") {
+      return "/ierp/?formId=home_page";
+    }
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set("ccRoute", "workbench");
+      if (!url.searchParams.get("apiMode")) {
+        url.searchParams.set("apiMode", "server");
+      }
+      url.hash = "";
+      return url.pathname + url.search;
+    } catch (ignore) {
+      return "/ierp/?formId=home_page";
+    }
+  }
+}(window, document));
