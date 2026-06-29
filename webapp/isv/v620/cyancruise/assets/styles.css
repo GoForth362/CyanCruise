@@ -450,6 +450,152 @@ h4 {
   padding-left: 18px;
 }
 
+.admin-console {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.admin-hero h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.admin-hero p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.admin-identity,
+.admin-metric {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.admin-identity span,
+.admin-metric span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-identity strong,
+.admin-metric strong {
+  color: var(--ink);
+  font-size: 24px;
+}
+
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-tab,
+.admin-action {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.admin-tab.active,
+.admin-action:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.admin-section {
+  display: none;
+}
+
+.admin-section.active {
+  display: block;
+}
+
+.admin-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-table th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.admin-table small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.admin-badge.ok {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.admin-badge.danger {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.admin-form {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.admin-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-form textarea {
+  resize: vertical;
+}
+
 .metric-list,
 .item-list,
 .form-grid {
@@ -1536,6 +1682,8 @@ h4 {
   .app-header,
   .page-header,
   .feature-page-header,
+  .admin-hero,
+  .admin-metrics,
   .panel-grid,
   .resume-layout,
   .form-grid {

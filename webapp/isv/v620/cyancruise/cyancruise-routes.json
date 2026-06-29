@@ -15,7 +15,6 @@
       "postgraduate-plan",
       "postgraduate-mistake",
       "postgraduate-reexam",
-      "postgraduate-exam",
       "postgraduate-recommendation",
       "recommendation-ranking",
       "recommendation-background",
@@ -699,29 +698,6 @@
           "userIdRequired": true,
           "dto": "PostgraduateReexamPreparationResult",
           "fallback": "Show local form state and ask the user to retry re-exam checklist generation."
-        }
-      ]
-    },
-    {
-      "key": "postgraduate-exam",
-      "title": "考研",
-      "ipdPaths": [
-        "pages/home/index"
-      ],
-      "target": "index.html?ccRoute=postgraduate",
-      "status": "entry-only",
-      "webApis": [
-        {
-          "name": "postgraduate school recommendation",
-          "method": "POST",
-          "path": "/cc001/postgraduate/school-recommend",
-          "body": [
-            "userId",
-            "request"
-          ],
-          "userIdRequired": true,
-          "dto": "PostgraduateSchoolRecommendationResult",
-          "fallback": "Redirect legacy postgraduate exam entry to the postgraduate companion page."
         }
       ]
     },
@@ -1723,6 +1699,18 @@
           "fallback": "Keep previous user state and show operation failed."
         },
         {
+          "name": "unban user",
+          "method": "POST",
+          "path": "/cc001/admin/users/unban",
+          "body": [
+            "adminId",
+            "userId"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminOperationResult",
+          "fallback": "Keep previous user state and show operation failed."
+        },
+        {
           "name": "question moderation",
           "method": "POST",
           "path": "/cc001/admin/questions/list",
@@ -1736,6 +1724,30 @@
           "fallback": "Show moderation queue unavailable."
         },
         {
+          "name": "approve question",
+          "method": "POST",
+          "path": "/cc001/admin/questions/approve",
+          "body": [
+            "adminId",
+            "questionId"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminOperationResult",
+          "fallback": "Keep previous question review state and show operation failed."
+        },
+        {
+          "name": "reject question",
+          "method": "POST",
+          "path": "/cc001/admin/questions/reject",
+          "body": [
+            "adminId",
+            "questionId"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminOperationResult",
+          "fallback": "Keep previous question review state and show operation failed."
+        },
+        {
           "name": "content management",
           "method": "POST",
           "path": "/cc001/admin/content/list",
@@ -1746,6 +1758,30 @@
           "adminIdRequired": true,
           "dto": "List<AdminContentItemDto>",
           "fallback": "Show content management unavailable."
+        },
+        {
+          "name": "pin content",
+          "method": "POST",
+          "path": "/cc001/admin/content/pin",
+          "body": [
+            "adminId",
+            "contentId"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminOperationResult",
+          "fallback": "Keep previous content display state and show operation failed."
+        },
+        {
+          "name": "hide content",
+          "method": "POST",
+          "path": "/cc001/admin/content/hide",
+          "body": [
+            "adminId",
+            "contentId"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminOperationResult",
+          "fallback": "Keep previous content display state and show operation failed."
         },
         {
           "name": "admin broadcast",
@@ -2155,18 +2191,6 @@
       "identityMode": "production-cosmic-context",
       "fallback": "Show postgraduate companion page and local recoverable error states.",
       "deploymentNotes": "Mount as the platform sidebar child page for postgraduate exam companion."
-    },
-    {
-      "mountKey": "cyancruise-postgraduate-exam",
-      "routeKey": "postgraduate-exam",
-      "title": "考研",
-      "target": "index.html?ccRoute=postgraduate",
-      "audience": "cyancruise-user",
-      "requiredRole": "COSMIC_AUTHENTICATED_USER",
-      "publishability": "entry-only",
-      "identityMode": "production-cosmic-context",
-      "fallback": "Redirect old postgraduate exam menu to postgraduate companion.",
-      "deploymentNotes": "Compatibility mount for tenants that already configured the old postgraduate-exam route."
     },
     {
       "mountKey": "cyancruise-postgraduate-recommendation",

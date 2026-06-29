@@ -39,22 +39,31 @@ public class AdminConsoleGovernanceApplicationService {
     private final AdminGovernanceStorage storage;
     private final NotificationsSubscriptionsApplicationService notifications;
     private final AdminConsoleGovernanceService helper;
+    private final boolean trustResolvedAdminIdentity;
 
     public AdminConsoleGovernanceApplicationService() {
         this(new InMemoryAdminGovernanceStorage(), new NotificationsSubscriptionsApplicationService(),
-                new AdminConsoleGovernanceService());
+                new AdminConsoleGovernanceService(), true);
     }
 
     public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
                                                      NotificationsSubscriptionsApplicationService notifications,
                                                      AdminConsoleGovernanceService helper) {
+        this(storage, notifications, helper, false);
+    }
+
+    public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
+                                                     NotificationsSubscriptionsApplicationService notifications,
+                                                     AdminConsoleGovernanceService helper,
+                                                     boolean trustResolvedAdminIdentity) {
         this.storage = storage;
         this.notifications = notifications;
         this.helper = helper;
+        this.trustResolvedAdminIdentity = trustResolvedAdminIdentity;
     }
 
     public AdminIdentityDto whoami(String adminId) {
-        return helper.authorize(adminId, storage.isAdmin(trim(adminId)));
+        return helper.authorize(adminId, trustResolvedAdminIdentity || storage.isAdmin(trim(adminId)));
     }
 
     public List<AdminOrganizationDto> listOrganizations(String adminId) {
@@ -353,6 +362,9 @@ public class AdminConsoleGovernanceApplicationService {
     }
 
     private void requireAdmin(String adminId) {
+        if (trustResolvedAdminIdentity && hasText(adminId)) {
+            return;
+        }
         AdminIdentityDto identity = whoami(adminId);
         if (!AdminConstants.STATUS_OK.equals(identity.getStatus())) {
             throw new IllegalArgumentException(identity.getStatus());
