@@ -155,6 +155,27 @@ F:\kingdee\ENV\mservice-cosmic\bin\filestorage\career-profile\247719091919598387
 
 Expected files after saving onboarding/profile data include `snapshot.ser` and `profile.ser`. This path is an observed runtime artifact for local validation only; business code must continue to read runtime paths from configuration and must not hard-code this local directory.
 
+## Admin Governance Storage
+
+管理端的用户治理、题库审核、内容管理、通知广播和审计日志可以使用共享 PostgreSQL 业务存储。生产或联调环境需要显式配置：
+
+```properties
+cc001.storage.backend=postgresql
+cc001.storage.postgresql.url=jdbc:postgresql://10.0.0.8:5432/cyancruise
+cc001.storage.postgresql.username=cyancruise_app
+cc001.storage.postgresql.password=<password>
+cc001.storage.postgresql.schema=public
+cc001.storage.postgresql.initialize=false
+```
+
+首次使用前执行：
+
+```powershell
+psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-admin-governance-storage.sql
+```
+
+`cc001.storage.postgresql.initialize=true` 仅建议本地开发或一次性初始化时使用；生产环境建议由数据库脚本明确建表和授权。启用 PostgreSQL 后，管理端不再使用进程内存保存用户、题库、内容和审计状态；管理员禁用用户后，用户端 `/cc001/*` 业务接口会在统一路由入口被拒绝。
+
 ## Restart Requirement
 
 Copying JARs into `lib\cus` is not enough for an already running 8080 process. Restart the process that owns port `8080`, then verify:

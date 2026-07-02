@@ -1,4 +1,4 @@
-# cosmic-login-context-provider Specification
+﻿# cosmic-login-context-provider Specification
 
 ## Purpose
 TBD - created by archiving change migrate-cosmic-login-context-provider. Update Purpose after archive.
@@ -75,4 +75,15 @@ The login context provider migration SHALL include focused tests for bridge succ
 #### Scenario: Implementation is verified
 - **WHEN** implementation is complete
 - **THEN** verification SHALL include focused provider/resolver/WebAPI tests, strict OpenSpec validation, route map validation when changed, migration map updates, and JDK 8 `.\gradlew.bat clean build`
+
+### Requirement: KAPI token broker isolation from login context
+The Cosmic login context provider SHALL remain the production source for current user identity when CyanCruise is opened from a self-built Cosmic application. Server-managed KAPI token configuration SHALL NOT override, synthesize, or replace the current login context.
+
+#### Scenario: Backend token configuration exists
+- **WHEN** server-managed KAPI token properties are configured
+- **THEN** the login context provider SHALL still resolve user/admin identity from Cosmic request context or approved platform context fields
+
+#### Scenario: Login context is unavailable
+- **WHEN** the login context provider cannot resolve a current user
+- **THEN** protected production WebAPI SHALL return identity-required diagnostics even if server-managed KAPI token configuration is available
 

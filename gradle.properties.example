@@ -39,6 +39,8 @@ systemProp.cosmic_home=D:/code/kingdee/cosmic/home
 #systemProp.cc001.storage.postgresql.password=<password>
 #systemProp.cc001.storage.postgresql.schema=public
 #systemProp.cc001.storage.postgresql.initialize=false
+#--When the shared PostgreSQL backend is enabled, admin governance uses the same connection.
+#--Run datamodel/postgresql-admin-governance-storage.sql once, or set initialize=true in local/dev only.
 
 #--Optional server-managed KAPI AccessToken. Store secrets in local gradle.properties or environment variables only.
 #--This token is an OpenAPI calling credential and must not be treated as the current browser login user.

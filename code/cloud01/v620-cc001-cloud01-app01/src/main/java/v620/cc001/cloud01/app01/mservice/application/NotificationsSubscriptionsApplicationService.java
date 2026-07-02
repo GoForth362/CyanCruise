@@ -1,14 +1,11 @@
 package v620.cc001.cloud01.app01.mservice.application;
 
-import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
-import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
-import v620.cc001.cloud01.app01.mservice.notification.impl.UnavailableSubscriptionSender;
-import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
 import v620.cc001.cloud01.app01.mservice.notification.NotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.SubscriptionQuotaStorage;
 import v620.cc001.cloud01.app01.mservice.notification.SubscriptionSender;
 import v620.cc001.cloud01.app01.mservice.notification.impl.UnavailableSubscriptionSender;
+import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.base.helper.career.NotificationsSubscriptionsService;
 import v620.cc001.base.common.dto.career.NotificationConstants;
 import v620.cc001.base.common.dto.career.NotificationOperationResult;
@@ -37,7 +34,7 @@ public class NotificationsSubscriptionsApplicationService {
     private final NotificationsSubscriptionsService helper;
 
     public NotificationsSubscriptionsApplicationService() {
-        this(new InMemoryNotificationStorage(), new InMemorySubscriptionQuotaStorage(),
+        this(CyanCruiseStorageFactory.notificationStorage(), new InMemorySubscriptionQuotaStorage(),
                 new UnavailableSubscriptionSender(), new NotificationsSubscriptionsService());
     }
 

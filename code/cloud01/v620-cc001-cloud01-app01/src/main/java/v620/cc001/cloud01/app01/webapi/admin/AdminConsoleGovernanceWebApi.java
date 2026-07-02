@@ -22,6 +22,7 @@ import v620.cc001.base.common.dto.career.AdminQuestionContributionRequest;
 import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AdminStudentRowDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
+import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.cloud01.app01.mservice.application.AdminConsoleGovernanceApplicationService;
 import v620.cc001.cloud01.app01.mservice.auth.impl.IdentityAwareCyanCruiseWebApiBoundary;
 import v620.cc001.cloud01.app01.mservice.auth.IdentityBoundaryException;
@@ -50,11 +51,29 @@ public class AdminConsoleGovernanceWebApi {
         this.identityBoundary = identityBoundary;
     }
 
+    public boolean isUserAllowed(String userId) {
+        return applicationService.isUserAllowed(userId);
+    }
+
+    public void registerActiveUserIfAbsent(String userId) {
+        applicationService.registerActiveUserIfAbsent(userId);
+    }
+
+    public void registerActiveUserIfAbsent(CosmicIdentityContextDto identity) {
+        if (identity == null) {
+            return;
+        }
+        applicationService.registerActiveUserIfAbsent(identity.getUserId(),
+                firstText(identity.getDisplayName(), identity.getUserName()), identity.getOrgId());
+    }
+
     @ApiPostMapping(value = "/whoami", desc = "Check admin identity", methodParamNames = {"adminId"})
     public @ApiResponseBody(value = "Admin identity") AdminIdentityDto whoami(
             @ApiRequestBody(value = "adminId", required = true) String adminId) {
         try {
-            return applicationService.whoami(identityBoundary.requireAdmin(adminId));
+            String resolvedAdminId = identityBoundary.requireAdmin(adminId);
+            registerActiveUserIfAbsent(identityBoundary.currentIdentity());
+            return applicationService.whoami(resolvedAdminId);
         } catch (IdentityBoundaryException ex) {
             return identityBoundary.rejectAsAdminIdentity(ex);
         }
@@ -329,5 +348,10 @@ public class AdminConsoleGovernanceWebApi {
         result.setSize(Integer.valueOf(Math.max(1, size)));
         result.setTotal(Integer.valueOf(0));
         return result;
+    }
+
+    private String firstText(String first, String second) {
+        return first != null && first.trim().length() > 0 ? first.trim()
+                : second != null && second.trim().length() > 0 ? second.trim() : null;
     }
 }

@@ -34,6 +34,8 @@
       notifications: "/cc001/notifications/list",
       notificationUnread: "/cc001/notifications/unread-count",
       notificationRead: "/cc001/notifications/read",
+      notificationReadAll: "/cc001/notifications/read-all",
+      notificationDelete: "/cc001/notifications/delete",
       subscriptionQuota: "/cc001/notifications/subscription/quota",
       weeklyReport: "/cc001/notifications/weekly-report/run",
       adminWhoami: "/cc001/admin/whoami",
@@ -91,7 +93,7 @@
         body: JSON.stringify(request.body)
       }).then(function (response) {
         if (!response.ok) {
-          throw new Error(path + " 返回 " + response.status);
+          throw new Error("服务暂不可用，请稍后重试。");
         }
         return response.json();
       }).then(function (payload) {
@@ -99,14 +101,14 @@
         if (mode === "kapi" || mode === "kapi-v2" || mode === "server" || mode === "server-kapi-v2") {
           if (payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
             if (!payload.success) {
-              throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+              throw new Error(firstText(payload.message, payload.errorCode, "服务暂不可用，请稍后重试。"));
             }
             return payload.data;
           }
           if (payload && Object.prototype.hasOwnProperty.call(payload, "status")
               && Object.prototype.hasOwnProperty.call(payload, "data")) {
             if (!payload.status) {
-              throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+              throw new Error(firstText(payload.message, payload.errorCode, "服务暂不可用，请稍后重试。"));
             }
             return payload.data;
           }

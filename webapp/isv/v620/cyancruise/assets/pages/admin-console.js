@@ -58,9 +58,7 @@
       context.pageHost.innerHTML = '<section class="admin-app admin-state-only">' +
         '<main class="admin-main"><section class="admin-panel admin-state-panel">' +
         '<h2>' + esc(context, title) + '</h2><p>' + esc(context, text) + '</p>' +
-        '<div class="admin-state-actions"><button type="button" id="adminReturnHomeButton">返回首页</button></div>' +
         '</section></main></section>';
-      bindPlatformHomeButton(context.pageHost);
       return;
     }
     context.renderShell({ title: "管理后台", summary: "" }, context.statePanel(title, text, "warning"));
@@ -105,18 +103,19 @@
     var name = first(data.whoami && data.whoami.userName, data.whoami && data.whoami.displayName, data.adminId, "admin");
     return '<header class="admin-topbar">' +
       '<div><h2 id="adminSectionTitle">数智大屏</h2><p id="adminSectionSub">查看平台关键指标和数据覆盖情况</p></div>' +
-      '<div class="admin-account"><span>' + esc(context, name) + '</span><button type="button" id="adminReturnHomeButton">返回用户端</button></div>' +
+      '<div class="admin-account"><span>' + esc(context, name) + '</span></div>' +
       '</header>';
   }
 
   function renderOverview(data, context) {
     var dashboard = data.dashboard || {};
     var analytics = data.analytics || {};
+    var events = analytics.eventBreakdown30d || {};
     return '<div class="admin-kpi-grid">' +
-      kpi(context, "学生数量", dashboard.studentCount, "已纳入统计的学生") +
+      kpi(context, "用户数量", analytics.totalUsers, "CyanCruise 已纳入管理的用户") +
       kpi(context, "面试次数", first(analytics.totalInterviews, dashboard.interviewCount), "模拟面试累计") +
       kpi(context, "测评次数", analytics.totalAssessments, "能力测评累计") +
-      kpi(context, "用户总数", analytics.totalUsers, "平台注册用户") +
+      kpi(context, "内容数量", events.CONTENT, "后台内容条目") +
       '</div>' +
       '<section class="admin-panel"><div class="admin-panel-head"><div><h3>数据覆盖</h3><p>报告、事件和后台采集状态</p></div></div>' +
       '<div class="admin-summary-row">' +
@@ -130,16 +129,18 @@
     var users = data.users && data.users.items || [];
     return panel(context, "用户管理", "管理注册用户和账号状态", '<div class="admin-panel-tools"><input type="search" placeholder="搜索用户名称..."></div>' +
       (users.length ? table([
-        "用户", "学校/专业", "状态", "组织", "操作"
+        "用户", "学校/专业", "状态", "平台组织ID", "操作"
       ], users.map(function (user) {
         var status = String(user.status || "ACTIVE");
         var banned = status === "BANNED";
+        var currentAdmin = isCurrentAdminUser(data, user);
         return [
-          identityCell(context, first(user.nickname, user.userId), user.userId),
+          identityCell(context, first(user.nickname, user.userId), user.userId) +
+            (currentAdmin ? '<small>当前管理员，管理权限请在金蝶安全管理调整</small>' : ""),
           twoLine(context, first(user.school, "-"), first(user.major, "")),
-          badge(context, banned ? "禁用" : "正常", banned ? "warn" : "ok"),
+          badge(context, banned ? "用户端禁用" : "用户端正常", banned ? "warn" : "ok"),
           esc(context, first(user.orgId, "-")),
-          actionButton(context, banned ? "unban-user" : "ban-user", user.userId, banned ? "解禁" : "禁用")
+          actionButton(context, banned ? "unban-user" : "ban-user", user.userId, banned ? "恢复用户端" : "禁用用户端")
         ];
       })) : empty("暂无用户数据", "接入正式用户存储后，这里会显示用户状态和最近面试情况。", context)));
   }
@@ -200,7 +201,6 @@
     var root = context.pageHost && context.pageHost.querySelector(".admin-app");
     var service = window.CYANCRUISE_SERVICES.admin;
     if (!root || !service) return;
-    bindPlatformHomeButton(root);
     Array.prototype.forEach.call(root.querySelectorAll(".admin-nav-item"), function (button) {
       button.addEventListener("click", function () {
         activateTab(root, this.getAttribute("data-tab"));
@@ -208,55 +208,74 @@
     });
     Array.prototype.forEach.call(root.querySelectorAll(".admin-action"), function (button) {
       button.addEventListener("click", function () {
-        runAction(item, context, service, this.getAttribute("data-action"), this.getAttribute("data-id"));
+        runAction(item, context, service, this.getAttribute("data-action"), this.getAttribute("data-id"), this);
       });
     });
     var broadcastButton = root.querySelector("#adminBroadcastButton");
     if (broadcastButton) {
       broadcastButton.addEventListener("click", function () {
+        var activeTab = currentActiveTab(root);
+        broadcastButton.disabled = true;
         service.broadcast(adminContext(context), {
           userId: value(root, "adminBroadcastUser"),
           title: value(root, "adminBroadcastTitle"),
           content: value(root, "adminBroadcastContent"),
           link: value(root, "adminBroadcastLink")
         }).then(function (result) {
-          context.showMessage("info", "公告已发送", "成功 " + first(result.successCount, 0) + " 个，失败 " + first(result.failedCount, 0) + " 个。");
-          context.renderPage(item);
+          return refreshAdminApp(item, context, service, activeTab).then(function () {
+            context.showMessage("info", "公告已发送", "成功 " + first(result.successCount, 0) + " 个，失败 " + first(result.failedCount, 0) + " 个。");
+          });
         }).catch(function (error) {
+          broadcastButton.disabled = false;
           context.showMessage("error", "发送失败", messageOf(error));
         });
       });
     }
   }
 
-  function bindPlatformHomeButton(root) {
-    if (!root) return;
-    var homeButton = root.querySelector("#adminReturnHomeButton");
-    if (homeButton) {
-      homeButton.addEventListener("click", function () {
-        navigatePlatformHome();
-      });
-    }
-  }
-
-  function runAction(item, context, service, action, id) {
+  function runAction(item, context, service, action, id, button) {
+    var root = context.pageHost && context.pageHost.querySelector(".admin-app");
+    var activeTab = currentActiveTab(root);
     var call;
-    if (action === "ban-user") call = service.banUser(adminContext(context), id, "管理员在后台手动禁用");
+    if (action === "ban-user") call = service.banUser(adminContext(context), id, "管理员在后台限制用户端访问");
     if (action === "unban-user") call = service.unbanUser(adminContext(context), id);
     if (action === "approve-question") call = service.approveQuestion(adminContext(context), id);
     if (action === "reject-question") call = service.rejectQuestion(adminContext(context), id);
     if (action === "pin-content") call = service.toggleContentPin(adminContext(context), id);
     if (action === "hide-content") call = service.toggleContentHidden(adminContext(context), id);
     if (!call) return;
+    if (button) {
+      button.disabled = true;
+      button.classList.add("loading");
+    }
     call.then(function () {
-      context.showMessage("info", "操作完成", "管理后台数据已更新。");
-      context.renderPage(item);
+      return refreshAdminApp(item, context, service, activeTab).then(function () {
+        context.showMessage("info", "操作完成", "管理后台数据已更新。");
+      });
     }).catch(function (error) {
+      if (button) {
+        button.disabled = false;
+        button.classList.remove("loading");
+      }
       context.showMessage("error", "操作失败", messageOf(error));
     });
   }
 
+  function refreshAdminApp(item, context, service, activeTab) {
+    return service.load(adminContext(context)).then(function (data) {
+      if (!data.authorized) {
+        renderStandaloneState(context, "无管理员权限", data.message || "当前账号没有管理后台权限。");
+        return;
+      }
+      renderAdminApp(item, context, data);
+      bindActions(item, context);
+      var root = context.pageHost && context.pageHost.querySelector(".admin-app");
+      activateTab(root, activeTab || "overview");
+    });
+  }
+
   function activateTab(root, key) {
+    if (!root) return;
     var title = {
       overview: ["数智大屏", "查看平台关键指标和数据覆盖情况"],
       users: ["用户管理", "管理注册用户和账号状态"],
@@ -273,6 +292,11 @@
     });
     root.querySelector("#adminSectionTitle").textContent = title[0];
     root.querySelector("#adminSectionSub").textContent = title[1];
+  }
+
+  function currentActiveTab(root) {
+    var current = root && root.querySelector(".admin-nav-item.active");
+    return current ? current.getAttribute("data-tab") : "overview";
   }
 
   function section(key, active, html) {
@@ -339,8 +363,8 @@
 
   function actionText(action) {
     var map = {
-      BAN_USER: "禁用用户",
-      UNBAN_USER: "解禁用户",
+      BAN_USER: "禁用用户端",
+      UNBAN_USER: "恢复用户端",
       BROADCAST: "发送公告",
       APPROVE_QUESTION: "通过题目",
       REJECT_QUESTION: "驳回题目",
@@ -378,32 +402,15 @@
     return error && error.message ? error.message : "管理后台请求失败，请稍后重试。";
   }
 
-  function navigatePlatformHome() {
-    var target = platformHomeUrl();
-    try {
-      if (window.top && window.top.location) {
-        window.top.location.href = target;
-        return;
-      }
-    } catch (ignore) {}
-    window.location.href = target;
+  function isCurrentAdminUser(data, user) {
+    if (!user) return false;
+    var userId = first(user.userId, "");
+    var whoami = data && data.whoami || {};
+    return same(userId, data && data.adminId) || same(userId, whoami.userId);
   }
 
-  function platformHomeUrl() {
-    var pathname = window.location && window.location.pathname || "";
-    if (pathname.indexOf("/ierp/") === 0 || pathname === "/ierp") {
-      return "/ierp/?formId=home_page";
-    }
-    try {
-      var url = new URL(window.location.href);
-      url.searchParams.set("ccRoute", "workbench");
-      if (!url.searchParams.get("apiMode")) {
-        url.searchParams.set("apiMode", "server");
-      }
-      url.hash = "";
-      return url.pathname + url.search;
-    } catch (ignore) {
-      return "/ierp/?formId=home_page";
-    }
+  function same(left, right) {
+    return String(left || "").trim() !== "" && String(left || "").trim() === String(right || "").trim();
   }
+
 }(window, document));

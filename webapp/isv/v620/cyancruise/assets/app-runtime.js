@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "20260629-cyancruise-v139";
+  var APP_VERSION = "20260703-cyancruise-v153";
 
   var endpoints = {
     snapshot: "/cc001/career-profile/snapshot/get",
@@ -35,6 +35,8 @@
     notifications: "/cc001/notifications/list",
     notificationUnread: "/cc001/notifications/unread-count",
     notificationRead: "/cc001/notifications/read",
+    notificationReadAll: "/cc001/notifications/read-all",
+    notificationDelete: "/cc001/notifications/delete",
     subscriptionQuota: "/cc001/notifications/subscription/quota",
     weeklyReport: "/cc001/notifications/weekly-report/run",
     adminWhoami: "/cc001/admin/whoami",
@@ -116,7 +118,7 @@
     page("interview-panorama", "全景仿真面试", "available", "user", "在沉浸式面试环境中使用摄像头与 AI 面试官面对面练习。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
     page("interview-panorama-history", "全景仿真面试记录", "available", "user", "分页查看已保存的全景仿真面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"]),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
-    page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "subscriptionQuota", "weeklyReport"]),
+    page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "notificationReadAll", "notificationDelete", "subscriptionQuota", "weeklyReport"]),
     page("employment-insight", "就业洞察", "available", "user", "按学校、专业和目标岗位查看就业洞察。", ["employmentInsight"]),
     page("career-resources", "职业资源", "available", "public", "查看文章、视频、咨询和职业路径资源。", ["careerResources"], { defaultNav: false, debugNav: true }),
     page("admin-console", "管理后台", "entry-only", "admin", "管理员治理入口，仅对 ADMIN 或平台管理员开放。", ["adminWhoami", "adminDashboard", "adminUsersBan", "adminQuestions", "adminContent", "adminBroadcast", "adminAuditLog"], { defaultNav: false, debugNav: true })
@@ -6485,21 +6487,21 @@
       body: JSON.stringify(request.body)
     }).then(function (response) {
       if (!response.ok) {
-        throw new Error(path + " 返回 " + response.status);
+        throw new Error("服务暂不可用，请稍后重试。");
       }
       return response.json();
     }).then(function (payload) {
       if (request.mode === "kapi" || request.mode === "kapi-v2" || request.mode === "server" || request.mode === "server-kapi-v2") {
         if (payload && Object.prototype.hasOwnProperty.call(payload, "success")) {
           if (!payload.success) {
-            throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+            throw new Error(firstText(payload.message, payload.errorCode, "服务暂不可用，请稍后重试。"));
           }
           return payload.data;
         }
         if (payload && Object.prototype.hasOwnProperty.call(payload, "status")
             && Object.prototype.hasOwnProperty.call(payload, "data")) {
           if (!payload.status) {
-            throw new Error(path + " " + firstText(payload.message, payload.errorCode, "custom WebAPI failed"));
+            throw new Error(firstText(payload.message, payload.errorCode, "服务暂不可用，请稍后重试。"));
           }
           return payload.data;
         }

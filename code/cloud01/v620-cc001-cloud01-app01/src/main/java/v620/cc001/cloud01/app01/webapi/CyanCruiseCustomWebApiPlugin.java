@@ -34,6 +34,7 @@ import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
 import v620.cc001.base.common.dto.career.AssistantChatRequest;
 import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
+import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.base.common.dto.career.FileUploadRequest;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyMaterialSaveRequest;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordQueryRequest;
@@ -229,6 +230,9 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             if ("/cc001/identity/current".equals(path)) {
                 return ApiResult.success(identityWebApi.current());
             }
+            if (requiresActiveUser(path) && !isActiveUserAllowed(body)) {
+                return ApiResult.fail("当前账号已被管理员禁用，请联系管理员。", "USER_BANNED");
+            }
             if ("/cc001/career-profile/snapshot/get".equals(path)) {
                 return ApiResult.success(profileWebApi.snapshot(extractUserId(body)));
             }
@@ -373,14 +377,34 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                         extractAdminId(body), textOrNull(value(body, "userId")),
                         textOrNull(value(body, "reason"))));
             }
+            if ("/cc001/admin/users/unban".equals(path)) {
+                return ApiResult.success(adminWebApi.unban(
+                        extractAdminId(body), textOrNull(value(body, "userId"))));
+            }
             if ("/cc001/admin/questions/list".equals(path)) {
                 return ApiResult.success(adminWebApi.questions(
                         extractAdminId(body), textOrNull(value(body, "source")),
                         textOrNull(value(body, "reviewStatus"))));
             }
+            if ("/cc001/admin/questions/approve".equals(path)) {
+                return ApiResult.success(adminWebApi.approveQuestion(
+                        extractAdminId(body), textOrNull(value(body, "questionId"))));
+            }
+            if ("/cc001/admin/questions/reject".equals(path)) {
+                return ApiResult.success(adminWebApi.rejectQuestion(
+                        extractAdminId(body), textOrNull(value(body, "questionId"))));
+            }
             if ("/cc001/admin/content/list".equals(path)) {
                 return ApiResult.success(adminWebApi.content(
                         extractAdminId(body), textOrNull(value(body, "type"))));
+            }
+            if ("/cc001/admin/content/pin".equals(path)) {
+                return ApiResult.success(adminWebApi.pinContent(
+                        extractAdminId(body), textOrNull(value(body, "contentId"))));
+            }
+            if ("/cc001/admin/content/hide".equals(path)) {
+                return ApiResult.success(adminWebApi.hideContent(
+                        extractAdminId(body), textOrNull(value(body, "contentId"))));
             }
             if ("/cc001/admin/broadcast".equals(path)) {
                 return ApiResult.success(adminWebApi.broadcast(
@@ -563,6 +587,33 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         return textOrNull(body);
     }
 
+    private boolean requiresActiveUser(String path) {
+        return path != null
+                && path.startsWith("/cc001/")
+                && !path.startsWith("/cc001/admin/")
+                && !path.startsWith("/cc001/identity/")
+                && !path.startsWith("/cc001/files/");
+    }
+
+    private boolean isActiveUserAllowed(Object body) {
+        String userId = extractOptionalUserId(body);
+        try {
+            CosmicIdentityContextDto identity = identityWebApi.current();
+            String resolvedUserId = firstText(identity == null ? null : identity.getUserId(), userId);
+            if (!adminWebApi.isUserAllowed(resolvedUserId)) {
+                return false;
+            }
+            if (identity != null && hasText(identity.getUserId())) {
+                adminWebApi.registerActiveUserIfAbsent(identity);
+            } else {
+                adminWebApi.registerActiveUserIfAbsent(userId);
+            }
+            return true;
+        } catch (RuntimeException ex) {
+            return true;
+        }
+    }
+
     private String extractAdminId(Object body) {
         if (body instanceof Map) {
             Object adminId = ((Map<?, ?>) body).get("adminId");
@@ -575,6 +626,14 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             }
         }
         return text(body);
+    }
+
+    private String firstText(String first, String second) {
+        return hasText(first) ? first.trim() : second;
+    }
+
+    private boolean hasText(String value) {
+        return value != null && value.trim().length() > 0;
     }
 
     private CareerProfileOnboardingRequest extractOnboardingRequest(Object body) {

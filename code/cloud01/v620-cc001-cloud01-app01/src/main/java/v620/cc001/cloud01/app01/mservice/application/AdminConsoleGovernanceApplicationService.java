@@ -1,8 +1,9 @@
 package v620.cc001.cloud01.app01.mservice.application;
 
-import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.AdminGovernanceStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
+import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorageFactory;
+import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.base.helper.career.AdminConsoleGovernanceService;
 import v620.cc001.base.common.dto.career.AdminAnalyticsSummaryDto;
 import v620.cc001.base.common.dto.career.AdminAuditLogDto;
@@ -24,6 +25,7 @@ import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.base.common.dto.career.NotificationConstants;
 import v620.cc001.base.common.dto.career.NotificationOperationResult;
 import v620.cc001.base.common.dto.career.NotificationPushRequest;
+import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,26 +39,43 @@ import java.util.Map;
 public class AdminConsoleGovernanceApplicationService {
 
     private final AdminGovernanceStorage storage;
+    private final CareerProfileStorage profileStorage;
     private final NotificationsSubscriptionsApplicationService notifications;
     private final AdminConsoleGovernanceService helper;
     private final boolean trustResolvedAdminIdentity;
 
     public AdminConsoleGovernanceApplicationService() {
-        this(new InMemoryAdminGovernanceStorage(), new NotificationsSubscriptionsApplicationService(),
+        this(CyanCruiseStorageFactory.adminGovernanceStorage(), profileStorageOrNull(), new NotificationsSubscriptionsApplicationService(),
                 new AdminConsoleGovernanceService(), true);
     }
 
     public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
                                                      NotificationsSubscriptionsApplicationService notifications,
                                                      AdminConsoleGovernanceService helper) {
-        this(storage, notifications, helper, false);
+        this(storage, null, notifications, helper, false);
+    }
+
+    public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
+                                                     CareerProfileStorage profileStorage,
+                                                     NotificationsSubscriptionsApplicationService notifications,
+                                                     AdminConsoleGovernanceService helper) {
+        this(storage, profileStorage, notifications, helper, false);
     }
 
     public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
                                                      NotificationsSubscriptionsApplicationService notifications,
                                                      AdminConsoleGovernanceService helper,
                                                      boolean trustResolvedAdminIdentity) {
+        this(storage, null, notifications, helper, trustResolvedAdminIdentity);
+    }
+
+    public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
+                                                     CareerProfileStorage profileStorage,
+                                                     NotificationsSubscriptionsApplicationService notifications,
+                                                     AdminConsoleGovernanceService helper,
+                                                     boolean trustResolvedAdminIdentity) {
         this.storage = storage;
+        this.profileStorage = profileStorage;
         this.notifications = notifications;
         this.helper = helper;
         this.trustResolvedAdminIdentity = trustResolvedAdminIdentity;
@@ -64,6 +83,55 @@ public class AdminConsoleGovernanceApplicationService {
 
     public AdminIdentityDto whoami(String adminId) {
         return helper.authorize(adminId, trustResolvedAdminIdentity || storage.isAdmin(trim(adminId)));
+    }
+
+    public boolean isUserAllowed(String userId) {
+        if (!hasText(userId)) {
+            return true;
+        }
+        AdminUserDto user = storage.findUser(userId.trim());
+        if (user == null) {
+            return true;
+        }
+        return user.getDeletedAt() == null && !AdminConstants.USER_STATUS_BANNED.equals(user.getStatus());
+    }
+
+    public void registerActiveUserIfAbsent(String userId) {
+        registerActiveUserIfAbsent(userId, null, null);
+    }
+
+    public void registerActiveUserIfAbsent(String userId, String displayName, String orgId) {
+        if (!hasText(userId)) {
+            return;
+        }
+        String safeUserId = userId.trim();
+        if (isDevelopmentUserId(safeUserId)) {
+            return;
+        }
+        AdminUserDto existing = storage.findUser(safeUserId);
+        if (existing != null) {
+            boolean changed = applyProfile(existing);
+            if (hasText(displayName) && (isBlank(existing.getNickname()) || sameText(existing.getNickname(), existing.getUserId()))) {
+                existing.setNickname(displayName.trim());
+                changed = true;
+            }
+            if (hasText(orgId) && isBlank(existing.getOrgId())) {
+                existing.setOrgId(orgId.trim());
+                changed = true;
+            }
+            if (changed) {
+                storage.saveUser(existing);
+            }
+            return;
+        }
+        AdminUserDto user = new AdminUserDto();
+        user.setUserId(safeUserId);
+        user.setNickname(firstText(displayName, safeUserId));
+        user.setOrgId(trim(orgId));
+        user.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        user.setCreatedAt(LocalDateTime.now());
+        applyProfile(user);
+        storage.saveUser(user);
     }
 
     public List<AdminOrganizationDto> listOrganizations(String adminId) {
@@ -99,6 +167,10 @@ public class AdminConsoleGovernanceApplicationService {
         List<AdminUserDto> all = new ArrayList<AdminUserDto>();
         for (AdminUserDto user : storage.listUsers()) {
             if (user.getDeletedAt() != null) continue;
+            if (isDevelopmentUserId(user.getUserId())) continue;
+            if (applyProfile(user)) {
+                storage.saveUser(user);
+            }
             if (hasText(keyword) && (user.getNickname() == null
                     || !user.getNickname().toLowerCase().contains(keyword.trim().toLowerCase()))) {
                 continue;
@@ -117,15 +189,21 @@ public class AdminConsoleGovernanceApplicationService {
 
     public AdminOperationResult banUser(String adminId, String userId, String reason) {
         requireAdmin(adminId);
+        String safeAdminId = trim(adminId);
+        String safeUserId = trim(userId);
         AdminUserDto user = userDetail(adminId, userId);
         String before = helper.auditSnapshot(simple("status", user.getStatus(), "bannedReason", user.getBannedReason()));
         helper.applyBan(user, reason);
         storage.saveUser(user);
-        NotificationOperationResult notification = pushUserNotice(userId, "Account suspended",
-                "Your account has been suspended. Reason: " + user.getBannedReason(), null);
+        boolean adminAccount = sameText(safeAdminId, safeUserId) || storage.isAdmin(safeUserId);
+        NotificationOperationResult notification = pushUserNotice(userId, "用户端访问已受限",
+                "你的 CyanCruise 用户端访问已被管理员限制。管理后台权限不在这里调整。", null);
         boolean audited = audit(adminId, AdminConstants.ACTION_BAN_USER, "USER", userId, before,
                 helper.auditSnapshot(simple("status", user.getStatus(), "bannedReason", user.getBannedReason())));
-        return op(AdminConstants.STATUS_OK, "banned; notification=" + notification.getStatus(), userId, 1, audited);
+        String message = adminAccount
+                ? "已禁用该账号的用户端功能，管理后台权限不会受影响。如需移除管理权限，请在金蝶安全管理中调整。"
+                : "已禁用该账号的用户端功能。";
+        return op(AdminConstants.STATUS_OK, message, userId, 1, audited);
     }
 
     public AdminOperationResult unbanUser(String adminId, String userId) {
@@ -134,11 +212,11 @@ public class AdminConsoleGovernanceApplicationService {
         String before = helper.auditSnapshot(simple("status", user.getStatus(), "bannedReason", user.getBannedReason()));
         helper.applyUnban(user);
         storage.saveUser(user);
-        NotificationOperationResult notification = pushUserNotice(userId, "Account restored",
-                "Your account restriction has been lifted. Welcome back!", null);
+        NotificationOperationResult notification = pushUserNotice(userId, "用户端访问已恢复",
+                "你的 CyanCruise 用户端访问已恢复。", null);
         boolean audited = audit(adminId, AdminConstants.ACTION_UNBAN_USER, "USER", userId, before,
                 helper.auditSnapshot(simple("status", user.getStatus(), "bannedReason", user.getBannedReason())));
-        return op(AdminConstants.STATUS_OK, "unbanned; notification=" + notification.getStatus(), userId, 1, audited);
+        return op(AdminConstants.STATUS_OK, "已恢复该账号的用户端功能。", userId, 1, audited);
     }
 
     public List<AdminCareerPathDto> listCareerPaths(String adminId) {
@@ -304,7 +382,13 @@ public class AdminConsoleGovernanceApplicationService {
 
     public AdminAnalyticsSummaryDto analyticsSummary(String adminId) {
         requireAdmin(adminId);
-        return storage.analyticsSummary();
+        AdminAnalyticsSummaryDto summary = storage.analyticsSummary();
+        int visibleUsers = visibleUserCount();
+        summary.setTotalUsers(Integer.valueOf(visibleUsers));
+        if (summary.getEventBreakdown30d() != null) {
+            summary.getEventBreakdown30d().put("USERS", Integer.valueOf(visibleUsers));
+        }
+        return summary;
     }
 
     public AdminPageResult<AdminAuditLogDto> auditLogs(String adminId, int page, int size) {
@@ -318,6 +402,16 @@ public class AdminConsoleGovernanceApplicationService {
             if (orgId != null && orgId.equals(user.getOrgId())) users.add(user);
         }
         return users;
+    }
+
+    private int visibleUserCount() {
+        int count = 0;
+        for (AdminUserDto user : storage.listUsers()) {
+            if (user.getDeletedAt() != null) continue;
+            if (isDevelopmentUserId(user.getUserId())) continue;
+            count++;
+        }
+        return count;
     }
 
     private List<AdminUserDto> broadcastTargets(AdminBroadcastRequest request) {
@@ -336,13 +430,21 @@ public class AdminConsoleGovernanceApplicationService {
     }
 
     private NotificationOperationResult pushUserNotice(String userId, String title, String content, String link) {
-        NotificationPushRequest request = new NotificationPushRequest();
-        request.setUserId(userId);
-        request.setType(NotificationConstants.TYPE_ADMIN_BROADCAST);
-        request.setTitle(title);
-        request.setContent(content);
-        request.setLink(link);
-        return notifications.pushBestEffort(request);
+        try {
+            NotificationPushRequest request = new NotificationPushRequest();
+            request.setUserId(userId);
+            request.setType(NotificationConstants.TYPE_ADMIN_BROADCAST);
+            request.setTitle(title);
+            request.setContent(content);
+            request.setLink(link);
+            return notifications.pushBestEffort(request);
+        } catch (Throwable ex) {
+            NotificationOperationResult result = new NotificationOperationResult();
+            result.setStatus(NotificationConstants.RESULT_FAILED);
+            result.setMessage("通知暂未发送，不影响本次管理操作。");
+            result.setUpdated(Integer.valueOf(0));
+            return result;
+        }
     }
 
     private boolean audit(String adminId, String action, String targetType, String targetId, String beforeJson, String afterJson) {
@@ -357,6 +459,32 @@ public class AdminConsoleGovernanceApplicationService {
             log.setCreatedAt(LocalDateTime.now());
             return storage.saveAudit(log);
         } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private boolean applyProfile(AdminUserDto user) {
+        if (user == null || !hasText(user.getUserId()) || profileStorage == null) {
+            return false;
+        }
+        try {
+            UserProfileSnapshot snapshot = profileStorage.loadSnapshot(user.getUserId().trim());
+            if (snapshot == null || snapshot.getOnboarding() == null
+                    || snapshot.getOnboarding().getEducation() == null) {
+                return false;
+            }
+            UserProfileSnapshot.EducationBlock education = snapshot.getOnboarding().getEducation();
+            boolean changed = false;
+            if (hasText(education.getSchool()) && isBlank(user.getSchool())) {
+                user.setSchool(education.getSchool().trim());
+                changed = true;
+            }
+            if (hasText(education.getMajor()) && isBlank(user.getMajor())) {
+                user.setMajor(education.getMajor().trim());
+                changed = true;
+            }
+            return changed;
+        } catch (RuntimeException ex) {
             return false;
         }
     }
@@ -422,11 +550,36 @@ public class AdminConsoleGovernanceApplicationService {
         return hasText(first) ? first.trim() : second;
     }
 
+    private boolean isDevelopmentUserId(String userId) {
+        if (!hasText(userId)) {
+            return false;
+        }
+        String safe = userId.trim();
+        return "api-user".equals(safe) || "demo-user".equals(safe) || "dev-user".equals(safe)
+                || "test-user".equals(safe);
+    }
+
+    private boolean isBlank(String value) {
+        return !hasText(value);
+    }
+
     private String trim(String value) {
         return value == null ? null : value.trim();
     }
 
+    private boolean sameText(String left, String right) {
+        return hasText(left) && hasText(right) && left.trim().equals(right.trim());
+    }
+
     private boolean hasText(String value) {
         return value != null && value.trim().length() > 0;
+    }
+
+    private static CareerProfileStorage profileStorageOrNull() {
+        try {
+            return CareerProfileStorageFactory.fromSystemProperties();
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 }

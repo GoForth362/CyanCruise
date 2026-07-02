@@ -57,6 +57,7 @@ class AdminConsoleGovernanceWebApiTest {
         AdminContentItemDto content = new AdminContentItemDto();
         content.setTitle("Article");
         AdminBroadcastRequest broadcast = new AdminBroadcastRequest();
+        broadcast.setUserId("u1");
         broadcast.setTitle("Notice");
         broadcast.setContent("Hello");
 

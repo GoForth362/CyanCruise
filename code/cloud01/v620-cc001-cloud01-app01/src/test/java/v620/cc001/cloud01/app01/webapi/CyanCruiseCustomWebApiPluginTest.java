@@ -35,6 +35,8 @@ import v620.base.helper.career.CareerPlanSummaryService;
 import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
+import v620.cc001.base.common.dto.career.AdminConstants;
+import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
@@ -44,24 +46,19 @@ import v620.base.helper.career.InterviewCoreService;
 import v620.base.helper.career.ResumeDiagnosisService;
 import v620.cc001.cloud01.app01.mservice.application.AssessmentApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.AssistantChatApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.AdminConsoleGovernanceApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.CareerAgentTodayApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.CareerPlanApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
 import v620.cc001.cloud01.app01.mservice.ai.CareerProfileRuleInputSource;
-import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultResumeDiagnosisAnalyzer;
-import v620.cc001.cloud01.app01.mservice.auth.impl.DevelopmentCyanCruiseIdentityResolver;
-import v620.cc001.cloud01.app01.mservice.ai.impl.EmptyAssistantChatContextProvider;
-import v620.cc001.cloud01.app01.mservice.storage.impl.FileAssistantChatStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.FileCareerPlanStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.FileCareerProfileStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.FileInterviewStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.FileResumeDiagnosisStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.FileResumeStorage;
-import v620.cc001.cloud01.app01.mservice.auth.impl.IdentityAwareCyanCruiseWebApiBoundary;
 import v620.cc001.cloud01.app01.mservice.application.InterviewApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.ResumeApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.ResumeDiagnosisApplicationService;
-import v620.cc001.cloud01.app01.mservice.ai.impl.UnavailableAssistantChatGenerator;
+import v620.cc001.cloud01.app01.mservice.application.NotificationsSubscriptionsApplicationService;
+import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.UnavailableSubscriptionSender;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -278,6 +275,85 @@ class CyanCruiseCustomWebApiPluginTest {
         assertEquals("Unsupported CyanCruise custom WebAPI path: /cc001/missing", result.getMessage());
     }
 
+    @Test
+    void blocksBannedUserBeforeUserRouteDispatch(@TempDir Path tempDir) {
+        IdentityAwareCyanCruiseWebApiBoundary boundary =
+                new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver("api-user"));
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        AdminUserDto user = new AdminUserDto();
+        user.setUserId("api-user");
+        user.setStatus(AdminConstants.USER_STATUS_BANNED);
+        storage.saveUser(user);
+        AdminConsoleGovernanceApplicationService adminService = new AdminConsoleGovernanceApplicationService(
+                storage,
+                new NotificationsSubscriptionsApplicationService(
+                        new InMemoryNotificationStorage(),
+                        new InMemorySubscriptionQuotaStorage(),
+                        new UnavailableSubscriptionSender(),
+                        new v620.base.helper.career.NotificationsSubscriptionsService()),
+                new v620.base.helper.career.AdminConsoleGovernanceService());
+        CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir, boundary,
+                new AdminConsoleGovernanceWebApi(adminService, boundary));
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("userId", "api-user");
+
+        ApiResult result = plugin.doCustomService(params("/cc001/career-profile/snapshot/get", body));
+
+        assertFalse(result.getSuccess());
+        assertEquals("USER_BANNED", result.getErrorCode());
+    }
+
+    @Test
+    void adminRouteStillWorksWhenAdminUserFacingAccessIsBanned(@TempDir Path tempDir) {
+        IdentityAwareCyanCruiseWebApiBoundary boundary =
+                new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver(
+                        "api-admin", "api-admin", CosmicIdentityConstants.ROLE_ADMIN));
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("api-admin");
+        AdminUserDto user = new AdminUserDto();
+        user.setUserId("api-admin");
+        user.setStatus(AdminConstants.USER_STATUS_BANNED);
+        storage.saveUser(user);
+        AdminConsoleGovernanceApplicationService adminService = new AdminConsoleGovernanceApplicationService(
+                storage,
+                new NotificationsSubscriptionsApplicationService(
+                        new InMemoryNotificationStorage(),
+                        new InMemorySubscriptionQuotaStorage(),
+                        new UnavailableSubscriptionSender(),
+                        new v620.base.helper.career.NotificationsSubscriptionsService()),
+                new v620.base.helper.career.AdminConsoleGovernanceService());
+        CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir, boundary,
+                new AdminConsoleGovernanceWebApi(adminService, boundary));
+
+        ApiResult result = plugin.doCustomService(params("/cc001/admin/whoami", "api-admin"));
+
+        assertTrue(result.getSuccess());
+    }
+
+    @Test
+    void registersActiveUserWhenUserRouteIsCalled(@TempDir Path tempDir) {
+        IdentityAwareCyanCruiseWebApiBoundary boundary =
+                new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver("real-user"));
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        AdminConsoleGovernanceApplicationService adminService = new AdminConsoleGovernanceApplicationService(
+                storage,
+                new NotificationsSubscriptionsApplicationService(
+                        new InMemoryNotificationStorage(),
+                        new InMemorySubscriptionQuotaStorage(),
+                        new UnavailableSubscriptionSender(),
+                        new v620.base.helper.career.NotificationsSubscriptionsService()),
+                new v620.base.helper.career.AdminConsoleGovernanceService());
+        CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir, boundary,
+                new AdminConsoleGovernanceWebApi(adminService, boundary));
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("userId", "real-user");
+
+        ApiResult result = plugin.doCustomService(params("/cc001/career-profile/snapshot/get", body));
+
+        assertTrue(result.getSuccess());
+        assertEquals(AdminConstants.USER_STATUS_ACTIVE, storage.findUser("real-user").getStatus());
+    }
+
     private Map<String, Object> params(String path, Object body) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put(CyanCruiseCustomWebApiPlugin.PARAM_PATH, path);
@@ -295,6 +371,11 @@ class CyanCruiseCustomWebApiPluginTest {
     }
 
     private CyanCruiseCustomWebApiPlugin plugin(Path tempDir, IdentityAwareCyanCruiseWebApiBoundary boundary) {
+        return plugin(tempDir, boundary, new AdminConsoleGovernanceWebApi());
+    }
+
+    private CyanCruiseCustomWebApiPlugin plugin(Path tempDir, IdentityAwareCyanCruiseWebApiBoundary boundary,
+                                               AdminConsoleGovernanceWebApi adminWebApi) {
         CareerProfileApplicationService profileService = profileService(tempDir);
         ResumeApplicationService resumeService = new ResumeApplicationService(
                 new FileResumeStorage(tempDir.resolve("resume").toFile()), profileService);
@@ -327,8 +408,12 @@ class CyanCruiseCustomWebApiPluginTest {
                 new InterviewWebApi(interviewService),
                 new AssistantChatWebApi(assistantService),
                 new EmploymentInsightsResourcesWebApi(),
-                new NotificationsSubscriptionsWebApi(),
-                new AdminConsoleGovernanceWebApi(),
+                new NotificationsSubscriptionsWebApi(new NotificationsSubscriptionsApplicationService(
+                        new InMemoryNotificationStorage(),
+                        new InMemorySubscriptionQuotaStorage(),
+                        new UnavailableSubscriptionSender(),
+                        new v620.base.helper.career.NotificationsSubscriptionsService())),
+                adminWebApi,
                 new FileUploadPreviewWebApi(),
                 new ResumeDiagnosisWebApi(diagnosisService),
                 new AssessmentWebApi(assessmentService));

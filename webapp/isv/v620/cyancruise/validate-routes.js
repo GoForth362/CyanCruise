@@ -192,6 +192,8 @@ const requiredApis = [
   "/cc001/notifications/list",
   "/cc001/notifications/unread-count",
   "/cc001/notifications/read",
+  "/cc001/notifications/read-all",
+  "/cc001/notifications/delete",
   "/cc001/notifications/subscription/grant",
   "/cc001/notifications/subscription/quota",
   "/cc001/notifications/weekly-report/run",

@@ -1,4 +1,4 @@
-# admin-console-governance Specification
+﻿# admin-console-governance Specification
 
 ## Purpose
 TBD - created by archiving change migrate-admin-console-governance. Update Purpose after archive.
@@ -59,6 +59,11 @@ CyanCruise SHALL support administrator user search, detail, ban, and unban contr
 
 - **WHEN** an administrator unbans an existing user
 - **THEN** the system SHALL restore the active status, clear the ban reason, attempt a restoration notification best-effort, and record an audit event
+
+#### Scenario: Banned user accesses user-facing route
+
+- **WHEN** a user has been banned by administrator user governance
+- **THEN** CyanCruise SHALL reject user-facing `/cc001/*` business routes for that user and return a recoverable banned-user state without executing the requested user operation
 
 ### Requirement: Skill map governance
 
@@ -178,6 +183,25 @@ CyanCruise SHALL record and expose administrator audit logs for state-changing m
 - **WHEN** an administrator requests audit logs with pagination
 - **THEN** the system SHALL return newest-first audit entries with bounded page size
 
+### Requirement: Admin governance persistent storage
+
+CyanCruise SHALL support a persistent admin governance storage adapter so administrator changes to users, question review, content visibility, organization data, skill-map data, and audit logs survive process restart and can affect user-facing runtime behavior.
+
+#### Scenario: PostgreSQL admin governance storage is configured
+
+- **WHEN** `cc001.storage.backend=postgresql` and complete PostgreSQL connection settings are provided
+- **THEN** the admin governance service SHALL use PostgreSQL-backed storage instead of process-local memory
+
+#### Scenario: PostgreSQL admin governance storage is not configured
+
+- **WHEN** PostgreSQL storage is not explicitly configured
+- **THEN** the admin governance service MAY use in-memory storage for local development and tests, and SHALL NOT pretend that in-memory state is production-persistent
+
+#### Scenario: Admin state is restarted
+
+- **WHEN** an administrator bans a user, approves a question, hides content, or records an audit event using persistent storage and the application process restarts
+- **THEN** the saved governance state SHALL remain queryable from the admin WebAPI after restart
+
 ### Requirement: Admin WebAPI and route mapping
 
 The migration SHALL define Cosmic WebAPI and webapp or platform route/API mapping for admin whoami, organizations, dashboards, students, users, skill map, questions, content, broadcast, analytics, and audit logs.
@@ -233,3 +257,80 @@ Admin governance SHALL use the shared Cosmic identity context boundary for admin
 
 - **WHEN** a management operation supplies an explicit adminId that conflicts with the resolved platform administrator identity
 - **THEN** admin governance SHALL reject the operation with identity-mismatch or forbidden semantics and SHALL NOT write audit or business changes as if it succeeded
+
+### Requirement: Admin console MVP page experience
+
+CyanCruise SHALL provide a management console page in the existing CyanCruise webapp that allows an authorized administrator to view dashboard, users, content, question review, broadcasts, and audit records from one entry.
+
+#### Scenario: Admin opens management console
+
+- **WHEN** an authorized administrator opens the `admin-console` route
+- **THEN** the page SHALL show management sections for 总览, 用户管理, 内容管理, 题库审核, 通知公告, and 操作记录
+
+#### Scenario: Admin uses management workspace layout
+
+- **WHEN** an authorized administrator opens the `admin-console` route
+- **THEN** the page SHALL present a management workspace with a persistent navigation area, top account area, spacious content region, and table-oriented panels that follow the CyanCruise user-facing visual style
+
+#### Scenario: Non-admin opens management console
+
+- **WHEN** a signed-in caller without an `ADMIN` equivalent role opens the `admin-console` route
+- **THEN** the page SHALL show a Chinese no-permission state and SHALL NOT call state-changing `/cc001/admin/*` operations
+
+#### Scenario: Admin backend is unavailable
+
+- **WHEN** the page cannot load management data from `/cc001/admin/*`
+- **THEN** the page SHALL show a recoverable Chinese unavailable state and SHALL NOT affect user-facing routes
+
+### Requirement: Admin frontend service boundary
+
+CyanCruise SHALL centralize admin frontend API calls behind a webapp service module so page rendering does not duplicate endpoint paths or payload assembly.
+
+#### Scenario: Page loads admin dashboard
+
+- **WHEN** the admin page requests dashboard data
+- **THEN** it SHALL call the admin service module, which SHALL invoke the configured `/cc001/admin/*` endpoint with the current admin identity
+
+#### Scenario: Admin action fails
+
+- **WHEN** an admin service call returns forbidden, identity-required, failed, or unavailable status
+- **THEN** the page SHALL present a clear Chinese failure message and SHALL keep the current page usable
+
+### Requirement: Unified admin WebAPI authorization
+
+Every CyanCruise management WebAPI under `/cc001/admin/*`, except public question contribution, SHALL resolve the current Cosmic identity and verify an `ADMIN` equivalent role before executing the application service operation.
+
+#### Scenario: Admin lists management data
+
+- **WHEN** an administrator lists organizations, users, questions, content, analytics, or audit logs
+- **THEN** the WebAPI SHALL validate the current admin identity before reading management data
+
+#### Scenario: Admin writes management data
+
+- **WHEN** an administrator creates, updates, deletes, bans, unbans, approves, rejects, broadcasts, pins, or hides management data
+- **THEN** the WebAPI SHALL validate the current admin identity before executing the write and recording audit output
+
+#### Scenario: Explicit admin id conflicts with platform identity
+
+- **WHEN** a request body supplies an `adminId` that does not match the resolved Cosmic administrator identity
+- **THEN** the WebAPI SHALL reject the operation and SHALL NOT execute the application service write
+
+#### Scenario: Cosmic administrator group grants management access
+
+- **WHEN** the current Cosmic platform user is recognized by the platform permission service as an administrator or administrator group member
+- **THEN** CyanCruise SHALL enrich the resolved production identity with an `ADMIN` equivalent role before checking `/cc001/admin/*` authorization
+
+#### Scenario: Cosmic administrator lookup is unavailable
+
+- **WHEN** the platform permission service is unavailable, missing, or fails during administrator lookup
+- **THEN** CyanCruise SHALL fail closed and SHALL NOT grant administrator access from the lookup alone
+
+### Requirement: Admin user-visible Chinese copy
+
+CyanCruise SHALL show management console labels, buttons, empty states, errors, and identity hints in understandable Chinese.
+
+#### Scenario: Management text is rendered
+
+- **WHEN** the admin console renders labels, buttons, or status messages
+- **THEN** the visible text SHALL use understandable Chinese such as “管理后台”, “用户管理”, “题库审核”, and “无管理员权限”, and SHALL NOT show garbled text or unexplained abbreviations
+
