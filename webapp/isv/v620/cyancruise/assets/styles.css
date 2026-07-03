@@ -50,6 +50,13 @@ button:focus {
   background: var(--accent-strong);
 }
 
+button.loading,
+button.loading:hover,
+button.loading:focus {
+  cursor: progress;
+  opacity: .72;
+}
+
 button.secondary {
   color: var(--accent);
   background: var(--surface-soft);
@@ -1006,6 +1013,100 @@ body.admin-mode .message-panel {
   background: var(--accent-strong);
 }
 
+.admin-broadcast-form {
+  display: grid;
+  gap: 18px;
+  padding: 22px 24px 24px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfdfb;
+}
+
+.admin-recipient-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-recipient-tools > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-recipient-tools button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 6px;
+}
+
+.admin-recipient-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-recipient-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 62px;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.admin-recipient-option:hover,
+.admin-recipient-option:focus-within {
+  border-color: var(--accent);
+  background: var(--surface-soft);
+}
+
+.admin-recipient-option input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  flex: 0 0 auto;
+}
+
+.admin-recipient-option span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.admin-recipient-option strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-recipient-option small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-recipient-empty {
+  grid-column: 1 / -1;
+  padding: 14px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+}
+
 .admin-content-form {
   display: grid;
   gap: 18px;
@@ -1241,6 +1342,47 @@ body.admin-mode .message-panel {
   gap: 16px 18px;
 }
 
+.admin-form-field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-form-field.wide {
+  grid-column: 1 / -1;
+}
+
+.admin-choice-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-choice-tab {
+  min-height: 38px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.admin-choice-tab:hover,
+.admin-choice-tab:focus {
+  border-color: var(--accent);
+  background: var(--surface-soft);
+  color: var(--accent-strong);
+}
+
+.admin-choice-tab.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
 .admin-form-grid label,
 .admin-check {
   display: grid;
@@ -1441,6 +1583,15 @@ body.admin-mode .message-panel {
 
   .admin-form-title {
     display: grid;
+  }
+
+  .admin-recipient-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-recipient-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

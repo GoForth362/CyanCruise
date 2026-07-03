@@ -1224,6 +1224,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         Map<?, ?> values = requestMap(body);
         if (values != null) {
             out.setUserId(textOrNull(values.get("userId")));
+            out.setUserIds(stringList(values.get("userIds")));
             out.setTitle(textOrNull(values.get("title")));
             out.setContent(textOrNull(values.get("content")));
             out.setLink(textOrNull(values.get("link")));

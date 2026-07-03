@@ -1,15 +1,19 @@
 package v620.cc001.base.common.dto.career;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class AdminBroadcastRequest implements Serializable {
     private static final long serialVersionUID = 1L;
     private String userId;
+    private List<String> userIds;
     private String title;
     private String content;
     private String link;
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+    public List<String> getUserIds() { return userIds; }
+    public void setUserIds(List<String> userIds) { this.userIds = userIds; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getContent() { return content; }

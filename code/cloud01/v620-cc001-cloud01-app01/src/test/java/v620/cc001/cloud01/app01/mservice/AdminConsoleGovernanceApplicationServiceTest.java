@@ -24,6 +24,7 @@ import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -152,6 +153,32 @@ class AdminConsoleGovernanceApplicationServiceTest {
     }
 
     @Test
+    void broadcastCanTargetMultipleActiveUsers() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        AdminConsoleGovernanceApplicationService service = service(storage);
+        AdminUserDto first = new AdminUserDto();
+        first.setUserId("u1");
+        first.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        storage.saveUser(first);
+        AdminUserDto second = new AdminUserDto();
+        second.setUserId("u2");
+        second.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        storage.saveUser(second);
+        AdminUserDto banned = new AdminUserDto();
+        banned.setUserId("u3");
+        banned.setStatus(AdminConstants.USER_STATUS_BANNED);
+        storage.saveUser(banned);
+        AdminBroadcastRequest request = new AdminBroadcastRequest();
+        request.setTitle("Notice");
+        request.setContent("Content");
+        request.setUserIds(Arrays.asList("u1", "u2", "u2", "u3"));
+
+        AdminBroadcastResult result = service.broadcast("admin", request);
+
+        assertEquals(Integer.valueOf(2), result.getTargetCount());
+    }
+
+    @Test
     void userListSkipsDevelopmentUserAndEnrichesProfileFields() {
         InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
         InMemoryCareerProfileStorage profiles = new InMemoryCareerProfileStorage();
@@ -247,6 +274,20 @@ class AdminConsoleGovernanceApplicationServiceTest {
         assertFalse(content.isEmpty());
         assertTrue(hasContent(content, "service-ncss-001"));
         assertTrue(hasContent(content, "video-bilibili-interview-001"));
+    }
+
+    @Test
+    void savedContentCategoryIsNormalizedByType() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        AdminConsoleGovernanceApplicationService service = service(storage);
+        AdminContentItemDto content = new AdminContentItemDto();
+        content.setTitle("Article");
+        content.setType(AdminConstants.CONTENT_TYPE_ARTICLE);
+        content.setCategory("求职指导");
+
+        AdminContentItemDto saved = service.saveContent("admin", content);
+
+        assertEquals("精选文章", saved.getCategory());
     }
 
     private boolean hasContent(List<AdminContentItemDto> content, String contentId) {

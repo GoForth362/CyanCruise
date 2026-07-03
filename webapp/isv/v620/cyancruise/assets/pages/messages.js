@@ -3,17 +3,29 @@
 
   var PAGE_SIZE = 10;
   var pageByUser = {};
+  var dataByUser = {};
   var registerPage = window.CYANCRUISE_REGISTER_PAGE_MODULE || function () {};
   var attachRenderer = window.CYANCRUISE_ATTACH_PAGE_RENDERER || function () {};
 
   registerPage("messages", ["messages"], "消息中心");
 
   attachRenderer("messages", function (item, context) {
-    renderLoading(item, context);
+    var cached = currentData(context);
+    if (cached) {
+      renderMessages(item, context, cached);
+      bindMessages(item, context);
+    } else {
+      renderLoading(item, context);
+    }
     loadMessages(context).then(function (data) {
+      storeData(context, data);
       renderMessages(item, context, data);
       bindMessages(item, context);
     }).catch(function (error) {
+      if (cached) {
+        notice(context, "warning", "刷新失败", messageOf(error));
+        return;
+      }
       renderUnavailable(item, context, messageOf(error));
     });
   });
@@ -130,7 +142,7 @@
         var target = event.currentTarget;
         var action = target.getAttribute("data-message-action");
         if (action === "refresh") {
-          rerender(item, context);
+          refreshMessages(item, context, target, "刷新中");
         } else if (action === "read") {
           markRead(item, context, target.getAttribute("data-message-id"));
         } else if (action === "read-all") {
@@ -138,12 +150,13 @@
         } else if (action === "delete") {
           archiveMessage(item, context, target.getAttribute("data-message-id"));
         } else if (action === "open") {
-          openLink(target.getAttribute("data-message-link"));
+          openLink(context, target.getAttribute("data-message-link"));
         } else if (action === "weekly-report") {
           runWeeklyReport(item, context);
         } else if (action === "page") {
           setPage(context, target.getAttribute("data-page"));
-          rerender(item, context);
+          renderMessages(item, context, currentData(context) || emptyData());
+          bindMessages(item, context);
         }
       });
     }
@@ -153,24 +166,35 @@
     if (!notificationId) {
       return;
     }
+    setButtonBusy(targetButton(context, notificationId, "read"), "处理中");
     context.post(context.endpoints.notificationRead, {
       userId: userIdOf(context),
       notificationId: notificationId
     }).then(function () {
+      applyRead(context, notificationId);
+      renderMessages(item, context, currentData(context) || emptyData());
+      bindMessages(item, context);
       notice(context, "success", "已标为已读", "这条消息已更新。");
-      rerender(item, context);
+      refreshMessages(item, context, null, "");
     }).catch(function (error) {
+      clearBusyButtons(context);
       notice(context, "warning", "操作失败", messageOf(error));
     });
   }
 
   function markAllRead(item, context) {
+    var button = actionButton(context, "read-all");
+    setButtonBusy(button, "处理中");
     context.post(context.endpoints.notificationReadAll, {
       userId: userIdOf(context)
     }).then(function () {
+      applyAllRead(context);
+      renderMessages(item, context, currentData(context) || emptyData());
+      bindMessages(item, context);
       notice(context, "success", "已全部标为已读", "未读消息数已更新。");
-      rerender(item, context);
+      refreshMessages(item, context, null, "");
     }).catch(function (error) {
+      clearBusyButtons(context);
       notice(context, "warning", "操作失败", messageOf(error));
     });
   }
@@ -179,18 +203,25 @@
     if (!notificationId) {
       return;
     }
+    setButtonBusy(targetButton(context, notificationId, "delete"), "移出中");
     context.post(context.endpoints.notificationDelete, {
       userId: userIdOf(context),
       notificationId: notificationId
     }).then(function () {
+      applyArchive(context, notificationId);
+      renderMessages(item, context, currentData(context) || emptyData());
+      bindMessages(item, context);
       notice(context, "success", "已移出列表", "这条消息已归档。");
-      rerender(item, context);
+      refreshMessages(item, context, null, "");
     }).catch(function (error) {
+      clearBusyButtons(context);
       notice(context, "warning", "操作失败", messageOf(error));
     });
   }
 
   function runWeeklyReport(item, context) {
+    var button = actionButton(context, "weekly-report");
+    setButtonBusy(button, "生成中");
     context.post(context.endpoints.weeklyReport, {
       userId: userIdOf(context),
       highlights: ["查看消息中心", "复盘近期练习"]
@@ -199,39 +230,82 @@
       notice(context, delivered ? "success" : "warning", delivered ? "周报已生成" : "周报暂未生成",
         delivered ? "新的周报通知已加入消息中心。" : first(result && result.reason, "近期活动还不够生成周报。"));
       setPage(context, 1);
-      rerender(item, context);
+      refreshMessages(item, context, null, "");
     }).catch(function (error) {
+      clearBusyButtons(context);
       notice(context, "warning", "周报生成失败", messageOf(error));
     });
   }
 
-  function openLink(link) {
-    var route = routeFromLink(link);
-    if (route) {
-      window.location.hash = route;
+  function openLink(context, link) {
+    var target = targetFromLink(link);
+    if (target.route) {
+      window.location.hash = target.route;
+      return;
     }
+    if (target.href) {
+      window.open(target.href, "_blank", "noopener,noreferrer");
+      return;
+    }
+    notice(context, "warning", "无法打开", "这条消息没有可识别的查看地址。");
   }
 
-  function routeFromLink(link) {
+  function targetFromLink(link) {
     var value = text(link);
     if (!value) {
-      return "";
+      return {};
+    }
+    if (/^https?:\/\//i.test(value)) {
+      return targetFromUrl(value, value);
+    }
+    var direct = routeFromText(value);
+    if (direct) {
+      return { route: direct };
     }
     try {
       var url = new URL(value, window.location.href);
-      return text(url.searchParams.get("ccRoute") || url.hash.replace(/^#/, ""));
+      return targetFromUrl(url.href, value);
     } catch (ignored) {
-      return value.replace(/^index\.html[#?]*/, "").replace(/^ccRoute=/, "").replace(/^#/, "").split("&")[0];
+      return {};
     }
   }
 
-  function rerender(item, context) {
-    renderLoading(item, context);
-    loadMessages(context).then(function (data) {
+  function targetFromUrl(urlValue, originalValue) {
+    try {
+      var url = new URL(urlValue, window.location.href);
+      var route = routeFromText(url.searchParams.get("ccRoute") || url.searchParams.get("route") || url.hash.replace(/^#/, ""));
+      if (route) {
+        return { route: route };
+      }
+      if (/^https?:\/\//i.test(originalValue)) {
+        return { href: url.href };
+      }
+      return { route: routeFromText(url.pathname.split("/").pop()) };
+    } catch (ignored) {
+      return {};
+    }
+  }
+
+  function routeFromText(value) {
+    var route = text(value)
+      .replace(/^index\.html[#?]*/, "")
+      .replace(/^ccRoute=/, "")
+      .replace(/^route=/, "")
+      .replace(/^#/, "")
+      .split("&")[0]
+      .split("?")[0];
+    return route;
+  }
+
+  function refreshMessages(item, context, button, busyText) {
+    setButtonBusy(button, busyText);
+    return loadMessages(context).then(function (data) {
+      storeData(context, data);
       renderMessages(item, context, data);
       bindMessages(item, context);
     }).catch(function (error) {
-      renderUnavailable(item, context, messageOf(error));
+      clearBusyButtons(context);
+      notice(context, "warning", "刷新失败", messageOf(error));
     });
   }
 
@@ -253,6 +327,97 @@
 
   function setPage(context, value) {
     pageByUser[userIdOf(context) || "anonymous"] = Math.max(1, numberOf(value) || 1);
+  }
+
+  function currentData(context) {
+    return dataByUser[userIdOf(context) || "anonymous"] || null;
+  }
+
+  function storeData(context, data) {
+    dataByUser[userIdOf(context) || "anonymous"] = data || emptyData();
+  }
+
+  function emptyData() {
+    return {
+      notifications: [],
+      unread: 0,
+      quotas: []
+    };
+  }
+
+  function applyRead(context, notificationId) {
+    var data = currentData(context);
+    if (!data) return;
+    var notifications = data.notifications || [];
+    for (var i = 0; i < notifications.length; i += 1) {
+      if (text(notifications[i].notificationId) === text(notificationId)) {
+        if (notifications[i].readFlag !== true) {
+          data.unread = Math.max(0, numberOf(data.unread) - 1);
+        }
+        notifications[i].readFlag = true;
+        return;
+      }
+    }
+  }
+
+  function applyAllRead(context) {
+    var data = currentData(context);
+    if (!data) return;
+    var notifications = data.notifications || [];
+    for (var i = 0; i < notifications.length; i += 1) {
+      notifications[i].readFlag = true;
+    }
+    data.unread = 0;
+  }
+
+  function applyArchive(context, notificationId) {
+    var data = currentData(context);
+    if (!data) return;
+    var next = [];
+    var removedUnread = 0;
+    var notifications = data.notifications || [];
+    for (var i = 0; i < notifications.length; i += 1) {
+      if (text(notifications[i].notificationId) === text(notificationId)) {
+        removedUnread = notifications[i].readFlag === true ? 0 : 1;
+      } else {
+        next.push(notifications[i]);
+      }
+    }
+    data.notifications = next;
+    data.unread = Math.max(0, numberOf(data.unread) - removedUnread);
+  }
+
+  function actionButton(context, action) {
+    if (!context.pageHost) return null;
+    return context.pageHost.querySelector('[data-message-action="' + action + '"]');
+  }
+
+  function targetButton(context, notificationId, action) {
+    if (!context.pageHost) return null;
+    return context.pageHost.querySelector('[data-message-action="' + action + '"][data-message-id="' + esc(context, notificationId) + '"]');
+  }
+
+  function setButtonBusy(button, label) {
+    if (!button) return;
+    if (!button.getAttribute("data-original-label")) {
+      button.setAttribute("data-original-label", button.textContent || "");
+    }
+    button.disabled = true;
+    button.classList.add("loading");
+    if (label) {
+      button.textContent = label;
+    }
+  }
+
+  function clearBusyButtons(context) {
+    if (!context.pageHost) return;
+    var buttons = context.pageHost.querySelectorAll("[data-original-label]");
+    for (var i = 0; i < buttons.length; i += 1) {
+      buttons[i].disabled = false;
+      buttons[i].classList.remove("loading");
+      buttons[i].textContent = buttons[i].getAttribute("data-original-label");
+      buttons[i].removeAttribute("data-original-label");
+    }
   }
 
   function summaryCard(context, title, value, note) {

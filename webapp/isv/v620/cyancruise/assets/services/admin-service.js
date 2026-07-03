@@ -189,6 +189,17 @@
     });
   }
 
+  function listUsers(context, keyword, size) {
+    return context.post(context.endpoints.adminUsers, {
+      adminId: adminId(context.identity),
+      page: 0,
+      size: size || context.pageSize || 20,
+      keyword: keyword || ""
+    }).then(function (result) {
+      return normalizePage(result, size || context.pageSize || 20);
+    });
+  }
+
   function auditLogs(context, page, size) {
     return context.post(context.endpoints.adminAuditLog, {
       adminId: adminId(context.identity),
@@ -262,6 +273,7 @@
     toggleContentHidden: toggleContentHidden,
     deleteContent: deleteContent,
     broadcast: broadcast,
+    listUsers: listUsers,
     auditLogs: auditLogs
   };
 }(window));

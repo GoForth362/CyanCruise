@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "20260704-cyancruise-v161";
+  var APP_VERSION = "20260704-cyancruise-v165";
 
   var endpoints = {
     snapshot: "/cc001/career-profile/snapshot/get",

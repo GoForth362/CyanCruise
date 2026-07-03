@@ -42,6 +42,10 @@ CyanCruise webapp SHALL provide a usable Chinese message center page for ordinar
 - **WHEN** a user clicks an unread message or its read action
 - **THEN** the page SHALL call the read API, refresh unread state, and keep the user on the message center
 
+#### Scenario: Message actions update asynchronously
+- **WHEN** the user marks a message read, marks all read, archives a message, refreshes, changes page, or generates a weekly report
+- **THEN** the page SHALL keep the existing message center visible, show operation progress at the action level, and update the affected list or counters without returning the whole page to a loading state
+
 #### Scenario: User marks all messages read
 - **WHEN** a user clicks the mark-all-read action
 - **THEN** the page SHALL call the read-all API and update the message list and unread count

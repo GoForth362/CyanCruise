@@ -33,8 +33,10 @@ import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Application boundary for CyanCruise admin console governance.
@@ -369,6 +371,7 @@ public class AdminConsoleGovernanceApplicationService {
     public AdminContentItemDto saveContent(String adminId, AdminContentItemDto content) {
         requireAdmin(adminId);
         if (content == null || !hasText(content.getTitle())) throw new IllegalArgumentException("content title is required");
+        normalizeContentGroup(content);
         AdminContentItemDto saved = storage.saveContent(content);
         audit(adminId, AdminConstants.ACTION_SAVE_CONTENT, firstText(saved.getType(), "CONTENT"), saved.getContentId(), null,
                 helper.auditSnapshot(simple("title", saved.getTitle(), "hidden", String.valueOf(saved.getHidden()))));
@@ -459,17 +462,32 @@ public class AdminConsoleGovernanceApplicationService {
 
     private List<AdminUserDto> broadcastTargets(AdminBroadcastRequest request) {
         List<AdminUserDto> targets = new ArrayList<AdminUserDto>();
-        if (request != null && hasText(request.getUserId())) {
-            AdminUserDto user = storage.findUser(request.getUserId().trim());
-            if (user != null) targets.add(user);
+        Set<String> requestedUserIds = new LinkedHashSet<String>();
+        if (request != null) {
+            if (hasText(request.getUserId())) {
+                requestedUserIds.add(request.getUserId().trim());
+            }
+            if (request.getUserIds() != null) {
+                for (String userId : request.getUserIds()) {
+                    if (hasText(userId)) requestedUserIds.add(userId.trim());
+                }
+            }
+        }
+        if (!requestedUserIds.isEmpty()) {
+            for (String userId : requestedUserIds) {
+                AdminUserDto user = storage.findUser(userId);
+                if (isBroadcastEligible(user)) targets.add(user);
+            }
             return targets;
         }
         for (AdminUserDto user : storage.listUsers()) {
-            if (user.getDeletedAt() == null && AdminConstants.USER_STATUS_ACTIVE.equals(user.getStatus())) {
-                targets.add(user);
-            }
+            if (isBroadcastEligible(user)) targets.add(user);
         }
         return targets;
+    }
+
+    private boolean isBroadcastEligible(AdminUserDto user) {
+        return user != null && user.getDeletedAt() == null && AdminConstants.USER_STATUS_ACTIVE.equals(user.getStatus());
     }
 
     private NotificationOperationResult pushUserNotice(String userId, String title, String content, String link) {
@@ -576,7 +594,7 @@ public class AdminConsoleGovernanceApplicationService {
         item.setType(contentTypeFromResource(card.getType()));
         item.setTitle(card.getTitle());
         item.setSummary(firstText(card.getSummary(), card.getBody()));
-        item.setCategory(firstText(card.getCategory(), card.getKeyword()));
+        item.setCategory(contentCategoryFromType(item.getType()));
         item.setSourceUrl(card.getSourceUrl());
         item.setImageUrl(card.getImageUrl());
         item.setPinned(Boolean.FALSE);
@@ -593,7 +611,27 @@ public class AdminConsoleGovernanceApplicationService {
         if ("article".equals(normalized)) {
             return AdminConstants.CONTENT_TYPE_ARTICLE;
         }
-        return "RESOURCE";
+        return AdminConstants.CONTENT_TYPE_RESOURCE;
+    }
+
+    private void normalizeContentGroup(AdminContentItemDto content) {
+        String type = content.getType();
+        if (AdminConstants.CONTENT_TYPE_VIDEO.equals(type)) {
+            content.setCategory("相关视频");
+            return;
+        }
+        if (AdminConstants.CONTENT_TYPE_ARTICLE.equals(type)) {
+            content.setCategory("精选文章");
+            return;
+        }
+        content.setType(AdminConstants.CONTENT_TYPE_RESOURCE);
+        content.setCategory("公共服务");
+    }
+
+    private String contentCategoryFromType(String type) {
+        if (AdminConstants.CONTENT_TYPE_VIDEO.equals(type)) return "相关视频";
+        if (AdminConstants.CONTENT_TYPE_ARTICLE.equals(type)) return "精选文章";
+        return "公共服务";
     }
 
     private AdminOperationResult op(String status, String message, String targetId, int updated, boolean auditRecorded) {

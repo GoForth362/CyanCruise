@@ -24,6 +24,7 @@ public final class AdminConstants {
 
     public static final String CONTENT_TYPE_ARTICLE = "ARTICLE";
     public static final String CONTENT_TYPE_VIDEO = "VIDEO";
+    public static final String CONTENT_TYPE_RESOURCE = "RESOURCE";
 
     public static final String ACTION_BAN_USER = "BAN_USER";
     public static final String ACTION_UNBAN_USER = "UNBAN_USER";

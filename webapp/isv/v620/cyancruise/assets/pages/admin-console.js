@@ -13,6 +13,12 @@
     ["audit", "审计日志"]
   ];
 
+  var CONTENT_GROUPS = [
+    { type: "RESOURCE", category: "公共服务", label: "公共服务" },
+    { type: "ARTICLE", category: "精选文章", label: "精选文章" },
+    { type: "VIDEO", category: "相关视频", label: "相关视频" }
+  ];
+
   registerPage("admin-console", ["admin-console"], "管理后台");
 
   attachRenderer("admin-console", function (item, context) {
@@ -84,7 +90,7 @@
       section("users", false, renderUsers(data, context)) +
       section("content", false, renderContent(data, context)) +
       section("questions", false, renderQuestions(data, context)) +
-      section("broadcast", false, renderBroadcast(context)) +
+      section("broadcast", false, renderBroadcast(data, context)) +
       section("audit", false, renderAudit(data, context)) +
       '</section></main></section>';
   }
@@ -216,10 +222,10 @@
     var content = data.content || [];
     return panel(context, "内容管理", "管理首页文章、视频和资源展示",
       contentForm(context) +
-      (content.length ? table(["标题", "类型", "展示状态", "外部链接", "操作"], content.map(function (item) {
+      (content.length ? table(["标题", "展示分组", "展示状态", "外部链接", "操作"], content.map(function (item) {
         return [
           twoLine(context, item.title, first(item.summary, item.contentId)),
-          esc(context, contentType(item.type)),
+          esc(context, contentGroupLabel(item.type, item.category)),
           badge(context, item.pinned ? "置顶" : "未置顶", item.pinned ? "ok" : "") + " " +
             badge(context, item.hidden ? "已隐藏" : "展示中", item.hidden ? "warn" : "ok"),
           linkCell(context, item.sourceUrl),
@@ -234,13 +240,17 @@
   function contentForm(context) {
     return '<div class="admin-content-form">' +
       '<input type="hidden" id="adminContentId">' +
+      '<input type="hidden" id="adminContentType" value="RESOURCE">' +
+      '<input type="hidden" id="adminContentCategory" value="公共服务">' +
       '<div class="admin-form-title"><strong>编辑内容</strong><span>保存后，未隐藏的内容会展示在用户端资源页。</span></div>' +
+      '<div class="admin-form-field wide"><span>内容类型</span><div class="admin-choice-tabs" role="tablist">' +
+      CONTENT_GROUPS.map(function (group, index) {
+        return '<button type="button" class="admin-choice-tab' + (index === 0 ? " active" : "") +
+          '" data-content-type="' + escAttr(context, group.type) + '" data-content-category="' +
+          escAttr(context, group.category) + '">' + esc(context, group.label) + '</button>';
+      }).join("") + '</div></div>' +
       '<div class="admin-form-grid">' +
-      '<label><span>内容类型</span><select id="adminContentType">' +
-      '<option value="ARTICLE">文章</option><option value="VIDEO">视频</option><option value="RESOURCE">资源入口</option>' +
-      '</select></label>' +
       '<label><span>标题</span><input id="adminContentTitle" placeholder="例如：后端简历优化指南"></label>' +
-      '<label><span>分类</span><input id="adminContentCategory" placeholder="例如：求职指导"></label>' +
       '<label><span>外部链接</span><input id="adminContentSourceUrl" placeholder="https://..."></label>' +
       '<label><span>封面链接</span><input id="adminContentImageUrl" placeholder="可选，https://..."></label>' +
       '<label class="wide"><span>摘要</span><textarea id="adminContentSummary" rows="3" placeholder="写给用户看的简介"></textarea></label>' +
@@ -370,13 +380,25 @@
       }).join("") + '</div>';
   }
 
-  function renderBroadcast(context) {
-    return panel(context, "通知公告", "给用户发送站内公告", '<div class="admin-form">' +
-      '<label>接收用户<input id="adminBroadcastUser" placeholder="留空表示发送给所有正常用户"></label>' +
-      '<label>标题<input id="adminBroadcastTitle" placeholder="例如：面试练习服务维护通知"></label>' +
-      '<label>内容<textarea id="adminBroadcastContent" rows="5" placeholder="请输入公告内容"></textarea></label>' +
-      '<label>链接<input id="adminBroadcastLink" placeholder="可选，例如 admin-console"></label>' +
-      '<button type="button" class="admin-primary" id="adminBroadcastButton">发送公告</button>' +
+  function renderBroadcast(data, context) {
+    var users = (data.users && data.users.items || []).filter(function (user) {
+      return user && !user.deletedAt && String(user.status || "ACTIVE") === "ACTIVE";
+    });
+    return panel(context, "通知公告", "给用户发送站内公告", '<div class="admin-broadcast-form">' +
+      '<div class="admin-form-title"><strong>发送公告</strong><span>可搜索并勾选多个接收用户；未选择时发送给所有用户端正常的用户。</span></div>' +
+      '<div class="admin-form-grid">' +
+      '<label class="wide"><span>接收用户</span><input id="adminBroadcastUserSearch" type="search" placeholder="搜索用户姓名、昵称或用户ID"></label>' +
+      '<label><span>标题</span><input id="adminBroadcastTitle" placeholder="例如：面试练习服务维护通知"></label>' +
+      '<label><span>链接</span><input id="adminBroadcastLink" placeholder="可选，例如 admin-console"></label>' +
+      '<label class="wide"><span>内容</span><textarea id="adminBroadcastContent" rows="4" placeholder="请输入公告内容"></textarea></label>' +
+      '</div>' +
+      '<div class="admin-recipient-tools">' +
+      '<span id="adminBroadcastRecipientSummary">未选择用户时，将发送给所有用户端正常的用户。</span>' +
+      '<div><button type="button" class="admin-secondary" id="adminBroadcastSelectVisible">全选当前结果</button>' +
+      '<button type="button" class="admin-secondary" id="adminBroadcastClearUsers">清空选择</button></div>' +
+      '</div>' +
+      '<div class="admin-recipient-list" id="adminBroadcastRecipientList">' + renderBroadcastRecipientList(context, users) + '</div>' +
+      '<div class="admin-form-row"><button type="button" class="admin-primary" id="adminBroadcastButton">发送公告</button></div>' +
       '</div>');
   }
 
@@ -553,6 +575,7 @@
   function bindContentForm(item, context, service, root) {
     var saveButton = root.querySelector("#adminContentSaveButton");
     var resetButton = root.querySelector("#adminContentResetButton");
+    bindContentTypeTabs(root);
     if (resetButton) {
       resetButton.addEventListener("click", function () {
         resetContentForm(root);
@@ -581,11 +604,14 @@
   function bindBroadcast(item, context, service, root) {
     var broadcastButton = root.querySelector("#adminBroadcastButton");
     if (!broadcastButton) return;
+    bindBroadcastRecipients(root, context, service);
     broadcastButton.addEventListener("click", function () {
       var activeTab = currentActiveTab(root);
+      var userIds = selectedBroadcastUserIds(root);
       broadcastButton.disabled = true;
       service.broadcast(adminContext(context), {
-        userId: value(root, "adminBroadcastUser"),
+        userIds: userIds,
+        userId: userIds.length === 1 ? userIds[0] : "",
         title: value(root, "adminBroadcastTitle"),
         content: value(root, "adminBroadcastContent"),
         link: value(root, "adminBroadcastLink")
@@ -598,6 +624,99 @@
         context.showMessage("error", "发送失败", messageOf(error));
       });
     });
+  }
+
+  function bindBroadcastRecipients(root, context, service) {
+    root._cyanBroadcastSelectedIds = root._cyanBroadcastSelectedIds || {};
+    var search = root.querySelector("#adminBroadcastUserSearch");
+    var selectVisible = root.querySelector("#adminBroadcastSelectVisible");
+    var clearUsers = root.querySelector("#adminBroadcastClearUsers");
+    var searchTimer = 0;
+    if (search) {
+      search.addEventListener("input", function () {
+        var keyword = search.value;
+        if (searchTimer) window.clearTimeout(searchTimer);
+        searchTimer = window.setTimeout(function () {
+          queryBroadcastRecipients(root, context, service, keyword);
+        }, 250);
+      });
+    }
+    bindBroadcastRecipientCheckboxes(root);
+    if (selectVisible) {
+      selectVisible.addEventListener("click", function () {
+        Array.prototype.forEach.call(root.querySelectorAll(".admin-recipient-option"), function (option) {
+          if (option.style.display === "none") return;
+          var checkbox = option.querySelector(".admin-broadcast-user");
+          if (checkbox) {
+            checkbox.checked = true;
+            root._cyanBroadcastSelectedIds[checkbox.value] = true;
+          }
+        });
+        updateBroadcastRecipientSummary(root);
+      });
+    }
+    if (clearUsers) {
+      clearUsers.addEventListener("click", function () {
+        root._cyanBroadcastSelectedIds = {};
+        Array.prototype.forEach.call(root.querySelectorAll(".admin-broadcast-user"), function (checkbox) {
+          checkbox.checked = false;
+        });
+        updateBroadcastRecipientSummary(root);
+      });
+    }
+    updateBroadcastRecipientSummary(root);
+  }
+
+  function bindBroadcastRecipientCheckboxes(root) {
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-broadcast-user"), function (checkbox) {
+      checkbox.checked = !!(root._cyanBroadcastSelectedIds && root._cyanBroadcastSelectedIds[checkbox.value]);
+      checkbox.addEventListener("change", function () {
+        root._cyanBroadcastSelectedIds = root._cyanBroadcastSelectedIds || {};
+        if (checkbox.checked) root._cyanBroadcastSelectedIds[checkbox.value] = true;
+        else delete root._cyanBroadcastSelectedIds[checkbox.value];
+        updateBroadcastRecipientSummary(root);
+      });
+    });
+  }
+
+  function selectedBroadcastUserIds(root) {
+    var selected = root._cyanBroadcastSelectedIds || {};
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-broadcast-user:checked"), function (checkbox) {
+      selected[checkbox.value] = true;
+    });
+    return Object.keys(selected).filter(function (userId) {
+      return !!userId;
+    });
+  }
+
+  function queryBroadcastRecipients(root, context, service, keyword) {
+    var list = root.querySelector("#adminBroadcastRecipientList");
+    if (!list || !service.listUsers) return;
+    list.innerHTML = '<div class="admin-recipient-empty">正在查询用户...</div>';
+    service.listUsers(adminContext(context), keyword, 50).then(function (page) {
+      var users = (page.items || []).filter(function (user) {
+        return user && !user.deletedAt && String(user.status || "ACTIVE") === "ACTIVE";
+      });
+      list.innerHTML = renderBroadcastRecipientList(context, users);
+      bindBroadcastRecipientCheckboxes(root);
+      updateBroadcastRecipientSummary(root);
+    }).catch(function (error) {
+      list.innerHTML = '<div class="admin-recipient-empty">' + esc(context, messageOf(error)) + '</div>';
+    });
+  }
+
+  function renderBroadcastRecipientList(context, users) {
+    return users.length ? users.map(function (user) {
+      return broadcastRecipientOption(context, user);
+    }).join("") : '<div class="admin-recipient-empty">暂无可接收公告的正常用户。</div>';
+  }
+
+  function updateBroadcastRecipientSummary(root) {
+    var summary = root.querySelector("#adminBroadcastRecipientSummary");
+    if (!summary) return;
+    var selected = selectedBroadcastUserIds(root).length;
+    summary.textContent = selected > 0 ? "已选择 " + selected + " 个接收用户，将批量发送给这些用户。" :
+      "未选择用户时，将发送给所有用户端正常的用户。";
   }
 
   function runAction(item, context, service, action, id, button) {
@@ -700,12 +819,13 @@
   }
 
   function readContentForm(root) {
+    var type = normalizeContentType(value(root, "adminContentType"));
     return {
       contentId: value(root, "adminContentId") || null,
-      type: value(root, "adminContentType") || "ARTICLE",
+      type: type,
       title: value(root, "adminContentTitle"),
       summary: value(root, "adminContentSummary"),
-      category: value(root, "adminContentCategory"),
+      category: categoryFromContentType(type),
       sourceUrl: value(root, "adminContentSourceUrl"),
       imageUrl: value(root, "adminContentImageUrl"),
       pinned: checked(root, "adminContentPinned"),
@@ -715,10 +835,9 @@
 
   function resetContentForm(root) {
     setValue(root, "adminContentId", "");
-    setValue(root, "adminContentType", "ARTICLE");
+    setContentType(root, "RESOURCE");
     setValue(root, "adminContentTitle", "");
     setValue(root, "adminContentSummary", "");
-    setValue(root, "adminContentCategory", "");
     setValue(root, "adminContentSourceUrl", "");
     setValue(root, "adminContentImageUrl", "");
     setChecked(root, "adminContentPinned", false);
@@ -727,17 +846,34 @@
 
   function fillContentForm(root, button) {
     if (!root || !button) return;
+    var type = normalizeContentType(button.getAttribute("data-type") || "");
     setValue(root, "adminContentId", button.getAttribute("data-content-id") || "");
-    setValue(root, "adminContentType", button.getAttribute("data-type") || "ARTICLE");
+    setContentType(root, type);
     setValue(root, "adminContentTitle", button.getAttribute("data-title") || "");
     setValue(root, "adminContentSummary", button.getAttribute("data-summary") || "");
-    setValue(root, "adminContentCategory", button.getAttribute("data-category") || "");
     setValue(root, "adminContentSourceUrl", button.getAttribute("data-source-url") || "");
     setValue(root, "adminContentImageUrl", button.getAttribute("data-image-url") || "");
     setChecked(root, "adminContentPinned", button.getAttribute("data-pinned") === "true");
     setChecked(root, "adminContentHidden", button.getAttribute("data-hidden") === "true");
     var input = root.querySelector("#adminContentTitle");
     if (input && input.focus) input.focus();
+  }
+
+  function bindContentTypeTabs(root) {
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-choice-tab[data-content-type]"), function (button) {
+      button.addEventListener("click", function () {
+        setContentType(root, this.getAttribute("data-content-type"));
+      });
+    });
+  }
+
+  function setContentType(root, type) {
+    type = normalizeContentType(type);
+    setValue(root, "adminContentType", type);
+    setValue(root, "adminContentCategory", categoryFromContentType(type));
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-choice-tab[data-content-type]"), function (button) {
+      button.classList.toggle("active", button.getAttribute("data-content-type") === type);
+    });
   }
 
   function readQuestionForm(root) {
@@ -970,10 +1106,30 @@
   }
 
   function contentType(type) {
-    if (type === "VIDEO") return "视频";
-    if (type === "ARTICLE") return "文章";
-    if (type === "RESOURCE") return "资源入口";
+    if (type === "VIDEO") return "相关视频";
+    if (type === "ARTICLE") return "精选文章";
+    if (type === "RESOURCE") return "公共服务";
     return type || "内容";
+  }
+
+  function normalizeContentType(type) {
+    type = String(type || "").toUpperCase();
+    if (type === "VIDEO") return "VIDEO";
+    if (type === "ARTICLE") return "ARTICLE";
+    return "RESOURCE";
+  }
+
+  function categoryFromContentType(type) {
+    type = normalizeContentType(type);
+    if (type === "VIDEO") return "相关视频";
+    if (type === "ARTICLE") return "精选文章";
+    return "公共服务";
+  }
+
+  function contentGroupLabel(type, category) {
+    var allowed = ["公共服务", "精选文章", "相关视频"];
+    if (allowed.indexOf(category) >= 0) return category;
+    return categoryFromContentType(type);
   }
 
   function sourceText(source) {
@@ -1010,6 +1166,18 @@
       TOGGLE_CONTENT: "切换内容状态"
     };
     return map[action] || action || "-";
+  }
+
+  function broadcastRecipientOption(context, user) {
+    var name = first(user.nickname, user.displayName, user.userName, user.userId);
+    var detail = [first(user.userId, ""), first(user.school, ""), first(user.major, "")].filter(function (item) {
+      return !!item;
+    }).join(" / ");
+    var search = [name, detail, user.orgId].join(" ");
+    return '<label class="admin-recipient-option" data-search="' + escAttr(context, search) + '">' +
+      '<input type="checkbox" class="admin-broadcast-user" value="' + escAttr(context, user.userId) + '">' +
+      '<span><strong>' + esc(context, name) + '</strong><small>' + esc(context, first(detail, "无补充信息")) +
+      '</small></span></label>';
   }
 
   function value(root, id) {
