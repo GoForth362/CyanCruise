@@ -159,7 +159,7 @@ public class NotificationsSubscriptionsApplicationService {
             NotificationPushRequest request = new NotificationPushRequest();
             request.setUserId(safeUserId);
             request.setType(NotificationConstants.TYPE_WEEKLY_REPORT);
-            request.setTitle("Weekly CyanCruise report");
+            request.setTitle("每周回顾");
             request.setContent(summary.getSummary());
             request.setLink("index.html#career-plan");
             pushBestEffort(request);

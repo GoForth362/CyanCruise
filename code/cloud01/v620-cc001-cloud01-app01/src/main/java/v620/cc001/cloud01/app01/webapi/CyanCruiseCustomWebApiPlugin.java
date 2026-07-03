@@ -29,6 +29,11 @@ import v620.base.helper.furtherstudy.PostgraduateCompanionService;
 import v620.base.helper.furtherstudy.RecommendationCompanionService;
 import v620.base.helper.furtherstudy.StudyAbroadCompanionService;
 import v620.cc001.base.common.dto.career.AdminBroadcastRequest;
+import v620.cc001.base.common.dto.career.AdminConstants;
+import v620.cc001.base.common.dto.career.AdminContentItemDto;
+import v620.cc001.base.common.dto.career.AdminIdentityDto;
+import v620.cc001.base.common.dto.career.AdminQuestionDto;
+import v620.cc001.base.common.dto.career.AssessmentQuestionDto;
 import v620.cc001.base.common.dto.career.AssessmentScaleDto;
 import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
 import v620.cc001.base.common.dto.career.AssistantChatRequest;
@@ -386,6 +391,15 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                         extractAdminId(body), textOrNull(value(body, "source")),
                         textOrNull(value(body, "reviewStatus"))));
             }
+            if ("/cc001/admin/questions/save".equals(path)) {
+                return ApiResult.success(adminWebApi.saveQuestion(
+                        extractAdminId(body), extractAdminQuestion(body, "question")));
+            }
+            if ("/cc001/admin/questions/update".equals(path)) {
+                return ApiResult.success(adminWebApi.updateQuestion(
+                        extractAdminId(body), textOrNull(value(body, "questionId")),
+                        extractAdminQuestion(body, "patch")));
+            }
             if ("/cc001/admin/questions/approve".equals(path)) {
                 return ApiResult.success(adminWebApi.approveQuestion(
                         extractAdminId(body), textOrNull(value(body, "questionId"))));
@@ -394,9 +408,29 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(adminWebApi.rejectQuestion(
                         extractAdminId(body), textOrNull(value(body, "questionId"))));
             }
+            if ("/cc001/admin/questions/delete".equals(path)) {
+                return ApiResult.success(adminWebApi.deleteQuestion(
+                        extractAdminId(body), textOrNull(value(body, "questionId"))));
+            }
+            if ("/cc001/admin/assessment/questions/save".equals(path)) {
+                ApiResult admin = requireAdmin(body);
+                if (!admin.getSuccess()) return admin;
+                return ApiResult.success(assessmentWebApi.saveQuestion(
+                        longObject(value(body, "scaleId")), extractAssessmentQuestion(body)));
+            }
+            if ("/cc001/admin/assessment/questions/delete".equals(path)) {
+                ApiResult admin = requireAdmin(body);
+                if (!admin.getSuccess()) return admin;
+                return ApiResult.success(assessmentWebApi.deleteQuestion(
+                        longObject(value(body, "scaleId")), longObject(value(body, "questionId"))));
+            }
             if ("/cc001/admin/content/list".equals(path)) {
                 return ApiResult.success(adminWebApi.content(
                         extractAdminId(body), textOrNull(value(body, "type"))));
+            }
+            if ("/cc001/admin/content/save".equals(path)) {
+                return ApiResult.success(adminWebApi.saveContent(
+                        extractAdminId(body), extractAdminContentItem(body)));
             }
             if ("/cc001/admin/content/pin".equals(path)) {
                 return ApiResult.success(adminWebApi.pinContent(
@@ -404,6 +438,10 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/admin/content/hide".equals(path)) {
                 return ApiResult.success(adminWebApi.hideContent(
+                        extractAdminId(body), textOrNull(value(body, "contentId"))));
+            }
+            if ("/cc001/admin/content/delete".equals(path)) {
+                return ApiResult.success(adminWebApi.deleteContent(
                         extractAdminId(body), textOrNull(value(body, "contentId"))));
             }
             if ("/cc001/admin/broadcast".equals(path)) {
@@ -1193,6 +1231,104 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         return out;
     }
 
+    private AdminContentItemDto extractAdminContentItem(Object body) {
+        Object request = value(body, "content");
+        if (request instanceof AdminContentItemDto) {
+            return (AdminContentItemDto) request;
+        }
+        AdminContentItemDto out = new AdminContentItemDto();
+        if (request instanceof Map) {
+            Map<?, ?> values = (Map<?, ?>) request;
+            out.setContentId(textOrNull(values.get("contentId")));
+            out.setType(textOrNull(values.get("type")));
+            out.setTitle(textOrNull(values.get("title")));
+            out.setSummary(textOrNull(values.get("summary")));
+            out.setImageUrl(textOrNull(values.get("imageUrl")));
+            out.setSourceUrl(textOrNull(values.get("sourceUrl")));
+            out.setCategory(textOrNull(values.get("category")));
+            out.setPinned(booleanObject(values.get("pinned")));
+            out.setHidden(booleanObject(values.get("hidden")));
+        }
+        return out;
+    }
+
+    private AdminQuestionDto extractAdminQuestion(Object body, String key) {
+        Object request = value(body, key);
+        if (request instanceof AdminQuestionDto) {
+            return (AdminQuestionDto) request;
+        }
+        AdminQuestionDto out = new AdminQuestionDto();
+        if (request instanceof Map) {
+            Map<?, ?> values = (Map<?, ?>) request;
+            out.setQuestionId(textOrNull(values.get("questionId")));
+            out.setPosition(textOrNull(values.get("position")));
+            out.setDifficulty(textOrNull(values.get("difficulty")));
+            out.setContent(textOrNull(values.get("content")));
+            out.setSummary(textOrNull(values.get("summary")));
+            out.setAnswer(textOrNull(values.get("answer")));
+            out.setStatus(textOrNull(values.get("status")));
+            out.setSource(textOrNull(values.get("source")));
+            out.setReviewStatus(textOrNull(values.get("reviewStatus")));
+            out.setContributorHash(textOrNull(values.get("contributorHash")));
+            out.setLikes(integerObject(values.get("likes")));
+            out.setDrawCount(integerObject(values.get("drawCount")));
+        }
+        return out;
+    }
+
+    private AssessmentQuestionDto extractAssessmentQuestion(Object body) {
+        Object request = value(body, "question");
+        if (request instanceof AssessmentQuestionDto) {
+            return (AssessmentQuestionDto) request;
+        }
+        AssessmentQuestionDto out = new AssessmentQuestionDto();
+        if (request instanceof Map) {
+            Map<?, ?> values = (Map<?, ?>) request;
+            out.setQuestionId(longObject(values.get("questionId")));
+            out.setScaleId(longObject(values.get("scaleId")));
+            out.setQuestionText(textOrNull(values.get("questionText")));
+            out.setQuestionType(textOrNull(values.get("questionType")));
+            out.setDimensionCode(textOrNull(values.get("dimensionCode")));
+            out.setSortOrder(integerObject(values.get("sortOrder")));
+            out.setOptions(extractAssessmentOptions(values.get("options")));
+        }
+        return out;
+    }
+
+    private java.util.List<v620.cc001.base.common.dto.career.AssessmentOptionDto> extractAssessmentOptions(Object value) {
+        java.util.List<v620.cc001.base.common.dto.career.AssessmentOptionDto> out =
+                new java.util.ArrayList<v620.cc001.base.common.dto.career.AssessmentOptionDto>();
+        if (!(value instanceof java.util.List)) {
+            return out;
+        }
+        java.util.List<?> values = (java.util.List<?>) value;
+        for (Object item : values) {
+            if (item instanceof v620.cc001.base.common.dto.career.AssessmentOptionDto) {
+                out.add((v620.cc001.base.common.dto.career.AssessmentOptionDto) item);
+            } else if (item instanceof Map) {
+                Map<?, ?> map = (Map<?, ?>) item;
+                v620.cc001.base.common.dto.career.AssessmentOptionDto option =
+                        new v620.cc001.base.common.dto.career.AssessmentOptionDto();
+                option.setOptionId(longObject(map.get("optionId")));
+                option.setQuestionId(longObject(map.get("questionId")));
+                option.setOptionLabel(textOrNull(map.get("optionLabel")));
+                option.setOptionText(textOrNull(map.get("optionText")));
+                option.setDimensionCode(textOrNull(map.get("dimensionCode")));
+                option.setSortOrder(integerObject(map.get("sortOrder")));
+                out.add(option);
+            }
+        }
+        return out;
+    }
+
+    private ApiResult requireAdmin(Object body) {
+        AdminIdentityDto identity = adminWebApi.whoami(extractAdminId(body));
+        if (identity == null || !AdminConstants.STATUS_OK.equals(identity.getStatus())) {
+            return ApiResult.fail("当前账号没有管理后台权限。", "FORBIDDEN");
+        }
+        return ApiResult.success(identity);
+    }
+
     private Object value(Object body, String key) {
         if (body instanceof Map) {
             return ((Map<?, ?>) body).get(key);
@@ -1233,6 +1369,32 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         } catch (NumberFormatException ex) {
             return null;
         }
+    }
+
+    private Integer integerObject(Object value) {
+        if (value instanceof Number) {
+            return Integer.valueOf(((Number) value).intValue());
+        }
+        String text = textOrNull(value);
+        if (text == null) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(text);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private Boolean booleanObject(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        String text = textOrNull(value);
+        if (text == null) {
+            return null;
+        }
+        return Boolean.valueOf("true".equalsIgnoreCase(text) || "1".equals(text) || "yes".equalsIgnoreCase(text));
     }
 
     private byte[] byteArray(Object value) {

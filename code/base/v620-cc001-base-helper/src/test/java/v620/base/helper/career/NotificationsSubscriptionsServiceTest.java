@@ -92,6 +92,7 @@ class NotificationsSubscriptionsServiceTest {
         assertEquals(NotificationConstants.RESULT_SKIPPED, empty.getStatus());
         assertEquals(Boolean.TRUE, delivered.getDelivered());
         assertTrue(delivered.getSummary().contains("completed one mock interview"));
+        assertTrue(delivered.getSummary().contains("本周进展"));
     }
 
     private NotificationRecordDto notification(String id, String userId, String type, boolean read) {

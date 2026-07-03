@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "20260703-cyancruise-v153";
+  var APP_VERSION = "20260704-cyancruise-v161";
 
   var endpoints = {
     snapshot: "/cc001/career-profile/snapshot/get",
@@ -46,11 +46,18 @@
     adminUsersBan: "/cc001/admin/users/ban",
     adminUsersUnban: "/cc001/admin/users/unban",
     adminQuestions: "/cc001/admin/questions/list",
+    adminQuestionSave: "/cc001/admin/questions/save",
+    adminQuestionUpdate: "/cc001/admin/questions/update",
     adminQuestionApprove: "/cc001/admin/questions/approve",
     adminQuestionReject: "/cc001/admin/questions/reject",
+    adminQuestionDelete: "/cc001/admin/questions/delete",
+    adminAssessmentQuestionSave: "/cc001/admin/assessment/questions/save",
+    adminAssessmentQuestionDelete: "/cc001/admin/assessment/questions/delete",
     adminContent: "/cc001/admin/content/list",
+    adminContentSave: "/cc001/admin/content/save",
     adminContentPin: "/cc001/admin/content/pin",
     adminContentHide: "/cc001/admin/content/hide",
+    adminContentDelete: "/cc001/admin/content/delete",
     adminBroadcast: "/cc001/admin/broadcast",
     adminAnalytics: "/cc001/admin/analytics/summary",
     adminAuditLog: "/cc001/admin/audit-log/list",

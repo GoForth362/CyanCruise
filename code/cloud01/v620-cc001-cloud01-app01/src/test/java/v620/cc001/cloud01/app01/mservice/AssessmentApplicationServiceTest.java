@@ -127,6 +127,26 @@ class AssessmentApplicationServiceTest {
     }
 
     @Test
+    void adminManagedAssessmentQuestionIsVisibleAndDeletable() {
+        AssessmentApplicationService assessmentService = new AssessmentApplicationService(
+                new AssessmentScoringService(),
+                new InMemoryAssessmentCatalog(),
+                new InMemoryAssessmentResultStorage(),
+                profileService(new FileCareerProfileStorage(tempDir)));
+        AssessmentQuestionDto question = new AssessmentQuestionDto();
+        question.setQuestionText("你更喜欢哪类工作节奏？");
+        question.setDimensionCode("PACE");
+        question.setOptions(Arrays.asList(option(null, "FAST"), option(null, "STEADY")));
+
+        AssessmentQuestionDto saved = assessmentService.saveQuestion(Long.valueOf(1001L), question);
+
+        assertNotNull(saved.getQuestionId());
+        assertEquals(Integer.valueOf(17), assessmentService.getScale(Long.valueOf(1001L)).getQuestionCount());
+        assertTrue(assessmentService.deleteQuestion(Long.valueOf(1001L), saved.getQuestionId()));
+        assertEquals(Integer.valueOf(16), assessmentService.getScale(Long.valueOf(1001L)).getQuestionCount());
+    }
+
+    @Test
     void assessmentSignalIsNoLongerMissingAfterSave() {
         CareerProfileApplicationService profileService = profileService(new FileCareerProfileStorage(tempDir));
         CareerUserProfileDto before = profileService.getProfile("user-3");

@@ -85,6 +85,26 @@ class AssessmentWebApiTest {
         assertEquals(result.getRecordId(), webApi.record(userId, result.getRecordId()).getRecordId());
     }
 
+    @Test
+    void webApiSavesAndDeletesAssessmentQuestionForAdminRoute() {
+        AssessmentWebApi webApi = new AssessmentWebApi(new AssessmentApplicationService(
+                new AssessmentScoringService(),
+                new InMemoryAssessmentCatalog(),
+                new InMemoryAssessmentResultStorage(),
+                profileService()));
+        AssessmentQuestionDto question = new AssessmentQuestionDto();
+        question.setQuestionText("你更容易在哪种任务中进入心流？");
+        question.setDimensionCode("FLOW");
+        question.setOptions(Arrays.asList(option(null, "ANALYZE"), option(null, "CREATE")));
+
+        AssessmentQuestionDto saved = webApi.saveQuestion(Long.valueOf(1002L), question);
+
+        assertNotNull(saved.getQuestionId());
+        assertEquals(Integer.valueOf(13), webApi.questions(Long.valueOf(1002L)).getQuestionCount());
+        assertEquals(Boolean.TRUE, webApi.deleteQuestion(Long.valueOf(1002L), saved.getQuestionId()));
+        assertEquals(Integer.valueOf(12), webApi.questions(Long.valueOf(1002L)).getQuestionCount());
+    }
+
     private CareerProfileApplicationService profileService() {
         return new CareerProfileApplicationService(
                 new InMemoryCareerProfileStorage(),

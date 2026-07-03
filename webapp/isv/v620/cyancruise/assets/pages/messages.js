@@ -1,6 +1,8 @@
 (function (window) {
   "use strict";
 
+  var PAGE_SIZE = 10;
+  var pageByUser = {};
   var registerPage = window.CYANCRUISE_REGISTER_PAGE_MODULE || function () {};
   var attachRenderer = window.CYANCRUISE_ATTACH_PAGE_RENDERER || function () {};
 
@@ -38,11 +40,11 @@
       '</section>');
   }
 
-  function renderUnavailable(item, context, text) {
+  function renderUnavailable(item, context, textValue) {
     context.renderShell(item, '<section class="feature-section full message-center">' +
       '<div class="section-heading"><div><h3>消息中心</h3><p class="section-note">站内通知暂时无法读取。</p></div>' +
       '<button type="button" class="secondary" data-message-action="refresh">重试</button></div>' +
-      state(context, "消息暂时不可用", text || "请稍后再试。", "warning") +
+      state(context, "消息暂时不可用", textValue || "请稍后再试。", "warning") +
       '</section>');
     bindMessages(item, context);
   }
@@ -51,9 +53,10 @@
     var notifications = data.notifications || [];
     var unread = data.unread || 0;
     var quotaText = quotaSummary(data.quotas);
+    var pageInfo = pageSlice(context, notifications);
     var body = '<section class="feature-section full message-center">' +
       '<div class="section-heading"><div><h3>消息中心</h3>' +
-      '<p class="section-note">查看系统通知、练习提醒、复盘结果和管理员公告。</p></div>' +
+      '<p class="section-note">只展示与你有关的通知，以及管理员发布给你的公告。</p></div>' +
       '<div class="actions-row compact">' +
       '<button type="button" class="secondary" data-message-action="refresh">刷新</button>' +
       '<button type="button" class="secondary" data-message-action="read-all" ' + (unread <= 0 ? "disabled" : "") + '>全部标为已读</button>' +
@@ -68,9 +71,11 @@
     if (!notifications.length) {
       body += state(context, "暂无消息", "新的公告、练习结果和周报会出现在这里。", "empty");
     } else {
-      body += '<div class="message-list">' + notifications.map(function (notification) {
+      body += renderPager(context, pageInfo, "top");
+      body += '<div class="message-list">' + pageInfo.items.map(function (notification) {
         return renderNotification(context, notification);
       }).join("") + '</div>';
+      body += renderPager(context, pageInfo, "bottom");
     }
     body += '</section>';
     context.renderShell(item, body);
@@ -79,13 +84,20 @@
   function renderNotification(context, notification) {
     var id = text(notification.notificationId);
     var read = notification.readFlag === true;
-    var typeLabel = first(notification.label, labelForType(notification.type));
-    var group = groupLabel(notification.groupKey, notification.type);
+    var type = text(notification.type).toUpperCase();
+    var admin = type === "ADMIN_BROADCAST";
+    var typeLabel = admin ? "管理员公告" : first(notification.label, labelForType(type));
+    var group = groupLabel(notification.groupKey, type);
     var link = text(notification.link);
-    return '<article class="message-item' + (read ? " is-read" : " is-unread") + '" data-message-id="' + esc(context, id) + '">' +
+    var classes = "message-item" + (read ? " is-read" : " is-unread") + (admin ? " is-admin" : "");
+    return '<article class="' + classes + '" data-message-id="' + esc(context, id) + '">' +
       '<div class="message-main">' +
-      '<div class="message-meta"><span>' + esc(context, group) + '</span><span>' + esc(context, typeLabel) + '</span><span>' + esc(context, formatDate(notification.createdAt)) + '</span></div>' +
-      '<h3>' + esc(context, first(notification.title, "未命名通知")) + '</h3>' +
+      '<div class="message-meta">' +
+      '<span>' + esc(context, group) + '</span>' +
+      '<span class="message-tag' + (admin ? " admin" : "") + '">' + esc(context, typeLabel) + '</span>' +
+      (read ? '<span class="message-tag muted">已读</span>' : '<span class="message-tag unread">未读</span>') +
+      '<span>' + esc(context, formatDate(notification.createdAt)) + '</span></div>' +
+      '<h3>' + esc(context, first(notification.title, admin ? "管理员公告" : "未命名通知")) + '</h3>' +
       '<p>' + esc(context, first(notification.content, "暂无内容")) + '</p>' +
       '</div>' +
       '<div class="message-actions">' +
@@ -93,6 +105,18 @@
       (link ? '<button type="button" class="secondary" data-message-action="open" data-message-link="' + esc(context, link) + '">前往查看</button>' : '') +
       '<button type="button" class="secondary danger" data-message-action="delete" data-message-id="' + esc(context, id) + '">移出列表</button>' +
       '</div></article>';
+  }
+
+  function renderPager(context, pageInfo, position) {
+    if (pageInfo.totalPages <= 1) {
+      return "";
+    }
+    return '<nav class="message-pager message-pager-' + esc(context, position) + '" aria-label="消息分页">' +
+      '<span>第 ' + pageInfo.page + ' / ' + pageInfo.totalPages + ' 页，每页 ' + PAGE_SIZE + ' 条</span>' +
+      '<div class="actions-row compact">' +
+      '<button type="button" class="secondary" data-message-action="page" data-page="' + (pageInfo.page - 1) + '" ' + (pageInfo.page <= 1 ? "disabled" : "") + '>上一页</button>' +
+      '<button type="button" class="secondary" data-message-action="page" data-page="' + (pageInfo.page + 1) + '" ' + (pageInfo.page >= pageInfo.totalPages ? "disabled" : "") + '>下一页</button>' +
+      '</div></nav>';
   }
 
   function bindMessages(item, context) {
@@ -117,6 +141,9 @@
           openLink(target.getAttribute("data-message-link"));
         } else if (action === "weekly-report") {
           runWeeklyReport(item, context);
+        } else if (action === "page") {
+          setPage(context, target.getAttribute("data-page"));
+          rerender(item, context);
         }
       });
     }
@@ -171,6 +198,7 @@
       var delivered = result && result.delivered === true;
       notice(context, delivered ? "success" : "warning", delivered ? "周报已生成" : "周报暂未生成",
         delivered ? "新的周报通知已加入消息中心。" : first(result && result.reason, "近期活动还不够生成周报。"));
+      setPage(context, 1);
       rerender(item, context);
     }).catch(function (error) {
       notice(context, "warning", "周报生成失败", messageOf(error));
@@ -178,9 +206,22 @@
   }
 
   function openLink(link) {
-    var route = text(link).replace(/^index\.html[#?]*/, "").replace(/^ccRoute=/, "").replace(/^#/, "");
+    var route = routeFromLink(link);
     if (route) {
       window.location.hash = route;
+    }
+  }
+
+  function routeFromLink(link) {
+    var value = text(link);
+    if (!value) {
+      return "";
+    }
+    try {
+      var url = new URL(value, window.location.href);
+      return text(url.searchParams.get("ccRoute") || url.hash.replace(/^#/, ""));
+    } catch (ignored) {
+      return value.replace(/^index\.html[#?]*/, "").replace(/^ccRoute=/, "").replace(/^#/, "").split("&")[0];
     }
   }
 
@@ -192,6 +233,26 @@
     }).catch(function (error) {
       renderUnavailable(item, context, messageOf(error));
     });
+  }
+
+  function pageSlice(context, notifications) {
+    var totalPages = Math.max(1, Math.ceil(notifications.length / PAGE_SIZE));
+    var page = Math.min(Math.max(1, currentPage(context)), totalPages);
+    pageByUser[userIdOf(context) || "anonymous"] = page;
+    var start = (page - 1) * PAGE_SIZE;
+    return {
+      page: page,
+      totalPages: totalPages,
+      items: notifications.slice(start, start + PAGE_SIZE)
+    };
+  }
+
+  function currentPage(context) {
+    return numberOf(pageByUser[userIdOf(context) || "anonymous"]) || 1;
+  }
+
+  function setPage(context, value) {
+    pageByUser[userIdOf(context) || "anonymous"] = Math.max(1, numberOf(value) || 1);
   }
 
   function summaryCard(context, title, value, note) {
@@ -209,20 +270,21 @@
 
   function labelForType(type) {
     var value = text(type).toUpperCase();
-    if (value === "ADMIN_BROADCAST") return "通知公告";
-    if (value === "WEEKLY_REPORT") return "周报通知";
+    if (value === "ADMIN_BROADCAST") return "管理员公告";
+    if (value === "WEEKLY_REPORT") return "每周回顾";
     if (value === "INTERVIEW_REPORT") return "面试复盘";
     if (value === "ASSESSMENT_RESULT") return "测评结果";
     if (value === "RESUME_DIAGNOSIS") return "简历诊断";
     if (value === "AI_PROACTIVE") return "智能提醒";
     if (value === "STREAK_WARNING") return "练习提醒";
-    return "系统通知";
+    return "系统消息";
   }
 
   function groupLabel(groupKey, type) {
     var group = text(groupKey).toUpperCase();
     var value = text(type).toUpperCase();
-    if (group === "CAREER" || value === "INTERVIEW_REPORT" || value === "ASSESSMENT_RESULT" || value === "RESUME_DIAGNOSIS") return "职业发展";
+    if (value === "ADMIN_BROADCAST") return "公告";
+    if (group === "CAREER" || value === "INTERVIEW_REPORT" || value === "ASSESSMENT_RESULT" || value === "RESUME_DIAGNOSIS" || value === "WEEKLY_REPORT") return "职业发展";
     if (group === "AI" || value === "AI_PROACTIVE") return "智能助手";
     return "系统消息";
   }

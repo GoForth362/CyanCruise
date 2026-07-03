@@ -1,9 +1,11 @@
 package v620.cc001.cloud01.app01.mservice.application;
 
 import v620.cc001.cloud01.app01.mservice.storage.AdminGovernanceStorage;
+import v620.cc001.cloud01.app01.mservice.storage.CareerResourceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
 import v620.base.helper.career.AdminConsoleGovernanceService;
 import v620.cc001.base.common.dto.career.AdminAnalyticsSummaryDto;
 import v620.cc001.base.common.dto.career.AdminAuditLogDto;
@@ -22,6 +24,7 @@ import v620.cc001.base.common.dto.career.AdminQuestionContributionRequest;
 import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AdminStudentRowDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
+import v620.cc001.base.common.dto.career.CareerResourceCardDto;
 import v620.cc001.base.common.dto.career.NotificationConstants;
 import v620.cc001.base.common.dto.career.NotificationOperationResult;
 import v620.cc001.base.common.dto.career.NotificationPushRequest;
@@ -40,13 +43,14 @@ public class AdminConsoleGovernanceApplicationService {
 
     private final AdminGovernanceStorage storage;
     private final CareerProfileStorage profileStorage;
+    private final CareerResourceStorage defaultResourceStorage;
     private final NotificationsSubscriptionsApplicationService notifications;
     private final AdminConsoleGovernanceService helper;
     private final boolean trustResolvedAdminIdentity;
 
     public AdminConsoleGovernanceApplicationService() {
         this(CyanCruiseStorageFactory.adminGovernanceStorage(), profileStorageOrNull(), new NotificationsSubscriptionsApplicationService(),
-                new AdminConsoleGovernanceService(), true);
+                new AdminConsoleGovernanceService(), true, new InMemoryCareerResourceStorage());
     }
 
     public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
@@ -74,8 +78,18 @@ public class AdminConsoleGovernanceApplicationService {
                                                      NotificationsSubscriptionsApplicationService notifications,
                                                      AdminConsoleGovernanceService helper,
                                                      boolean trustResolvedAdminIdentity) {
+        this(storage, profileStorage, notifications, helper, trustResolvedAdminIdentity, null);
+    }
+
+    public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
+                                                     CareerProfileStorage profileStorage,
+                                                     NotificationsSubscriptionsApplicationService notifications,
+                                                     AdminConsoleGovernanceService helper,
+                                                     boolean trustResolvedAdminIdentity,
+                                                     CareerResourceStorage defaultResourceStorage) {
         this.storage = storage;
         this.profileStorage = profileStorage;
+        this.defaultResourceStorage = defaultResourceStorage;
         this.notifications = notifications;
         this.helper = helper;
         this.trustResolvedAdminIdentity = trustResolvedAdminIdentity;
@@ -275,6 +289,34 @@ public class AdminConsoleGovernanceApplicationService {
         return out;
     }
 
+    public AdminQuestionDto saveQuestion(String adminId, AdminQuestionDto question) {
+        requireAdmin(adminId);
+        if (question == null || !hasText(question.getContent())) {
+            throw new IllegalArgumentException("question content is required");
+        }
+        String before = null;
+        if (hasText(question.getQuestionId())) {
+            AdminQuestionDto existing = storage.findQuestion(question.getQuestionId());
+            if (existing != null) {
+                before = helper.auditSnapshot(simple("reviewStatus", existing.getReviewStatus(), "content", existing.getContent()));
+            }
+        }
+        if (!hasText(question.getSource())) question.setSource("ADMIN");
+        if (!hasText(question.getPosition())) question.setPosition("通用岗位");
+        if (!hasText(question.getDifficulty())) question.setDifficulty("NORMAL");
+        if (!hasText(question.getReviewStatus())) question.setReviewStatus(AdminConstants.QUESTION_REVIEW_PUBLISHED);
+        if (!hasText(question.getStatus())) {
+            question.setStatus(AdminConstants.QUESTION_REVIEW_REJECTED.equals(question.getReviewStatus())
+                    ? AdminConstants.QUESTION_STATUS_HIDDEN : AdminConstants.QUESTION_STATUS_APPROVED);
+        }
+        if (question.getLikes() == null) question.setLikes(Integer.valueOf(0));
+        if (question.getDrawCount() == null) question.setDrawCount(Integer.valueOf(0));
+        AdminQuestionDto saved = storage.saveQuestion(question);
+        audit(adminId, AdminConstants.ACTION_UPDATE_QUESTION, "QUESTION", saved.getQuestionId(), before,
+                helper.auditSnapshot(simple("reviewStatus", saved.getReviewStatus(), "content", saved.getContent())));
+        return saved;
+    }
+
     public AdminQuestionDto updateQuestion(String adminId, String questionId, AdminQuestionDto patch) {
         requireAdmin(adminId);
         AdminQuestionDto existing = requireQuestion(questionId);
@@ -320,6 +362,7 @@ public class AdminConsoleGovernanceApplicationService {
 
     public List<AdminContentItemDto> listContent(String adminId, String type) {
         requireAdmin(adminId);
+        syncDefaultResources();
         return storage.listContent(type);
     }
 
@@ -509,6 +552,48 @@ public class AdminConsoleGovernanceApplicationService {
         AdminContentItemDto item = storage.findContent(contentId);
         if (item == null) throw new IllegalArgumentException("content not found");
         return item;
+    }
+
+    private void syncDefaultResources() {
+        if (defaultResourceStorage == null) {
+            return;
+        }
+        List<CareerResourceCardDto> cards = defaultResourceStorage.listCards();
+        for (CareerResourceCardDto card : cards) {
+            if (card == null || !hasText(card.getId()) || !hasText(card.getTitle())) {
+                continue;
+            }
+            if (storage.findContent(card.getId()) != null) {
+                continue;
+            }
+            storage.saveContent(contentFromResource(card));
+        }
+    }
+
+    private AdminContentItemDto contentFromResource(CareerResourceCardDto card) {
+        AdminContentItemDto item = new AdminContentItemDto();
+        item.setContentId(card.getId());
+        item.setType(contentTypeFromResource(card.getType()));
+        item.setTitle(card.getTitle());
+        item.setSummary(firstText(card.getSummary(), card.getBody()));
+        item.setCategory(firstText(card.getCategory(), card.getKeyword()));
+        item.setSourceUrl(card.getSourceUrl());
+        item.setImageUrl(card.getImageUrl());
+        item.setPinned(Boolean.FALSE);
+        item.setHidden(Boolean.FALSE);
+        item.setPublishedAt(card.getPublishedAt());
+        return item;
+    }
+
+    private String contentTypeFromResource(String type) {
+        String normalized = type == null ? "" : type.trim().toLowerCase();
+        if ("video".equals(normalized)) {
+            return AdminConstants.CONTENT_TYPE_VIDEO;
+        }
+        if ("article".equals(normalized)) {
+            return AdminConstants.CONTENT_TYPE_ARTICLE;
+        }
+        return "RESOURCE";
     }
 
     private AdminOperationResult op(String status, String message, String targetId, int updated, boolean auditRecorded) {

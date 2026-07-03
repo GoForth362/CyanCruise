@@ -36,6 +36,8 @@ import v620.cc001.base.common.dto.career.CosmicIdentityConstants;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.AdminConstants;
+import v620.cc001.base.common.dto.career.AdminQuestionDto;
+import v620.cc001.base.common.dto.career.AssessmentQuestionDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
@@ -328,6 +330,94 @@ class CyanCruiseCustomWebApiPluginTest {
         ApiResult result = plugin.doCustomService(params("/cc001/admin/whoami", "api-admin"));
 
         assertTrue(result.getSuccess());
+    }
+
+    @Test
+    void routesAdminQuestionSaveAndDelete(@TempDir Path tempDir) {
+        IdentityAwareCyanCruiseWebApiBoundary boundary =
+                new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver(
+                        "api-admin", "api-admin", CosmicIdentityConstants.ROLE_ADMIN));
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("api-admin");
+        AdminConsoleGovernanceApplicationService adminService = new AdminConsoleGovernanceApplicationService(
+                storage,
+                new NotificationsSubscriptionsApplicationService(
+                        new InMemoryNotificationStorage(),
+                        new InMemorySubscriptionQuotaStorage(),
+                        new UnavailableSubscriptionSender(),
+                        new v620.base.helper.career.NotificationsSubscriptionsService()),
+                new v620.base.helper.career.AdminConsoleGovernanceService());
+        CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir, boundary,
+                new AdminConsoleGovernanceWebApi(adminService, boundary));
+        Map<String, Object> question = new HashMap<String, Object>();
+        question.put("content", "请描述一次你定位性能问题的过程。");
+        question.put("position", "后端开发");
+        Map<String, Object> saveBody = new HashMap<String, Object>();
+        saveBody.put("adminId", "api-admin");
+        saveBody.put("question", question);
+
+        ApiResult saved = plugin.doCustomService(params("/cc001/admin/questions/save", saveBody));
+        AdminQuestionDto savedQuestion = (AdminQuestionDto) saved.getData();
+        Map<String, Object> deleteBody = new HashMap<String, Object>();
+        deleteBody.put("adminId", "api-admin");
+        deleteBody.put("questionId", savedQuestion.getQuestionId());
+        ApiResult deleted = plugin.doCustomService(params("/cc001/admin/questions/delete", deleteBody));
+
+        assertTrue(saved.getSuccess());
+        assertEquals("ADMIN", savedQuestion.getSource());
+        assertTrue(deleted.getSuccess());
+        assertEquals(Boolean.TRUE, deleted.getData());
+    }
+
+    @Test
+    void routesAdminAssessmentQuestionSaveAndDelete(@TempDir Path tempDir) {
+        IdentityAwareCyanCruiseWebApiBoundary boundary =
+                new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver(
+                        "api-admin", "api-admin", CosmicIdentityConstants.ROLE_ADMIN));
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("api-admin");
+        AdminConsoleGovernanceApplicationService adminService = new AdminConsoleGovernanceApplicationService(
+                storage,
+                new NotificationsSubscriptionsApplicationService(
+                        new InMemoryNotificationStorage(),
+                        new InMemorySubscriptionQuotaStorage(),
+                        new UnavailableSubscriptionSender(),
+                        new v620.base.helper.career.NotificationsSubscriptionsService()),
+                new v620.base.helper.career.AdminConsoleGovernanceService());
+        CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir, boundary,
+                new AdminConsoleGovernanceWebApi(adminService, boundary));
+        Map<String, Object> optionA = new HashMap<String, Object>();
+        optionA.put("optionLabel", "A");
+        optionA.put("optionText", "分析复杂问题");
+        optionA.put("dimensionCode", "I");
+        Map<String, Object> optionB = new HashMap<String, Object>();
+        optionB.put("optionLabel", "B");
+        optionB.put("optionText", "帮助他人成长");
+        optionB.put("dimensionCode", "S");
+        java.util.List<Map<String, Object>> options = new ArrayList<Map<String, Object>>();
+        options.add(optionA);
+        options.add(optionB);
+        Map<String, Object> question = new HashMap<String, Object>();
+        question.put("questionText", "你更有成就感的是？");
+        question.put("dimensionCode", "I/S");
+        question.put("options", options);
+        Map<String, Object> saveBody = new HashMap<String, Object>();
+        saveBody.put("adminId", "api-admin");
+        saveBody.put("scaleId", Long.valueOf(1002L));
+        saveBody.put("question", question);
+
+        ApiResult saved = plugin.doCustomService(params("/cc001/admin/assessment/questions/save", saveBody));
+        AssessmentQuestionDto savedQuestion = (AssessmentQuestionDto) saved.getData();
+        Map<String, Object> deleteBody = new HashMap<String, Object>();
+        deleteBody.put("adminId", "api-admin");
+        deleteBody.put("scaleId", Long.valueOf(1002L));
+        deleteBody.put("questionId", savedQuestion.getQuestionId());
+        ApiResult deleted = plugin.doCustomService(params("/cc001/admin/assessment/questions/delete", deleteBody));
+
+        assertTrue(saved.getSuccess());
+        assertEquals("I/S", savedQuestion.getDimensionCode());
+        assertTrue(deleted.getSuccess());
+        assertEquals(Boolean.TRUE, deleted.getData());
     }
 
     @Test

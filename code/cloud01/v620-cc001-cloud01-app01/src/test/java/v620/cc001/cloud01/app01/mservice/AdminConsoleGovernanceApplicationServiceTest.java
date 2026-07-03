@@ -4,6 +4,7 @@ import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationS
 import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.UnavailableSubscriptionSender;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
 import v620.cc001.cloud01.app01.mservice.application.AdminConsoleGovernanceApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.NotificationsSubscriptionsApplicationService;
@@ -22,6 +23,8 @@ import v620.cc001.base.common.dto.career.AdminQuestionContributionRequest;
 import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -78,6 +81,8 @@ class AdminConsoleGovernanceApplicationServiceTest {
         assertEquals(Integer.valueOf(1), broadcastResult.getTargetCount());
         assertEquals(AdminConstants.QUESTION_REVIEW_PUBLISHED, approved.getReviewStatus());
         assertEquals(Boolean.TRUE, service.toggleContentPinned("admin", savedContent.getContentId()).getPinned());
+        assertTrue(service.deleteContent("admin", savedContent.getContentId()));
+        assertEquals(Integer.valueOf(0), service.listContent("admin", null).size());
         assertEquals(Integer.valueOf(3), service.analyticsSummary("admin").getEventBreakdown30d().get("ADMIN_UNKNOWN_EVENT"));
         assertFalse(service.auditLogs("admin", 0, 50).getItems().isEmpty());
     }
@@ -202,6 +207,55 @@ class AdminConsoleGovernanceApplicationServiceTest {
         assertEquals("General", question.getPosition());
         assertTrue(question.getContributorHash().length() > 20);
         assertFalse(question.getContributorHash().contains("u1"));
+    }
+
+    @Test
+    void adminCanSaveAndDeleteInterviewQuestion() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        AdminConsoleGovernanceApplicationService service = service(storage);
+        AdminQuestionDto question = new AdminQuestionDto();
+        question.setPosition("后端开发");
+        question.setDifficulty("NORMAL");
+        question.setContent("请说明一次你解决线上问题的过程。");
+
+        AdminQuestionDto saved = service.saveQuestion("admin", question);
+
+        assertEquals("ADMIN", saved.getSource());
+        assertEquals(AdminConstants.QUESTION_REVIEW_PUBLISHED, saved.getReviewStatus());
+        assertEquals(AdminConstants.QUESTION_STATUS_APPROVED, saved.getStatus());
+        assertEquals(Integer.valueOf(1), service.listQuestions("admin", null, null).size());
+        assertTrue(service.deleteQuestion("admin", saved.getQuestionId()));
+        assertEquals(Integer.valueOf(0), service.listQuestions("admin", null, null).size());
+    }
+
+    @Test
+    void defaultCareerResourcesAreImportedForAdminEditing() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        AdminConsoleGovernanceApplicationService service = new AdminConsoleGovernanceApplicationService(storage,
+                null,
+                new NotificationsSubscriptionsApplicationService(
+                        new InMemoryNotificationStorage(),
+                        new InMemorySubscriptionQuotaStorage(),
+                        new UnavailableSubscriptionSender(),
+                        new v620.base.helper.career.NotificationsSubscriptionsService()),
+                new AdminConsoleGovernanceService(),
+                true,
+                new InMemoryCareerResourceStorage());
+
+        List<AdminContentItemDto> content = service.listContent("admin", null);
+
+        assertFalse(content.isEmpty());
+        assertTrue(hasContent(content, "service-ncss-001"));
+        assertTrue(hasContent(content, "video-bilibili-interview-001"));
+    }
+
+    private boolean hasContent(List<AdminContentItemDto> content, String contentId) {
+        for (AdminContentItemDto item : content) {
+            if (contentId.equals(item.getContentId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private AdminConsoleGovernanceApplicationService service(InMemoryAdminGovernanceStorage storage) {

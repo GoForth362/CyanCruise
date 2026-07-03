@@ -20,6 +20,9 @@ import v620.cc001.cloud01.app01.mservice.furtherstudy.FurtherStudyCompanionStora
  */
 public final class CyanCruiseStorageFactory {
 
+    private static final InMemoryAdminGovernanceStorage IN_MEMORY_ADMIN_GOVERNANCE_STORAGE =
+            new InMemoryAdminGovernanceStorage();
+
     private CyanCruiseStorageFactory() {
     }
 
@@ -68,7 +71,7 @@ public final class CyanCruiseStorageFactory {
         if (storageConfig.isPostgresqlBackend()) {
             return new PostgresqlAdminGovernanceStorage(storageConfig);
         }
-        return new InMemoryAdminGovernanceStorage();
+        return IN_MEMORY_ADMIN_GOVERNANCE_STORAGE;
     }
 
     public static FurtherStudyCompanionStorage furtherStudyCompanionStorage() {

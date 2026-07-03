@@ -213,6 +213,17 @@ public class AdminConsoleGovernanceWebApi {
         }
     }
 
+    @ApiPostMapping(value = "/questions/save", desc = "Save question", methodParamNames = {"adminId", "question"})
+    public @ApiResponseBody(value = "Question") AdminQuestionDto saveQuestion(
+            @ApiRequestBody(value = "adminId", required = true) String adminId,
+            @ApiRequestBody(value = "question", required = true) AdminQuestionDto question) {
+        try {
+            return applicationService.saveQuestion(resolveAdminId(adminId), question);
+        } catch (IdentityBoundaryException ex) {
+            return null;
+        }
+    }
+
     @ApiPostMapping(value = "/questions/update", desc = "Update question", methodParamNames = {"adminId", "questionId", "patch"})
     public @ApiResponseBody(value = "Question") AdminQuestionDto updateQuestion(
             @ApiRequestBody(value = "adminId", required = true) String adminId,
@@ -244,6 +255,17 @@ public class AdminConsoleGovernanceWebApi {
             return applicationService.rejectQuestion(resolveAdminId(adminId), questionId);
         } catch (IdentityBoundaryException ex) {
             return null;
+        }
+    }
+
+    @ApiPostMapping(value = "/questions/delete", desc = "Delete question", methodParamNames = {"adminId", "questionId"})
+    public @ApiResponseBody(value = "Deleted") Boolean deleteQuestion(
+            @ApiRequestBody(value = "adminId", required = true) String adminId,
+            @ApiRequestBody(value = "questionId", required = true) String questionId) {
+        try {
+            return Boolean.valueOf(applicationService.deleteQuestion(resolveAdminId(adminId), questionId));
+        } catch (IdentityBoundaryException ex) {
+            return Boolean.FALSE;
         }
     }
 
@@ -294,6 +316,17 @@ public class AdminConsoleGovernanceWebApi {
             return applicationService.toggleContentHidden(resolveAdminId(adminId), contentId);
         } catch (IdentityBoundaryException ex) {
             return null;
+        }
+    }
+
+    @ApiPostMapping(value = "/content/delete", desc = "Delete content", methodParamNames = {"adminId", "contentId"})
+    public @ApiResponseBody(value = "Deleted") Boolean deleteContent(
+            @ApiRequestBody(value = "adminId", required = true) String adminId,
+            @ApiRequestBody(value = "contentId", required = true) String contentId) {
+        try {
+            return Boolean.valueOf(applicationService.deleteContent(resolveAdminId(adminId), contentId));
+        } catch (IdentityBoundaryException ex) {
+            return Boolean.FALSE;
         }
     }
 

@@ -113,15 +113,15 @@ public class NotificationsSubscriptionsService {
         if (safeHighlights.isEmpty()) {
             summary.setDelivered(Boolean.FALSE);
             summary.setStatus(NotificationConstants.RESULT_SKIPPED);
-            summary.setSummary("Not enough recent CyanCruise activity to build a weekly report.");
+            summary.setSummary("近期活动还不够生成每周回顾。");
             return summary;
         }
         summary.setDelivered(Boolean.TRUE);
         summary.setStatus(NotificationConstants.RESULT_OK);
-        StringBuilder builder = new StringBuilder("This week: ");
+        StringBuilder builder = new StringBuilder("本周进展：");
         builder.append(safeHighlights.get(0));
         if (safeHighlights.size() > 1) {
-            builder.append(" Next focus: ").append(safeHighlights.get(1));
+            builder.append("。下周重点：").append(safeHighlights.get(1));
         }
         summary.setSummary(builder.toString());
         return summary;
@@ -177,15 +177,15 @@ public class NotificationsSubscriptionsService {
 
     public String labelForType(String type) {
         String normalized = normalizeType(type);
-        if (NotificationConstants.TYPE_INTERVIEW_REPORT.equals(normalized)) return "Mock interview";
-        if (NotificationConstants.TYPE_ASSESSMENT_RESULT.equals(normalized)) return "Assessment";
-        if (NotificationConstants.TYPE_RESUME_DIAGNOSIS.equals(normalized)) return "Resume diagnosis";
-        if (NotificationConstants.TYPE_WEEKLY_REPORT.equals(normalized)) return "Weekly report";
-        if (NotificationConstants.TYPE_STREAK_WARNING.equals(normalized)) return "Check-in reminder";
-        if (NotificationConstants.TYPE_MARKET_LIKE.equals(normalized)) return "Resource activity";
-        if (NotificationConstants.TYPE_AI_PROACTIVE.equals(normalized)) return "AI assistant";
-        if (NotificationConstants.TYPE_ADMIN_BROADCAST.equals(normalized)) return "Announcement";
-        return "System";
+        if (NotificationConstants.TYPE_INTERVIEW_REPORT.equals(normalized)) return "面试复盘";
+        if (NotificationConstants.TYPE_ASSESSMENT_RESULT.equals(normalized)) return "测评结果";
+        if (NotificationConstants.TYPE_RESUME_DIAGNOSIS.equals(normalized)) return "简历诊断";
+        if (NotificationConstants.TYPE_WEEKLY_REPORT.equals(normalized)) return "每周回顾";
+        if (NotificationConstants.TYPE_STREAK_WARNING.equals(normalized)) return "练习提醒";
+        if (NotificationConstants.TYPE_MARKET_LIKE.equals(normalized)) return "资源动态";
+        if (NotificationConstants.TYPE_AI_PROACTIVE.equals(normalized)) return "智能助手";
+        if (NotificationConstants.TYPE_ADMIN_BROADCAST.equals(normalized)) return "管理员公告";
+        return "系统消息";
     }
 
     public String iconForType(String type) {

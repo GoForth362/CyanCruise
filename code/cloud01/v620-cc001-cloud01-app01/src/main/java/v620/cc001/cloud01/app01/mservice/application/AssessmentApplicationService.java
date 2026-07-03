@@ -9,6 +9,7 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssessmentCatalog;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssessmentResultStorage;
 import v620.base.helper.career.AssessmentScoringService;
 import v620.cc001.base.common.dto.career.AssessmentScaleDto;
+import v620.cc001.base.common.dto.career.AssessmentQuestionDto;
 import v620.cc001.base.common.dto.career.AssessmentScoreResult;
 import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
@@ -60,6 +61,19 @@ public class AssessmentApplicationService {
             throw new IllegalArgumentException("Unknown assessment scale: " + scaleId);
         }
         return scale;
+    }
+
+    public AssessmentQuestionDto saveQuestion(Long scaleId, AssessmentQuestionDto question) {
+        if (question == null || question.getQuestionText() == null || question.getQuestionText().trim().length() == 0) {
+            throw new IllegalArgumentException("assessment question text is required");
+        }
+        getScale(scaleId);
+        return catalog.saveQuestion(scaleId, question);
+    }
+
+    public boolean deleteQuestion(Long scaleId, Long questionId) {
+        getScale(scaleId);
+        return catalog.deleteQuestion(scaleId, questionId);
     }
 
     public AssessmentScoreResult submit(String userId, AssessmentSubmitRequest request) {

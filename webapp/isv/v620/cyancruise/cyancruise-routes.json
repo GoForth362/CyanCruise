@@ -1724,6 +1724,31 @@
           "fallback": "Show moderation queue unavailable."
         },
         {
+          "name": "save interview question",
+          "method": "POST",
+          "path": "/cc001/admin/questions/save",
+          "body": [
+            "adminId",
+            "question"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminQuestionDto",
+          "fallback": "Keep previous question list and show save failed."
+        },
+        {
+          "name": "update interview question",
+          "method": "POST",
+          "path": "/cc001/admin/questions/update",
+          "body": [
+            "adminId",
+            "questionId",
+            "patch"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminQuestionDto",
+          "fallback": "Keep previous question list and show update failed."
+        },
+        {
           "name": "approve question",
           "method": "POST",
           "path": "/cc001/admin/questions/approve",
@@ -1748,6 +1773,44 @@
           "fallback": "Keep previous question review state and show operation failed."
         },
         {
+          "name": "delete interview question",
+          "method": "POST",
+          "path": "/cc001/admin/questions/delete",
+          "body": [
+            "adminId",
+            "questionId"
+          ],
+          "adminIdRequired": true,
+          "dto": "Boolean",
+          "fallback": "Keep previous question list and show delete failed."
+        },
+        {
+          "name": "save assessment question",
+          "method": "POST",
+          "path": "/cc001/admin/assessment/questions/save",
+          "body": [
+            "adminId",
+            "scaleId",
+            "question"
+          ],
+          "adminIdRequired": true,
+          "dto": "AssessmentQuestionDto",
+          "fallback": "Keep previous assessment question list and show save failed."
+        },
+        {
+          "name": "delete assessment question",
+          "method": "POST",
+          "path": "/cc001/admin/assessment/questions/delete",
+          "body": [
+            "adminId",
+            "scaleId",
+            "questionId"
+          ],
+          "adminIdRequired": true,
+          "dto": "Boolean",
+          "fallback": "Keep previous assessment question list and show delete failed."
+        },
+        {
           "name": "content management",
           "method": "POST",
           "path": "/cc001/admin/content/list",
@@ -1758,6 +1821,18 @@
           "adminIdRequired": true,
           "dto": "List<AdminContentItemDto>",
           "fallback": "Show content management unavailable."
+        },
+        {
+          "name": "save content",
+          "method": "POST",
+          "path": "/cc001/admin/content/save",
+          "body": [
+            "adminId",
+            "content"
+          ],
+          "adminIdRequired": true,
+          "dto": "AdminContentItemDto",
+          "fallback": "Keep previous content list and show save failed."
         },
         {
           "name": "pin content",
@@ -1782,6 +1857,18 @@
           "adminIdRequired": true,
           "dto": "AdminOperationResult",
           "fallback": "Keep previous content display state and show operation failed."
+        },
+        {
+          "name": "delete content",
+          "method": "POST",
+          "path": "/cc001/admin/content/delete",
+          "body": [
+            "adminId",
+            "contentId"
+          ],
+          "adminIdRequired": true,
+          "dto": "Boolean",
+          "fallback": "Keep previous content list and show delete failed."
         },
         {
           "name": "admin broadcast",

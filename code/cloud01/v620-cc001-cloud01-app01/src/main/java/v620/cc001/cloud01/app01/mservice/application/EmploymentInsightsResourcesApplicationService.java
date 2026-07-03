@@ -1,9 +1,9 @@
 package v620.cc001.cloud01.app01.mservice.application;
 
-import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryEmploymentInsightStorage;
 import v620.cc001.cloud01.app01.mservice.storage.CareerResourceStorage;
+import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.EmploymentInsightStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.AdminContentCareerResourceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryEmploymentInsightStorage;
 import v620.base.helper.career.EmploymentInsightsResourcesService;
@@ -25,7 +25,9 @@ public class EmploymentInsightsResourcesApplicationService {
     private final EmploymentInsightsResourcesService helper;
 
     public EmploymentInsightsResourcesApplicationService() {
-        this(new InMemoryEmploymentInsightStorage(), new InMemoryCareerResourceStorage(),
+        this(new InMemoryEmploymentInsightStorage(),
+                new AdminContentCareerResourceStorage(CyanCruiseStorageFactory.adminGovernanceStorage(),
+                        new InMemoryCareerResourceStorage()),
                 new CareerProfileApplicationService(), new EmploymentInsightsResourcesService());
     }
 

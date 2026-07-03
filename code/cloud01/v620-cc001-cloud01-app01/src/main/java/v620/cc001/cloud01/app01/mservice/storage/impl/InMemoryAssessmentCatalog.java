@@ -48,6 +48,116 @@ public class InMemoryAssessmentCatalog implements AssessmentCatalog {
         return null;
     }
 
+    public synchronized AssessmentQuestionDto saveQuestion(Long scaleId, AssessmentQuestionDto question) {
+        AssessmentScaleDto scale = findScale(scaleId);
+        if (scale == null || question == null) {
+            throw new IllegalArgumentException("assessment scale and question are required");
+        }
+        AssessmentQuestionDto saved = copyQuestion(question);
+        saved.setScaleId(scale.getScaleId());
+        List<AssessmentQuestionDto> questions = new ArrayList<AssessmentQuestionDto>();
+        if (scale.getQuestions() != null) {
+            for (AssessmentQuestionDto existing : scale.getQuestions()) {
+                questions.add(copyQuestion(existing));
+            }
+        }
+        if (saved.getQuestionId() == null) {
+            saved.setQuestionId(Long.valueOf(nextQuestionId(scale, questions)));
+        }
+        if (saved.getSortOrder() == null) {
+            saved.setSortOrder(Integer.valueOf(nextSortOrder(questions)));
+        }
+        if (saved.getQuestionType() == null || saved.getQuestionType().trim().length() == 0) {
+            saved.setQuestionType("SINGLE");
+        }
+        normalizeOptions(saved);
+        boolean replaced = false;
+        for (int index = 0; index < questions.size(); index += 1) {
+            if (saved.getQuestionId().equals(questions.get(index).getQuestionId())) {
+                questions.set(index, saved);
+                replaced = true;
+                break;
+            }
+        }
+        if (!replaced) {
+            questions.add(saved);
+        }
+        scale.setQuestions(questions);
+        withQuestionCount(scale);
+        return copyQuestion(saved);
+    }
+
+    public synchronized boolean deleteQuestion(Long scaleId, Long questionId) {
+        AssessmentScaleDto scale = findScale(scaleId);
+        if (scale == null || questionId == null || scale.getQuestions() == null) {
+            return false;
+        }
+        List<AssessmentQuestionDto> questions = new ArrayList<AssessmentQuestionDto>();
+        boolean deleted = false;
+        for (AssessmentQuestionDto question : scale.getQuestions()) {
+            if (questionId.equals(question.getQuestionId())) {
+                deleted = true;
+            } else {
+                questions.add(copyQuestion(question));
+            }
+        }
+        scale.setQuestions(questions);
+        withQuestionCount(scale);
+        return deleted;
+    }
+
+    private AssessmentScaleDto findScale(Long scaleId) {
+        if (scaleId == null) {
+            return null;
+        }
+        for (AssessmentScaleDto scale : scales) {
+            if (scaleId.equals(scale.getScaleId())) {
+                return scale;
+            }
+        }
+        return null;
+    }
+
+    private long nextQuestionId(AssessmentScaleDto scale, List<AssessmentQuestionDto> questions) {
+        long max = scale.getScaleId().longValue() * 100L;
+        for (AssessmentQuestionDto question : questions) {
+            if (question.getQuestionId() != null && question.getQuestionId().longValue() > max) {
+                max = question.getQuestionId().longValue();
+            }
+        }
+        return max + 1L;
+    }
+
+    private int nextSortOrder(List<AssessmentQuestionDto> questions) {
+        int max = 0;
+        for (AssessmentQuestionDto question : questions) {
+            if (question.getSortOrder() != null && question.getSortOrder().intValue() > max) {
+                max = question.getSortOrder().intValue();
+            }
+        }
+        return max + 1;
+    }
+
+    private void normalizeOptions(AssessmentQuestionDto question) {
+        List<AssessmentOptionDto> options = question.getOptions() == null
+                ? new ArrayList<AssessmentOptionDto>() : question.getOptions();
+        long base = question.getQuestionId().longValue() * 10L;
+        for (int index = 0; index < options.size(); index += 1) {
+            AssessmentOptionDto option = options.get(index);
+            if (option.getOptionId() == null) {
+                option.setOptionId(Long.valueOf(base + index + 1L));
+            }
+            option.setQuestionId(question.getQuestionId());
+            if (option.getSortOrder() == null) {
+                option.setSortOrder(Integer.valueOf(index));
+            }
+            if (option.getScoreValue() == null) {
+                option.setScoreValue(BigDecimal.ONE);
+            }
+        }
+        question.setOptions(new ArrayList<AssessmentOptionDto>(options));
+    }
+
     private AssessmentScaleDto mbtiScale() {
         long scaleId = 1001L;
         AssessmentScaleDto scale = scale(scaleId,

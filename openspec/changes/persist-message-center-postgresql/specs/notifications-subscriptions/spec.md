@@ -26,6 +26,18 @@ CyanCruise webapp SHALL provide a usable Chinese message center page for ordinar
 - **WHEN** a user opens the message center route
 - **THEN** the page SHALL load notifications, unread count, and subscription quota, then render messages grouped with readable Chinese labels
 
+#### Scenario: Message list is paginated
+- **WHEN** the user has more than 10 visible notifications
+- **THEN** the page SHALL show 10 notifications per page and provide previous/next paging controls
+
+#### Scenario: Message labels are visible
+- **WHEN** a notification is rendered
+- **THEN** the page SHALL display a readable Chinese label for its notification type and read state
+
+#### Scenario: Administrator announcement is highlighted
+- **WHEN** a notification type is `ADMIN_BROADCAST`
+- **THEN** the page SHALL clearly mark it as 管理员公告 and visually distinguish it from ordinary system messages
+
 #### Scenario: User marks one message read
 - **WHEN** a user clicks an unread message or its read action
 - **THEN** the page SHALL call the read API, refresh unread state, and keep the user on the message center

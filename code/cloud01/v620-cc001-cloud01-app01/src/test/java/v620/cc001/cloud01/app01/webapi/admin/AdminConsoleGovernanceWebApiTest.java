@@ -54,6 +54,8 @@ class AdminConsoleGovernanceWebApiTest {
         AdminQuestionDto question = new AdminQuestionDto();
         question.setContent("Question content");
         AdminQuestionDto savedQuestion = storage.saveQuestion(question);
+        AdminQuestionDto adminQuestion = new AdminQuestionDto();
+        adminQuestion.setContent("请介绍一个你主导的项目。");
         AdminContentItemDto content = new AdminContentItemDto();
         content.setTitle("Article");
         AdminBroadcastRequest broadcast = new AdminBroadcastRequest();
@@ -68,6 +70,9 @@ class AdminConsoleGovernanceWebApiTest {
         assertEquals(AdminConstants.STATUS_OK, webApi.ban("admin", "u1", "risk").getStatus());
         assertEquals(AdminConstants.QUESTION_REVIEW_PUBLISHED,
                 webApi.approveQuestion("admin", savedQuestion.getQuestionId()).getReviewStatus());
+        AdminQuestionDto newQuestion = webApi.saveQuestion("admin", adminQuestion);
+        assertEquals("ADMIN", newQuestion.getSource());
+        assertEquals(Boolean.TRUE, webApi.deleteQuestion("admin", newQuestion.getQuestionId()));
         assertEquals(Boolean.TRUE, webApi.pinContent("admin", webApi.saveContent("admin", content).getContentId()).getPinned());
         assertFalse(webApi.auditLogs("admin", 0, 20).getItems().isEmpty());
     }

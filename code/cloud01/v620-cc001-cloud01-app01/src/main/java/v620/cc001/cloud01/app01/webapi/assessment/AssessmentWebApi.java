@@ -6,6 +6,7 @@ import kd.bos.openapi.common.custom.annotation.ApiPostMapping;
 import kd.bos.openapi.common.custom.annotation.ApiRequestBody;
 import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
 import v620.cc001.base.common.dto.career.AssessmentScaleDto;
+import v620.cc001.base.common.dto.career.AssessmentQuestionDto;
 import v620.cc001.base.common.dto.career.AssessmentScoreResult;
 import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
 import v620.cc001.cloud01.app01.mservice.application.AssessmentApplicationService;
@@ -38,6 +39,14 @@ public class AssessmentWebApi {
     public @ApiResponseBody(value = "职业测评量表与题目") AssessmentScaleDto questions(
             @ApiRequestBody(value = "量表ID", required = true) Long scaleId) {
         return applicationService.getScale(scaleId);
+    }
+
+    public AssessmentQuestionDto saveQuestion(Long scaleId, AssessmentQuestionDto question) {
+        return applicationService.saveQuestion(scaleId, question);
+    }
+
+    public Boolean deleteQuestion(Long scaleId, Long questionId) {
+        return Boolean.valueOf(applicationService.deleteQuestion(scaleId, questionId));
     }
 
     @ApiPostMapping(value = "/submit", desc = "提交职业测评答案", methodParamNames = {"userId", "scale", "request"})

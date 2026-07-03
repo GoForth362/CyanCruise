@@ -76,7 +76,7 @@
 | --- | --- | --- |
 | 总览 | 查看学生数量、面试次数、测评次数、用户总数 | `/cc001/admin/whoami`、`/cc001/admin/organizations/dashboard`、`/cc001/admin/analytics/summary` |
 | 用户管理 | 查看用户状态，禁用或恢复用户 | `/cc001/admin/users/list`、`/cc001/admin/users/ban`、`/cc001/admin/users/unban` |
-| 内容管理 | 管理文章、视频、资源内容的展示状态 | `/cc001/admin/content/list`、`/cc001/admin/content/pin`、`/cc001/admin/content/hide` |
+| 内容管理 | 新增、编辑、隐藏、置顶和删除文章/视频/资源内容 | `/cc001/admin/content/list`、`/cc001/admin/content/save`、`/cc001/admin/content/pin`、`/cc001/admin/content/hide`、`/cc001/admin/content/delete` |
 | 题库审核 | 审核用户贡献题或 AI 生成题 | `/cc001/admin/questions/list`、`/cc001/admin/questions/approve`、`/cc001/admin/questions/reject` |
 | 通知公告 | 给用户发送站内公告 | `/cc001/admin/broadcast` |
 | 操作记录 | 查看管理员操作审计记录 | `/cc001/admin/audit-log/list` |

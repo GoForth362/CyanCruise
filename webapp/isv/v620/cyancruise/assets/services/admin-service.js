@@ -17,6 +17,7 @@
     var post = context.post;
     var orgId = context.orgId || "";
     var pageSize = context.pageSize || 20;
+    var auditPageSize = context.auditPageSize || 10;
 
     return whoami(context).then(function (who) {
       if (!who || who.status !== "OK") {
@@ -27,8 +28,10 @@
           analytics: {},
           users: emptyPage(pageSize),
           questions: [],
+          assessmentScales: [],
+          assessmentQuestionBanks: [],
           content: [],
-          auditLogs: emptyPage(pageSize),
+          auditLogs: emptyPage(auditPageSize),
           message: (who && who.message) || "当前账号没有管理后台权限。"
         };
       }
@@ -37,8 +40,9 @@
         safe(post, endpoints.adminAnalytics, id, {}),
         safe(post, endpoints.adminUsers, { adminId: id, page: 0, size: pageSize, keyword: "" }, emptyPage(pageSize)),
         safe(post, endpoints.adminQuestions, { adminId: id, source: "", reviewStatus: "" }, []),
+        loadAssessmentBanks(context),
         safe(post, endpoints.adminContent, { adminId: id, type: "" }, []),
-        safe(post, endpoints.adminAuditLog, { adminId: id, page: 0, size: pageSize }, emptyPage(pageSize))
+        safe(post, endpoints.adminAuditLog, { adminId: id, page: 0, size: auditPageSize }, emptyPage(auditPageSize))
       ]).then(function (results) {
         return {
           authorized: true,
@@ -48,9 +52,27 @@
           analytics: results[1] || {},
           users: normalizePage(results[2], pageSize),
           questions: normalizeArray(results[3]),
-          content: normalizeArray(results[4]),
-          auditLogs: normalizePage(results[5], pageSize),
+          assessmentScales: normalizeArray(results[4] && results[4].scales),
+          assessmentQuestionBanks: normalizeArray(results[4] && results[4].banks),
+          content: normalizeArray(results[5]),
+          auditLogs: normalizePage(results[6], auditPageSize),
           message: ""
+        };
+      });
+    });
+  }
+
+  function loadAssessmentBanks(context) {
+    var endpoints = context.endpoints || {};
+    var post = context.post;
+    return safe(post, endpoints.assessmentScales, {}, []).then(function (scales) {
+      scales = normalizeArray(scales);
+      return Promise.all(scales.map(function (scale) {
+        return safe(post, endpoints.assessmentQuestions, { scaleId: scale.scaleId }, scale);
+      })).then(function (banks) {
+        return {
+          scales: scales,
+          banks: normalizeArray(banks)
         };
       });
     });
@@ -94,6 +116,44 @@
     });
   }
 
+  function saveQuestion(context, question) {
+    return action(context, context.endpoints.adminQuestionSave, {
+      adminId: adminId(context.identity),
+      question: question || {}
+    });
+  }
+
+  function updateQuestion(context, questionId, patch) {
+    return action(context, context.endpoints.adminQuestionUpdate, {
+      adminId: adminId(context.identity),
+      questionId: questionId,
+      patch: patch || {}
+    });
+  }
+
+  function deleteQuestion(context, questionId) {
+    return action(context, context.endpoints.adminQuestionDelete, {
+      adminId: adminId(context.identity),
+      questionId: questionId
+    });
+  }
+
+  function saveAssessmentQuestion(context, scaleId, question) {
+    return action(context, context.endpoints.adminAssessmentQuestionSave, {
+      adminId: adminId(context.identity),
+      scaleId: scaleId,
+      question: question || {}
+    });
+  }
+
+  function deleteAssessmentQuestion(context, scaleId, questionId) {
+    return action(context, context.endpoints.adminAssessmentQuestionDelete, {
+      adminId: adminId(context.identity),
+      scaleId: scaleId,
+      questionId: questionId
+    });
+  }
+
   function toggleContentPin(context, contentId) {
     return action(context, context.endpoints.adminContentPin, {
       adminId: adminId(context.identity),
@@ -108,10 +168,34 @@
     });
   }
 
+  function saveContent(context, content) {
+    return action(context, context.endpoints.adminContentSave, {
+      adminId: adminId(context.identity),
+      content: content || {}
+    });
+  }
+
+  function deleteContent(context, contentId) {
+    return action(context, context.endpoints.adminContentDelete, {
+      adminId: adminId(context.identity),
+      contentId: contentId
+    });
+  }
+
   function broadcast(context, request) {
     return action(context, context.endpoints.adminBroadcast, {
       adminId: adminId(context.identity),
       request: request || {}
+    });
+  }
+
+  function auditLogs(context, page, size) {
+    return context.post(context.endpoints.adminAuditLog, {
+      adminId: adminId(context.identity),
+      page: page || 0,
+      size: size || 10
+    }).then(function (result) {
+      return normalizePage(result, size || 10);
     });
   }
 
@@ -168,8 +252,16 @@
     unbanUser: unbanUser,
     approveQuestion: approveQuestion,
     rejectQuestion: rejectQuestion,
+    saveQuestion: saveQuestion,
+    updateQuestion: updateQuestion,
+    deleteQuestion: deleteQuestion,
+    saveAssessmentQuestion: saveAssessmentQuestion,
+    deleteAssessmentQuestion: deleteAssessmentQuestion,
+    saveContent: saveContent,
     toggleContentPin: toggleContentPin,
     toggleContentHidden: toggleContentHidden,
-    broadcast: broadcast
+    deleteContent: deleteContent,
+    broadcast: broadcast,
+    auditLogs: auditLogs
   };
 }(window));
