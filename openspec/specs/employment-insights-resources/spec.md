@@ -1,9 +1,7 @@
 ## Purpose
 
 定义 CyanCruise 就业洞察与就业资源入口能力，包括用户画像匹配、学校/专业独立存储、简历摘要展示、公共就业服务、精选文章、相关视频、资源跳转、首页消费契约、降级状态和迁移边界。
-
 ## Requirements
-
 ### Requirement: Employment insight profile matching
 
 CyanCruise SHALL provide an employment insight contract that derives school, major, and target role from the current user profile context and uses them to select relevant employment records and public resource signals.
@@ -90,23 +88,23 @@ The employment insight capability SHALL expose employment rate, postgraduate rat
 - **THEN** the response SHALL omit numeric metric values and SHALL include a summary or highlight that explains the data is unavailable or pending verification
 
 ### Requirement: Career resource feed
-
-CyanCruise SHALL provide a resource feed contract for webapp consumption that can expose public service cards, article cards, video cards, consultation/tip cards, and career path cards without requiring IPD frontend or crawler runtime.
+CyanCruise SHALL provide a resource feed contract for webapp consumption that can expose public service cards, article cards, video cards, consultation/tip cards, and career path cards without requiring IPD frontend or crawler runtime. The feed SHALL include visible administrator-managed content when such content exists.
 
 #### Scenario: Resource feed is requested
-
 - **WHEN** the webapp requests employment resources
 - **THEN** the system SHALL return resource cards with stable identifiers, title, summary or body, category or keyword, source URL, image URL when available, and type-specific fields such as video duration or career path id
 
+#### Scenario: Admin content is visible
+- **WHEN** administrator-managed content is saved and not hidden
+- **THEN** the resource feed SHALL include that content as a resource card using its title, summary, category, image URL, source URL, and content type
+
+#### Scenario: Admin content is hidden
+- **WHEN** administrator-managed content is marked hidden
+- **THEN** the resource feed SHALL NOT expose that content to user-facing pages
+
 #### Scenario: Resource feed has no configured content
-
-- **WHEN** no resource records are available
-- **THEN** the system SHALL return an empty or unavailable resource state that keeps the webapp navigable and SHALL NOT fail the workbench
-
-#### Scenario: User id is available for resources
-
-- **WHEN** a user id is available to the resource feed
-- **THEN** the system MAY use it for stable daily ordering or personalization but SHALL keep anonymous read access possible for non-user-owned resource cards
+- **WHEN** no administrator-managed resource records are available
+- **THEN** the system SHALL return seeded or empty resource state that keeps the webapp navigable and SHALL NOT fail the workbench
 
 ### Requirement: Employment home resource content
 
@@ -197,3 +195,4 @@ The employment insight and resource migration SHALL include verification and doc
 
 - **WHEN** the change is finalized
 - **THEN** `docs/ipd-to-cyancruise-migration-map.md` SHALL record IPD source paths, CyanCruise target modules, data mapping, temporarily excluded items, and validation results
+

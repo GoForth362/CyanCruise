@@ -81,7 +81,14 @@ CyanCruise SHALL provide administrator contracts for career path and career node
 
 ### Requirement: Question bank moderation
 
-CyanCruise SHALL expose administrator question bank moderation contracts that include hidden, AI-generated, user-contributed, and pending-review questions.
+CyanCruise SHALL expose administrator “题库管理” contracts that include “面试题库”和“职业测评题库”, and retain moderation coverage for hidden, AI-generated, user-contributed, and pending-review questions.
+
+#### Scenario: Admin manages interview questions
+
+- **GIVEN** 当前用户具备管理后台权限
+- **WHEN** 管理员进入“题库管理”的“面试题库”
+- **THEN** 页面 SHALL 展示面试题列表
+- **AND** 管理员 SHALL be able to 新增、编辑、发布、隐藏和删除面试题
 
 #### Scenario: Admin filters questions
 
@@ -103,6 +110,21 @@ CyanCruise SHALL expose administrator question bank moderation contracts that in
 - **WHEN** an administrator rejects a question
 - **THEN** the system SHALL transition reviewStatus to `REJECTED` and record an audit event
 
+#### Scenario: Admin manages assessment question catalog
+
+- **GIVEN** 当前用户具备管理后台权限
+- **WHEN** 管理员进入“题库管理”的“职业测评题库”
+- **THEN** 页面 SHALL 展示现有职业测评量表、题目数量、题目文本、维度和选项
+- **AND** 管理员 SHALL be able to 新增、编辑和删除职业测评题目
+- **AND** 页面 SHALL 说明职业测评题库当前保存在应用运行期题库中
+
+#### Scenario: Admin question bank errors hide implementation details
+
+- **GIVEN** 管理端或客户端操作失败
+- **WHEN** 页面展示错误提示
+- **THEN** 提示文案 SHALL 使用普通中文说明问题
+- **AND** 提示文案 SHALL NOT 暴露接口路径、TraceId 或 Java 类名
+
 ### Requirement: Public question contribution safety
 
 CyanCruise SHALL retain the IPD question bank contribution semantics for content length, difficulty normalization, contributor anonymization, and local content safety.
@@ -118,23 +140,27 @@ CyanCruise SHALL retain the IPD question bank contribution semantics for content
 - **THEN** the system SHALL reject the contribution with a user-facing reason and SHALL NOT persist the question
 
 ### Requirement: Content management governance
-
-CyanCruise SHALL support administrator management of CareerLoop home articles, videos, and resource content with create, update, delete, pin, hide, and list contracts.
+CyanCruise SHALL support administrator management of CareerLoop home articles, videos, and resource content with create, update, delete, pin, hide, and list contracts. Managed content SHALL be usable by the user-facing resource feed when it is not hidden.
 
 #### Scenario: Admin creates article
-
 - **WHEN** an administrator creates a home article
 - **THEN** the system SHALL assign platform ownership fields as needed, default missing published time to current time, persist the article, and record an audit event
 
-#### Scenario: Admin toggles article pin or hidden state
+#### Scenario: Admin updates existing content
+- **WHEN** an administrator saves content with an existing content identifier
+- **THEN** the system SHALL update the editable content fields, preserve the content identity, persist the new state, and record an audit event
 
+#### Scenario: Admin toggles article pin or hidden state
 - **WHEN** an administrator toggles pinned or hidden state for an existing article
 - **THEN** the system SHALL invert only the requested state, preserve other fields, and record an audit event
 
 #### Scenario: Admin deletes content
-
 - **WHEN** an administrator deletes an article or video
 - **THEN** the system SHALL remove or mark the content unavailable according to the storage adapter and record an audit event
+
+#### Scenario: Admin manages content in webapp
+- **WHEN** an administrator opens the management console content section
+- **THEN** the page SHALL provide controls to create, edit, save, hide, restore, pin, unpin, and delete content using understandable Chinese labels
 
 ### Requirement: Admin broadcast
 
@@ -203,18 +229,11 @@ CyanCruise SHALL support a persistent admin governance storage adapter so admini
 - **THEN** the saved governance state SHALL remain queryable from the admin WebAPI after restart
 
 ### Requirement: Admin WebAPI and route mapping
-
 The migration SHALL define Cosmic WebAPI and webapp or platform route/API mapping for admin whoami, organizations, dashboards, students, users, skill map, questions, content, broadcast, analytics, and audit logs.
 
-#### Scenario: Route map is reviewed
-
+#### Scenario: Content write route map is reviewed
 - **WHEN** reviewers inspect webapp or platform migration artifacts
-- **THEN** they SHALL find admin route keys, consumed WebAPI paths, DTO fields, identity requirements, authorization requirements, and fallback states
-
-#### Scenario: Admin backend is unavailable
-
-- **WHEN** the management WebAPI is unavailable
-- **THEN** the admin entry SHALL show a recoverable unavailable state and SHALL NOT affect user-facing CareerLoop workbench routes
+- **THEN** they SHALL find route keys for admin content list, save, pin, hide, and delete operations with administrator authorization requirements
 
 ### Requirement: Migration boundary for admin console governance
 
@@ -333,4 +352,3 @@ CyanCruise SHALL show management console labels, buttons, empty states, errors, 
 
 - **WHEN** the admin console renders labels, buttons, or status messages
 - **THEN** the visible text SHALL use understandable Chinese such as “管理后台”, “用户管理”, “题库审核”, and “无管理员权限”, and SHALL NOT show garbled text or unexplained abbreviations
-
