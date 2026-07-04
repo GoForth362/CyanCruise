@@ -1,5 +1,19 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.storage.impl.FileInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
+import v620.cc001.cloud01.app01.mservice.ai.InterviewAiService;
+import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.InterviewApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.ResumeApplicationService;
+import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.FileInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
+import v620.cc001.cloud01.app01.mservice.storage.InterviewStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import v620.base.helper.career.CareerProfileBuildService;

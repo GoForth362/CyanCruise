@@ -1,5 +1,7 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultResumeDiagnosisAnalyzer;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.ResumeDiagnosisService;
 import v620.cc001.base.common.dto.career.ResumeDiagnosisRequest;

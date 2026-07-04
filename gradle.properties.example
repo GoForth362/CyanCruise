@@ -39,6 +39,25 @@ systemProp.cosmic_home=D:/code/kingdee/cosmic/home
 #systemProp.cc001.storage.postgresql.password=<password>
 #systemProp.cc001.storage.postgresql.schema=public
 #systemProp.cc001.storage.postgresql.initialize=false
+#--When the shared PostgreSQL backend is enabled, admin governance uses the same connection.
+#--Run datamodel/postgresql-admin-governance-storage.sql once, or set initialize=true in local/dev only.
+
+#--Optional server-managed KAPI AccessToken. Store secrets in local gradle.properties or environment variables only.
+#--This token is an OpenAPI calling credential and must not be treated as the current browser login user.
+#systemProp.cc001.kapi.token.endpoint=http://10.0.0.8:8080/ierp/kapi/oauth2/getToken
+#systemProp.cc001.kapi.token.clientId=cc001
+#systemProp.cc001.kapi.token.clientSecret=<AccessToken authentication secret>
+#--Optional fallback only. By default username/accountId are resolved from the current Cosmic RequestContext.
+#--后面可以改成游客登录
+#systemProp.cc001.kapi.token.username=<fallback proxy user number>
+#systemProp.cc001.kapi.token.accountId=<fallback account id>
+#systemProp.cc001.kapi.token.language=zh_CN
+#systemProp.cc001.kapi.token.timeoutSeconds=10
+#systemProp.cc001.kapi.token.cacheSeconds=3300
+#systemProp.cc001.kapi.token.expirySkewSeconds=60
+# Optional. If omitted, CyanCruise derives this from the token endpoint base URL.
+#systemProp.cc001.kapi.route.endpoint=http://10.0.0.8:8080/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route
+#systemProp.cc001.kapi.route.timeoutSeconds=10
 
 #--Performance configuration for gradle build
 org.gradle.parallel=true

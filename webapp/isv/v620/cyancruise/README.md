@@ -17,7 +17,7 @@
 - `?ccRoute=workbench`
 - `?ccRoute=employment-home`
 - `?ccRoute=further-study-home`
-- `?ccRoute=postgraduate-exam`
+- `?ccRoute=postgraduate`
 - `?ccRoute=postgraduate-recommendation`
 - `?ccRoute=study-abroad`
 - `?ccRoute=resume-home`
@@ -37,7 +37,7 @@
 - `?ccRoute=employment-insight`
 - `?ccRoute=career-resources`（默认导航隐藏，调试或后续内容接入时使用）
 
-管理侧入口为 `?ccRoute=admin-console`，只在生产管理员身份或开发角色显式包含 `ADMIN`、`COSMIC_ADMIN`、`PLATFORM_ADMIN` 时展示可访问状态。
+管理侧入口为 `?ccRoute=admin-console`，只在生产管理员身份或开发角色显式包含 `ADMIN`、`COSMIC_ADMIN`、`PLATFORM_ADMIN` 时展示可访问状态。管理后台当前已提供基础总览、用户管理、内容管理、题库审核、通知公告和操作记录入口；若当前账号无管理员权限，页面会显示无权限状态，并且不会调用 `/cc001/admin/*` 管理接口。
 
 ## 金蝶平台侧边栏外部链接
 
@@ -45,29 +45,50 @@
 
 | 菜单 | 外部链接 | 状态 |
 | --- | --- | --- |
-| CyanCruise 首页 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=workbench` | 已接入 |
-| 就业 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=employment-home` | 已接入 |
-| 就业 / 简历 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-home` | 父级/分组 |
-| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume` | 已接入 |
-| 就业 / 简历 / AI简历诊断 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-diagnosis` | 已接入 |
-| 就业 / 面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-home` | 两种面试入口与独立记录入口 |
-| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-panorama` | 沉浸式环境、摄像头预览、按难度自动计时与 AI 问答已接入 |
-| 就业 / 面试 / AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview` | 七题逐题问答、语音辅助、复盘与记录删除已接入 |
-| 就业 / 面试 / AI 模拟面试记录 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-history` | 独立记录页，后端分页且每页 10 条 |
-| 就业 / 面试 / 全景仿真面试记录 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview-panorama-history` | 独立记录页，按全景类型分页且每页 10 条 |
-| 深造 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=further-study-home` | 规划入口 |
-| 深造 / 考研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-exam` | 规划入口 |
-| 深造 / 保研 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=postgraduate-recommendation` | 规划入口 |
-| 深造 / 留学 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=study-abroad` | 规划入口 |
-| AI路径规划 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=career-plan` | 规划入口 |
-| 职业测评 | `/ierp/isv/v620/cyancruise/index.htm?ccRoute=assessment` | 规划入口 |
+| CyanCruise 首页 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=workbench&apiMode=server` | 已接入 |
+| 就业 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=employment-home&apiMode=server` | 已接入 |
+| 就业 / 简历 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=resume-home&apiMode=server` | 父级/分组 |
+| 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=resume&apiMode=server` | 已接入 |
+| 就业 / 简历 / AI简历诊断 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=resume-diagnosis&apiMode=server` | 已接入 |
+| 就业 / 面试 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-home&apiMode=server` | 两种面试入口与独立记录入口 |
+| 就业 / 面试 / 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-panorama&apiMode=server` | 沉浸式环境、摄像头预览、按难度自动计时与 AI 问答已接入 |
+| 就业 / 面试 / AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview&apiMode=server` | 七题逐题问答、语音辅助、复盘与记录删除已接入 |
+| 就业 / 面试 / AI 模拟面试记录 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-history&apiMode=server` | 独立记录页，后端分页且每页 10 条 |
+| 就业 / 面试 / 全景仿真面试记录 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-panorama-history&apiMode=server` | 独立记录页，按全景类型分页且每页 10 条 |
+| 深造 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=further-study-home&apiMode=server` | 规划入口 |
+| 深造 / 考研 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=postgraduate&apiMode=server` | 规划入口 |
+| 深造 / 保研 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=postgraduate-recommendation&apiMode=server` | 规划入口 |
+| 深造 / 留学 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=study-abroad&apiMode=server` | 规划入口 |
+| AI路径规划 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=career-plan&apiMode=server` | 规划入口 |
+| 职业测评 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=assessment&apiMode=server` | 规划入口 |
+
+## 管理端外部链接
+
+管理端建议单独放在应用菜单底部或单独的“管理后台”分组下，不要放进普通学生端路径里。菜单可先配置一个总入口：
+
+| 菜单 | 外部链接 | 可见性 |
+| --- | --- | --- |
+| 管理后台 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=admin-console&apiMode=server` | 仅管理员 |
+
+进入管理后台后，页面内已经包含这些后台页签：
+
+| 页签 | 用途 | 后端接口 |
+| --- | --- | --- |
+| 总览 | 查看学生数量、面试次数、测评次数、用户总数 | `/cc001/admin/whoami`、`/cc001/admin/organizations/dashboard`、`/cc001/admin/analytics/summary` |
+| 用户管理 | 查看用户状态，禁用或恢复用户 | `/cc001/admin/users/list`、`/cc001/admin/users/ban`、`/cc001/admin/users/unban` |
+| 内容管理 | 新增、编辑、隐藏、置顶和删除文章/视频/资源内容 | `/cc001/admin/content/list`、`/cc001/admin/content/save`、`/cc001/admin/content/pin`、`/cc001/admin/content/hide`、`/cc001/admin/content/delete` |
+| 题库审核 | 审核用户贡献题或 AI 生成题 | `/cc001/admin/questions/list`、`/cc001/admin/questions/approve`、`/cc001/admin/questions/reject` |
+| 通知公告 | 给用户发送站内公告 | `/cc001/admin/broadcast` |
+| 操作记录 | 查看管理员操作审计记录 | `/cc001/admin/audit-log/list` |
+
+当前阶段不建议在苍穹左侧菜单里把“用户管理、内容管理、题库审核”等拆成多个外部链接，因为它们现在是 `admin-console` 页面内的页签，不是独立 `ccRoute` 页面。
 
 金蝶菜单配置不依赖 `#hash`，统一使用查询参数形式，例如：
 
 ```text
-/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume
-/ierp/isv/v620/cyancruise/index.htm?ccRoute=resume-diagnosis
-/ierp/isv/v620/cyancruise/index.htm?ccRoute=interview
+/ierp/isv/v620/cyancruise/index.html?ccRoute=resume&apiMode=server
+/ierp/isv/v620/cyancruise/index.html?ccRoute=resume-diagnosis&apiMode=server
+/ierp/isv/v620/cyancruise/index.html?ccRoute=interview&apiMode=server
 ```
 
 当前阶段就业发布四个核心入口：简历制作、简历诊断、全景仿真面试、AI 模拟面试。全景仿真面试以会议室背景和通透信息层营造沉浸环境，支持摄像头与麦克风本地预览、答题自动倒计时和 AI 逐轮提问；题目出现后立即计时，入门、常规、进阶每题分别为 3、5、8 分钟，超时后自动进入后续流程。视频不会上传或保存。摄像头受非安全连接或苍穹嵌入策略限制时，可选择无摄像头模式继续。普通 AI 模拟面试采用最多七题的逐题问答，最后自动给出总分、评价和改进方向。

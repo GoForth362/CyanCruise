@@ -2,13 +2,88 @@ const fs = require("fs");
 const path = require("path");
 
 const routePath = path.join(__dirname, "cyancruise-routes.json");
-const appPath = path.join(__dirname, "assets", "app.js");
+const appPath = path.join(__dirname, "assets", "app-runtime.js");
+const assetsPath = path.join(__dirname, "assets");
 const stylesPath = path.join(__dirname, "assets", "styles.css");
 const panoramaImagePath = path.join(__dirname, "assets", "images", "panorama-interview-room-v1.png");
 const panoramaInterviewerImagePath = path.join(__dirname, "assets", "images", "ai-interviewer-human-v1.png");
 const routeMap = JSON.parse(fs.readFileSync(routePath, "utf8"));
 const app = fs.readFileSync(appPath, "utf8");
+const appSources = readJsSources(assetsPath);
 const styles = fs.readFileSync(stylesPath, "utf8");
+
+const requiredSplitFiles = [
+  "app.js",
+  "app-config.js",
+  "app-runtime.js",
+  "routes.js",
+  "api.js",
+  "state.js",
+  "identity.js",
+  "navigation.js",
+  "pages/workbench.js",
+  "pages/employment-home.js",
+  "pages/resume-home.js",
+  "pages/resume.js",
+  "pages/resume-diagnosis.js",
+  "pages/interview-home.js",
+  "pages/interview.js",
+  "pages/interview-panorama.js",
+  "pages/postgraduate.js",
+  "pages/recommendation.js",
+  "pages/study-abroad.js",
+  "pages/assessment.js",
+  "pages/career-plan.js",
+  "pages/assistant.js",
+  "pages/messages.js",
+  "pages/admin-console.js",
+  "components/feature-card.js",
+  "components/message.js",
+  "components/form.js",
+  "components/dialog.js",
+  "components/page-shell.js",
+  "components/status-panel.js",
+  "components/pager.js",
+  "services/resume-service.js",
+  "services/interview-service.js",
+  "services/profile-service.js",
+  "services/further-study-service.js",
+  "services/resource-service.js",
+  "services/file-service.js",
+  "services/admin-service.js"
+];
+
+const requiredPageRendererRoutes = [
+  "workbench",
+  "employment-home",
+  "resume-home",
+  "resume",
+  "resume-diagnosis",
+  "interview-home",
+  "interview",
+  "interview-panorama",
+  "postgraduate",
+  "postgraduate-recommendation",
+  "study-abroad",
+  "assessment",
+  "career-plan",
+  "assistant",
+  "messages",
+  "admin-console"
+];
+
+function readJsSources(dir) {
+  let out = "";
+  for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+    const itemPath = path.join(dir, item.name);
+    if (item.isDirectory()) {
+      out += "\n" + readJsSources(itemPath);
+    } else if (item.isFile() && item.name.endsWith(".js")) {
+      out += "\n" + fs.readFileSync(itemPath, "utf8");
+    }
+  }
+  return out;
+}
 
 if (!fs.existsSync(panoramaImagePath)) {
   throw new Error("Missing panoramic interview room image asset");
@@ -90,7 +165,6 @@ const requiredRoutes = [
   "workbench",
   "employment-home",
   "further-study-home",
-  "postgraduate-exam",
   "postgraduate-recommendation",
   "study-abroad",
   "onboarding",
@@ -118,15 +192,31 @@ const requiredApis = [
   "/cc001/notifications/list",
   "/cc001/notifications/unread-count",
   "/cc001/notifications/read",
+  "/cc001/notifications/read-all",
+  "/cc001/notifications/delete",
   "/cc001/notifications/subscription/grant",
   "/cc001/notifications/subscription/quota",
   "/cc001/notifications/weekly-report/run",
   "/cc001/admin/whoami",
   "/cc001/admin/organizations/dashboard",
+  "/cc001/admin/users/list",
   "/cc001/admin/users/ban",
+  "/cc001/admin/users/unban",
   "/cc001/admin/questions/list",
+  "/cc001/admin/questions/save",
+  "/cc001/admin/questions/update",
+  "/cc001/admin/questions/approve",
+  "/cc001/admin/questions/reject",
+  "/cc001/admin/questions/delete",
+  "/cc001/admin/assessment/questions/save",
+  "/cc001/admin/assessment/questions/delete",
   "/cc001/admin/content/list",
+  "/cc001/admin/content/save",
+  "/cc001/admin/content/pin",
+  "/cc001/admin/content/hide",
+  "/cc001/admin/content/delete",
   "/cc001/admin/broadcast",
+  "/cc001/admin/analytics/summary",
   "/cc001/admin/audit-log/list",
   "/cc001/files/upload",
   "/cc001/files/preview-url",
@@ -163,7 +253,6 @@ const requiredPageShellRoutes = [
   "workbench",
   "employment-home",
   "further-study-home",
-  "postgraduate-exam",
   "postgraduate-recommendation",
   "study-abroad",
   "onboarding",
@@ -226,11 +315,23 @@ function fail(message) {
   process.exit(1);
 }
 
+for (const file of requiredSplitFiles) {
+  if (!fs.existsSync(path.join(assetsPath, file))) {
+    fail(`Missing split frontend module: ${file}`);
+  }
+}
+
+for (const route of requiredPageRendererRoutes) {
+  if (!appSources.includes(`attachRenderer("${route}"`)) {
+    fail(`Missing page module renderer registration: ${route}`);
+  }
+}
+
 for (const key of requiredRoutes) {
   if (!routeMap.routes.some((route) => route.key === key && (route.status === "available" || route.status === "entry-only"))) {
     fail(`Missing available or entry-only route: ${key}`);
   }
-  if (!app.includes(key)) {
+  if (!appSources.includes(key)) {
     fail(`Static app does not reference route: ${key}`);
   }
 }
@@ -287,8 +388,8 @@ if (!routeMap.identity.mismatchRule || !routeMap.identity.mismatchRule.includes(
 if (!routeMap.sourceEvidence || !routeMap.sourceEvidence.runtimeRule) {
   fail("Route map missing IPD source evidence or runtime rule");
 }
-if (!routeMap.pageShell || routeMap.pageShell.change !== "migrate-webapp-careerloop-pages") {
-  fail("Route map missing migrate-webapp-careerloop-pages pageShell metadata");
+if (!routeMap.pageShell || routeMap.pageShell.change !== "migrate-webapp-cyancruise-pages") {
+  fail("Route map missing migrate-webapp-cyancruise-pages pageShell metadata");
 }
 if (routeMap.pageShell.implementation !== "static-hash-route-states") {
   fail("Page shell implementation must be static-hash-route-states");
@@ -300,7 +401,7 @@ for (const key of requiredPageShellRoutes) {
   if (!routeKeys.has(key)) {
     fail(`Page shell references unknown route: ${key}`);
   }
-  if (!app.includes(`"${key}"`) && !app.includes(`'${key}'`)) {
+  if (!appSources.includes(`"${key}"`) && !appSources.includes(`'${key}'`)) {
     fail(`Static app page registry missing route: ${key}`);
   }
 }
@@ -356,7 +457,7 @@ for (const mount of routeMap.platformMounts) {
   }
 }
 
-for (const key of ["workbench", "employment-home", "further-study-home", "postgraduate-exam", "postgraduate-recommendation", "study-abroad", "onboarding", "today-action", "assessment", "resume", "resume-diagnosis", "interview", "career-plan", "assistant", "messages", "file-upload-preview", "employment-insight", "career-resources", "admin-console"]) {
+for (const key of ["workbench", "employment-home", "further-study-home", "postgraduate-recommendation", "study-abroad", "onboarding", "today-action", "assessment", "resume", "resume-diagnosis", "interview", "career-plan", "assistant", "messages", "file-upload-preview", "employment-insight", "career-resources", "admin-console"]) {
   if (!routeMap.platformMounts.some((mount) => mount.routeKey === key)) {
     fail(`Missing platform mount for route: ${key}`);
   }

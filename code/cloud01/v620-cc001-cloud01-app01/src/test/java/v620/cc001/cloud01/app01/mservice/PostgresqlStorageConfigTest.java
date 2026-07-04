@@ -1,5 +1,8 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.storage.PostgresqlProfileStorageConfig;
+import v620.cc001.cloud01.app01.mservice.storage.PostgresqlStorageConfig;
+import v620.cc001.cloud01.app01.mservice.notification.impl.PostgresqlNotificationStorage;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,6 +33,19 @@ class PostgresqlStorageConfigTest {
                 new org.junit.jupiter.api.function.Executable() {
                     public void execute() {
                         config.requireComplete("test storage");
+                    }
+                });
+    }
+
+    @Test
+    void notificationStorageRequiresCompleteConfig() {
+        final PostgresqlStorageConfig config = new PostgresqlStorageConfig();
+        config.setBackend("postgresql");
+
+        assertThrows(IllegalStateException.class,
+                new org.junit.jupiter.api.function.Executable() {
+                    public void execute() {
+                        new PostgresqlNotificationStorage(config);
                     }
                 });
     }

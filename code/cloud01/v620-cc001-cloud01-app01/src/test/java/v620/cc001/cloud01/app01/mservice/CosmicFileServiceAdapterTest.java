@@ -1,5 +1,10 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.file.impl.CosmicCareerFileServiceProvider;
+import v620.cc001.cloud01.app01.mservice.application.FileUploadPreviewApplicationService;
+import v620.cc001.cloud01.app01.mservice.file.impl.CosmicCareerFileServiceProvider;
+import v620.cc001.cloud01.app01.mservice.file.CosmicFileAdapterConfig;
+import v620.cc001.cloud01.app01.mservice.file.CyanCruiseFileServiceAdapterFactory;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.FileUploadPreviewService;
 import v620.cc001.base.common.dto.career.FileConstants;
@@ -23,7 +28,7 @@ class CosmicFileServiceAdapterTest {
 
     @Test
     void defaultProductionAdapterIsDisabledSafe() {
-        FileUploadPreviewApplicationService service = CareerLoopFileServiceAdapterFactory.production();
+        FileUploadPreviewApplicationService service = CyanCruiseFileServiceAdapterFactory.production();
 
         FileUploadResult upload = service.upload(upload("resumes", "resume.pdf", new byte[]{1, 2}));
         FilePreviewUrlResult preview = service.previewUrl("resumes/a.pdf", 1);
@@ -41,7 +46,7 @@ class CosmicFileServiceAdapterTest {
     @Test
     void enabledAdapterDelegatesAndPreservesObjectKeyContract() {
         RecordingCosmicFileProvider provider = new RecordingCosmicFileProvider();
-        FileUploadPreviewApplicationService service = CareerLoopFileServiceAdapterFactory.production(
+        FileUploadPreviewApplicationService service = CyanCruiseFileServiceAdapterFactory.production(
                 provider, enabled(), new FileUploadPreviewService());
 
         FileUploadResult uploaded = service.upload(upload("resumes", "resume.txt", "hello".getBytes()));
@@ -71,7 +76,7 @@ class CosmicFileServiceAdapterTest {
     void damagedPdfReturnsParseFailureWithoutBreakingDownload() {
         RecordingCosmicFileProvider provider = new RecordingCosmicFileProvider();
         provider.textExtractionAvailable = false;
-        FileUploadPreviewApplicationService service = CareerLoopFileServiceAdapterFactory.production(
+        FileUploadPreviewApplicationService service = CyanCruiseFileServiceAdapterFactory.production(
                 provider, enabled(), new FileUploadPreviewService());
         FileUploadResult uploaded = service.upload(upload("resumes", "resume.pdf", new byte[]{1, 2, 3}));
 

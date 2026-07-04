@@ -14,10 +14,10 @@ public class InMemoryCosmicDatamodelGateway implements CosmicDatamodelGateway {
     private final Map<String, AtomicLong> sequences = new LinkedHashMap<String, AtomicLong>();
 
     public synchronized CosmicDatamodelRecord save(CosmicDatamodelRecord record) {
-        Long id = DatamodelFieldMapper.asLong(record.get(CareerLoopDatamodelObjects.ID));
+        Long id = DatamodelFieldMapper.asLong(record.get(CyanCruiseDatamodelObjects.ID));
         if (id == null) {
             id = nextId(record.getObjectName());
-            record.set(CareerLoopDatamodelObjects.ID, id);
+            record.set(CyanCruiseDatamodelObjects.ID, id);
         }
         bucket(record.getObjectName()).put(id, record.copy());
         return record.copy();

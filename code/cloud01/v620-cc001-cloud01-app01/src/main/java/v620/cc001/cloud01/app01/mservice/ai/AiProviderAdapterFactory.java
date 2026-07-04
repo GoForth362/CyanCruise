@@ -1,5 +1,8 @@
 package v620.cc001.cloud01.app01.mservice.ai;
 
+
+import v620.cc001.cloud01.app01.mservice.ai.impl.CompatibleEndpointAiProviderAdapter;
+import v620.cc001.cloud01.app01.mservice.ai.impl.UnavailableAiProviderAdapter;
 public final class AiProviderAdapterFactory {
 
     private AiProviderAdapterFactory() {

@@ -1,5 +1,11 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.file.impl.PlainTextFileTextExtractor;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerFileStorage;
+import v620.cc001.cloud01.app01.mservice.application.FileUploadPreviewApplicationService;
+import v620.cc001.cloud01.app01.mservice.file.FileTextExtractor;
+import v620.cc001.cloud01.app01.mservice.file.impl.PlainTextFileTextExtractor;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerFileStorage;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.FileUploadPreviewService;
 import v620.cc001.base.common.dto.career.FileConstants;

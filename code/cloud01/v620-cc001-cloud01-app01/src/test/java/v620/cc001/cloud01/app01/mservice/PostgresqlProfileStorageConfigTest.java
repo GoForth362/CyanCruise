@@ -1,5 +1,12 @@
 package v620.cc001.cloud01.app01.mservice;
 
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorageFactory;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerProfileStorage;
+import v620.cc001.cloud01.app01.mservice.storage.PostgresqlProfileStorageConfig;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
