@@ -10,7 +10,6 @@ import v620.cc001.cloud01.app01.mservice.datamodel.CosmicDatamodelRecord;
 import v620.cc001.cloud01.app01.mservice.datamodel.CosmicRecordFilter;
 import v620.cc001.cloud01.app01.mservice.datamodel.DatamodelFieldMapper;
 
-import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +30,7 @@ public class CosmicCareerProfileStorage implements CareerProfileStorage {
     public void saveSnapshot(String userId, UserProfileSnapshot snapshot) {
         CosmicDatamodelRecord record = existingOrNew(CyanCruiseDatamodelObjects.PROFILE_SNAPSHOT, userId);
         gateway.save(record.set("version", snapshot == null ? null : snapshot.getVersion())
-                .set("snapshot_json", snapshot)
-                .set(CyanCruiseDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
+                .set("snapshot_json", snapshot));
     }
 
     public Map<String, String> loadFacts(String userId) {
@@ -51,7 +49,7 @@ public class CosmicCareerProfileStorage implements CareerProfileStorage {
                     .set(CyanCruiseDatamodelObjects.USER_ID, userId)
                     .set("fact_key", key);
         }
-        gateway.save(record.set("fact_value", value).set(CyanCruiseDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
+        gateway.save(record.set("fact_value", value));
     }
 
     public CareerUserProfileDto loadProfile(String userId) {
@@ -69,8 +67,7 @@ public class CosmicCareerProfileStorage implements CareerProfileStorage {
                 .set("completeness_score", profile == null ? null : profile.getCompletenessScore())
                 .set("current_stage", profile == null ? null : profile.getCurrentStage())
                 .set("target_role", targetRole)
-                .set("profile_json", profile)
-                .set(CyanCruiseDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
+                .set("profile_json", profile));
     }
 
     public CareerProfileDraftDto loadDraft(String userId) {
@@ -81,14 +78,12 @@ public class CosmicCareerProfileStorage implements CareerProfileStorage {
 
     public void saveDraft(String userId, CareerProfileDraftDto draft) {
         CosmicDatamodelRecord record = existingOrNew(CyanCruiseDatamodelObjects.PROFILE_DRAFT, userId);
-        gateway.save(record.set("draft_json", draft == null ? new CareerProfileDraftDto() : draft)
-                .set(CyanCruiseDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
+        gateway.save(record.set("draft_json", draft == null ? new CareerProfileDraftDto() : draft));
     }
 
     public void clearDraft(String userId) {
         CosmicDatamodelRecord record = existingOrNew(CyanCruiseDatamodelObjects.PROFILE_DRAFT, userId);
-        gateway.save(record.set("draft_json", new CareerProfileDraftDto())
-                .set(CyanCruiseDatamodelObjects.UPDATED_AT, LocalDateTime.now()));
+        gateway.save(record.set("draft_json", new CareerProfileDraftDto()));
     }
 
     private CosmicDatamodelRecord existingOrNew(String objectName, String userId) {

@@ -29,6 +29,11 @@ public final class CyanCruiseDatamodelObjects {
     public static final String STUDY_MATERIAL = "cc_study_material";
     public static final String STUDY_EVENT = "cc_study_event";
     public static final String AGENT_CONTEXT_REF = "cc_agent_context_ref";
+    public static final String NOTICE = "cc_notice";
+    public static final String USER_ACCOUNT = "cc_user_account";
+    public static final String QUESTION = "cc_question";
+    public static final String CONTENT = "cc_content";
+    public static final String ADMIN_AUDIT = "cc_admin_audit";
 
     public static final String ID = "id";
     public static final String USER_ID = "user_id";

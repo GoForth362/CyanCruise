@@ -86,9 +86,9 @@ class CosmicDatamodelStorageTest {
         String platformObject = CyanCruiseBusinessModelMapping.toPlatformObject(CyanCruiseDatamodelObjects.USER_PROFILE);
         CosmicDatamodelRecord platformRow = rawGateway.findOne(platformObject, null);
         assertNotNull(platformRow);
-        assertEquals("mapped-user", platformRow.get("v620_userid"));
-        assertEquals("Java backend", platformRow.get("v620_targetrole"));
-        assertEquals(Integer.valueOf(90), platformRow.get("v620_completenessscore"));
+        assertEquals("mapped-user", platformRow.get("fk_v620_userid"));
+        assertEquals("Java backend", platformRow.get("fk_v620_targetrole"));
+        assertEquals(Integer.valueOf(90), platformRow.get("fk_v620_completenessscore"));
         assertEquals(null, platformRow.get(CyanCruiseDatamodelObjects.USER_ID));
         assertEquals(Integer.valueOf(90), storage.loadProfile("mapped-user").getCompletenessScore());
     }

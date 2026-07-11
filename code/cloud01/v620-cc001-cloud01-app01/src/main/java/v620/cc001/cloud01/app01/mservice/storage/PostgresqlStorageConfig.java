@@ -11,12 +11,18 @@ public class PostgresqlStorageConfig {
     public static final String PASSWORD_PROPERTY = "cc001.storage.postgresql.password";
     public static final String SCHEMA_PROPERTY = "cc001.storage.postgresql.schema";
     public static final String INITIALIZE_PROPERTY = "cc001.storage.postgresql.initialize";
+    public static final String COSMIC_ENABLED_PROPERTY = "cc001.storage.cosmic.enabled";
+    public static final String COSMIC_MODULES_PROPERTY = "cc001.storage.cosmic.modules";
+    public static final String COSMIC_CLIENT_CLASS_PROPERTY = "cc001.storage.cosmic.clientClass";
     public static final String BACKEND_ENV = "CC001_STORAGE_BACKEND";
     public static final String URL_ENV = "CC001_STORAGE_POSTGRESQL_URL";
     public static final String USERNAME_ENV = "CC001_STORAGE_POSTGRESQL_USERNAME";
     public static final String PASSWORD_ENV = "CC001_STORAGE_POSTGRESQL_PASSWORD";
     public static final String SCHEMA_ENV = "CC001_STORAGE_POSTGRESQL_SCHEMA";
     public static final String INITIALIZE_ENV = "CC001_STORAGE_POSTGRESQL_INITIALIZE";
+    public static final String COSMIC_ENABLED_ENV = "CC001_STORAGE_COSMIC_ENABLED";
+    public static final String COSMIC_MODULES_ENV = "CC001_STORAGE_COSMIC_MODULES";
+    public static final String COSMIC_CLIENT_CLASS_ENV = "CC001_STORAGE_COSMIC_CLIENT_CLASS";
 
     private String backend;
     private String url;
@@ -24,6 +30,9 @@ public class PostgresqlStorageConfig {
     private String password;
     private String schema = "public";
     private boolean initialize;
+    private boolean cosmicEnabled;
+    private String cosmicModules;
+    private String cosmicClientClass;
 
     public static PostgresqlStorageConfig fromSystemProperties() {
         PostgresqlStorageConfig config = new PostgresqlStorageConfig();
@@ -45,11 +54,40 @@ public class PostgresqlStorageConfig {
         config.setInitialize(Boolean.parseBoolean(configuredValue(INITIALIZE_PROPERTY, INITIALIZE_ENV,
                 configuredValue(PostgresqlProfileStorageConfig.INITIALIZE_PROPERTY,
                         PostgresqlProfileStorageConfig.INITIALIZE_ENV, "false"))));
+        config.setCosmicEnabled(Boolean.parseBoolean(configuredValue(COSMIC_ENABLED_PROPERTY, COSMIC_ENABLED_ENV,
+                "cosmic".equalsIgnoreCase(config.getBackend()) ? "true" : "false")));
+        config.setCosmicModules(configuredValue(COSMIC_MODULES_PROPERTY, COSMIC_MODULES_ENV, ""));
+        config.setCosmicClientClass(configuredValue(COSMIC_CLIENT_CLASS_PROPERTY, COSMIC_CLIENT_CLASS_ENV, ""));
         return config;
     }
 
     public boolean isPostgresqlBackend() {
         return "postgresql".equalsIgnoreCase(trim(backend));
+    }
+
+    public boolean isCosmicBackend() {
+        return "cosmic".equalsIgnoreCase(trim(backend));
+    }
+
+    public boolean isCosmicEnabled() {
+        return cosmicEnabled || isCosmicBackend();
+    }
+
+    public boolean isCosmicModuleEnabled(String moduleName) {
+        if (!isCosmicEnabled() || !hasText(moduleName)) {
+            return false;
+        }
+        if (!hasText(cosmicModules)) {
+            return isCosmicBackend();
+        }
+        String[] modules = cosmicModules.split(",");
+        for (int i = 0; i < modules.length; i++) {
+            String module = trim(modules[i]);
+            if ("*".equals(module) || moduleName.equalsIgnoreCase(module)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isComplete() {
@@ -124,6 +162,30 @@ public class PostgresqlStorageConfig {
 
     public void setInitialize(boolean initialize) {
         this.initialize = initialize;
+    }
+
+    public boolean getCosmicEnabled() {
+        return cosmicEnabled;
+    }
+
+    public void setCosmicEnabled(boolean cosmicEnabled) {
+        this.cosmicEnabled = cosmicEnabled;
+    }
+
+    public String getCosmicModules() {
+        return cosmicModules;
+    }
+
+    public void setCosmicModules(String cosmicModules) {
+        this.cosmicModules = trim(cosmicModules);
+    }
+
+    public String getCosmicClientClass() {
+        return cosmicClientClass;
+    }
+
+    public void setCosmicClientClass(String cosmicClientClass) {
+        this.cosmicClientClass = trim(cosmicClientClass);
     }
 
     public static boolean hasText(String value) {

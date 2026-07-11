@@ -1,0 +1,75 @@
+{
+  "info": {
+    "name": "CyanCruise KAPI 自定义 WebAPI 测试集合",
+    "description": "导入 Apifox 后配置 baseUrl、accessToken、userId、adminId。所有接口统一请求 cc001/cyancruise/route，通过请求体 path 转发。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://10.0.0.8:8080" },
+    { "key": "accessToken", "value": "" },
+    { "key": "userId", "value": "2477190919195983874" },
+    { "key": "adminId", "value": "2477190919195983874" }
+  ],
+  "item": [
+    {
+      "name": "01 身份与画像",
+      "item": [
+        { "name": "获取当前平台身份", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": { "raw": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "host": ["{{baseUrl}}"], "path": ["ierp", "kapi", "v2", "v620", "v620_cc001", "cc001", "cyancruise", "route"], "query": [{ "key": "access_token", "value": "{{accessToken}}" }] }, "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/identity/current\",\n  \"body\": {}\n}" } } },
+        { "name": "获取画像快照", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/career-profile/snapshot/get\",\n  \"body\": {\"userId\":\"{{userId}}\"}\n}" } } },
+        { "name": "保存入门引导信息", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/career-profile/onboarding/save\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"identityType\":\"student\",\"stage\":\"本科\",\"targetRole\":\"Java开发工程师\",\"hasResume\":\"yes\",\"weeklyAvailability\":\"6小时\"}}\n}" } } },
+        { "name": "获取今日任务", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/career-agent/today/get\",\n  \"body\": {\"userId\":\"{{userId}}\"}\n}" } } }
+      ]
+    },
+    {
+      "name": "02 测评",
+      "item": [
+        { "name": "获取量表列表", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/assessment/scales\",\n  \"body\": {}\n}" } } },
+        { "name": "获取量表题目", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/assessment/questions\",\n  \"body\": {\"scaleId\":1}\n}" } } },
+        { "name": "提交测评答案", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/assessment/submit\",\n  \"body\": {\"userId\":\"{{userId}}\",\"scale\":{\"scaleId\":1,\"title\":\"职业兴趣测评\"},\"request\":{\"scaleId\":1,\"answers\":{\"1\":2,\"2\":3}}}\n}" } } },
+        { "name": "获取测评记录", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/assessment/records\",\n  \"body\": {\"userId\":\"{{userId}}\"}\n}" } } }
+      ]
+    },
+    {
+      "name": "03 简历与面试",
+      "item": [
+        { "name": "获取简历列表", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/resume/list\",\n  \"body\": {\"userId\":\"{{userId}}\"}\n}" } } },
+        { "name": "创建简历", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/resume/create\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"title\":\"Java开发工程师简历\",\"targetRole\":\"Java开发工程师\",\"content\":\"教育经历、项目经历、技能栈...\"}}\n}" } } },
+        { "name": "分析简历", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/resume-diagnosis/analyze\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"resumeId\":1,\"force\":true}}\n}" } } },
+        { "name": "开始引导式面试", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/interview/guided/start\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"positionName\":\"Java开发工程师\",\"difficulty\":\"normal\",\"mode\":\"text\"}}\n}" } } },
+        { "name": "提交面试回答", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/interview/guided/answer\",\n  \"body\": {\"userId\":\"{{userId}}\",\"interviewId\":1,\"answer\":\"我负责了用户画像模块...\"}\n}" } } },
+        { "name": "结束引导式面试", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/interview/guided/finish\",\n  \"body\": {\"userId\":\"{{userId}}\",\"interviewId\":1}\n}" } } },
+        { "name": "发送助手消息", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/assistant-chat/send\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"message\":\"帮我优化简历项目经历\",\"persona\":\"career-coach\"}}\n}" } } }
+      ]
+    },
+    {
+      "name": "04 通知、文件与资源",
+      "item": [
+        { "name": "获取就业洞察", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/career-employment/insight/get\",\n  \"body\": {\"userId\":\"{{userId}}\"}\n}" } } },
+        { "name": "获取通知列表", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/notifications/list\",\n  \"body\": {\"userId\":\"{{userId}}\"}\n}" } } },
+        { "name": "上传文件", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/files/upload\",\n  \"body\": {\"folder\":\"resume\",\"originalFilename\":\"resume.txt\",\"base64\":\"5rWL6K+V5paH5pys\"}\n}" } } },
+        { "name": "提取文件文本", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/files/extract-text\",\n  \"body\": {\"fileUrlOrKey\":\"resume/resume.txt\"}\n}" } } }
+      ]
+    },
+    {
+      "name": "05 升学规划",
+      "item": [
+        { "name": "考研院校推荐", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/postgraduate/school-recommend\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"major\":\"计算机科学与技术\",\"targetRegion\":\"上海\",\"scoreRange\":\"360-390\"}}\n}" } } },
+        { "name": "生成考研计划", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/postgraduate/plan/generate\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"targetSchool\":\"复旦大学\",\"targetMajor\":\"计算机技术\",\"monthsLeft\":8}}\n}" } } },
+        { "name": "保研画像诊断", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/recommendation/diagnose\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"gpa\":\"3.7/4.0\",\"research\":\"一段科研经历\"}}\n}" } } },
+        { "name": "留学院校定位", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/study-abroad/school/position\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"targetCountry\":\"英国\",\"major\":\"Data Science\",\"gpa\":\"3.6/4.0\"}}\n}" } } },
+        { "name": "查询升学记录", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/further-study/records/list\",\n  \"body\": {\"userId\":\"{{userId}}\",\"request\":{\"track\":\"postgraduate\",\"limit\":20,\"offset\":0}}\n}" } } }
+      ]
+    },
+    {
+      "name": "06 管理端",
+      "item": [
+        { "name": "查看管理员身份", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/admin/whoami\",\n  \"body\": {\"adminId\":\"{{adminId}}\"}\n}" } } },
+        { "name": "用户列表", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/admin/users/list\",\n  \"body\": {\"adminId\":\"{{adminId}}\",\"page\":1,\"size\":20,\"keyword\":\"\"}\n}" } } },
+        { "name": "面试题列表", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/admin/questions/list\",\n  \"body\": {\"adminId\":\"{{adminId}}\",\"source\":\"\",\"reviewStatus\":\"\"}\n}" } } },
+        { "name": "保存面试题", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/admin/questions/save\",\n  \"body\": {\"adminId\":\"{{adminId}}\",\"question\":{\"position\":\"Java开发工程师\",\"difficulty\":\"normal\",\"content\":\"请介绍一个项目经历\",\"answer\":\"可按经历讲述框架回答\"}}\n}" } } },
+        { "name": "内容列表", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/admin/content/list\",\n  \"body\": {\"adminId\":\"{{adminId}}\",\"type\":\"resource\"}\n}" } } },
+        { "name": "审计日志", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "url": "{{baseUrl}}/ierp/kapi/v2/v620/v620_cc001/cc001/cyancruise/route?access_token={{accessToken}}", "body": { "mode": "raw", "raw": "{\n  \"path\": \"/cc001/admin/audit-log/list\",\n  \"body\": {\"adminId\":\"{{adminId}}\",\"page\":1,\"size\":20}\n}" } } }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 package v620.cc001.cloud01.app01.mservice.datamodel;
 
 import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -30,6 +32,11 @@ public final class CyanCruiseBusinessModelMapping {
         objects.put(CyanCruiseDatamodelObjects.STUDY_MATERIAL, "v620_cc_study_material");
         objects.put(CyanCruiseDatamodelObjects.STUDY_EVENT, "v620_cc_study_event");
         objects.put(CyanCruiseDatamodelObjects.AGENT_CONTEXT_REF, "v620_cc_agent_ctx_ref");
+        objects.put(CyanCruiseDatamodelObjects.NOTICE, "v620_cc_notice");
+        objects.put(CyanCruiseDatamodelObjects.USER_ACCOUNT, "v620_cc_user_account");
+        objects.put(CyanCruiseDatamodelObjects.QUESTION, "v620_cc_question");
+        objects.put(CyanCruiseDatamodelObjects.CONTENT, "v620_cc_content");
+        objects.put(CyanCruiseDatamodelObjects.ADMIN_AUDIT, "v620_cc_admin_audit");
         OBJECT_TO_PLATFORM = Collections.unmodifiableMap(objects);
         OBJECT_TO_LOGICAL = Collections.unmodifiableMap(reverse(objects));
 
@@ -42,8 +49,9 @@ public final class CyanCruiseBusinessModelMapping {
         putInterview(fields);
         putAgent(fields);
         putFurtherStudy(fields);
-        FIELD_TO_PLATFORM = Collections.unmodifiableMap(fields);
-        FIELD_TO_LOGICAL = Collections.unmodifiableMap(reverse(fields));
+        putNoticeAndAdmin(fields);
+        FIELD_TO_PLATFORM = Collections.unmodifiableMap(toPlatformTableFields(fields));
+        FIELD_TO_LOGICAL = Collections.unmodifiableMap(reverse(FIELD_TO_PLATFORM));
     }
 
     private CyanCruiseBusinessModelMapping() {
@@ -67,6 +75,49 @@ public final class CyanCruiseBusinessModelMapping {
     public static String toLogicalField(String fieldName) {
         String mapped = FIELD_TO_LOGICAL.get(fieldName);
         return mapped == null ? fieldName : mapped;
+    }
+
+    public static List<String> platformFieldsForObject(String objectName) {
+        String logicalObject = toLogicalObject(objectName);
+        List<String> fields = new ArrayList<String>();
+        fields.add(CyanCruiseDatamodelObjects.ID);
+        fields.add(toPlatformField(CyanCruiseDatamodelObjects.USER_ID));
+        fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
+        if (CyanCruiseDatamodelObjects.USER_PROFILE.equals(logicalObject)
+                || CyanCruiseDatamodelObjects.PROFILE_SNAPSHOT.equals(logicalObject)
+                || CyanCruiseDatamodelObjects.PROFILE_DRAFT.equals(logicalObject)
+                || CyanCruiseDatamodelObjects.PROFILE_FACT.equals(logicalObject)) {
+            add(fields, "target_role", "current_stage", "personalization_level", "completeness_score",
+                    "profile_json", "readiness_json", "evidence_json", "agent_summary", "last_agent_run_id",
+                    "version", "snapshot_json", "draft_json", "fact_key", "fact_value");
+        } else if (CyanCruiseDatamodelObjects.RESUME.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
+            add(fields, "resume_id", "title", "target_job", "file_key", "version", "status",
+                    "parsed_content", "diagnosis_score", "keyword_json");
+        } else if (CyanCruiseDatamodelObjects.RESUME_DIAGNOSIS.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
+            add(fields, "diagnosis_id", "resume_id", "score", "diagnosis_json", "keyword_status_json");
+        } else if (CyanCruiseDatamodelObjects.ASSESSMENT_RECORD.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
+            add(fields, "record_id", "scale_id", "scale_title", "status", "summary",
+                    "suggested_roles_json", "answers_json", "result_json", "completed_at");
+        } else if (CyanCruiseDatamodelObjects.INTERVIEW.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
+            add(fields, "interview_id", "resume_id", "position_name", "difficulty", "status", "mode",
+                    "final_score", "duration_seconds", "report_json", "started_at", "ended_at");
+        } else if (CyanCruiseDatamodelObjects.TASK.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
+            add(fields, "task_id", "task_key", "title", "description", "due_date", "priority",
+                    "parent_task_id", "sub_index", "status");
+        } else if (CyanCruiseDatamodelObjects.CAREER_PLAN.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
+            add(fields, "plan_id", "target_role", "model_used", "tokens_consumed", "start_state_json",
+                    "milestones_json", "weekly_focus_json", "version", "generated_at", "last_updated_at", "plan_json");
+        } else if (CyanCruiseDatamodelObjects.NOTICE.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
+            add(fields, "notice_id", "notice_type", "title", "content", "link_route", "status", "admin_id", "read_at");
+        }
+        return fields;
     }
 
     public static CosmicDatamodelRecord toPlatformRecord(CosmicDatamodelRecord record) {
@@ -96,6 +147,15 @@ public final class CyanCruiseBusinessModelMapping {
             reversed.put(entry.getValue(), entry.getKey());
         }
         return reversed;
+    }
+
+    private static Map<String, String> toPlatformTableFields(Map<String, String> source) {
+        Map<String, String> mapped = new LinkedHashMap<String, String>();
+        for (Map.Entry<String, String> entry : source.entrySet()) {
+            String value = entry.getValue();
+            mapped.put(entry.getKey(), value != null && value.startsWith("v620_") ? "fk_" + value : value);
+        }
+        return mapped;
     }
 
     private static void putCommon(Map<String, String> fields) {
@@ -223,5 +283,51 @@ public final class CyanCruiseBusinessModelMapping {
         fields.put("source_id", "v620_sourceid");
         fields.put("source_summary", "v620_sourcesummary");
         fields.put("write_back", "v620_writeback");
+    }
+
+    private static void putNoticeAndAdmin(Map<String, String> fields) {
+        fields.put("notice_id", "v620_noticeid");
+        fields.put("notice_type", "v620_noticetype");
+        fields.put("link_route", "v620_linkroute");
+        fields.put("admin_id", "v620_adminid");
+        fields.put("read_at", "v620_readat");
+        fields.put("username", "v620_username");
+        fields.put("nickname", "v620_nickname");
+        fields.put("org_id", "v620_orgid");
+        fields.put("school", "v620_school");
+        fields.put("major", "v620_major");
+        fields.put("banned_reason", "v620_bannedreason");
+        fields.put("last_active_at", "v620_lastactiveat");
+        fields.put("question_id", "v620_questionid");
+        fields.put("content", "v620_content");
+        fields.put("position", "v620_position");
+        fields.put("source", "v620_source");
+        fields.put("review_status", "v620_reviewstatus");
+        fields.put("answer_json", "v620_answerjson");
+        fields.put("contributor_hash", "v620_contributorhash");
+        fields.put("reviewed_at", "v620_reviewedat");
+        fields.put("content_id", "v620_contentid");
+        fields.put("content_type", "v620_contenttype");
+        fields.put("link_url", "v620_linkurl");
+        fields.put("cover_file_key", "v620_coverfilekey");
+        fields.put("pinned", "v620_pinned");
+        fields.put("hidden", "v620_hidden");
+        fields.put("published_at", "v620_publishedat");
+        fields.put("audit_id", "v620_auditid");
+        fields.put("action", "v620_action");
+        fields.put("target_type", "v620_targettype");
+        fields.put("before_json", "v620_beforejson");
+        fields.put("after_json", "v620_afterjson");
+        fields.put("ip", "v620_ip");
+        fields.put("user_agent", "v620_useragent");
+    }
+
+    private static void add(List<String> fields, String... logicalFields) {
+        for (int i = 0; i < logicalFields.length; i++) {
+            String platformField = toPlatformField(logicalFields[i]);
+            if (!fields.contains(platformField)) {
+                fields.add(platformField);
+            }
+        }
     }
 }
