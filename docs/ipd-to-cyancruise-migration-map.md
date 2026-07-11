@@ -111,6 +111,19 @@
 | 暂不迁移 | Spring Boot、JPA、Flyway、Lombok、repository、Vue、uni-app、真实 AI SDK、生产数据补偿脚本和页面实现 |
 | 验证方式 | datamodel 字段映射 contract test、storage adapter 聚焦测试、OpenSpec 严格校验、JDK 8 Gradle 测试和完整构建 |
 
+## Cosmic 业务对象存储接入
+
+| 维度 | 内容 |
+| --- | --- |
+| change | `connect-cosmic-business-object-storage` |
+| CyanCruise 目标 | `code/cloud01/v620-cc001-cloud01-app01` 的 `CosmicBusinessObjectDatamodelGateway`、`CosmicBusinessObjectClient`、`CyanCruiseStorageFactory`、`CareerProfileStorageFactory`、`CyanCruiseBusinessModelMapping` |
+| 数据映射 | 逻辑对象继续使用 `cc_cl_*`/`cc_*` 名称，运行时通过 `CyanCruiseBusinessModelMapping` 映射到 `v620_cc_user_profile`、`v620_cc_resume_record`、`v620_cc_resume_diag`、`v620_cc_assess_record`、`v620_cc_interview`、`v620_cc_career_plan`、`v620_cc_notice` 等金蝶业务对象；逻辑字段映射到 `v620_xxx` 平台字段 |
+| 已接入切换入口 | `profile`、`resume`、`resume-diagnosis`、`assessment`、`interview`、`career-plan`、`assistant` 可通过 `cc001.storage.backend=cosmic` 与 `cc001.storage.cosmic.modules` 切换到 Cosmic storage |
+| 暂不切换 | `notification`、`admin-governance`、`further-study` 当前保留 PostgreSQL 或内存后备，待对应 Cosmic storage adapter 和真实环境验收完成后再切换 |
+| 运行原理 | 前端仍调用现有 WebAPI；后端运行在本地苍穹时写本地苍穹数据源，运行在客户/云端苍穹时写该租户数据源；代码不直接保存或连接生产数据库凭据 |
+| 回滚方式 | 移除 `cc001.storage.backend=cosmic` 或从 `cc001.storage.cosmic.modules` 中移除模块并重启；回滚后确认 PostgreSQL/内存或 Cosmic 业务对象哪一端为权威数据源 |
+| 验证方式 | `CosmicBusinessObjectStorageTest` 映射和工厂测试、OpenSpec 严格校验、JDK 8 Gradle 构建；真实苍穹环境需手工验证画像、简历、测评、面试和通知读写 |
+
 ## AI 基础设施接入
 
 | 维度 | 内容 |

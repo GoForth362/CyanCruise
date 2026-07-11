@@ -82,7 +82,10 @@ allprojects {
 	    	'cc001.storage.postgresql.password',
 	    	'cc001.storage.postgresql.schema',
 	    	'cc001.storage.postgresql.initialize',
-	    	'cc001.storage.postgresql.liveTest'
+	    	'cc001.storage.postgresql.liveTest',
+	    	'cc001.storage.cosmic.enabled',
+	    	'cc001.storage.cosmic.modules',
+	    	'cc001.storage.cosmic.clientClass'
 	    ].each { propertyName ->
 	    	if (System.getProperty(propertyName) != null) {
 	    		systemProperty propertyName, System.getProperty(propertyName)
@@ -277,4 +280,3 @@ def deployWebappToHome(String home) {
 		staticIndexAlias.bytes = staticIndex.bytes
 	}
 }
-

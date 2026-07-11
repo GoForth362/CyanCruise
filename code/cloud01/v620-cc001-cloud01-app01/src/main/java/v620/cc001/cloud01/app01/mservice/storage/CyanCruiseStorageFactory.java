@@ -1,11 +1,26 @@
 package v620.cc001.cloud01.app01.mservice.storage;
 
+import v620.cc001.cloud01.app01.mservice.datamodel.CosmicBusinessObjectDatamodelGateway;
+import v620.cc001.cloud01.app01.mservice.datamodel.CosmicDatamodelGateway;
+import v620.cc001.cloud01.app01.mservice.datamodel.MappedCosmicDatamodelGateway;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryFurtherStudyCompanionStorage;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.PostgresqlFurtherStudyCompanionStorage;
 import v620.cc001.cloud01.app01.mservice.notification.NotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.PostgresqlNotificationStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssessmentResultStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicResumeDiagnosisStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicResumeStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssessmentResultStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssistantChatStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeDiagnosisStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAdminGovernanceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAssessmentResultStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAssistantChatStorage;
@@ -35,27 +50,69 @@ public final class CyanCruiseStorageFactory {
     }
 
     public static CareerPlanStorage careerPlanStorage() {
-        return new PostgresqlCareerPlanStorage(config());
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isCosmicModuleEnabled("career-plan")) {
+            return new CosmicCareerPlanStorage(cosmicGateway(storageConfig));
+        }
+        if (storageConfig.isCosmicEnabled()) {
+            return new InMemoryCareerPlanStorage();
+        }
+        return new PostgresqlCareerPlanStorage(storageConfig);
     }
 
     public static ResumeStorage resumeStorage() {
-        return new PostgresqlResumeStorage(config());
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isCosmicModuleEnabled("resume")) {
+            return new CosmicResumeStorage(cosmicGateway(storageConfig));
+        }
+        if (storageConfig.isCosmicEnabled()) {
+            return new InMemoryResumeStorage();
+        }
+        return new PostgresqlResumeStorage(storageConfig);
     }
 
     public static ResumeDiagnosisStorage resumeDiagnosisStorage() {
-        return new PostgresqlResumeDiagnosisStorage(config());
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isCosmicModuleEnabled("resume-diagnosis")) {
+            return new CosmicResumeDiagnosisStorage(cosmicGateway(storageConfig));
+        }
+        if (storageConfig.isCosmicEnabled()) {
+            return new InMemoryResumeDiagnosisStorage();
+        }
+        return new PostgresqlResumeDiagnosisStorage(storageConfig);
     }
 
     public static InterviewStorage interviewStorage() {
-        return new PostgresqlInterviewStorage(config());
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isCosmicModuleEnabled("interview")) {
+            return new CosmicInterviewStorage(cosmicGateway(storageConfig));
+        }
+        if (storageConfig.isCosmicEnabled()) {
+            return new InMemoryInterviewStorage();
+        }
+        return new PostgresqlInterviewStorage(storageConfig);
     }
 
     public static AssistantChatStorage assistantChatStorage() {
-        return new PostgresqlAssistantChatStorage(config());
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isCosmicModuleEnabled("assistant")) {
+            return new CosmicAssistantChatStorage(cosmicGateway(storageConfig));
+        }
+        if (storageConfig.isCosmicEnabled()) {
+            return new InMemoryAssistantChatStorage();
+        }
+        return new PostgresqlAssistantChatStorage(storageConfig);
     }
 
     public static AssessmentResultStorage assessmentResultStorage() {
-        return new PostgresqlAssessmentResultStorage(config());
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isCosmicModuleEnabled("assessment")) {
+            return new CosmicAssessmentResultStorage(cosmicGateway(storageConfig));
+        }
+        if (storageConfig.isCosmicEnabled()) {
+            return new InMemoryAssessmentResultStorage();
+        }
+        return new PostgresqlAssessmentResultStorage(storageConfig);
     }
 
     public static NotificationStorage notificationStorage() {
@@ -80,5 +137,9 @@ public final class CyanCruiseStorageFactory {
             return new PostgresqlFurtherStudyCompanionStorage(storageConfig);
         }
         return new InMemoryFurtherStudyCompanionStorage();
+    }
+
+    private static CosmicDatamodelGateway cosmicGateway(PostgresqlStorageConfig storageConfig) {
+        return new MappedCosmicDatamodelGateway(CosmicBusinessObjectDatamodelGateway.fromConfig(storageConfig));
     }
 }

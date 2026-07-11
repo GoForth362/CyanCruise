@@ -176,6 +176,36 @@ psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-admin-governa
 
 `cc001.storage.postgresql.initialize=true` 仅建议本地开发或一次性初始化时使用；生产环境建议由数据库脚本明确建表和授权。启用 PostgreSQL 后，管理端不再使用进程内存保存用户、题库、内容和审计状态；管理员禁用用户后，用户端 `/cc001/*` 业务接口会在统一路由入口被拒绝。
 
+## 当前存储决策
+
+当前 CyanCruise 处于功能完善阶段，PostgreSQL 是全部用户端和管理端业务数据的唯一主存储。首页、用户画像、简历、测评、面试、路径规划、消息和管理治理功能都应优先完成 PostgreSQL 的保存、读取、权限和页面闭环。
+
+本地 8080 运行时保持 `cc001.storage.backend=postgresql`。不要启用 `cc001.storage.backend=cosmic`、`cc001.storage.cosmic.modules` 或 `cc001.storage.cosmic.clientClass`，也不进行 PostgreSQL 与金蝶业务对象双写。已有的 Cosmic storage adapter 仅作为后续迁移准备保留，不参与当前功能验收。
+
+## 延后：Cosmic Business Object Storage
+
+金蝶业务对象存储接入的本质是：CyanCruise 后端仍通过现有 WebAPI 接收前端请求，然后在 storage adapter 层调用当前苍穹运行时的数据服务，把业务状态写入 `v620_cc_*` 业务对象。前端不会直接连接数据库，也不会直接操作业务对象。
+
+当前环境写到哪里，取决于这套 CyanCruise Java 包运行在哪个苍穹环境里：
+
+- 本地苍穹运行时：写入本地苍穹环境配置的数据源。
+- 客户或云端苍穹运行时：写入该租户/环境配置的数据源。
+- 代码仓库不保存数据库地址、密码、access token 或 client secret。
+
+可使用下面的配置启用 Cosmic storage：
+
+```properties
+cc001.storage.backend=cosmic
+cc001.storage.cosmic.modules=profile,resume,resume-diagnosis,assessment,interview,career-plan,assistant
+cc001.storage.cosmic.clientClass=<tenant-specific CosmicBusinessObjectClient implementation>
+```
+
+当前代码侧已具备 `profile`、`resume`、`resume-diagnosis`、`assessment`、`interview`、`career-plan`、`assistant` 的 Cosmic storage 切换入口。`notification`、`admin-governance`、`further-study` 尚未默认切换到 Cosmic storage；这些模块在完成对应 adapter 和真实环境验收前继续使用当前 PostgreSQL 或内存后备。
+
+当前本地金蝶数据表详情页显示自定义字段标识为 `fk_v620_*`，例如 `fk_v620_userid`、`fk_v620_targetrole`。运行时字段映射已按该实际表字段前缀写入；如果后续租户环境保存为无 `fk_` 前缀的 `v620_*`，只需调整 `CyanCruiseBusinessModelMapping` 的平台字段前缀转换。
+
+如果需要回退，移除 `cc001.storage.backend=cosmic` 或从 `cc001.storage.cosmic.modules` 中移除对应模块，重启当前 8080 进程即可。回退后必须确认哪一端数据是权威数据源，避免同一模块长期双写。
+
 ## Restart Requirement
 
 Copying JARs into `lib\cus` is not enough for an already running 8080 process. Restart the process that owns port `8080`, then verify:
