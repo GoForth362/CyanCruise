@@ -1,3 +1,7 @@
+## 当前实施状态
+
+2026-07-11 决定：CyanCruise 在功能完善阶段统一以 PostgreSQL 作为唯一主存储。该 change 已完成的映射、gateway 与 adapter 代码作为后续迁移准备保留；真实苍穹业务对象试水、模块切换和手工验收延后，不作为当前应用功能完成的前置条件。当前禁止 PostgreSQL 与 Cosmic storage 双写。
+
 ## Context
 
 CyanCruise 当前已经具备三层基础：

@@ -176,7 +176,13 @@ psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-admin-governa
 
 `cc001.storage.postgresql.initialize=true` 仅建议本地开发或一次性初始化时使用；生产环境建议由数据库脚本明确建表和授权。启用 PostgreSQL 后，管理端不再使用进程内存保存用户、题库、内容和审计状态；管理员禁用用户后，用户端 `/cc001/*` 业务接口会在统一路由入口被拒绝。
 
-## Cosmic Business Object Storage
+## 当前存储决策
+
+当前 CyanCruise 处于功能完善阶段，PostgreSQL 是全部用户端和管理端业务数据的唯一主存储。首页、用户画像、简历、测评、面试、路径规划、消息和管理治理功能都应优先完成 PostgreSQL 的保存、读取、权限和页面闭环。
+
+本地 8080 运行时保持 `cc001.storage.backend=postgresql`。不要启用 `cc001.storage.backend=cosmic`、`cc001.storage.cosmic.modules` 或 `cc001.storage.cosmic.clientClass`，也不进行 PostgreSQL 与金蝶业务对象双写。已有的 Cosmic storage adapter 仅作为后续迁移准备保留，不参与当前功能验收。
+
+## 延后：Cosmic Business Object Storage
 
 金蝶业务对象存储接入的本质是：CyanCruise 后端仍通过现有 WebAPI 接收前端请求，然后在 storage adapter 层调用当前苍穹运行时的数据服务，把业务状态写入 `v620_cc_*` 业务对象。前端不会直接连接数据库，也不会直接操作业务对象。
 

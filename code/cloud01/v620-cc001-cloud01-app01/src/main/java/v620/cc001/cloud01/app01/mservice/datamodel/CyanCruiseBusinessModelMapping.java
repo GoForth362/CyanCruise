@@ -82,38 +82,40 @@ public final class CyanCruiseBusinessModelMapping {
         List<String> fields = new ArrayList<String>();
         fields.add(CyanCruiseDatamodelObjects.ID);
         fields.add(toPlatformField(CyanCruiseDatamodelObjects.USER_ID));
-        fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
-        if (CyanCruiseDatamodelObjects.USER_PROFILE.equals(logicalObject)
-                || CyanCruiseDatamodelObjects.PROFILE_SNAPSHOT.equals(logicalObject)
-                || CyanCruiseDatamodelObjects.PROFILE_DRAFT.equals(logicalObject)
-                || CyanCruiseDatamodelObjects.PROFILE_FACT.equals(logicalObject)) {
+        if (CyanCruiseDatamodelObjects.USER_PROFILE.equals(logicalObject)) {
             add(fields, "target_role", "current_stage", "personalization_level", "completeness_score",
-                    "profile_json", "readiness_json", "evidence_json", "agent_summary", "last_agent_run_id",
-                    "version", "snapshot_json", "draft_json", "fact_key", "fact_value");
+                    "profile_json", "readiness_json", "evidence_json", "agent_summary", "last_agent_run_id");
         } else if (CyanCruiseDatamodelObjects.RESUME.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
             fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
             add(fields, "resume_id", "title", "target_job", "file_key", "version", "status",
                     "parsed_content", "diagnosis_score", "keyword_json");
         } else if (CyanCruiseDatamodelObjects.RESUME_DIAGNOSIS.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
             fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
             add(fields, "diagnosis_id", "resume_id", "score", "diagnosis_json", "keyword_status_json");
         } else if (CyanCruiseDatamodelObjects.ASSESSMENT_RECORD.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
             fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
             add(fields, "record_id", "scale_id", "scale_title", "status", "summary",
                     "suggested_roles_json", "answers_json", "result_json", "completed_at");
         } else if (CyanCruiseDatamodelObjects.INTERVIEW.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
             fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
             add(fields, "interview_id", "resume_id", "position_name", "difficulty", "status", "mode",
                     "final_score", "duration_seconds", "report_json", "started_at", "ended_at");
         } else if (CyanCruiseDatamodelObjects.TASK.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
             fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
             add(fields, "task_id", "task_key", "title", "description", "due_date", "priority",
                     "parent_task_id", "sub_index", "status");
         } else if (CyanCruiseDatamodelObjects.CAREER_PLAN.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
             fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
             add(fields, "plan_id", "target_role", "model_used", "tokens_consumed", "start_state_json",
                     "milestones_json", "weekly_focus_json", "version", "generated_at", "last_updated_at", "plan_json");
         } else if (CyanCruiseDatamodelObjects.NOTICE.equals(logicalObject)) {
+            fields.add(toPlatformField(CyanCruiseDatamodelObjects.CREATED_AT));
             fields.add(toPlatformField(CyanCruiseDatamodelObjects.UPDATED_AT));
             add(fields, "notice_id", "notice_type", "title", "content", "link_route", "status", "admin_id", "read_at");
         }

@@ -23,6 +23,7 @@ import v620.cc001.base.common.dto.career.AssessmentScoreResult;
 import v620.cc001.base.common.dto.career.AssistantChatMessageDto;
 import v620.cc001.base.common.dto.career.AssistantChatSessionDto;
 import v620.cc001.base.common.dto.career.CareerAgentTodayDto;
+import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerPlanRecordDto;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
 import v620.cc001.base.common.dto.career.InterviewMessageDto;
@@ -91,6 +92,31 @@ class CosmicDatamodelStorageTest {
         assertEquals(Integer.valueOf(90), platformRow.get("fk_v620_completenessscore"));
         assertEquals(null, platformRow.get(CyanCruiseDatamodelObjects.USER_ID));
         assertEquals(Integer.valueOf(90), storage.loadProfile("mapped-user").getCompletenessScore());
+    }
+
+    @Test
+    void profileStateUsesOneModeledBusinessObjectRecord() {
+        InMemoryCosmicDatamodelGateway rawGateway = new InMemoryCosmicDatamodelGateway();
+        CosmicCareerProfileStorage storage = new CosmicCareerProfileStorage(new MappedCosmicDatamodelGateway(rawGateway));
+        UserProfileSnapshot snapshot = new UserProfileSnapshot();
+        snapshot.setVersion(Integer.valueOf(3));
+        CareerProfileDraftDto draft = new CareerProfileDraftDto();
+        draft.setTargetRole("试水岗位");
+        CareerUserProfileDto profile = new CareerUserProfileDto();
+        profile.setPersonalizationLevel("HIGH");
+
+        storage.saveSnapshot("profile-user", snapshot);
+        storage.saveFact("profile-user", "target_city", "深圳");
+        storage.saveDraft("profile-user", draft);
+        storage.saveProfile("profile-user", profile);
+
+        assertEquals(1, rawGateway.list("v620_cc_user_profile", null, null).size());
+        assertTrue(rawGateway.list(CyanCruiseDatamodelObjects.PROFILE_SNAPSHOT, null, null).isEmpty());
+        assertTrue(rawGateway.list(CyanCruiseDatamodelObjects.PROFILE_DRAFT, null, null).isEmpty());
+        assertTrue(rawGateway.list(CyanCruiseDatamodelObjects.PROFILE_FACT, null, null).isEmpty());
+        assertEquals(Integer.valueOf(3), storage.loadSnapshot("profile-user").getVersion());
+        assertEquals("深圳", storage.loadFacts("profile-user").get("target_city"));
+        assertEquals("试水岗位", storage.loadDraft("profile-user").getTargetRole());
     }
 
     @Test
