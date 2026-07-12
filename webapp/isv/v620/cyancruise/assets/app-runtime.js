@@ -99,6 +99,11 @@
     serverManagedApiCode: "cc001/cyancruise/route"
   };
 
+  var agentAssistant = {
+    h5Url: "http://10.0.0.8:8080/ierp/ai/h5/chat.do?accountId=1565321489509515264&assistant=2521954995352373251",
+    statusNote: "金蝶平台助手已发布为 H5 入口；当前平台侧任务流运行仍需修复大模型节点调用异常。"
+  };
+
   var pages = [
     page("workbench", "CyanCruise 首页", "available", "user", "填写用户画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
     page("employment-home", "就业", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
@@ -4515,7 +4520,8 @@
     } else if (item.key === "assessment") {
       body += statePanel("职业测评", "后续通过答题分析人格、性格、偏好和行动风格，并把结果补入完整用户画像，用于指导路径规划和今日行动。当前先保留入口，不展开题组。", "pending");
     } else if (item.key === "assistant") {
-      body += statePanel("助手会话", "可调用发送消息和会话列表契约；真实智能服务在后续 change 接入。", "pending");
+      body += renderAgentAssistantPanel();
+      body += statePanel("助手会话", "仍保留发送消息和会话列表接口契约，便于后续把平台智能体结果同步回 CyanCruise 会话记录。", "pending");
     } else if (item.key === "messages") {
       body += statePanel("站内消息", "消息列表、未读数、已读和订阅配额契约已映射；微信真实发送暂不迁移。", "pending");
     } else if (item.key === "file-upload-preview") {
@@ -4528,6 +4534,17 @@
       body += statePanel(item.title, item.summary, "empty");
     }
     renderShell(item, body);
+  }
+
+  function renderAgentAssistantPanel() {
+    if (!agentAssistant.h5Url) {
+      return statePanel("金蝶智能体助手", "暂未配置金蝶平台 H5 助手地址。", "warning");
+    }
+    return '<section class="panel full"><div class="section-heading"><div><h3>金蝶智能体助手</h3>' +
+      '<p class="section-note">' + escapeHtml(agentAssistant.statusNote) + '</p></div>' +
+      '<a class="secondary" href="' + escapeAttr(agentAssistant.h5Url) + '" target="_blank" rel="noopener">打开助手</a></div>' +
+      '<iframe title="金蝶智能体助手" src="' + escapeAttr(agentAssistant.h5Url) + '" ' +
+      'style="width:100%;min-height:640px;border:1px solid var(--border);border-radius:8px;background:#fff;"></iframe></section>';
   }
 
   function renderInterviewPage(item) {
