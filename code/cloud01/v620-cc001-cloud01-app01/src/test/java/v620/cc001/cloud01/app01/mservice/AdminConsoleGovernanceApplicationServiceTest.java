@@ -153,6 +153,47 @@ class AdminConsoleGovernanceApplicationServiceTest {
     }
 
     @Test
+    void differentAdministratorsSeeTheSameGovernanceUsers() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("admin-a");
+        storage.addAdmin("admin-b");
+        AdminConsoleGovernanceApplicationService service = service(storage);
+        service.registerActiveUserIfAbsent("shared-user", "Shared User", "100000");
+
+        AdminPageResult<AdminUserDto> first = service.listUsers("admin-a", 0, 20, null);
+        AdminPageResult<AdminUserDto> second = service.listUsers("admin-b", 0, 20, null);
+
+        assertEquals(first.getTotal(), second.getTotal());
+        assertEquals(first.getItems().get(0).getUserId(), second.getItems().get(0).getUserId());
+    }
+
+    @Test
+    void userListSearchesAllVisibleFieldsAndMarksAccountType() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("platform-admin");
+        AdminUserDto administrator = new AdminUserDto();
+        administrator.setUserId("platform-admin");
+        administrator.setNickname("管理员甲");
+        administrator.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        storage.saveUser(administrator);
+        AdminUserDto regular = new AdminUserDto();
+        regular.setUserId("user-1001");
+        regular.setNickname("普通用户乙");
+        regular.setSchool("成都理工大学");
+        regular.setMajor("软件工程");
+        regular.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        storage.saveUser(regular);
+        AdminConsoleGovernanceApplicationService service = service(storage);
+
+        assertEquals("user-1001", service.listUsers("admin", 0, 20, "普通用户").getItems().get(0).getUserId());
+        assertEquals("user-1001", service.listUsers("admin", 0, 20, "1001").getItems().get(0).getUserId());
+        assertEquals("user-1001", service.listUsers("admin", 0, 20, "成都理工").getItems().get(0).getUserId());
+        assertEquals("user-1001", service.listUsers("admin", 0, 20, "软件工程").getItems().get(0).getUserId());
+        assertEquals(Boolean.TRUE, service.listUsers("admin", 0, 20, "管理员甲").getItems().get(0).getAdministrator());
+        assertEquals(Boolean.FALSE, service.listUsers("admin", 0, 20, "普通用户乙").getItems().get(0).getAdministrator());
+    }
+
+    @Test
     void broadcastCanTargetMultipleActiveUsers() {
         InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
         AdminConsoleGovernanceApplicationService service = service(storage);

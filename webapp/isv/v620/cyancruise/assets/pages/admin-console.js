@@ -32,7 +32,7 @@
       return;
     }
     if (!canAdmin) {
-      renderStandaloneState(context, "无管理员权限", "当前账号可以继续使用用户端，但不能进入管理后台。");
+      renderUnauthorized(context);
       return;
     }
     if (!adminService || typeof adminService.load !== "function") {
@@ -43,13 +43,13 @@
     renderStandaloneState(context, "正在加载管理后台", "正在读取用户、内容、题库和操作记录。");
     adminService.load(adminContext(context)).then(function (data) {
       if (!data.authorized) {
-        renderStandaloneState(context, "无管理员权限", data.message || "当前账号没有管理后台权限。");
+        renderUnauthorized(context);
         return;
       }
       renderAdminApp(item, context, data);
       bindActions(item, context);
     }).catch(function (error) {
-      renderStandaloneState(context, "管理后台暂不可用", messageOf(error));
+      renderStandaloneState(context, "管理数据暂时无法加载", messageOf(error), true);
     });
   });
 
@@ -59,12 +59,36 @@
     }
   }
 
-  function renderStandaloneState(context, title, text) {
+  function renderUnauthorized(context) {
+    if (context.hideMessage) {
+      context.hideMessage();
+    }
+    if (!context.pageHost) {
+      return;
+    }
+    context.pageHost.innerHTML =
+      '<section class="admin-access-denied" aria-labelledby="adminAccessDeniedTitle">' +
+      '<div class="admin-access-denied-content">' +
+      '<h2 id="adminAccessDeniedTitle">管理后台</h2>' +
+      '<p>管理员治理入口，仅对 ADMIN 或平台管理员开放。</p>' +
+      '</div></section>';
+  }
+
+  function renderStandaloneState(context, title, text, retryable) {
     if (context.pageHost) {
       context.pageHost.innerHTML = '<section class="admin-app admin-state-only">' +
         '<main class="admin-main"><section class="admin-panel admin-state-panel">' +
         '<h2>' + esc(context, title) + '</h2><p>' + esc(context, text) + '</p>' +
+        (retryable ? '<div class="admin-state-actions"><button type="button" class="admin-retry-load">重新加载</button></div>' : '') +
         '</section></main></section>';
+      if (retryable) {
+        var retryButton = context.pageHost.querySelector(".admin-retry-load");
+        if (retryButton) {
+          retryButton.addEventListener("click", function () {
+            window.location.reload();
+          });
+        }
+      }
       return;
     }
     context.renderShell({ title: "管理后台", summary: "" }, context.statePanel(title, text, "warning"));
@@ -199,10 +223,15 @@
   }
 
   function renderUsers(data, context) {
+    return panel(context, "用户管理", "管理注册用户和账号状态",
+      '<div class="admin-panel-tools"><input id="adminUserSearch" type="search" placeholder="搜索姓名、用户ID、学校或专业..."></div>' +
+      '<div class="admin-users-region">' + renderUserTable(data, context) + '</div>');
+  }
+
+  function renderUserTable(data, context) {
     var users = data.users && data.users.items || [];
-    return panel(context, "用户管理", "管理注册用户和账号状态", '<div class="admin-panel-tools"><input type="search" placeholder="搜索用户名称..."></div>' +
-      (users.length ? table([
-        "用户", "学校/专业", "状态", "平台组织ID", "操作"
+    return users.length ? table([
+        "用户", "身份类型", "学校/专业", "状态", "平台组织ID", "操作"
       ], users.map(function (user) {
         var status = String(user.status || "ACTIVE");
         var banned = status === "BANNED";
@@ -210,12 +239,13 @@
         return [
           identityCell(context, first(user.nickname, user.displayName, user.userName, user.userId), user.userId) +
             (currentAdmin ? '<small>当前管理员，管理权限请在金蝶安全管理调整</small>' : ""),
+          badge(context, user.administrator ? "管理员" : "普通用户", user.administrator ? "ok" : ""),
           twoLine(context, first(user.school, "-"), first(user.major, "")),
           badge(context, banned ? "用户端禁用" : "用户端正常", banned ? "warn" : "ok"),
           esc(context, first(user.orgId, "-")),
           actionButton(context, banned ? "unban-user" : "ban-user", user.userId, banned ? "恢复用户端" : "禁用用户端")
         ];
-      })) : empty("暂无用户数据", "接入正式用户存储后，这里会显示用户状态和最近面试情况。", context)));
+      })) : empty("未找到匹配用户", "请尝试其他姓名、用户ID、学校或专业关键字。", context);
   }
 
   function renderContent(data, context) {
@@ -445,11 +475,8 @@
         activateTab(root, this.getAttribute("data-tab"));
       });
     });
-    Array.prototype.forEach.call(root.querySelectorAll(".admin-action"), function (button) {
-      button.addEventListener("click", function () {
-        runAction(item, context, service, this.getAttribute("data-action"), this.getAttribute("data-id"), this);
-      });
-    });
+    bindActionButtons(item, context, service, root);
+    bindUserSearch(item, context, service, root);
     bindContentForm(item, context, service, root);
     bindQuestionForm(item, context, service, root);
     bindAssessmentQuestionForm(item, context, service, root);
@@ -457,6 +484,46 @@
     bindAssessmentTabs(root);
     bindBroadcast(item, context, service, root);
     bindAuditPager(context, service, root);
+  }
+
+  function bindActionButtons(item, context, service, scope) {
+    Array.prototype.forEach.call(scope.querySelectorAll(".admin-action"), function (button) {
+      if (button.getAttribute("data-admin-action-bound") === "true") return;
+      button.setAttribute("data-admin-action-bound", "true");
+      button.addEventListener("click", function () {
+        runAction(item, context, service, this.getAttribute("data-action"), this.getAttribute("data-id"), this);
+      });
+    });
+  }
+
+  function bindUserSearch(item, context, service, root) {
+    var input = root.querySelector("#adminUserSearch");
+    var region = root.querySelector(".admin-users-region");
+    if (!input || !region) return;
+    var timer = 0;
+    var requestSequence = 0;
+    input.addEventListener("input", function () {
+      var keyword = input.value;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(function () {
+        var sequence = ++requestSequence;
+        input.setAttribute("aria-busy", "true");
+        service.listUsers(adminContext(context), keyword, 20).then(function (users) {
+          if (sequence !== requestSequence) return;
+          region.innerHTML = renderUserTable({
+            users: users,
+            adminId: first(context.identity && context.identity.adminId, context.identity && context.identity.userId)
+          }, context);
+          bindActionButtons(item, context, service, region);
+        }).catch(function (error) {
+          if (sequence === requestSequence) {
+            context.showMessage("error", "搜索失败", messageOf(error));
+          }
+        }).then(function () {
+          if (sequence === requestSequence) input.removeAttribute("aria-busy");
+        });
+      }, 250);
+    });
   }
 
   function bindAuditPager(context, service, root) {
@@ -783,7 +850,7 @@
   function refreshAdminApp(item, context, service, activeTab) {
     return service.load(adminContext(context)).then(function (data) {
       if (!data.authorized) {
-        renderStandaloneState(context, "无管理员权限", data.message || "当前账号没有管理后台权限。");
+        renderUnauthorized(context);
         return;
       }
       renderAdminApp(item, context, data);

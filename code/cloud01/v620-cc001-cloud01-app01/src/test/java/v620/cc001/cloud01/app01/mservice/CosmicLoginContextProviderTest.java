@@ -123,6 +123,28 @@ class CosmicLoginContextProviderTest {
     }
 
     @Test
+    void requestContextIdentityOverridesStaleClientPlatformIdentity() {
+        RequestContext previous = RequestContext.get();
+        RequestContext current = RequestContext.create();
+        current.setUserId("current-user");
+        Map<String, Object> stale = new LinkedHashMap<String, Object>();
+        stale.put("userId", "previous-user");
+        stale.put("displayName", "旧账号");
+        try {
+            RequestContext.set(current);
+            RequestContextCosmicLoginContextBridge.setPlatformContext(stale);
+
+            Map<String, Object> context = new RequestContextCosmicLoginContextBridge().currentLoginContext();
+
+            assertEquals("current-user", context.get("userId"));
+            assertEquals("旧账号", context.get("displayName"));
+        } finally {
+            RequestContextCosmicLoginContextBridge.clearPlatformContext();
+            RequestContext.set(previous);
+        }
+    }
+
+    @Test
     void webApiBoundaryRejectsBodyMismatchAndAllowsCurrentUser() {
         CosmicIdentityContextProvider provider = provider(map("userId", "u1"), enabledProvider());
         IdentityAwareCyanCruiseWebApiBoundary boundary = new IdentityAwareCyanCruiseWebApiBoundary(

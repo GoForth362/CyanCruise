@@ -38,7 +38,7 @@
       return Promise.all([
         safe(post, endpoints.adminDashboard, { adminId: id, orgId: orgId }, {}),
         safe(post, endpoints.adminAnalytics, id, {}),
-        safe(post, endpoints.adminUsers, { adminId: id, page: 0, size: pageSize, keyword: "" }, emptyPage(pageSize)),
+        required(post, endpoints.adminUsers, { adminId: id, page: 0, size: pageSize, keyword: "" }),
         safe(post, endpoints.adminQuestions, { adminId: id, source: "", reviewStatus: "" }, []),
         loadAssessmentBanks(context),
         safe(post, endpoints.adminContent, { adminId: id, type: "" }, []),
@@ -80,11 +80,7 @@
 
   function whoami(context) {
     var endpoints = context.endpoints || {};
-    return safe(context.post, endpoints.adminWhoami, adminId(context.identity), {
-      status: "IDENTITY_REQUIRED",
-      admin: false,
-      message: "未识别到当前登录身份。"
-    });
+    return required(context.post, endpoints.adminWhoami, adminId(context.identity));
   }
 
   function banUser(context, userId, reason) {
@@ -226,6 +222,13 @@
     return post(endpoint, body).catch(function () {
       return fallback;
     });
+  }
+
+  function required(post, endpoint, body) {
+    if (!endpoint || typeof post !== "function") {
+      return Promise.reject(new Error("管理服务暂不可用，请刷新页面后重试。"));
+    }
+    return post(endpoint, body);
   }
 
   function normalizePage(page, size) {

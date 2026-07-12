@@ -14,6 +14,7 @@ public class AdminUserDto implements Serializable {
     private String major;
     private String status;
     private String bannedReason;
+    private Boolean administrator;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
@@ -31,6 +32,8 @@ public class AdminUserDto implements Serializable {
     public void setStatus(String status) { this.status = status; }
     public String getBannedReason() { return bannedReason; }
     public void setBannedReason(String bannedReason) { this.bannedReason = bannedReason; }
+    public Boolean getAdministrator() { return administrator; }
+    public void setAdministrator(Boolean administrator) { this.administrator = administrator; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getDeletedAt() { return deletedAt; }

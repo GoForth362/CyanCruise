@@ -1,5 +1,8 @@
 package v620.cc001.cloud01.app01.webapi;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import v620.cc001.cloud01.app01.webapi.admin.AdminConsoleGovernanceWebApi;
 import v620.cc001.cloud01.app01.webapi.assessment.AssessmentWebApi;
 import v620.cc001.cloud01.app01.webapi.assistant.AssistantChatWebApi;
@@ -93,6 +96,9 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
     public static final String PARAM_PATH = "path";
     public static final String PARAM_BODY = "body";
     public static final String PARAM_PLATFORM_IDENTITY = "platformIdentity";
+    private static final ObjectMapper RPC_RESPONSE_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private final CyanCruiseIdentityWebApi identityWebApi;
     private final CareerProfileWebApi profileWebApi;
@@ -218,9 +224,25 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             @ApiRequestBody(value = "CyanCruise custom WebAPI params", required = true) Map<String, Object> params) {
         ApiResult result = doCustomService(params);
         if (result.getSuccess()) {
-            return CustomApiResult.success(result.getData());
+            try {
+                return CustomApiResult.success(toRpcSafeData(result.getData()));
+            } catch (RuntimeException ex) {
+                return CustomApiResult.fail("RPC_RESPONSE_CONVERSION_FAILED", "响应数据暂时无法处理，请稍后重试。");
+            }
         }
         return CustomApiResult.fail(result.getErrorCode(), result.getMessage());
+    }
+
+    static Object toRpcSafeData(Object data) {
+        if (data == null || data instanceof String || data instanceof Number || data instanceof Boolean) {
+            return data;
+        }
+        try {
+            byte[] json = RPC_RESPONSE_MAPPER.writeValueAsBytes(data);
+            return RPC_RESPONSE_MAPPER.readValue(json, Object.class);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Unable to convert Custom WebAPI response to RPC-safe data", ex);
+        }
     }
 
     @Override

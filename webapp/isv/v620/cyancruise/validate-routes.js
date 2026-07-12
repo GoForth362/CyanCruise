@@ -11,6 +11,8 @@ const routeMap = JSON.parse(fs.readFileSync(routePath, "utf8"));
 const app = fs.readFileSync(appPath, "utf8");
 const appSources = readJsSources(assetsPath);
 const styles = fs.readFileSync(stylesPath, "utf8");
+const adminServiceSource = fs.readFileSync(path.join(assetsPath, "services", "admin-service.js"), "utf8");
+const adminConsoleSource = fs.readFileSync(path.join(assetsPath, "pages", "admin-console.js"), "utf8");
 
 const requiredSplitFiles = [
   "app.js",
@@ -93,6 +95,60 @@ if (!fs.existsSync(panoramaInterviewerImagePath)) {
 }
 for (const marker of ["panoramaDeadlineAt", "Date.now()", "ai-interviewer-human-v1.png"]) {
   if (!app.includes(marker)) throw new Error(`Missing persistent panoramic timer or interviewer marker: ${marker}`);
+}
+for (const marker of ["function required", "required(post, endpoints.adminUsers", "required(context.post, endpoints.adminWhoami"]) {
+  if (!adminServiceSource.includes(marker)) {
+    throw new Error(`Admin service must preserve management data request failures: ${marker}`);
+  }
+}
+for (const marker of ["管理数据暂时无法加载", "admin-retry-load", "重新加载"]) {
+  if (!adminConsoleSource.includes(marker)) {
+    throw new Error(`Admin console must show a recoverable load failure state: ${marker}`);
+  }
+}
+for (const marker of ["adminUserSearch", "bindUserSearch", "service.listUsers(adminContext(context), keyword, 20)", "管理员", "普通用户"]) {
+  if (!adminConsoleSource.includes(marker)) {
+    throw new Error(`Admin user search and account type rendering must remain connected: ${marker}`);
+  }
+}
+for (const marker of ["function renderUnauthorized", "admin-access-denied", "管理员治理入口，仅对 ADMIN 或平台管理员开放。"]) {
+  if (!adminConsoleSource.includes(marker)) {
+    throw new Error(`Admin console must render the centered unauthorized state: ${marker}`);
+  }
+}
+for (const marker of [".admin-access-denied", "place-items: center", "text-align: center"]) {
+  if (!styles.includes(marker)) {
+    throw new Error(`Missing centered admin access-denied style: ${marker}`);
+  }
+}
+if (adminConsoleSource.includes('renderStandaloneState(context, "无管理员权限"')) {
+  throw new Error("Unauthorized administrators must not receive the technical standalone warning panel");
+}
+for (const marker of [
+  "post(endpoints.identityCurrent, {})",
+  "prepareUserScopedStorage(previousUserId, userId)",
+  "productionIdentityRequired(\"cc001-identity-current-failed\")",
+  "return baseKey + \".user.\" + encodeURIComponent(userId)",
+  "parseUserStorageJson(\"cyancruise.homeIntent\")"
+]) {
+  if (!app.includes(marker)) {
+    throw new Error(`Account switching must refresh server identity and isolate browser state: ${marker}`);
+  }
+}
+if (app.includes('state.identity.mode !== "production" || state.identity.userId')) {
+  throw new Error("Production identity refresh must not be skipped because a cached userId exists");
+}
+for (const legacyAccess of [
+  'localStorage.getItem("cyancruise.homeIntent',
+  'localStorage.setItem("cyancruise.homeIntent',
+  'localStorage.removeItem("cyancruise.homeIntent',
+  'localStorage.getItem("cyancruise.previewProfile',
+  'localStorage.setItem("cyancruise.previewProfile',
+  'localStorage.removeItem("cyancruise.previewProfile'
+]) {
+  if (app.includes(legacyAccess)) {
+    throw new Error(`User browser state must not use an unscoped storage key: ${legacyAccess}`);
+  }
 }
 for (const marker of ["speechSynthesis", "SpeechSynthesisUtterance", "speakPanoramaQuestion", "panoramaLastSpokenQuestion", "播放题目"]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic interviewer speech marker: ${marker}`);

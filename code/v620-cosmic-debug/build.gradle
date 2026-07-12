@@ -14,6 +14,7 @@ dependencies {
 
 	// 引入cloud01云 - app01应用模块
 	implementation project(':v620-cc001-cloud01-app01')
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
 	
 } 
 

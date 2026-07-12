@@ -29,32 +29,38 @@ public class RequestContextCosmicLoginContextBridge implements CosmicLoginContex
     public Map<String, Object> currentLoginContext() {
         Map<String, Object> context = new LinkedHashMap<String, Object>();
         Map<String, Object> platformContext = PLATFORM_CONTEXT.get();
-        if (platformContext != null) {
-            context.putAll(platformContext);
-        }
         try {
             RequestContext requestContext = RequestContext.get();
-            if (requestContext == null) {
-                return context;
+            if (requestContext != null) {
+                put(context, "userId", requestContext.getUserId());
+                putLong(context, "userId", requestContext.getCurrUserId());
+                putLong(context, "operatorId", requestContext.getCurrUserId());
+                put(context, "uid", requestContext.getUid());
+                put(context, "userName", requestContext.getUserName());
+                put(context, "orgId", requestContext.getOrgId());
+                put(context, "tenantId", requestContext.getTenantId());
+                put(context, "tenantCode", requestContext.getTenantCode());
+                put(context, "ip", requestContext.getLoginIP());
+                put(context, "userAgent", requestContext.getUserAgent());
+                put(context, "api3rdAppId", requestContext.getApi3rdAppId());
+                put(context, "authType", requestContext.getAuthType());
+                putReflective(context, requestContext);
             }
-            put(context, "userId", requestContext.getUserId());
-            putLong(context, "userId", requestContext.getCurrUserId());
-            putLong(context, "operatorId", requestContext.getCurrUserId());
-            put(context, "uid", requestContext.getUid());
-            put(context, "userName", requestContext.getUserName());
-            put(context, "orgId", requestContext.getOrgId());
-            put(context, "tenantId", requestContext.getTenantId());
-            put(context, "tenantCode", requestContext.getTenantCode());
-            put(context, "ip", requestContext.getLoginIP());
-            put(context, "userAgent", requestContext.getUserAgent());
-            put(context, "api3rdAppId", requestContext.getApi3rdAppId());
-            put(context, "authType", requestContext.getAuthType());
-            putReflective(context, requestContext);
         } catch (Throwable ex) {
             context.put(PlatformCosmicIdentityContextProvider.DIAGNOSTIC_FIELD,
                     "RequestContext bridge failed: " + ex.getClass().getName());
         }
+        mergeFallback(context, platformContext);
         return context;
+    }
+
+    private void mergeFallback(Map<String, Object> context, Map<String, Object> fallback) {
+        if (fallback == null) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : fallback.entrySet()) {
+            put(context, entry.getKey(), entry.getValue());
+        }
     }
 
     private void putLong(Map<String, Object> context, String key, long value) {

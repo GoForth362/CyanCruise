@@ -1,6 +1,5 @@
 package v620.cc001.cloud01.app01.mservice.application;
 
-import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
 import v620.cc001.cloud01.app01.mservice.notification.NotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.SubscriptionQuotaStorage;
 import v620.cc001.cloud01.app01.mservice.notification.SubscriptionSender;
@@ -34,7 +33,7 @@ public class NotificationsSubscriptionsApplicationService {
     private final NotificationsSubscriptionsService helper;
 
     public NotificationsSubscriptionsApplicationService() {
-        this(CyanCruiseStorageFactory.notificationStorage(), new InMemorySubscriptionQuotaStorage(),
+        this(CyanCruiseStorageFactory.notificationStorage(), CyanCruiseStorageFactory.subscriptionQuotaStorage(),
                 new UnavailableSubscriptionSender(), new NotificationsSubscriptionsService());
     }
 

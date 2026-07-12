@@ -65,6 +65,7 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceSto
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -102,8 +103,21 @@ class CyanCruiseCustomWebApiPluginTest {
         CustomApiResult<Object> result = plugin.route(params("/cc001/identity/current", new HashMap<String, Object>()));
 
         assertTrue(result.isStatus());
-        CosmicIdentityContextDto identity = (CosmicIdentityContextDto) result.getData();
-        assertEquals("api-user", identity.getUserId());
+        Map<?, ?> identity = (Map<?, ?>) result.getData();
+        assertEquals("api-user", identity.get("userId"));
+    }
+
+    @Test
+    void routeConvertsAdminJavaTimeFieldsToRpcSafeStrings() {
+        AdminUserDto user = new AdminUserDto();
+        user.setUserId("api-user");
+        user.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        user.setCreatedAt(LocalDateTime.of(2026, 7, 12, 14, 4, 2));
+
+        Map<?, ?> safe = (Map<?, ?>) CyanCruiseCustomWebApiPlugin.toRpcSafeData(user);
+
+        assertEquals("api-user", safe.get("userId"));
+        assertEquals("2026-07-12T14:04:02", safe.get("createdAt"));
     }
 
     @Test

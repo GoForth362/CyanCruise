@@ -15,6 +15,7 @@ def biz = ext.path.biz
 def lib = ext.path.lib
 
 dependencies {
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
 	api fileTree(dir: bos, include: '*.jar')
 	
 	api fileTree(dir: trd, include: '*.jar', exclude: ['qing-arthas-*.jar', 'flink*-1.15.0.jar'])

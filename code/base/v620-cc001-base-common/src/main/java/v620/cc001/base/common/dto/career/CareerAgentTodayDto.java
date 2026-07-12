@@ -2,11 +2,14 @@ package v620.cc001.base.common.dto.career;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.Serializable;
 
 /**
  * Result of the career agent daily recommendation rule.
  */
-public class CareerAgentTodayDto {
+public class CareerAgentTodayDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String stage;
     private String riskLevel;
@@ -117,7 +120,9 @@ public class CareerAgentTodayDto {
         this.actions = actions;
     }
 
-    public static class Action {
+    public static class Action implements Serializable {
+
+        private static final long serialVersionUID = 1L;
         private String label;
         private String labelKey;
         private String target;

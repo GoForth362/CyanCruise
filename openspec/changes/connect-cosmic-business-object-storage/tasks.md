@@ -1,6 +1,7 @@
 ## 1. 映射和建模核对
 
-- [ ] 1.1 核对 `datamodel/cyancruise-business-modeling.md` 中已建业务对象与金蝶平台实际对象编码、表名、字段标识一致。
+- [x] 1.1 核对 `datamodel/cyancruise-business-modeling.md` 中已建业务对象与金蝶平台实际对象编码、表名、字段标识一致。
+  - 2026-07-12 人工核对确认：已建业务对象的对象编码、表名和字段标识与金蝶平台实际配置一致。
 - [x] 1.2 补齐 `CyanCruiseBusinessModelMapping` 中通知、管理端、深造、Agent 相关对象和字段映射缺口。
 - [x] 1.3 增加对象/字段映射单元测试，覆盖逻辑对象到 `v620_cc_*`、逻辑字段到 `v620_xxx` 的转换。
 - [x] 1.4 记录暂不切换到 Cosmic 存储的模块和原因，避免误认为所有对象已接入运行时。

@@ -2,7 +2,6 @@ package v620.cc001.cloud01.app01.mservice.application;
 
 import v620.cc001.cloud01.app01.mservice.storage.CareerPlanStorage;
 import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
-import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.base.helper.career.CareerProfileBuildService;
 import v620.base.helper.career.CareerProfileSnapshotMergeService;
@@ -28,7 +27,7 @@ public class CareerProfileApplicationService {
     private final CareerProfileBuildService buildService;
 
     public CareerProfileApplicationService() {
-        this(CareerProfileStorageFactory.fromSystemProperties(), CyanCruiseStorageFactory.careerPlanStorage(),
+        this(CyanCruiseStorageFactory.profileStorage(), CyanCruiseStorageFactory.careerPlanStorage(),
                 new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
     }
 

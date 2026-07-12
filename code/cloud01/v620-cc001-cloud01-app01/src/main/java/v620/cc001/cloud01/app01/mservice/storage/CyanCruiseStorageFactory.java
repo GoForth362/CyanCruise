@@ -8,6 +8,9 @@ import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.PostgresqlFurtherStud
 import v620.cc001.cloud01.app01.mservice.notification.NotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.PostgresqlNotificationStorage;
+import v620.cc001.cloud01.app01.mservice.notification.SubscriptionQuotaStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.InMemorySubscriptionQuotaStorage;
+import v620.cc001.cloud01.app01.mservice.notification.impl.PostgresqlSubscriptionQuotaStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssessmentResultStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicAssistantChatStorage;
@@ -35,6 +38,8 @@ import v620.cc001.cloud01.app01.mservice.furtherstudy.FurtherStudyCompanionStora
  */
 public final class CyanCruiseStorageFactory {
 
+    public static final String SHARED_RUNTIME_PROPERTY = "cc001.shared.runtime.enabled";
+
     private static final InMemoryAdminGovernanceStorage IN_MEMORY_ADMIN_GOVERNANCE_STORAGE =
             new InMemoryAdminGovernanceStorage();
 
@@ -42,7 +47,18 @@ public final class CyanCruiseStorageFactory {
     }
 
     public static PostgresqlStorageConfig config() {
-        return PostgresqlStorageConfig.fromSystemProperties();
+        PostgresqlStorageConfig storageConfig = PostgresqlStorageConfig.fromSystemProperties();
+        if (isSharedRuntime()) {
+            storageConfig.requireComplete("shared CyanCruise storage");
+            if (storageConfig.isCosmicEnabled()) {
+                throw new IllegalStateException("Shared runtime requires PostgreSQL storage instead of Cosmic or in-memory storage.");
+            }
+        }
+        return storageConfig;
+    }
+
+    public static boolean isSharedRuntime() {
+        return Boolean.parseBoolean(System.getProperty(SHARED_RUNTIME_PROPERTY, "false"));
     }
 
     public static CareerProfileStorage profileStorage() {
@@ -121,6 +137,14 @@ public final class CyanCruiseStorageFactory {
             return new PostgresqlNotificationStorage(storageConfig);
         }
         return new InMemoryNotificationStorage();
+    }
+
+    public static SubscriptionQuotaStorage subscriptionQuotaStorage() {
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isPostgresqlBackend()) {
+            return new PostgresqlSubscriptionQuotaStorage(storageConfig);
+        }
+        return new InMemorySubscriptionQuotaStorage();
     }
 
     public static AdminGovernanceStorage adminGovernanceStorage() {

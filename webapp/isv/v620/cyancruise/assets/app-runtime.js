@@ -1,7 +1,15 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "20260704-cyancruise-v165";
+  var APP_VERSION = "20260712-cyancruise-v168";
+  var ACTIVE_USER_STORAGE_KEY = "cyancruise.activeUserId";
+  var USER_SCOPED_STORAGE_KEYS = [
+    "cyancruise.homeIntent",
+    "cyancruise.homeIntentSaved",
+    "cyancruise.homeIntentEditing",
+    "cyancruise.homeProfileExpanded",
+    "cyancruise.previewProfile"
+  ];
 
   var endpoints = {
     snapshot: "/cc001/career-profile/snapshot/get",
@@ -523,6 +531,7 @@
       getValue: getValue,
       hasAdminRole: hasAdminRole,
       hasUserIdentity: hasUserIdentity,
+      hideMessage: hideMessage,
       identity: state.identity,
       isFilePreview: isFilePreview,
       normalizeArray: normalizeArray,
@@ -640,7 +649,7 @@
   }
 
   function isHomeIntentCollapsed(intent) {
-    return localStorage.getItem("cyancruise.homeIntentSaved") === "true" && localStorage.getItem("cyancruise.homeIntentEditing") !== "true" && !!intent.goal;
+    return getUserStorageItem("cyancruise.homeIntentSaved") === "true" && getUserStorageItem("cyancruise.homeIntentEditing") !== "true" && !!intent.goal;
   }
 
   function homeWelcomeTitle() {
@@ -695,7 +704,7 @@
   }
 
   function homeIntentSummaryPanel(selectedGoal, onboarding, targetRole, preference) {
-    var expanded = localStorage.getItem("cyancruise.homeProfileExpanded") === "true";
+    var expanded = getUserStorageItem("cyancruise.homeProfileExpanded") === "true";
     var summaryRows = [
       ["当前路线", labelForGoal(selectedGoal)],
       ["目标岗位或方向", firstText(targetRole, "待确认")],
@@ -724,26 +733,26 @@
   }
 
   function editHomeIntent() {
-    localStorage.setItem("cyancruise.homeIntentEditing", "true");
+    setUserStorageItem("cyancruise.homeIntentEditing", "true");
     renderPage(pageByKey.workbench);
   }
 
   function cancelHomeIntentEdit() {
-    if (localStorage.getItem("cyancruise.homeIntentSaved") === "true") {
-      localStorage.removeItem("cyancruise.homeIntentEditing");
-      localStorage.removeItem("cyancruise.previewProfile");
+    if (getUserStorageItem("cyancruise.homeIntentSaved") === "true") {
+      removeUserStorageItem("cyancruise.homeIntentEditing");
+      removeUserStorageItem("cyancruise.previewProfile");
     } else {
-      localStorage.removeItem("cyancruise.homeIntent");
-      localStorage.removeItem("cyancruise.homeIntentEditing");
-      localStorage.removeItem("cyancruise.previewProfile");
+      removeUserStorageItem("cyancruise.homeIntent");
+      removeUserStorageItem("cyancruise.homeIntentEditing");
+      removeUserStorageItem("cyancruise.previewProfile");
     }
     renderPage(pageByKey.workbench);
     showMessage("info", "已取消修改", "页面已恢复到修改前的用户画像。");
   }
 
   function toggleHomeProfile() {
-    var expanded = localStorage.getItem("cyancruise.homeProfileExpanded") === "true";
-    localStorage.setItem("cyancruise.homeProfileExpanded", expanded ? "false" : "true");
+    var expanded = getUserStorageItem("cyancruise.homeProfileExpanded") === "true";
+    setUserStorageItem("cyancruise.homeProfileExpanded", expanded ? "false" : "true");
     renderPage(pageByKey.workbench);
   }
 
@@ -787,7 +796,7 @@
   }
 
   function changeHomeGoal() {
-    localStorage.setItem("cyancruise.homeIntentEditing", "true");
+    setUserStorageItem("cyancruise.homeIntentEditing", "true");
   }
 
   function resolveHomeGoal(goal, target, preference) {
@@ -5989,8 +5998,13 @@
   }
 
   function renderForbidden(item) {
-    renderShell(item, statePanel("无管理员权限", "该页面需要 ADMIN 或平台管理员身份，当前不会调用 /cc001/admin/*。", "warning"));
-    showMessage("warning", "已阻止管理员调用", "当前身份不满足管理员页面要求。");
+    hideMessage();
+    els.pageHost.innerHTML =
+      '<section class="admin-access-denied" aria-labelledby="adminAccessDeniedTitle">' +
+      '<div class="admin-access-denied-content">' +
+      '<h2 id="adminAccessDeniedTitle">管理后台</h2>' +
+      '<p>管理员治理入口，仅对 ADMIN 或平台管理员开放。</p>' +
+      '</div></section>';
   }
 
   function loadOverview() {
@@ -6059,7 +6073,7 @@
     };
     if (isFilePreview()) {
       var previewPreviousTarget = currentProfileTargetRole();
-      localStorage.setItem("cyancruise.previewProfile", JSON.stringify(request));
+      setUserStorageItem("cyancruise.previewProfile", JSON.stringify(request));
       state.snapshot = { onboarding: request, preferences: { targetRole: request.targetRole } };
       updateOverviewCards();
       refreshPlanAfterProfileTargetChange(previewPreviousTarget);
@@ -6080,8 +6094,7 @@
   }
 
   function readHomeIntent() {
-    migrateLegacyStorageKey("cyancruise.homeIntent", "cyancruise.homeIntent");
-    return parseStorageJson(localStorage, "cyancruise.homeIntent") || {};
+    return parseUserStorageJson("cyancruise.homeIntent") || {};
   }
 
   function submitHomeIntent(event) {
@@ -6098,7 +6111,7 @@
       resumeStatus: valueOf("resumeStatus"),
       experience: valueOf("profileExperience")
     };
-    localStorage.setItem("cyancruise.homeIntent", JSON.stringify(intent));
+    setUserStorageItem("cyancruise.homeIntent", JSON.stringify(intent));
     var request = {
       identityType: intent.identityType,
       stage: intent.educationStage,
@@ -6118,20 +6131,20 @@
     };
     if (!hasUserIdentity() || isFilePreview()) {
       var previewPreviousTarget = currentProfileTargetRole();
-      localStorage.setItem("cyancruise.previewProfile", JSON.stringify(request));
+      setUserStorageItem("cyancruise.previewProfile", JSON.stringify(request));
       state.snapshot = { onboarding: request, preferences: { targetRole: request.targetRole } };
       updateOverviewCards();
       refreshPlanAfterProfileTargetChange(previewPreviousTarget);
-      localStorage.setItem("cyancruise.homeIntentEditing", "true");
+      setUserStorageItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
       showMessage("info", "已保存", "用户画像草稿已保存到当前浏览器。");
       return;
     }
     var previousTarget = currentProfileTargetRole();
     post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
-      localStorage.setItem("cyancruise.homeIntentSaved", "true");
-      localStorage.removeItem("cyancruise.homeIntentEditing");
-      localStorage.removeItem("cyancruise.previewProfile");
+      setUserStorageItem("cyancruise.homeIntentSaved", "true");
+      removeUserStorageItem("cyancruise.homeIntentEditing");
+      removeUserStorageItem("cyancruise.previewProfile");
       state.snapshot = snapshot;
       updateOverviewCards();
       if (!refreshPlanAfterProfileTargetChange(previousTarget)) {
@@ -6139,7 +6152,7 @@
       }
       showMessage("info", "已保存", "用户画像草稿已写入职业画像。");
     }).catch(function (error) {
-      localStorage.setItem("cyancruise.homeIntentEditing", "true");
+      setUserStorageItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
       showMessage("warning", "已本地保存", "平台暂未写入成功，但用户画像草稿已保存在当前浏览器。");
     });
@@ -6456,16 +6469,21 @@
   }
 
   function loadPlatformIdentity() {
-    if (!state.identity || state.identity.mode !== "production" || state.identity.userId) {
-      return Promise.resolve();
+    if (!state.identity || state.identity.mode !== "production") {
+      prepareUserScopedStorage("", state.identity && state.identity.userId);
+      return Promise.resolve(false);
     }
+    var previousUserId = firstText(state.identity.userId);
     return post(endpoints.identityCurrent, {}).then(function (identity) {
       var userId = firstText(identity.userId, identity.adminId);
       if (!userId || identity.status !== "OK") {
         state.identityDiagnostic = identityDiagnosticText(identity, null);
+        state.identity = productionIdentityRequired("cc001-identity-current-invalid");
+        updateIdentityState();
         showMessage("warning", "平台身份未就绪", firstText(identity.message, identity.status, "identity response has no userId"));
-        return;
+        return false;
       }
+      prepareUserScopedStorage(previousUserId, userId);
       state.identity = {
         mode: "production",
         userId: userId,
@@ -6476,10 +6494,25 @@
       };
       state.identityDiagnostic = "";
       updateIdentityState();
+      return !!previousUserId && previousUserId !== userId;
     }).catch(function (error) {
       state.identityDiagnostic = identityDiagnosticText(null, error);
+      state.identity = productionIdentityRequired("cc001-identity-current-failed");
+      updateIdentityState();
       showMessage("warning", "平台身份调用失败", error && error.message ? error.message : "identity request failed");
+      return false;
     });
+  }
+
+  function productionIdentityRequired(source) {
+    return {
+      mode: "production",
+      userId: "",
+      adminId: "",
+      roles: [],
+      displayName: "",
+      source: source
+    };
   }
 
   function post(path, body) {
@@ -6745,6 +6778,59 @@
     }
   }
 
+  function prepareUserScopedStorage(previousUserId, nextUserId) {
+    var legacyOwner = firstText(localStorage.getItem(ACTIVE_USER_STORAGE_KEY), previousUserId);
+    if (legacyOwner) {
+      migrateLegacyUserStorage(legacyOwner);
+    } else {
+      removeLegacyUserStorage();
+    }
+    if (nextUserId) {
+      localStorage.setItem(ACTIVE_USER_STORAGE_KEY, nextUserId);
+    } else {
+      localStorage.removeItem(ACTIVE_USER_STORAGE_KEY);
+    }
+  }
+
+  function migrateLegacyUserStorage(userId) {
+    for (var i = 0; i < USER_SCOPED_STORAGE_KEYS.length; i += 1) {
+      var legacyKey = USER_SCOPED_STORAGE_KEYS[i];
+      var scopedKey = userStorageKey(legacyKey, userId);
+      var legacyValue = localStorage.getItem(legacyKey);
+      if (legacyValue !== null && localStorage.getItem(scopedKey) === null) {
+        localStorage.setItem(scopedKey, legacyValue);
+      }
+      localStorage.removeItem(legacyKey);
+    }
+  }
+
+  function removeLegacyUserStorage() {
+    for (var i = 0; i < USER_SCOPED_STORAGE_KEYS.length; i += 1) {
+      localStorage.removeItem(USER_SCOPED_STORAGE_KEYS[i]);
+    }
+  }
+
+  function userStorageKey(baseKey, explicitUserId) {
+    var userId = firstText(explicitUserId, state.identity && state.identity.userId, "preview");
+    return baseKey + ".user." + encodeURIComponent(userId);
+  }
+
+  function getUserStorageItem(baseKey) {
+    return localStorage.getItem(userStorageKey(baseKey));
+  }
+
+  function setUserStorageItem(baseKey, value) {
+    localStorage.setItem(userStorageKey(baseKey), value);
+  }
+
+  function removeUserStorageItem(baseKey) {
+    localStorage.removeItem(userStorageKey(baseKey));
+  }
+
+  function parseUserStorageJson(baseKey) {
+    return parseStorageJson(localStorage, userStorageKey(baseKey));
+  }
+
   function defaultApiBase() {
     var firstSegment = trim(window.location.pathname).split("/").filter(Boolean)[0];
     return firstSegment === "ierp" ? "/ierp" : "";
@@ -6844,8 +6930,7 @@
 
   function readPreviewProfile() {
     try {
-      migrateLegacyStorageKey("cyancruise.previewProfile", "cyancruise.previewProfile");
-      var raw = localStorage.getItem("cyancruise.previewProfile");
+      var raw = getUserStorageItem("cyancruise.previewProfile");
       if (!raw) {
         return null;
       }

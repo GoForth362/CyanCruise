@@ -493,6 +493,31 @@ body.admin-mode .message-panel {
   width: min(420px, calc(100vw - 48px));
 }
 
+.admin-access-denied {
+  display: grid;
+  min-height: calc(100vh - 68px);
+  padding: 24px;
+  place-items: center;
+}
+
+.admin-access-denied-content {
+  width: min(680px, 100%);
+  text-align: center;
+}
+
+.admin-access-denied h2 {
+  margin: 0;
+  font-size: 38px;
+  line-height: 1.2;
+}
+
+.admin-access-denied p {
+  margin: 20px 0 0;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1.6;
+}
+
 .admin-app {
   display: grid;
   grid-template-columns: 238px minmax(0, 1fr);

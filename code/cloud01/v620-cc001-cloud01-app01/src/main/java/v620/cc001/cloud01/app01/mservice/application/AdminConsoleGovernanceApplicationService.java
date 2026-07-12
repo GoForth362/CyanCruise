@@ -6,6 +6,8 @@ import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicAdminAuthorityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.ReflectiveCosmicAdminAuthorityResolver;
 import v620.base.helper.career.AdminConsoleGovernanceService;
 import v620.cc001.base.common.dto.career.AdminAnalyticsSummaryDto;
 import v620.cc001.base.common.dto.career.AdminAuditLogDto;
@@ -49,10 +51,12 @@ public class AdminConsoleGovernanceApplicationService {
     private final NotificationsSubscriptionsApplicationService notifications;
     private final AdminConsoleGovernanceService helper;
     private final boolean trustResolvedAdminIdentity;
+    private final CosmicAdminAuthorityResolver adminAuthorityResolver;
 
     public AdminConsoleGovernanceApplicationService() {
         this(CyanCruiseStorageFactory.adminGovernanceStorage(), profileStorageOrNull(), new NotificationsSubscriptionsApplicationService(),
-                new AdminConsoleGovernanceService(), true, new InMemoryCareerResourceStorage());
+                new AdminConsoleGovernanceService(), true, new InMemoryCareerResourceStorage(),
+                new ReflectiveCosmicAdminAuthorityResolver());
     }
 
     public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
@@ -89,12 +93,24 @@ public class AdminConsoleGovernanceApplicationService {
                                                      AdminConsoleGovernanceService helper,
                                                      boolean trustResolvedAdminIdentity,
                                                      CareerResourceStorage defaultResourceStorage) {
+        this(storage, profileStorage, notifications, helper, trustResolvedAdminIdentity, defaultResourceStorage,
+                new ReflectiveCosmicAdminAuthorityResolver());
+    }
+
+    public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
+                                              CareerProfileStorage profileStorage,
+                                              NotificationsSubscriptionsApplicationService notifications,
+                                              AdminConsoleGovernanceService helper,
+                                              boolean trustResolvedAdminIdentity,
+                                              CareerResourceStorage defaultResourceStorage,
+                                              CosmicAdminAuthorityResolver adminAuthorityResolver) {
         this.storage = storage;
         this.profileStorage = profileStorage;
         this.defaultResourceStorage = defaultResourceStorage;
         this.notifications = notifications;
         this.helper = helper;
         this.trustResolvedAdminIdentity = trustResolvedAdminIdentity;
+        this.adminAuthorityResolver = adminAuthorityResolver;
     }
 
     public AdminIdentityDto whoami(String adminId) {
@@ -187,8 +203,8 @@ public class AdminConsoleGovernanceApplicationService {
             if (applyProfile(user)) {
                 storage.saveUser(user);
             }
-            if (hasText(keyword) && (user.getNickname() == null
-                    || !user.getNickname().toLowerCase().contains(keyword.trim().toLowerCase()))) {
+            markAdministrator(user);
+            if (!matchesUserKeyword(user, keyword)) {
                 continue;
             }
             all.add(user);
@@ -200,7 +216,35 @@ public class AdminConsoleGovernanceApplicationService {
         requireAdmin(adminId);
         AdminUserDto user = storage.findUser(userId);
         if (user == null) throw new IllegalArgumentException("user not found");
+        markAdministrator(user);
         return user;
+    }
+
+    private boolean matchesUserKeyword(AdminUserDto user, String keyword) {
+        if (!hasText(keyword)) {
+            return true;
+        }
+        String normalized = keyword.trim().toLowerCase(java.util.Locale.ENGLISH);
+        return containsIgnoreCase(user.getNickname(), normalized)
+                || containsIgnoreCase(user.getUserId(), normalized)
+                || containsIgnoreCase(user.getSchool(), normalized)
+                || containsIgnoreCase(user.getMajor(), normalized);
+    }
+
+    private boolean containsIgnoreCase(String value, String normalizedKeyword) {
+        return value != null && value.toLowerCase(java.util.Locale.ENGLISH).contains(normalizedKeyword);
+    }
+
+    private void markAdministrator(AdminUserDto user) {
+        boolean administrator = storage.isAdmin(trim(user.getUserId()));
+        if (!administrator && adminAuthorityResolver != null) {
+            try {
+                administrator = adminAuthorityResolver.isAdmin(user.getUserId(), user.getUserId());
+            } catch (RuntimeException ignored) {
+                // Platform permission lookup is best-effort for list decoration and fails closed.
+            }
+        }
+        user.setAdministrator(Boolean.valueOf(administrator));
     }
 
     public AdminOperationResult banUser(String adminId, String userId, String reason) {
