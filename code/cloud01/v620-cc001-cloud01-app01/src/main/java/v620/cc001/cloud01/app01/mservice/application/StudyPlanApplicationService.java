@@ -145,8 +145,7 @@ public class StudyPlanApplicationService {
     private StudyCenterSelectionDto selection(String userId) { return storage.loadSelection(userId); }
     private List<StudyPlanningMaterialDto> usableMaterials(String userId, String direction) {
         List<StudyPlanningMaterialDto> usable = new ArrayList<StudyPlanningMaterialDto>();
-        if (!CareerRouteContext.POSTGRADUATE.equals(direction)
-                && !CareerRouteContext.RECOMMENDATION.equals(direction)) return usable;
+        if (!CareerRouteContext.isStudyDirection(direction)) return usable;
         List<StudyPlanningMaterialDto> stored = storage.listMaterials(userId, direction);
         if (stored == null) return usable;
         for (StudyPlanningMaterialDto material : stored) {
@@ -187,9 +186,11 @@ public class StudyPlanApplicationService {
         if (isRuleFallback(plan)) return true;
         boolean postgraduatePlan = CareerRouteContext.POSTGRADUATE.equals(plan.getStudyDirection());
         boolean recommendationPlan = CareerRouteContext.RECOMMENDATION.equals(plan.getStudyDirection());
+        boolean studyAbroadPlan = CareerRouteContext.STUDY_ABROAD.equals(plan.getStudyDirection());
         boolean untypedPostgraduatePlan = !hasText(plan.getStudyDirection()) && selection != null
                 && CareerRouteContext.POSTGRADUATE.equals(selection.getDirection());
-        if (!postgraduatePlan && !recommendationPlan && !untypedPostgraduatePlan) return false;
+        if (!postgraduatePlan && !recommendationPlan && !studyAbroadPlan
+                && !untypedPostgraduatePlan) return false;
         return !hasCompleteRoute(plan)
                 || !PostgraduateRouteCoverage.coversTwelveContinuousMonths(plan.getPhases())
                 || !"AGENT".equalsIgnoreCase(text(plan.getPlanningMode()))
@@ -260,10 +261,12 @@ public class StudyPlanApplicationService {
 
     private static StudyPlanAiGenerator defaultAiGenerator() {
         Map<String, AgentPlatformTaskFlowConfig> configs = new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
-        configs.put(CareerRouteContext.POSTGRADUATE, AgentPlatformTaskFlowConfig.fromSystemProperties(AgentPlatformStudyPlanGenerator.POSTGRADUATE_PREFIX));
-        configs.put(CareerRouteContext.RECOMMENDATION, AgentPlatformTaskFlowConfig.fromSystemProperties(
+        configs.put(CareerRouteContext.POSTGRADUATE, loadStudyAgentConfig(
+                AgentPlatformStudyPlanGenerator.POSTGRADUATE_PREFIX));
+        configs.put(CareerRouteContext.RECOMMENDATION, loadStudyAgentConfig(
                 AgentPlatformStudyPlanGenerator.RECOMMENDATION_PREFIX));
-        configs.put(CareerRouteContext.STUDY_ABROAD, AgentPlatformTaskFlowConfig.fromSystemProperties(AgentPlatformStudyPlanGenerator.STUDY_ABROAD_PREFIX));
+        configs.put(CareerRouteContext.STUDY_ABROAD, loadStudyAgentConfig(
+                AgentPlatformStudyPlanGenerator.STUDY_ABROAD_PREFIX));
         Map<String, AgentPlatformTaskFlowClient> clients = new LinkedHashMap<String, AgentPlatformTaskFlowClient>();
         for (Map.Entry<String, AgentPlatformTaskFlowConfig> entry : configs.entrySet()) {
             AgentPlatformTaskFlowConfig config = entry.getValue();
@@ -271,5 +274,16 @@ public class StudyPlanApplicationService {
             else if (config.isAvailable()) clients.put(entry.getKey(), new DefaultAgentPlatformTaskFlowClient(config));
         }
         return clients.isEmpty() ? null : new AgentPlatformStudyPlanGenerator(clients, configs);
+    }
+
+    /**
+     * Study planning is published as one Agent per direction. Do not allow a stale
+     * task-flow property to take precedence inside the shared SDK client.
+     */
+    static AgentPlatformTaskFlowConfig loadStudyAgentConfig(String prefix) {
+        AgentPlatformTaskFlowConfig config = AgentPlatformTaskFlowConfig.fromSystemProperties(prefix);
+        config.setTaskFlowCode(null);
+        config.setJsonEncodeAgentQuery(false);
+        return config;
     }
 }

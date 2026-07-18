@@ -48,7 +48,7 @@ class StudyPlanningMaterialApplicationServiceTest {
     }
 
     @Test
-    void acceptsRecommendationMaterialAndKeepsDirectionsIsolated() {
+    void acceptsRecommendationAndStudyAbroadMaterialsAndKeepsDirectionsIsolated() {
         InMemoryStudyCenterStorage studyStorage = new InMemoryStudyCenterStorage();
         FileTextExtractor extractor = new FileTextExtractor() {
             public String extract(byte[] bytes, String objectKey) { return "text"; }
@@ -62,12 +62,19 @@ class StudyPlanningMaterialApplicationServiceTest {
         request.setDirection(CareerRouteContext.RECOMMENDATION);
 
         StudyPlanningMaterialDto saved = service.upload("user-a", request);
+        StudyPlanningMaterialUploadRequest abroadRequest = request("program.txt", "application content");
+        abroadRequest.setDirection(CareerRouteContext.STUDY_ABROAD);
+        StudyPlanningMaterialDto abroad = service.upload("user-a", abroadRequest);
 
         assertEquals(CareerRouteContext.RECOMMENDATION, saved.getDirection());
+        assertEquals(CareerRouteContext.STUDY_ABROAD, abroad.getDirection());
         assertEquals(1, service.list("user-a", CareerRouteContext.RECOMMENDATION).size());
+        assertEquals(1, service.list("user-a", CareerRouteContext.STUDY_ABROAD).size());
         assertTrue(service.list("user-a", CareerRouteContext.POSTGRADUATE).isEmpty());
         assertThrows(IllegalArgumentException.class,
                 () -> service.delete("user-a", CareerRouteContext.POSTGRADUATE, saved.getMaterialId()));
+        assertThrows(IllegalArgumentException.class,
+                () -> service.delete("user-a", CareerRouteContext.RECOMMENDATION, abroad.getMaterialId()));
     }
 
     private StudyPlanningMaterialUploadRequest request(String filename, String text) {

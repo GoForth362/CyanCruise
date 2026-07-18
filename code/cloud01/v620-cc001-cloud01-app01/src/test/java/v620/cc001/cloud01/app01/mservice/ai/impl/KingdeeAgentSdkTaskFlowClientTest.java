@@ -53,6 +53,23 @@ class KingdeeAgentSdkTaskFlowClientTest {
     }
 
     @Test
+    void sendsRawJsonWhenAgentConfigurationDisablesSecondEncoding() {
+        AgentPlatformTaskFlowConfig config = sdkConfig();
+        config.setJsonEncodeAgentQuery(false);
+        RecordingRunner runner = new RecordingRunner(Stream.of(
+                AgentMessage.chat("message-1", "{\"summary\":\"available\"}", false)));
+        KingdeeAgentSdkTaskFlowClient client = new KingdeeAgentSdkTaskFlowClient(config, runner);
+        AgentTaskFlowRequestDto request = new AgentTaskFlowRequestDto();
+        String question = "{\"mode\":\"STUDY_PLANNING\",\"direction\":\"STUDY_ABROAD\"}";
+        request.putInput("question", question);
+
+        AgentTaskFlowResponseDto response = client.execute(request);
+
+        assertTrue(response.isSuccess());
+        assertEquals(question, runner.query);
+    }
+
+    @Test
     void directlyRunsConfiguredTaskFlowWithStringParams() {
         AgentPlatformTaskFlowConfig config = new AgentPlatformTaskFlowConfig();
         config.setEnabled(true);

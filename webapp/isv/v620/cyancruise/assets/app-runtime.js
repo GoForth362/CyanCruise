@@ -1331,7 +1331,8 @@
     if (!hasUserIdentity()) return;
     var selection = state.studyCenterSelection || {};
     var direction = firstText(selection.direction, "");
-    if (direction !== "POSTGRADUATE" && direction !== "RECOMMENDATION") {
+    if (direction !== "POSTGRADUATE" && direction !== "RECOMMENDATION"
+        && direction !== "STUDY_ABROAD") {
       state.studyPlanningMaterials = [];
       state.studyPlanningMaterialsError = null;
       return;
@@ -1501,7 +1502,8 @@
   function studyPlanningMaterialsPanel() {
     var selection = state.studyCenterSelection || {};
     var direction = firstText(selection.direction, "");
-    if (direction !== "POSTGRADUATE" && direction !== "RECOMMENDATION") return "";
+    if (direction !== "POSTGRADUATE" && direction !== "RECOMMENDATION"
+        && direction !== "STUDY_ABROAD") return "";
     var directionLabel = studyCenterDirectionLabel(direction);
     var materials = Array.isArray(state.studyPlanningMaterials) ? state.studyPlanningMaterials : [];
     var availableCount = materials.filter(function (item) {
@@ -1515,6 +1517,8 @@
     } else if (!materials.length) {
       status = statePanel("还没有规划资料", direction === "RECOMMENDATION"
         ? "可以上传目标院校推免说明、夏令营或预推免通知、成绩排名证明及个人经历材料。"
+        : direction === "STUDY_ABROAD"
+        ? "可以上传目标院校或项目说明、申请要求、成绩与语言证明、个人经历及申请材料。"
         : "可以上传目标院校招生说明、专业目录、考试科目说明或个人学习证明。", "empty");
     } else {
       status = '<div class="study-material-list">' + materials.map(function (material) {
@@ -1532,7 +1536,7 @@
       '<h3>规划依据资料</h3><p class="section-note">成功读取正文的资料会与用户画像、目标院校一起用于下一次' + escapeHtml(directionLabel) + '智能路线生成，不会写入公共知识库。</p>' +
       '</div><span class="resource-type">可用 ' + availableCount + ' 份</span></div>' +
       '<div class="form-grid study-material-upload"><label>资料类型<select id="studyPlanningMaterialType">' +
-      '<option value="ADMISSION_GUIDE">招生或推免说明</option><option value="MAJOR_CATALOG">专业目录与选拔要求</option>' +
+      '<option value="ADMISSION_GUIDE">院校、项目或招生说明</option><option value="MAJOR_CATALOG">专业目录与选拔要求</option>' +
       '<option value="SCORE_OR_TRANSCRIPT">成绩或学习证明</option><option value="STUDY_PROGRESS">学习进度记录</option>' +
       '<option value="OTHER">其他相关资料</option></select></label>' +
       '<label>选择文件<input id="studyPlanningMaterialFile" type="file" accept=".pdf,.doc,.docx,.txt,.md,application/pdf,text/plain"></label>' +
@@ -1543,8 +1547,8 @@
 
   function studyMaterialTypeLabel(value) {
     var labels = {
-      ADMISSION_GUIDE: "招生说明",
-      MAJOR_CATALOG: "专业目录与考试科目",
+      ADMISSION_GUIDE: "院校、项目或招生说明",
+      MAJOR_CATALOG: "专业目录与选拔要求",
       SCORE_OR_TRANSCRIPT: "成绩或学习证明",
       STUDY_PROGRESS: "学习进度记录",
       OTHER: "其他相关资料"
@@ -2105,7 +2109,8 @@
 
   function studyPlanGenerationButtonLabel(plan, direction, fallbackLabel) {
     var emptyLabel = direction === "POSTGRADUATE" ? "生成考研规划"
-      : direction === "RECOMMENDATION" ? "生成保研规划" : firstText(fallbackLabel, "生成升学规划");
+      : direction === "RECOMMENDATION" ? "生成保研规划"
+      : direction === "STUDY_ABROAD" ? "生成留学规划" : firstText(fallbackLabel, "生成升学规划");
     if (!hasVerifiedStudyPlan(plan, direction)) return emptyLabel;
     var refreshState = studyPlanRefreshState(plan);
     if (refreshState.refreshableCount === 0) return "计划已全部开始";
@@ -2116,7 +2121,8 @@
     if (!plan || plan.unavailable || plan.hasPlan !== true) return false;
     var phases = normalizeArray(plan.phases);
     var routeDirection = firstText(plan.studyDirection, direction, getValue(state.studyCenterSelection, "direction"));
-    if (routeDirection !== "POSTGRADUATE" && routeDirection !== "RECOMMENDATION") return phases.length > 0;
+    if (routeDirection !== "POSTGRADUATE" && routeDirection !== "RECOMMENDATION"
+        && routeDirection !== "STUDY_ABROAD") return false;
     return phases.length >= 3
       && firstText(plan.planningMode, "").toUpperCase() === "AGENT"
       && firstText(plan.agentStatus, "").toUpperCase() === "AGENT_GENERATED";
@@ -3261,10 +3267,16 @@
     }
     var view = buildPlanViewModel();
     if (!view.dailyPlan.items.length) {
+      var studyDirection = firstText(getValue(state.studyCenterSelection, "direction"), "");
+      var studyDirectionLabel = studyCenterDirectionLabel(studyDirection);
+      var missingStudyPlan = isStudyRoute() && !hasVerifiedStudyPlan(state.plan, studyDirection);
       renderShell(item,
-        statePanel(state.plan ? "每日计划暂不可用" : "等待路径规划",
-          firstText(view.dailyPlan.summary, "今日行动会从路径规划里的当前阶段按顺序生成。请稍后重试。"),
-          state.plan ? "warning" : "pending")
+        statePanel(missingStudyPlan ? "尚未生成真实" + studyDirectionLabel + "规划"
+            : (state.plan ? "每日计划暂不可用" : "等待路径规划"),
+          missingStudyPlan ? "当前没有通过智能服务校验的" + studyDirectionLabel
+            + "路线。生成真实规划后，今日行动才会按当前阶段创建。"
+            : firstText(view.dailyPlan.summary, "今日行动会从路径规划里的当前阶段按顺序生成。请稍后重试。"),
+          missingStudyPlan ? "pending" : (state.plan ? "warning" : "pending"))
       );
       return;
     }
@@ -4323,11 +4335,15 @@
     var view = buildPlanViewModel();
     var summary = firstText(view.plan.startStateSummary, view.plan.summary,
       isStudyRoute() ? "根据升学方向、目标院校和个人情况生成分阶段升学路线图。" : "根据个人情况、简历记录和目标岗位生成分阶段就业路线图。");
+    var currentStudyDirection = firstText(getValue(state.studyCenterSelection, "direction"), "");
+    var currentStudyDirectionLabel = studyCenterDirectionLabel(currentStudyDirection);
     var phaseHtml = view.visiblePhases.length ? view.visiblePhases.map(function (phase, index) {
       return renderPlanPhaseCard(phase, index, view.progressState, view.activePhaseId, view.currentPhaseId);
     }).join("") :
-      statePanel(isStudyRoute() ? "尚未生成真实升学规划" : "路线图待生成",
-        isStudyRoute() ? "当前没有通过智能体校验的升学路线，点击“生成智能路线图”后才会展示规划。" : "当前还没有可展示的路线图，点击“生成智能路线图”即可开始规划。", "pending");
+      statePanel(isStudyRoute() ? "尚未生成真实" + currentStudyDirectionLabel + "规划" : "路线图待生成",
+        isStudyRoute() ? "当前没有通过智能服务校验的" + currentStudyDirectionLabel
+          + "路线，点击“生成" + currentStudyDirectionLabel + "规划”后才会展示规划。"
+          : "当前还没有可展示的路线图，点击“生成智能路线图”即可开始规划。", "pending");
     var timelineHtml = view.visiblePhases.length ? renderPlanTimeline(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
     var flowHtml = view.visiblePhases.length ? renderPlanFlow(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
     renderFeatureShell(item, item.title, isStudyRoute() ? "根据升学方向、目标院校和个人情况整理未来一年的行动路线。" : "根据你的个人情况、简历和目标岗位整理未来一年的行动路线。",
@@ -7322,7 +7338,12 @@
     if (!parent || parent === item.key) {
       return "";
     }
-    var label = "返回";
+    var labels = {
+      postgraduate: "返回考研陪伴",
+      "postgraduate-recommendation": "返回保研陪伴",
+      "study-abroad": "返回留学陪伴"
+    };
+    var label = labels[parent] || "返回";
     return '<div class="page-actions"><button type="button" class="secondary" data-back-route="' +
       escapeHtml(parent) + '">' + label + '</button></div>';
   }
@@ -7358,21 +7379,21 @@
       "interview-panorama": "",
       "interview-panorama-history": "interview-panorama",
       "postgraduate": "",
-      "postgraduate-school": "",
-      "postgraduate-plan": "",
-      "postgraduate-mistake": "",
-      "postgraduate-reexam": "",
+      "postgraduate-school": "postgraduate",
+      "postgraduate-plan": "postgraduate",
+      "postgraduate-mistake": "postgraduate",
+      "postgraduate-reexam": "postgraduate",
       "postgraduate-recommendation": "",
-      "recommendation-ranking": "",
-      "recommendation-background": "",
-      "recommendation-material": "",
-      "recommendation-tutor": "",
+      "recommendation-ranking": "postgraduate-recommendation",
+      "recommendation-background": "postgraduate-recommendation",
+      "recommendation-material": "postgraduate-recommendation",
+      "recommendation-tutor": "postgraduate-recommendation",
       "study-abroad": "",
-      "study-abroad-profile": "",
-      "study-abroad-language": "",
-      "study-abroad-school": "",
-      "study-abroad-statement": "",
-      "study-abroad-visa": "",
+      "study-abroad-profile": "study-abroad",
+      "study-abroad-language": "study-abroad",
+      "study-abroad-school": "study-abroad",
+      "study-abroad-statement": "study-abroad",
+      "study-abroad-visa": "study-abroad",
       "today-action": "workbench",
       "assessment": "workbench",
       "deep-profile-detail": "assessment",

@@ -41,7 +41,12 @@
       if (!parent || parent === item.key) {
         return "";
       }
-      var label = "返回";
+      var labels = {
+        postgraduate: "返回考研陪伴",
+        "postgraduate-recommendation": "返回保研陪伴",
+        "study-abroad": "返回留学陪伴"
+      };
+      var label = labels[parent] || "返回";
       return '<div class="page-actions"><button type="button" class="secondary" data-back-route="' +
         context.escapeHtml(parent) + '">' + label + '</button></div>';
     }

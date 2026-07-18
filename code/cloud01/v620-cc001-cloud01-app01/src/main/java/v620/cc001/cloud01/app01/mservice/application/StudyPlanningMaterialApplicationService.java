@@ -41,9 +41,8 @@ public class StudyPlanningMaterialApplicationService {
             throw new IllegalArgumentException("请选择要上传的升学规划资料。");
         }
         String direction = requireDirection(request.getDirection());
-        if (!CareerRouteContext.POSTGRADUATE.equals(direction)
-                && !CareerRouteContext.RECOMMENDATION.equals(direction)) {
-            throw new IllegalArgumentException("当前仅支持上传考研或保研规划资料。");
+        if (!CareerRouteContext.isStudyDirection(direction)) {
+            throw new IllegalArgumentException("请选择考研、保研或留学方向后再上传规划资料。");
         }
         FileUploadRequest file = request.getFile();
         validateFile(file);
@@ -125,7 +124,7 @@ public class StudyPlanningMaterialApplicationService {
             throw new IllegalArgumentException("请选择非空文件。");
         }
         if (file.getBytes().length > MAX_FILE_BYTES) {
-            throw new IllegalArgumentException("单份考研资料不能超过 5MB。");
+            throw new IllegalArgumentException("单份升学规划资料不能超过 5MB。");
         }
         String filename = requireText(file.getOriginalFilename(), "文件名");
         String lower = filename.toLowerCase(Locale.ROOT);

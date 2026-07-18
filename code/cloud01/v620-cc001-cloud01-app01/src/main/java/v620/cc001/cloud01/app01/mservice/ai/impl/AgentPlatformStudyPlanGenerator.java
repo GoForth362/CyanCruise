@@ -71,7 +71,7 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
             throw new IllegalStateException("当前升学方向的智能规划服务尚未配置，请稍后重试。");
         }
         AgentTaskFlowRequestDto request = new AgentTaskFlowRequestDto();
-        request.setTaskFlowCode(config.getTaskFlowCode());
+        request.setTaskFlowCode(null);
         request.putInput("question", question(safeDirection, targetSchool, profile, snapshot,
                 existingPlan, materials, false));
         AgentTaskFlowResponseDto response = client.execute(request);
@@ -143,7 +143,10 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
                     ? "请结合目标院校、用户画像和上传资料，生成从当前日期起未来一年的保研路线图、"
                     + "每周计划和每日行动。围绕资格与排名、科研竞赛、材料准备、夏令营、预推免和志愿确认安排，"
                     + "未核验的院校要求必须标记待确认，不得虚构录取结果或兜底路线。"
-                    : "请按所选升学方向生成未来一年的可执行路线图、每周计划和每日行动。");
+                    : "请结合目标国家或地区、目标院校与专业、用户画像和上传资料，生成从当前日期起未来一年的留学路线图、"
+                    + "每周计划和每日行动。围绕目标定位、语言或标准化考试、学术与实践背景、选校、文书、网申、"
+                    + "录取后确认及签证准备安排；未核验的项目要求和时间节点必须标记待确认，不得虚构录取结果、"
+                    + "院校政策、申请截止日期或兜底路线。");
             return mapper.writeValueAsString(payload);
         } catch (Exception ex) {
             throw new IllegalStateException("升学规划资料暂时无法整理，请稍后重试。", ex);
@@ -282,7 +285,7 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
                 && (plan.getPhases().size() < POSTGRADUATE_MIN_PHASES
                 || !coversFullYear(plan.getPhases()))) {
             throw new IllegalStateException(
-                    "Postgraduate roadmap must cover all 12 months in at least three phases.");
+                    "Study roadmap must cover all 12 months in at least three phases.");
         }
     }
 
@@ -292,7 +295,8 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
 
     private boolean requiresFullYearRoadmap(String direction) {
         return CareerRouteContext.POSTGRADUATE.equals(direction)
-                || CareerRouteContext.RECOMMENDATION.equals(direction);
+                || CareerRouteContext.RECOMMENDATION.equals(direction)
+                || CareerRouteContext.STUDY_ABROAD.equals(direction);
     }
 
     private Map<String, Object> progress(CareerPlanRecordDto plan) {

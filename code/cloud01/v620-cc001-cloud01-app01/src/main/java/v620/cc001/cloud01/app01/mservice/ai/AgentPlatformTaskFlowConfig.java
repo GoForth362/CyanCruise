@@ -28,6 +28,7 @@ public class AgentPlatformTaskFlowConfig {
     private String flowCodeField = "taskFlowCode";
     private String inputField = "inputs";
     private String answerPath = "answer";
+    private boolean jsonEncodeAgentQuery = true;
 
     public static AgentPlatformTaskFlowConfig fromSystemProperties() {
         return fromSystemProperties("cc001.agent.platform.resume");
@@ -100,6 +101,10 @@ public class AgentPlatformTaskFlowConfig {
     public void setInputField(String inputField) { this.inputField = textOrDefault(inputField, "inputs"); }
     public String getAnswerPath() { return answerPath; }
     public void setAnswerPath(String answerPath) { this.answerPath = textOrDefault(answerPath, "answer"); }
+    public boolean isJsonEncodeAgentQuery() { return jsonEncodeAgentQuery; }
+    public void setJsonEncodeAgentQuery(boolean jsonEncodeAgentQuery) {
+        this.jsonEncodeAgentQuery = jsonEncodeAgentQuery;
+    }
 
     private static int parseInt(String value, int fallback) {
         try {

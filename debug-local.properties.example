@@ -22,12 +22,13 @@ cc001.agent.platform.employment.enabled=false
 cc001.agent.platform.employment.agentNumber=
 # cc001.agent.platform.employment.taskFlowCode=
 
-# Study planning uses one independent Agent for each selected direction.
+# Study planning calls one independent Agent for each selected direction.
+# Task-flow codes belong inside those Agents and are not configured here.
 cc001.agent.platform.study.postgraduate.enabled=false
 cc001.agent.platform.study.postgraduate.agentNumber=
-# cc001.agent.platform.study.postgraduate.taskFlowCode=
 cc001.agent.platform.study.recommendation.enabled=false
 cc001.agent.platform.study.recommendation.agentNumber=
+# Overseas-study planning calls the published Agent directly. No taskFlowCode is used.
 cc001.agent.platform.study.abroad.enabled=false
 cc001.agent.platform.study.abroad.agentNumber=
 
