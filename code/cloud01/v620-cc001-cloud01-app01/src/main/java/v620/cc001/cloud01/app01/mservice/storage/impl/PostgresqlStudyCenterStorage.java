@@ -39,46 +39,46 @@ public class PostgresqlStudyCenterStorage extends PostgresqlStorageSupport imple
         } catch (SQLException e) { throw storageException("save study-center selection", e); }
         finally { close(s); close(c); }
     }
-    public CareerPlanRecordDto loadPlan(String userId) {
-        String sql = "SELECT plan_json::text FROM " + table("cc_study_center_plan") + " WHERE user_id = ?";
+    public CareerPlanRecordDto loadPlan(String userId, String direction) {
+        String sql = "SELECT plan_json::text FROM " + table("cc_study_center_plan") + " WHERE user_id = ? AND direction = ?";
         Connection c = null; PreparedStatement s = null; ResultSet r = null;
-        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); r = s.executeQuery(); return r.next() ? readJson(r.getString(1), CareerPlanRecordDto.class, null) : null; }
+        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(direction, "direction")); r = s.executeQuery(); return r.next() ? readJson(r.getString(1), CareerPlanRecordDto.class, null) : null; }
         catch (SQLException e) { throw storageException("load study plan", e); } finally { close(r); close(s); close(c); }
     }
-    public void savePlan(String userId, CareerPlanRecordDto plan) {
-        String sql = "INSERT INTO " + table("cc_study_center_plan") + " (user_id, direction, plan_json, updated_at) VALUES (?, ?, CAST(? AS JSONB), now()) ON CONFLICT (user_id) DO UPDATE SET direction = EXCLUDED.direction, plan_json = EXCLUDED.plan_json, updated_at = now()";
+    public void savePlan(String userId, String direction, CareerPlanRecordDto plan) {
+        String sql = "INSERT INTO " + table("cc_study_center_plan") + " (user_id, direction, plan_json, updated_at) VALUES (?, ?, CAST(? AS JSONB), now()) ON CONFLICT (user_id, direction) DO UPDATE SET plan_json = EXCLUDED.plan_json, updated_at = now()";
         Connection c = null; PreparedStatement s = null;
-        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, plan == null ? null : plan.getStudyDirection()); s.setString(3, toJson(plan)); s.executeUpdate(); }
+        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(direction, "direction")); s.setString(3, toJson(plan)); s.executeUpdate(); }
         catch (SQLException e) { throw storageException("save study plan", e); } finally { close(s); close(c); }
     }
-    public void deletePlan(String userId) {
-        String sql = "DELETE FROM " + table("cc_study_center_plan") + " WHERE user_id = ?";
+    public void deletePlan(String userId, String direction) {
+        String sql = "DELETE FROM " + table("cc_study_center_plan") + " WHERE user_id = ? AND direction = ?";
         Connection c = null; PreparedStatement s = null;
-        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.executeUpdate(); }
+        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(direction, "direction")); s.executeUpdate(); }
         catch (SQLException e) { throw storageException("delete study plan", e); } finally { close(s); close(c); }
     }
-    public void deleteDailyTasks(String userId) {
-        String sql = "DELETE FROM " + table("cc_study_center_daily_task") + " WHERE user_id = ?";
+    public void deleteDailyTasks(String userId, String direction) {
+        String sql = "DELETE FROM " + table("cc_study_center_daily_task") + " WHERE user_id = ? AND direction = ?";
         Connection c = null; PreparedStatement s = null;
-        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.executeUpdate(); }
+        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(direction, "direction")); s.executeUpdate(); }
         catch (SQLException e) { throw storageException("delete study daily tasks", e); } finally { close(s); close(c); }
     }
-    public List<CareerDailyTaskDto> listDailyTasks(String userId) {
-        String sql = "SELECT task_json::text FROM " + table("cc_study_center_daily_task") + " WHERE user_id = ? ORDER BY plan_date, task_id";
+    public List<CareerDailyTaskDto> listDailyTasks(String userId, String direction) {
+        String sql = "SELECT task_json::text FROM " + table("cc_study_center_daily_task") + " WHERE user_id = ? AND direction = ? ORDER BY plan_date, task_id";
         List<CareerDailyTaskDto> out = new ArrayList<CareerDailyTaskDto>(); Connection c = null; PreparedStatement s = null; ResultSet r = null;
-        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); r = s.executeQuery(); while (r.next()) { CareerDailyTaskDto task = readJson(r.getString(1), CareerDailyTaskDto.class, null); if (task != null) out.add(task); } return out; }
+        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(direction, "direction")); r = s.executeQuery(); while (r.next()) { CareerDailyTaskDto task = readJson(r.getString(1), CareerDailyTaskDto.class, null); if (task != null) out.add(task); } return out; }
         catch (SQLException e) { throw storageException("list study daily tasks", e); } finally { close(r); close(s); close(c); }
     }
-    public CareerDailyTaskDto findDailyTask(String userId, String taskId) {
-        String sql = "SELECT task_json::text FROM " + table("cc_study_center_daily_task") + " WHERE user_id = ? AND task_id = ?";
+    public CareerDailyTaskDto findDailyTask(String userId, String direction, String taskId) {
+        String sql = "SELECT task_json::text FROM " + table("cc_study_center_daily_task") + " WHERE user_id = ? AND direction = ? AND task_id = ?";
         Connection c = null; PreparedStatement s = null; ResultSet r = null;
-        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(taskId, "taskId")); r = s.executeQuery(); return r.next() ? readJson(r.getString(1), CareerDailyTaskDto.class, null) : null; }
+        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(direction, "direction")); s.setString(3, requireText(taskId, "taskId")); r = s.executeQuery(); return r.next() ? readJson(r.getString(1), CareerDailyTaskDto.class, null) : null; }
         catch (SQLException e) { throw storageException("find study daily task", e); } finally { close(r); close(s); close(c); }
     }
-    public void saveDailyTask(String userId, CareerDailyTaskDto task) {
-        String sql = "INSERT INTO " + table("cc_study_center_daily_task") + " (user_id, task_id, direction, plan_date, task_json, updated_at) VALUES (?, ?, ?, ?, CAST(? AS JSONB), now()) ON CONFLICT (user_id, task_id) DO UPDATE SET direction = EXCLUDED.direction, plan_date = EXCLUDED.plan_date, task_json = EXCLUDED.task_json, updated_at = now()";
+    public void saveDailyTask(String userId, String direction, CareerDailyTaskDto task) {
+        String sql = "INSERT INTO " + table("cc_study_center_daily_task") + " (user_id, task_id, direction, plan_date, task_json, updated_at) VALUES (?, ?, ?, ?, CAST(? AS JSONB), now()) ON CONFLICT (user_id, direction, task_id) DO UPDATE SET plan_date = EXCLUDED.plan_date, task_json = EXCLUDED.task_json, updated_at = now()";
         Connection c = null; PreparedStatement s = null;
-        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(task.getTaskId(), "taskId")); s.setString(3, task.getRouteType()); s.setObject(4, task.getPlanDate()); s.setString(5, toJson(task)); s.executeUpdate(); }
+        try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(userId, "userId")); s.setString(2, requireText(task.getTaskId(), "taskId")); s.setString(3, requireText(direction, "direction")); s.setObject(4, task.getPlanDate()); s.setString(5, toJson(task)); s.executeUpdate(); }
         catch (SQLException e) { throw storageException("save study daily task", e); } finally { close(s); close(c); }
     }
     public StudyPlanningMaterialDto saveMaterial(String userId, StudyPlanningMaterialDto material) {
@@ -108,14 +108,15 @@ public class PostgresqlStudyCenterStorage extends PostgresqlStorageSupport imple
         } catch (SQLException e) { throw storageException("save study planning material", e); }
         finally { close(s); close(c); }
     }
-    public StudyPlanningMaterialDto findMaterial(String userId, String materialId) {
+    public StudyPlanningMaterialDto findMaterial(String userId, String direction, String materialId) {
         String sql = "SELECT payload_json::text FROM " + table("cc_study_center_material")
-                + " WHERE user_id = ? AND material_id = ?";
+                + " WHERE user_id = ? AND direction = ? AND material_id = ?";
         Connection c = null; PreparedStatement s = null; ResultSet r = null;
         try {
             c = connection(); s = c.prepareStatement(sql);
             s.setString(1, requireText(userId, "userId"));
-            s.setString(2, requireText(materialId, "materialId"));
+            s.setString(2, requireText(direction, "direction"));
+            s.setString(3, requireText(materialId, "materialId"));
             r = s.executeQuery();
             return r.next() ? readJson(r.getString(1), StudyPlanningMaterialDto.class, null) : null;
         } catch (SQLException e) { throw storageException("find study planning material", e); }
@@ -141,14 +142,15 @@ public class PostgresqlStudyCenterStorage extends PostgresqlStorageSupport imple
         } catch (SQLException e) { throw storageException("list study planning materials", e); }
         finally { close(r); close(s); close(c); }
     }
-    public boolean deleteMaterial(String userId, String materialId) {
+    public boolean deleteMaterial(String userId, String direction, String materialId) {
         String sql = "DELETE FROM " + table("cc_study_center_material")
-                + " WHERE user_id = ? AND material_id = ?";
+                + " WHERE user_id = ? AND direction = ? AND material_id = ?";
         Connection c = null; PreparedStatement s = null;
         try {
             c = connection(); s = c.prepareStatement(sql);
             s.setString(1, requireText(userId, "userId"));
-            s.setString(2, requireText(materialId, "materialId"));
+            s.setString(2, requireText(direction, "direction"));
+            s.setString(3, requireText(materialId, "materialId"));
             return s.executeUpdate() > 0;
         } catch (SQLException e) { throw storageException("delete study planning material", e); }
         finally { close(s); close(c); }
@@ -170,12 +172,27 @@ public class PostgresqlStudyCenterStorage extends PostgresqlStorageSupport imple
         try { c = connection(); s = c.createStatement();
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_selection") + " (user_id VARCHAR(128) PRIMARY KEY, direction VARCHAR(64) NOT NULL, target_school VARCHAR(255), updated_at TIMESTAMP NOT NULL)");
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_resource") + " (resource_id VARCHAR(128) PRIMARY KEY, resource_type VARCHAR(64) NOT NULL, payload_json JSONB NOT NULL, pinned BOOLEAN NOT NULL DEFAULT FALSE, hidden BOOLEAN NOT NULL DEFAULT FALSE, published_at TIMESTAMP NOT NULL DEFAULT now())");
-            s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_plan") + " (user_id VARCHAR(128) PRIMARY KEY, direction VARCHAR(64) NOT NULL, plan_json JSONB NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now())");
-            s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_daily_task") + " (user_id VARCHAR(128) NOT NULL, task_id VARCHAR(255) NOT NULL, direction VARCHAR(64), plan_date DATE, task_json JSONB NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now(), PRIMARY KEY (user_id, task_id))");
+            s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_plan") + " (user_id VARCHAR(128) NOT NULL, direction VARCHAR(64) NOT NULL, plan_json JSONB NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now(), PRIMARY KEY (user_id, direction))");
+            s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_daily_task") + " (user_id VARCHAR(128) NOT NULL, task_id VARCHAR(255) NOT NULL, direction VARCHAR(64) NOT NULL, plan_date DATE, task_json JSONB NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now(), PRIMARY KEY (user_id, direction, task_id))");
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_material") + " (material_id VARCHAR(128) PRIMARY KEY, user_id VARCHAR(128) NOT NULL, direction VARCHAR(64) NOT NULL, material_type VARCHAR(64), object_key VARCHAR(1024) NOT NULL, original_filename VARCHAR(512), extraction_status VARCHAR(64), payload_json JSONB NOT NULL, created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL)");
             s.execute("CREATE INDEX IF NOT EXISTS idx_cc_study_material_user_direction ON "
                     + table("cc_study_center_material") + " (user_id, direction, updated_at DESC)");
+            migrateDirectionKeys(s, table("cc_study_center_plan"), "idx_cc_study_plan_user_direction", "user_id, direction");
+            migrateDirectionKeys(s, table("cc_study_center_daily_task"), "idx_cc_study_daily_user_direction_task", "user_id, direction, task_id");
         } catch (SQLException e) { throw storageException("initialize study-center tables", e); }
         finally { close(s); close(c); }
+    }
+    private void migrateDirectionKeys(Statement statement, String tableName,
+                                      String indexName, String columns) throws SQLException {
+        statement.execute("UPDATE " + tableName + " SET direction = 'POSTGRADUATE' WHERE direction IS NULL OR btrim(direction) = ''");
+        statement.execute("ALTER TABLE " + tableName + " ALTER COLUMN direction SET NOT NULL");
+        statement.execute("DO $$ DECLARE pk_name text; BEGIN "
+                + "SELECT conname INTO pk_name FROM pg_constraint WHERE conrelid = '" + tableName + "'::regclass "
+                + "AND contype = 'p' AND NOT EXISTS (SELECT 1 FROM unnest(conkey) AS key_no(attnum) "
+                + "JOIN pg_attribute attr ON attr.attrelid = conrelid AND attr.attnum = key_no.attnum "
+                + "WHERE attr.attname = 'direction'); "
+                + "IF pk_name IS NOT NULL THEN EXECUTE 'ALTER TABLE " + tableName
+                + " DROP CONSTRAINT ' || quote_ident(pk_name); END IF; END $$");
+        statement.execute("CREATE UNIQUE INDEX IF NOT EXISTS " + indexName + " ON " + tableName + " (" + columns + ")");
     }
 }

@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import v620.cc001.base.common.dto.career.CareerRouteContext;
+import v620.cc001.base.common.dto.career.CareerPlanRecordDto;
+import v620.cc001.base.common.dto.career.CareerDailyTaskDto;
 import v620.cc001.base.common.dto.furtherstudy.StudyPlanningMaterialDto;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlStudyCenterStorage;
 
@@ -22,10 +24,11 @@ class PostgresqlStudyPlanningMaterialLiveTest {
     private String userId;
     private String otherUserId;
     private String materialId;
+    private PostgresqlStorageConfig config;
 
     @BeforeEach
     void setUp() {
-        PostgresqlStorageConfig config = PostgresqlStorageConfig.fromSystemProperties();
+        config = PostgresqlStorageConfig.fromSystemProperties();
         Assumptions.assumeTrue(Boolean.parseBoolean(configuredValue(LIVE_TEST_PROPERTY,
                         "CC001_STUDY_POSTGRESQL_LIVE_TEST", "false")),
                 "Set " + LIVE_TEST_PROPERTY + "=true to run PostgreSQL study material tests.");
@@ -40,7 +43,11 @@ class PostgresqlStudyPlanningMaterialLiveTest {
     @AfterEach
     void tearDown() {
         if (storage != null && userId != null && materialId != null) {
-            storage.deleteMaterial(userId, materialId);
+            storage.deleteMaterial(userId, CareerRouteContext.POSTGRADUATE, materialId);
+            storage.deletePlan(userId, CareerRouteContext.POSTGRADUATE);
+            storage.deletePlan(userId, CareerRouteContext.RECOMMENDATION);
+            storage.deleteDailyTasks(userId, CareerRouteContext.POSTGRADUATE);
+            storage.deleteDailyTasks(userId, CareerRouteContext.RECOMMENDATION);
         }
     }
 
@@ -71,6 +78,37 @@ class PostgresqlStudyPlanningMaterialLiveTest {
         assertFalse(storage.deleteMaterial(otherUserId, materialId));
         assertTrue(storage.deleteMaterial(userId, materialId));
         assertNull(storage.findMaterial(userId, materialId));
+    }
+
+    @Test
+    void persistsPlansAndDailyTasksAcrossInstancesWithDirectionIsolation() {
+        CareerPlanRecordDto postgraduate = new CareerPlanRecordDto();
+        postgraduate.setUserId(userId);
+        postgraduate.setStudyDirection(CareerRouteContext.POSTGRADUATE);
+        postgraduate.setTargetRole("考研规划");
+        CareerPlanRecordDto recommendation = new CareerPlanRecordDto();
+        recommendation.setUserId(userId);
+        recommendation.setStudyDirection(CareerRouteContext.RECOMMENDATION);
+        recommendation.setTargetRole("保研规划");
+        storage.savePlan(userId, CareerRouteContext.POSTGRADUATE, postgraduate);
+        storage.savePlan(userId, CareerRouteContext.RECOMMENDATION, recommendation);
+
+        CareerDailyTaskDto postgraduateTask = new CareerDailyTaskDto();
+        postgraduateTask.setTaskId("shared-task");
+        postgraduateTask.setText("考研行动");
+        CareerDailyTaskDto recommendationTask = new CareerDailyTaskDto();
+        recommendationTask.setTaskId("shared-task");
+        recommendationTask.setText("保研行动");
+        storage.saveDailyTask(userId, CareerRouteContext.POSTGRADUATE, postgraduateTask);
+        storage.saveDailyTask(userId, CareerRouteContext.RECOMMENDATION, recommendationTask);
+
+        PostgresqlStudyCenterStorage reloaded = new PostgresqlStudyCenterStorage(config);
+        assertEquals("考研规划", reloaded.loadPlan(userId, CareerRouteContext.POSTGRADUATE).getTargetRole());
+        assertEquals("保研规划", reloaded.loadPlan(userId, CareerRouteContext.RECOMMENDATION).getTargetRole());
+        assertEquals("考研行动", reloaded.findDailyTask(userId, CareerRouteContext.POSTGRADUATE,
+                "shared-task").getText());
+        assertEquals("保研行动", reloaded.findDailyTask(userId, CareerRouteContext.RECOMMENDATION,
+                "shared-task").getText());
     }
 
     private String configuredValue(String property, String environment, String fallback) {

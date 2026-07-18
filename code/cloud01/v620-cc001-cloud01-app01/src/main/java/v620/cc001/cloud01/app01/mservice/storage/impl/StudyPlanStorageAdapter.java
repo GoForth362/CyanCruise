@@ -7,8 +7,9 @@ import v620.cc001.cloud01.app01.mservice.storage.StudyCenterStorage;
 /** Adapts the independent study-plan slot to the shared plan engine. */
 public class StudyPlanStorageAdapter implements CareerPlanStorage {
     private final StudyCenterStorage storage;
-    public StudyPlanStorageAdapter(StudyCenterStorage storage) { this.storage = storage; }
-    public CareerPlanRecordDto load(String userId) { return storage.loadPlan(userId); }
-    public void save(String userId, CareerPlanRecordDto plan) { storage.savePlan(userId, plan); }
-    public boolean exists(String userId) { return storage.loadPlan(userId) != null; }
+    private final String direction;
+    public StudyPlanStorageAdapter(StudyCenterStorage storage, String direction) { this.storage = storage; this.direction = direction; }
+    public CareerPlanRecordDto load(String userId) { return storage.loadPlan(userId, direction); }
+    public void save(String userId, CareerPlanRecordDto plan) { storage.savePlan(userId, direction, plan); }
+    public boolean exists(String userId) { return storage.loadPlan(userId, direction) != null; }
 }

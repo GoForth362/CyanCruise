@@ -18,10 +18,26 @@ dependencies {
 	
 } 
 
+def localDebugProjects = [
+	project(':v620-cc001-base-common'),
+	project(':v620-cc001-base-helper'),
+	project(':v620-cc001-cloud01-app01')
+]
+
+def localDebugJarFiles = localDebugProjects.collect {
+	it.tasks.named('jar').get().archiveFile.get().asFile.canonicalFile
+}.toSet()
+
 task runDebugApplication(type: JavaExec) {
 	group = 'application'
 	description = 'Run v620.cosmic.debug.DebugApplication for local Cosmic debugging.'
 	mainClass = 'v620.cosmic.debug.DebugApplication'
-	classpath = sourceSets.main.runtimeClasspath
+	// Windows 会锁定运行中的 JAR。内部模块改用编译输出目录，避免本地调试进程导致 clean 无法删除 build/libs。
+	classpath = files(
+		sourceSets.main.output,
+		localDebugProjects.collect { it.sourceSets.main.output },
+		configurations.runtimeClasspath.filter { !localDebugJarFiles.contains(it.canonicalFile) }
+	)
+	dependsOn localDebugProjects.collect { it.tasks.named('classes') }
 	workingDir = rootProject.projectDir
 }

@@ -123,12 +123,12 @@ for (const marker of ["isSuccessTitle", "\"success\"", "setTimeout(hide, 3000)"]
 if (!styles.includes(".message-panel.success") || !styles.includes("var(--blue-bg)")) {
   throw new Error("Success messages must use the application light-blue theme");
 }
-for (const forbidden of ["返回升学中心", "返回考研陪伴", "返回保研陪伴", "返回留学陪伴"]) {
-  if (app.includes(forbidden)) throw new Error(`Study companion pages must not render in-page return actions: ${forbidden}`);
+if (app.includes("返回升学中心")) {
+  throw new Error("Study companion homes must remain independent platform entries without an in-page return action");
 }
-for (const route of ["postgraduate", "postgraduate-school", "postgraduate-plan", "postgraduate-mistake", "postgraduate-reexam", "postgraduate-recommendation", "recommendation-ranking", "recommendation-background", "recommendation-material", "recommendation-tutor", "study-abroad", "study-abroad-profile", "study-abroad-language", "study-abroad-school", "study-abroad-statement", "study-abroad-visa"]) {
+for (const route of ["postgraduate", "postgraduate-recommendation", "study-abroad"]) {
   const pattern = new RegExp(`["']?${route}["']?\\s*:\\s*["']{2}`);
-  if (!pattern.test(navigationSource)) throw new Error(`Study companion route must not have a page-level back route: ${route}`);
+  if (!pattern.test(navigationSource)) throw new Error(`Study companion home must not have a page-level back route: ${route}`);
 }
 for (const removedMarker of ["further-study-tools", "<h3>选择具体升学方向</h3>", "路线明确后，可继续使用对应方向的择校、备考、材料和申请工具。"] ) {
   if (app.includes(removedMarker)) {
@@ -261,7 +261,7 @@ for (const marker of ["interviewPage", "interview-history", "interviewHistoryPag
 for (const marker of ["interviewViewMode", "查看问答", "interviewQuestionAnswerPairs", "面试官问题", "我的回答"]) {
   if (!app.includes(marker)) throw new Error(`Missing interview transcript marker: ${marker}`);
 }
-for (const marker of ['backRouteFor(item.key)', 'var label = "返回"', 'data-back-route="']) {
+for (const marker of ['backRouteFor(item.key)', 'var label = labels[parent] || "返回"', 'data-back-route="']) {
   if (!app.includes(marker) && !pageShellSource.includes(marker)) {
     throw new Error(`Missing parent-level page header navigation marker: ${marker}`);
   }
@@ -537,12 +537,38 @@ const routeKeys = new Set(routeMap.routes.map((route) => route.key));
 const mountKeys = new Set();
 const studyRoute = routeMap.routes.find((route) => route.key === "further-study-home");
 const studyMount = routeMap.platformMounts.find((mount) => mount.routeKey === "further-study-home");
+const studyCompanionChildren = {
+  postgraduate: ["postgraduate-school", "postgraduate-plan", "postgraduate-mistake", "postgraduate-reexam"],
+  "postgraduate-recommendation": ["recommendation-ranking", "recommendation-background", "recommendation-material", "recommendation-tutor"],
+  "study-abroad": ["study-abroad-profile", "study-abroad-language", "study-abroad-school", "study-abroad-statement", "study-abroad-visa"]
+};
 
 if (!studyRoute || studyRoute.title !== "升学中心") {
   fail("Further-study route metadata must use the study route map title");
 }
 if (!studyMount || studyMount.title !== "升学中心") {
   fail("Further-study platform mount must use the study route map title");
+}
+for (const [parent, children] of Object.entries(studyCompanionChildren)) {
+  const parentRoute = routeMap.routes.find((route) => route.key === parent);
+  if (!parentRoute || parentRoute.parentRoute) {
+    fail(`Study companion home must remain an independent platform entry: ${parent}`);
+  }
+  for (const child of children) {
+    const childRoute = routeMap.routes.find((route) => route.key === child);
+    if (!childRoute || childRoute.parentRoute !== parent) {
+      fail(`Study companion child route missing parent: ${child} -> ${parent}`);
+    }
+    const mapping = `"${child}": "${parent}"`;
+    if (!navigationSource.includes(mapping) || !app.includes(mapping)) {
+      fail(`Study companion runtime navigation missing parent: ${child} -> ${parent}`);
+    }
+  }
+}
+for (const label of ["返回考研陪伴", "返回保研陪伴", "返回留学陪伴"]) {
+  if (!pageShellSource.includes(label) || !app.includes(label)) {
+    fail(`Study companion child page missing named back action: ${label}`);
+  }
 }
 
 if (!routeMap.identity || !routeMap.identity.production || !routeMap.identity.development) {
@@ -675,6 +701,23 @@ for (const marker of ['data-link="study-resources">全部资源', "function rend
   if (!appSources.includes(marker)) {
     fail(`Missing study resource library marker: ${marker}`);
   }
+}
+
+for (const marker of ['direction === "RECOMMENDATION" ? "生成保研规划"',
+    'direction === "STUDY_ABROAD" ? "生成留学规划"',
+    '&& direction !== "STUDY_ABROAD"',
+    '尚未生成真实" + currentStudyDirectionLabel + "规划',
+    '尚未生成真实" + studyDirectionLabel + "规划',
+    'direction: firstText(getValue(state.studyCenterSelection, "direction"), "")']) {
+  if (!appSources.includes(marker)) {
+    fail(`Missing recommendation planning isolation marker: ${marker}`);
+  }
+}
+const studyMaterialDeleteApi = routeMap.routes.flatMap((route) => route.webApis || [])
+  .find((api) => api.path === "/cc001/study-center/materials/delete");
+if (!studyMaterialDeleteApi || !Array.isArray(studyMaterialDeleteApi.body)
+    || !studyMaterialDeleteApi.body.includes("direction")) {
+  fail("Study planning material deletion must carry the selected direction");
 }
 
 for (const key of ["interview-history", "interview-panorama-history"]) {

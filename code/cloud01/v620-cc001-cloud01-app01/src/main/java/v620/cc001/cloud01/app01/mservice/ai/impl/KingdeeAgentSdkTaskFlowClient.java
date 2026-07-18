@@ -109,7 +109,8 @@ public class KingdeeAgentSdkTaskFlowClient implements AgentPlatformTaskFlowClien
             params.put("question", query);
             return flowRunner.run(config.getTaskFlowCode(), query, params);
         }
-        return runner.run(config.getAgentNumber(), agentQuery(query));
+        return runner.run(config.getAgentNumber(), config.isJsonEncodeAgentQuery()
+                ? agentQuery(query) : query);
     }
 
     private String question(AgentTaskFlowRequestDto request) {

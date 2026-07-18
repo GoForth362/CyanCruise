@@ -3,6 +3,7 @@ package v620.cc001.cloud01.app01.mservice.application;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -83,6 +84,116 @@ class StudyPlanRouteIsolationTest {
     }
 
     @Test
+    void recommendationGenerationUsesAgentInputWithoutTaskFlowCode() {
+        final AtomicReference<AgentTaskFlowRequestDto> captured =
+                new AtomicReference<AgentTaskFlowRequestDto>();
+        AgentPlatformTaskFlowClient client = request -> {
+            captured.set(request);
+            return successfulAgentResponse();
+        };
+        Map<String, AgentPlatformTaskFlowClient> clients =
+                new LinkedHashMap<String, AgentPlatformTaskFlowClient>();
+        clients.put(CareerRouteContext.RECOMMENDATION, client);
+        Map<String, AgentPlatformTaskFlowConfig> configs =
+                new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
+        configs.put(CareerRouteContext.RECOMMENDATION, config("recommendation-flow"));
+
+        new AgentPlatformStudyPlanGenerator(clients, configs).generate(
+                "u1", CareerRouteContext.RECOMMENDATION, "电子科技大学", null);
+
+        assertNotNull(captured.get());
+        assertNull(captured.get().getTaskFlowCode());
+        assertTrue(captured.get().getInputs().get("question").contains("\"direction\":\"RECOMMENDATION\""));
+    }
+
+    @Test
+    void studyAbroadGenerationUsesAgentInputWithoutTaskFlowCodeAndOnlyProvidedMaterials() {
+        final AtomicReference<AgentTaskFlowRequestDto> captured =
+                new AtomicReference<AgentTaskFlowRequestDto>();
+        AgentPlatformTaskFlowClient client = request -> {
+            captured.set(request);
+            return successfulAgentResponse();
+        };
+        Map<String, AgentPlatformTaskFlowClient> clients =
+                new LinkedHashMap<String, AgentPlatformTaskFlowClient>();
+        clients.put(CareerRouteContext.STUDY_ABROAD, client);
+        Map<String, AgentPlatformTaskFlowConfig> configs =
+                new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
+        configs.put(CareerRouteContext.STUDY_ABROAD, config("study-abroad-flow"));
+        StudyPlanningMaterialDto material = new StudyPlanningMaterialDto();
+        material.setMaterialId("abroad-material");
+        material.setTitle("目标项目申请说明");
+        material.setMaterialType("ADMISSION_GUIDE");
+        material.setExtractedText("语言成绩、材料清单和申请条件以项目官方说明为准");
+
+        new AgentPlatformStudyPlanGenerator(clients, configs).generate(
+                "u1", CareerRouteContext.STUDY_ABROAD, "目标院校待确认", null,
+                null, Arrays.asList(material));
+
+        assertNotNull(captured.get());
+        assertNull(captured.get().getTaskFlowCode());
+        String question = captured.get().getInputs().get("question");
+        assertTrue(question.contains("\"direction\":\"STUDY_ABROAD\""));
+        assertTrue(question.contains("目标项目申请说明"));
+        assertTrue(question.contains("语言或标准化考试"));
+        assertTrue(question.contains("不得虚构录取结果"));
+    }
+
+    @Test
+    void studyAbroadRuntimeConfigIgnoresStaleTaskFlowAndRequiresAgentNumber() {
+        String prefix = AgentPlatformStudyPlanGenerator.STUDY_ABROAD_PREFIX;
+        String enabledKey = prefix + ".enabled";
+        String agentKey = prefix + ".agentNumber";
+        String flowKey = prefix + ".taskFlowCode";
+        String oldEnabled = System.getProperty(enabledKey);
+        String oldAgent = System.getProperty(agentKey);
+        String oldFlow = System.getProperty(flowKey);
+        try {
+            System.setProperty(enabledKey, "true");
+            System.clearProperty(agentKey);
+            System.setProperty(flowKey, "stale-study-abroad-flow");
+
+            AgentPlatformTaskFlowConfig withoutAgent =
+                    StudyPlanApplicationService.loadStudyAgentConfig(prefix);
+            assertNull(withoutAgent.getTaskFlowCode());
+            assertFalse(withoutAgent.isAgentSdkAvailable());
+            assertFalse(withoutAgent.isJsonEncodeAgentQuery());
+
+            System.setProperty(agentKey, "agent-study-abroad");
+            AgentPlatformTaskFlowConfig withAgent =
+                    StudyPlanApplicationService.loadStudyAgentConfig(prefix);
+            assertEquals("agent-study-abroad", withAgent.getAgentNumber());
+            assertNull(withAgent.getTaskFlowCode());
+            assertTrue(withAgent.isAgentSdkAvailable());
+            assertFalse(withAgent.isJsonEncodeAgentQuery());
+        } finally {
+            restoreProperty(enabledKey, oldEnabled);
+            restoreProperty(agentKey, oldAgent);
+            restoreProperty(flowKey, oldFlow);
+        }
+    }
+
+    @Test
+    void rejectsTwoConcatenatedJsonObjectsFromStudyAbroadAgent() {
+        AgentPlatformTaskFlowClient client = request -> {
+            AgentTaskFlowResponseDto response = new AgentTaskFlowResponseDto();
+            response.setSuccess(true);
+            response.setAnswer("{\"direction\":\"STUDY_ABROAD\"}" + fullYearAnswer());
+            return response;
+        };
+        Map<String, AgentPlatformTaskFlowClient> clients =
+                new LinkedHashMap<String, AgentPlatformTaskFlowClient>();
+        clients.put(CareerRouteContext.STUDY_ABROAD, client);
+        Map<String, AgentPlatformTaskFlowConfig> configs =
+                new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
+        configs.put(CareerRouteContext.STUDY_ABROAD, config("unused-flow"));
+
+        assertThrows(IllegalStateException.class, () ->
+                new AgentPlatformStudyPlanGenerator(clients, configs).generate(
+                        "u1", CareerRouteContext.STUDY_ABROAD, "target school", null));
+    }
+
+    @Test
     void sendsCurrentUsersExtractedMaterialsToPostgraduateAgent() {
         final AtomicReference<AgentTaskFlowRequestDto> captured = new AtomicReference<AgentTaskFlowRequestDto>();
         AgentPlatformTaskFlowClient client = request -> {
@@ -151,7 +262,7 @@ class StudyPlanRouteIsolationTest {
         assertTrue(question.contains("不得拒绝生成"));
         assertTrue(question.contains("只输出一个 camelCase JSON 对象"));
         assertTrue(question.contains("中文分号分隔 4 至 6 条事实"));
-        assertTrue(question.contains("当前阶段、已有基础、准备差距、考研目标和待确认信息"));
+        assertTrue(question.contains("当前阶段、已有基础、准备差距、升学目标和待确认信息"));
     }
 
     @Test
@@ -279,6 +390,37 @@ class StudyPlanRouteIsolationTest {
     }
 
     @Test
+    void retriesStudyAbroadTaskFlowInsteadOfAcceptingSingleMonthFallback() {
+        final AtomicInteger calls = new AtomicInteger();
+        AgentPlatformTaskFlowClient client = request -> {
+            AgentTaskFlowResponseDto response = new AgentTaskFlowResponseDto();
+            response.setSuccess(true);
+            if (calls.incrementAndGet() == 1) {
+                response.setAnswer("{\"targetRole\":\"study abroad goal\",\"startStateSummary\":\"basis\","
+                        + "\"phases\":[" + phaseJson("short", "month 1") + "],"
+                        + "\"weeklyPlan\":{\"actions\":[\"action\"]},"
+                        + "\"dailySuggestions\":[\"action\"],\"weeklyFocus\":[\"action\"]}");
+            } else {
+                response.setAnswer(fullYearAnswer());
+            }
+            return response;
+        };
+        Map<String, AgentPlatformTaskFlowClient> clients =
+                new LinkedHashMap<String, AgentPlatformTaskFlowClient>();
+        clients.put(CareerRouteContext.STUDY_ABROAD, client);
+        Map<String, AgentPlatformTaskFlowConfig> configs =
+                new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
+        configs.put(CareerRouteContext.STUDY_ABROAD, config("study-abroad-flow"));
+
+        CareerPlanRecordDto plan = new AgentPlatformStudyPlanGenerator(clients, configs)
+                .generate("u1", CareerRouteContext.STUDY_ABROAD, "target school", null);
+
+        assertEquals(2, calls.get());
+        assertEquals(3, plan.getPhases().size());
+        assertEquals(CareerRouteContext.STUDY_ABROAD, plan.getStudyDirection());
+    }
+
+    @Test
     void replacesLegacySingleStartedPhaseWithVerifiedAgentRoute() {
         String userId = "legacy-short-study-route";
         InMemoryStudyCenterStorage storage = new InMemoryStudyCenterStorage();
@@ -326,6 +468,11 @@ class StudyPlanRouteIsolationTest {
         storage.saveSelection(selection);
         CareerPlanRecordDto old = plan(userId, "原保研规划", "study-old");
         old.setStudyDirection(CareerRouteContext.RECOMMENDATION);
+        old.setPhases(Arrays.asList(old.getPhases().get(0),
+                phase("study-old-2", "NOT_STARTED"), phase("study-old-3", "NOT_STARTED")));
+        applyFullYearHorizons(old);
+        old.setPlanningMode("AGENT");
+        old.setAgentStatus("AGENT_GENERATED");
         storage.savePlan(userId, old);
 
         assertThrows(IllegalStateException.class, () -> service.generateAgentPlan(userId));
@@ -526,6 +673,44 @@ class StudyPlanRouteIsolationTest {
         assertTrue(study.getToday(userId).getCompletedCount().intValue() > 0);
     }
 
+    @Test
+    void keepsAllStudyDirectionPlansAndTasksInDifferentSlots() {
+        String userId = "study-direction-isolation-user";
+        InMemoryStudyCenterStorage storage = new InMemoryStudyCenterStorage();
+        CareerPlanRecordDto postgraduate = plan(userId, "考研规划", "postgraduate-phase");
+        postgraduate.setStudyDirection(CareerRouteContext.POSTGRADUATE);
+        CareerPlanRecordDto recommendation = plan(userId, "保研规划", "recommendation-phase");
+        recommendation.setStudyDirection(CareerRouteContext.RECOMMENDATION);
+        CareerPlanRecordDto studyAbroad = plan(userId, "留学规划", "study-abroad-phase");
+        studyAbroad.setStudyDirection(CareerRouteContext.STUDY_ABROAD);
+        storage.savePlan(userId, CareerRouteContext.POSTGRADUATE, postgraduate);
+        storage.savePlan(userId, CareerRouteContext.RECOMMENDATION, recommendation);
+        storage.savePlan(userId, CareerRouteContext.STUDY_ABROAD, studyAbroad);
+
+        CareerDailyTaskDto postgraduateTask = new CareerDailyTaskDto();
+        postgraduateTask.setTaskId("shared-task-id");
+        postgraduateTask.setText("完成考研任务");
+        CareerDailyTaskDto recommendationTask = new CareerDailyTaskDto();
+        recommendationTask.setTaskId("shared-task-id");
+        recommendationTask.setText("完成保研任务");
+        CareerDailyTaskDto studyAbroadTask = new CareerDailyTaskDto();
+        studyAbroadTask.setTaskId("shared-task-id");
+        studyAbroadTask.setText("完成留学任务");
+        storage.saveDailyTask(userId, CareerRouteContext.POSTGRADUATE, postgraduateTask);
+        storage.saveDailyTask(userId, CareerRouteContext.RECOMMENDATION, recommendationTask);
+        storage.saveDailyTask(userId, CareerRouteContext.STUDY_ABROAD, studyAbroadTask);
+
+        assertEquals("考研规划", storage.loadPlan(userId, CareerRouteContext.POSTGRADUATE).getTargetRole());
+        assertEquals("保研规划", storage.loadPlan(userId, CareerRouteContext.RECOMMENDATION).getTargetRole());
+        assertEquals("留学规划", storage.loadPlan(userId, CareerRouteContext.STUDY_ABROAD).getTargetRole());
+        assertEquals("完成考研任务", storage.findDailyTask(userId, CareerRouteContext.POSTGRADUATE,
+                "shared-task-id").getText());
+        assertEquals("完成保研任务", storage.findDailyTask(userId, CareerRouteContext.RECOMMENDATION,
+                "shared-task-id").getText());
+        assertEquals("完成留学任务", storage.findDailyTask(userId, CareerRouteContext.STUDY_ABROAD,
+                "shared-task-id").getText());
+    }
+
     private CareerProfileApplicationService profileService() {
         return new CareerProfileApplicationService(new InMemoryCareerProfileStorage(),
                 new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
@@ -601,5 +786,9 @@ class StudyPlanRouteIsolationTest {
         AgentPlatformTaskFlowConfig config = new AgentPlatformTaskFlowConfig();
         config.setTaskFlowCode(code);
         return config;
+    }
+
+    private void restoreProperty(String key, String value) {
+        if (value == null) System.clearProperty(key); else System.setProperty(key, value);
     }
 }
