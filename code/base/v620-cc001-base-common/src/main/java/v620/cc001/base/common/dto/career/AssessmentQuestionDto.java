@@ -17,6 +17,7 @@ public class AssessmentQuestionDto implements Serializable {
     private String questionType = "SINGLE";
     private String dimensionCode;
     private Integer sortOrder;
+    private boolean published;
     private List<AssessmentOptionDto> options = new ArrayList<AssessmentOptionDto>();
 
     public Long getQuestionId() {
@@ -65,6 +66,14 @@ public class AssessmentQuestionDto implements Serializable {
 
     public void setSortOrder(Integer sortOrder) {
         this.sortOrder = sortOrder;
+    }
+
+    public boolean isPublished() {
+        return published;
+    }
+
+    public void setPublished(boolean published) {
+        this.published = published;
     }
 
     public List<AssessmentOptionDto> getOptions() {

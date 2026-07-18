@@ -15,16 +15,17 @@
     confirm: function (title, text, confirmText, onConfirm, context) {
       var escapeHtml = context.escapeHtml;
       var hide = context.hide;
+      var options = context.options || {};
       hide();
       var previousFocus = document.activeElement;
       var overlay = document.createElement("div");
-      overlay.className = "confirm-overlay";
+      overlay.className = "confirm-overlay" + (options.danger ? " danger-overlay" : "");
       overlay.innerHTML =
-        '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogText">' +
+        '<div class="confirm-dialog' + (options.danger ? ' danger-dialog' : '') + '" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogText">' +
         '<div class="confirm-copy"><strong id="confirmDialogTitle">' + escapeHtml(title) + '</strong>' +
         '<span id="confirmDialogText">' + escapeHtml(text) + '</span></div>' +
         '<div class="confirm-actions">' +
-        '<button type="button" class="secondary" data-confirm-cancel>取消</button>' +
+        (options.acknowledgeOnly ? '' : '<button type="button" class="secondary" data-confirm-cancel>取消</button>') +
         '<button type="button" class="danger" data-confirm-ok>' + escapeHtml(confirmText || "确认") + '</button>' +
         '</div></div>';
       document.body.appendChild(overlay);
@@ -47,7 +48,9 @@
           close();
         }
       });
-      cancel.addEventListener("click", close);
+      if (cancel) {
+        cancel.addEventListener("click", close);
+      }
       ok.addEventListener("click", function () {
         close();
         if (typeof onConfirm === "function") {

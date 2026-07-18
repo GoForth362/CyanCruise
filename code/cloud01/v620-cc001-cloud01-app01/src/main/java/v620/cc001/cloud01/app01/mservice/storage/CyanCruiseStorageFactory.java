@@ -19,18 +19,27 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicInterviewStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicResumeDiagnosisStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicResumeStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssessmentResultStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssessmentCatalog;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssessmentAttemptStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAssistantChatStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerDailyTaskStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryInterviewStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeDiagnosisStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAdminGovernanceStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAssessmentResultStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAssessmentCatalog;
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAssessmentAttemptStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlAssistantChatStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerPlanStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerDailyTaskStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.CosmicCareerDailyTaskStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlInterviewStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlResumeDiagnosisStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlResumeStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryStudyCenterStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlStudyCenterStorage;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.FurtherStudyCompanionStorage;
 
 /**
@@ -42,6 +51,14 @@ public final class CyanCruiseStorageFactory {
 
     private static final InMemoryAdminGovernanceStorage IN_MEMORY_ADMIN_GOVERNANCE_STORAGE =
             new InMemoryAdminGovernanceStorage();
+    private static final InMemoryAssessmentCatalog IN_MEMORY_ASSESSMENT_CATALOG =
+            new InMemoryAssessmentCatalog();
+    private static final InMemoryAssessmentAttemptStorage IN_MEMORY_ASSESSMENT_ATTEMPTS =
+            new InMemoryAssessmentAttemptStorage();
+    private static final InMemoryCareerDailyTaskStorage IN_MEMORY_CAREER_DAILY_TASKS =
+            new InMemoryCareerDailyTaskStorage();
+    private static final InMemoryStudyCenterStorage IN_MEMORY_STUDY_CENTER_STORAGE =
+            new InMemoryStudyCenterStorage();
 
     private CyanCruiseStorageFactory() {
     }
@@ -131,6 +148,33 @@ public final class CyanCruiseStorageFactory {
         return new PostgresqlAssessmentResultStorage(storageConfig);
     }
 
+    public static CareerDailyTaskStorage careerDailyTaskStorage() {
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isCosmicModuleEnabled("career-task")) {
+            return new CosmicCareerDailyTaskStorage(cosmicGateway(storageConfig));
+        }
+        if (storageConfig.isCosmicEnabled()) {
+            return IN_MEMORY_CAREER_DAILY_TASKS;
+        }
+        return new PostgresqlCareerDailyTaskStorage(storageConfig);
+    }
+
+    public static AssessmentCatalog assessmentCatalog() {
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isPostgresqlBackend()) {
+            return new PostgresqlAssessmentCatalog(storageConfig);
+        }
+        return IN_MEMORY_ASSESSMENT_CATALOG;
+    }
+
+    public static AssessmentAttemptStorage assessmentAttemptStorage() {
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isPostgresqlBackend()) {
+            return new PostgresqlAssessmentAttemptStorage(storageConfig);
+        }
+        return IN_MEMORY_ASSESSMENT_ATTEMPTS;
+    }
+
     public static NotificationStorage notificationStorage() {
         PostgresqlStorageConfig storageConfig = config();
         if (storageConfig.isPostgresqlBackend()) {
@@ -161,6 +205,14 @@ public final class CyanCruiseStorageFactory {
             return new PostgresqlFurtherStudyCompanionStorage(storageConfig);
         }
         return new InMemoryFurtherStudyCompanionStorage();
+    }
+
+    public static StudyCenterStorage studyCenterStorage() {
+        PostgresqlStorageConfig storageConfig = config();
+        if (storageConfig.isPostgresqlBackend()) {
+            return new PostgresqlStudyCenterStorage(storageConfig);
+        }
+        return IN_MEMORY_STUDY_CENTER_STORAGE;
     }
 
     private static CosmicDatamodelGateway cosmicGateway(PostgresqlStorageConfig storageConfig) {

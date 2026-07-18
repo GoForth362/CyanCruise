@@ -33,6 +33,7 @@ final class AssessmentResultCopies {
         copy.setSuggestedRoles(source.getSuggestedRoles() == null
                 ? new ArrayList<String>()
                 : new ArrayList<String>(source.getSuggestedRoles()));
+        copy.setAiInterpretation(source.getAiInterpretation());
         return copy;
     }
 }

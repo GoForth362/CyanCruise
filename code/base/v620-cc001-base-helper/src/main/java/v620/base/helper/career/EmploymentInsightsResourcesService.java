@@ -450,10 +450,19 @@ public class EmploymentInsightsResourcesService {
         final int seed = hasText(userId) ? Math.abs(userId.trim().hashCode()) : 0;
         Collections.sort(out, new Comparator<CareerResourceCardDto>() {
             public int compare(CareerResourceCardDto left, CareerResourceCardDto right) {
+                int pinned = bool(right == null ? null : right.getPinned())
+                        - bool(left == null ? null : left.getPinned());
+                if (pinned != 0) {
+                    return pinned;
+                }
                 return stableRank(left, seed) - stableRank(right, seed);
             }
         });
         return out;
+    }
+
+    private int bool(Boolean value) {
+        return Boolean.TRUE.equals(value) ? 1 : 0;
     }
 
     private int stableRank(CareerResourceCardDto card, int seed) {

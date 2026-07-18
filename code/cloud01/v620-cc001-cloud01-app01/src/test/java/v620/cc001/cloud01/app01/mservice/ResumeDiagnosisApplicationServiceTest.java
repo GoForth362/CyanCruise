@@ -32,8 +32,10 @@ import v620.cc001.base.common.dto.career.ResumeKeywordStatusDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.FileUploadRequest;
 import v620.cc001.base.common.dto.career.FileUploadResult;
+import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -44,6 +46,66 @@ class ResumeDiagnosisApplicationServiceTest {
 
     @TempDir
     File tempDir;
+
+    @Test
+    void reusesDiagnosisForIdenticalInputButReanalyzesWhenJobDescriptionChanges() {
+        ResumeApplicationService resumeService = resumeService(
+                new InMemoryResumeStorage(), new InMemoryCareerProfileStorage());
+        ResumeRecordDto resume = resumeService.create("diagnosis-cache-user", request());
+        final AtomicInteger calls = new AtomicInteger();
+        ResumeDiagnosisApplicationService service = new ResumeDiagnosisApplicationService(
+                resumeService,
+                new InMemoryResumeDiagnosisStorage(),
+                new ResumeDiagnosisAnalyzer() {
+                    public String analyze(ResumeDiagnosisRequest request, String resumeText) {
+                        calls.incrementAndGet();
+                        return "{\"overallScore\":80}";
+                    }
+                },
+                new ResumeDiagnosisService());
+        ResumeDiagnosisRequest first = new ResumeDiagnosisRequest();
+        first.setResumeId(resume.getResumeId());
+        first.setJobDescription("Java and SQL");
+
+        service.diagnose("diagnosis-cache-user", first);
+        ResumeDiagnosisRequest same = new ResumeDiagnosisRequest();
+        same.setResumeId(resume.getResumeId());
+        same.setJobDescription("Java and SQL");
+        service.diagnose("diagnosis-cache-user", same);
+        ResumeDiagnosisRequest changed = new ResumeDiagnosisRequest();
+        changed.setResumeId(resume.getResumeId());
+        changed.setJobDescription("Frontend and TypeScript");
+        service.diagnose("diagnosis-cache-user", changed);
+
+        assertEquals(2, calls.get());
+    }
+
+    @Test
+    void savesChangedDiagnosisAsHistoryAndAllowsOwnerToDeleteIt() {
+        ResumeApplicationService resumeService = resumeService(
+                new InMemoryResumeStorage(), new InMemoryCareerProfileStorage());
+        ResumeRecordDto resume = resumeService.create("diagnosis-history-user", request());
+        InMemoryResumeDiagnosisStorage storage = new InMemoryResumeDiagnosisStorage();
+        ResumeDiagnosisApplicationService service = diagnosisService(resumeService, storage, "{\"overallScore\":80}");
+        ResumeDiagnosisRequest first = new ResumeDiagnosisRequest();
+        first.setResumeId(resume.getResumeId());
+        first.setJobDescription("Java");
+        ResumeDiagnosisResultDto firstResult = service.diagnose("diagnosis-history-user", first);
+        ResumeDiagnosisRequest changed = new ResumeDiagnosisRequest();
+        changed.setResumeId(resume.getResumeId());
+        changed.setJobDescription("Java and SQL");
+        ResumeDiagnosisResultDto changedResult = service.diagnose("diagnosis-history-user", changed);
+
+        assertEquals(2, service.listDiagnosisHistory("diagnosis-history-user", resume.getResumeId()).size());
+        assertTrue(service.deleteDiagnosisHistory("diagnosis-history-user", resume.getResumeId(), firstResult.getDiagnosisId()));
+        assertEquals(1, service.listDiagnosisHistory("diagnosis-history-user", resume.getResumeId()).size());
+        assertEquals(changedResult.getDiagnosisId(), service.getDiagnosis("diagnosis-history-user", resume.getResumeId()).getDiagnosisId());
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                service.listDiagnosisHistory("other-user", resume.getResumeId());
+            }
+        }));
+    }
 
     @Test
     void diagnosisResultCarriesRevisionSuggestionsAndContextSources() {
@@ -62,6 +124,38 @@ class ResumeDiagnosisApplicationServiceTest {
         assertEquals(Integer.valueOf(1), result.getRevisionPlan().getHighPrioritySuggestions());
         assertTrue(result.getContextSources().contains("resume:" + resume.getResumeId()));
         assertTrue(result.getContextSources().contains("request.jobDescription"));
+    }
+
+    @Test
+    void diagnosisUsesSelfProfileSupplementAsUserProvidedFact() {
+        CareerProfileStorage profileStorage = new InMemoryCareerProfileStorage();
+        CareerProfileApplicationService profiles = profileService(profileStorage);
+        CareerProfileOnboardingRequest onboarding = new CareerProfileOnboardingRequest();
+        onboarding.setSelfProfileSupplement("课程项目中负责接口联调，每周可投入 12 小时");
+        profiles.saveOnboarding("diagnosis-supplement-user", onboarding);
+
+        ResumeApplicationService resumeService = resumeService(new InMemoryResumeStorage(), profileStorage);
+        ResumeRecordDto resume = resumeService.create("diagnosis-supplement-user", request());
+        final String[] capturedContext = new String[1];
+        ResumeDiagnosisApplicationService service = new ResumeDiagnosisApplicationService(
+                resumeService,
+                new InMemoryResumeDiagnosisStorage(),
+                new ResumeDiagnosisAnalyzer() {
+                    public String analyze(ResumeDiagnosisRequest request, String resumeText) {
+                        capturedContext[0] = request.getProfileContext();
+                        return "{\"overallScore\":80}";
+                    }
+                },
+                new ResumeDiagnosisService(),
+                profiles);
+        ResumeDiagnosisRequest diagnosisRequest = new ResumeDiagnosisRequest();
+        diagnosisRequest.setResumeId(resume.getResumeId());
+
+        ResumeDiagnosisResultDto result = service.diagnose("diagnosis-supplement-user", diagnosisRequest);
+
+        assertTrue(capturedContext[0].contains("selfProfileSupplement(user-provided-fact)="));
+        assertTrue(capturedContext[0].contains("课程项目中负责接口联调"));
+        assertTrue(result.getContextSources().contains("profile.onboarding.selfProfileSupplement"));
     }
 
     @Test

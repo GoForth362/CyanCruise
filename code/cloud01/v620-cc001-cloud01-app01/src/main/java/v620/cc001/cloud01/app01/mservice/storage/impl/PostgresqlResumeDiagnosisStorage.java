@@ -8,6 +8,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PostgresqlResumeDiagnosisStorage extends PostgresqlStorageSupport implements ResumeDiagnosisStorage {
 
@@ -30,6 +34,7 @@ public class PostgresqlResumeDiagnosisStorage extends PostgresqlStorageSupport i
         PreparedStatement statement = null;
         try {
             connection = connection();
+            ensureHistoryTable(connection);
             statement = connection.prepareStatement(sql);
             statement.setLong(1, result.getResumeId().longValue());
             if (result.getOverallScore() == null) {
@@ -39,6 +44,21 @@ public class PostgresqlResumeDiagnosisStorage extends PostgresqlStorageSupport i
             }
             statement.setString(3, toJson(result));
             statement.executeUpdate();
+            close(statement);
+            statement = connection.prepareStatement("INSERT INTO " + table("cc_resume_diagnosis_history")
+                    + " (user_id, resume_id, target_job, overall_score, payload_json, created_at)"
+                    + " VALUES (?, ?, ?, ?, ?::jsonb, ?)", Statement.RETURN_GENERATED_KEYS);
+            statement.setString(1, result.getUserId());
+            statement.setLong(2, result.getResumeId().longValue());
+            statement.setString(3, result.getTargetJob());
+            if (result.getOverallScore() == null) statement.setNull(4, java.sql.Types.INTEGER);
+            else statement.setInt(4, result.getOverallScore().intValue());
+            statement.setString(5, toJson(result));
+            statement.setTimestamp(6, java.sql.Timestamp.valueOf(result.getDiagnosedAt() == null ? LocalDateTime.now() : result.getDiagnosedAt()));
+            statement.executeUpdate();
+            ResultSet keys = statement.getGeneratedKeys();
+            if (keys.next()) result.setDiagnosisId(Long.valueOf(keys.getLong(1)));
+            close(keys);
             return result;
         } catch (SQLException e) {
             throw storageException("save resume diagnosis", e);
@@ -65,6 +85,58 @@ public class PostgresqlResumeDiagnosisStorage extends PostgresqlStorageSupport i
             throw storageException("load resume diagnosis", e);
         } finally {
             close(resultSet);
+            close(statement);
+            close(connection);
+        }
+    }
+
+    public List<ResumeDiagnosisResultDto> listDiagnoses(String userId, Long resumeId) {
+        String sql = "SELECT diagnosis_id, payload_json, created_at FROM " + table("cc_resume_diagnosis_history")
+                + " WHERE user_id = ? AND resume_id = ? ORDER BY created_at DESC, diagnosis_id DESC";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+        List<ResumeDiagnosisResultDto> result = new ArrayList<ResumeDiagnosisResultDto>();
+        try {
+            connection = connection();
+            ensureHistoryTable(connection);
+            statement = connection.prepareStatement(sql);
+            statement.setString(1, userId);
+            statement.setLong(2, resumeId == null ? -1L : resumeId.longValue());
+            resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                ResumeDiagnosisResultDto item = readJson(resultSet.getString("payload_json"), ResumeDiagnosisResultDto.class, null);
+                if (item != null) {
+                    item.setDiagnosisId(Long.valueOf(resultSet.getLong("diagnosis_id")));
+                    item.setDiagnosedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+                    result.add(item);
+                }
+            }
+            return result;
+        } catch (SQLException e) {
+            throw storageException("list resume diagnosis history", e);
+        } finally {
+            close(resultSet);
+            close(statement);
+            close(connection);
+        }
+    }
+
+    public boolean deleteDiagnosis(String userId, Long diagnosisId) {
+        if (diagnosisId == null) return false;
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = connection();
+            ensureHistoryTable(connection);
+            statement = connection.prepareStatement("DELETE FROM " + table("cc_resume_diagnosis_history")
+                    + " WHERE diagnosis_id = ? AND user_id = ?");
+            statement.setLong(1, diagnosisId.longValue());
+            statement.setString(2, userId);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw storageException("delete resume diagnosis history", e);
+        } finally {
             close(statement);
             close(connection);
         }
@@ -118,6 +190,21 @@ public class PostgresqlResumeDiagnosisStorage extends PostgresqlStorageSupport i
             close(resultSet);
             close(statement);
             close(connection);
+        }
+    }
+
+    private void ensureHistoryTable(Connection connection) throws SQLException {
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+            statement.execute("CREATE TABLE IF NOT EXISTS " + table("cc_resume_diagnosis_history")
+                    + " (diagnosis_id BIGSERIAL PRIMARY KEY, user_id VARCHAR(128) NOT NULL, resume_id BIGINT NOT NULL,"
+                    + " target_job TEXT, overall_score INTEGER, payload_json JSONB NOT NULL,"
+                    + " created_at TIMESTAMP NOT NULL DEFAULT now())");
+            statement.execute("CREATE INDEX IF NOT EXISTS idx_cc_resume_diagnosis_history_user_resume"
+                    + " ON " + table("cc_resume_diagnosis_history") + " (user_id, resume_id, created_at DESC)");
+        } finally {
+            close(statement);
         }
     }
 }

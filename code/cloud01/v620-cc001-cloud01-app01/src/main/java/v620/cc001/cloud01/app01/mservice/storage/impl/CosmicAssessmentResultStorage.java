@@ -40,6 +40,17 @@ public class CosmicAssessmentResultStorage implements AssessmentResultStorage {
         return toDto(record);
     }
 
+    public void updateResult(String userId, AssessmentScoreResult result) {
+        if (result == null || result.getRecordId() == null) throw new IllegalArgumentException("assessment result recordId is required");
+        CosmicDatamodelRecord record = gateway.load(CyanCruiseDatamodelObjects.ASSESSMENT_RECORD, result.getRecordId());
+        DatamodelOwnershipGuard.requireUser(userId, record, CyanCruiseDatamodelObjects.ASSESSMENT_RECORD);
+        record.set("result_summary", result.getResultSummary())
+                .set("result_json", result.getDimensionCounts())
+                .set("answers_json", result.getAnswers())
+                .set("ai_interpretation_json", result.getAiInterpretation());
+        gateway.save(record);
+    }
+
     public List<AssessmentScoreResult> listResults(final String userId) {
         List<CosmicDatamodelRecord> rows = gateway.list(CyanCruiseDatamodelObjects.ASSESSMENT_RECORD, new CosmicRecordFilter() {
             public boolean matches(CosmicDatamodelRecord record) {
@@ -62,6 +73,7 @@ public class CosmicAssessmentResultStorage implements AssessmentResultStorage {
         result.setResultSummary(DatamodelFieldMapper.asString(record.get("result_summary")));
         result.setDimensionCounts((java.util.Map<String, Integer>) record.get("result_json"));
         result.setAnswers((java.util.List<v620.cc001.base.common.dto.career.AssessmentAnswerSnapshot>) record.get("answers_json"));
+        result.setAiInterpretation((AssessmentScoreResult.AiInterpretation) record.get("ai_interpretation_json"));
         return result;
     }
 }

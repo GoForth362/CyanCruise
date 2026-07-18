@@ -205,6 +205,13 @@ public class InMemoryAdminGovernanceStorage implements AdminGovernanceStorage {
         return true;
     }
 
+    public int deleteAuditLogsBefore(LocalDateTime cutoff) {
+        if (cutoff == null) return 0;
+        int before = auditLogs.size();
+        auditLogs.removeIf(log -> log != null && log.getCreatedAt() != null && log.getCreatedAt().isBefore(cutoff));
+        return before - auditLogs.size();
+    }
+
     public Map<String, List<AdminInterviewSummaryDto>> listInterviewsByUsers(List<AdminUserDto> users) {
         Map<String, List<AdminInterviewSummaryDto>> out = new LinkedHashMap<String, List<AdminInterviewSummaryDto>>();
         if (users == null) return out;

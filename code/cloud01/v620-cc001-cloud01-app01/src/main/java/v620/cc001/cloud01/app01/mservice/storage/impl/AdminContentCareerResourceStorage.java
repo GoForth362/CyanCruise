@@ -91,6 +91,7 @@ public class AdminContentCareerResourceStorage implements CareerResourceStorage 
         card.setImageUrl(item.getImageUrl());
         card.setAuthor("CyanCruise");
         card.setPublishedAt(item.getPublishedAt());
+        card.setPinned(item.getPinned());
         return card;
     }
 

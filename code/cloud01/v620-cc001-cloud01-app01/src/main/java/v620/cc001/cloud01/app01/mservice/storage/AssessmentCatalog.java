@@ -14,4 +14,6 @@ public interface AssessmentCatalog {
     AssessmentQuestionDto saveQuestion(Long scaleId, AssessmentQuestionDto question);
 
     boolean deleteQuestion(Long scaleId, Long questionId);
+
+    AssessmentScaleDto saveAnswerQuestionCount(Long scaleId, Integer answerQuestionCount);
 }

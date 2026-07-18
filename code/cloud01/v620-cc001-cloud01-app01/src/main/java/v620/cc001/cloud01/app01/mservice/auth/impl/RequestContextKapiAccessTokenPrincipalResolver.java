@@ -21,8 +21,7 @@ public class RequestContextKapiAccessTokenPrincipalResolver implements KapiAcces
                         invoke(context, "getUserNo"),
                         invoke(context, "getUserCode"),
                         invoke(context, "getUserName"),
-                        invoke(context, "getUserId"),
-                        String.valueOf(context.getUserId()));
+                        String.valueOf(context.getCurrUserId()));
                 accountId = firstText(
                         invoke(context, "getAccountId"),
                         invoke(context, "getAccountID"),

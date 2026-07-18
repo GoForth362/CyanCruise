@@ -38,20 +38,17 @@ class AssessmentWebApiTest {
         AssessmentWebApi webApi = new AssessmentWebApi(new AssessmentApplicationService(
                 new AssessmentScoringService(), profileService));
 
-        AssessmentScoreResult result = webApi.submit(userId, mbtiScale(),
-                answers(answer(1L, 11L), answer(2L, 21L), answer(3L, 31L), answer(4L, 41L)));
+        AssessmentScaleDto attempt = webApi.start(userId, Long.valueOf(1001L));
+        AssessmentScoreResult result = webApi.submit(userId, null, answersForAttempt(attempt));
 
         UserProfileSnapshot snapshot = profileService.getSnapshot(userId);
         CareerUserProfileDto profile = profileService.getProfile(userId);
 
         assertEquals("COMPLETED", result.getStatus());
-        assertEquals("ENTP", result.getResultSummary());
-        assertEquals(Integer.valueOf(1), result.getDimensionCounts().get("E"));
-        assertEquals(4, result.getAnswers().size());
+        assertEquals(16, result.getAnswers().size());
         assertNotNull(snapshot.getAssessment());
-        assertEquals(Long.valueOf(100L), snapshot.getAssessment().getScaleId());
-        assertEquals("MBTI", snapshot.getAssessment().getScaleTitle());
-        assertEquals("ENTP", snapshot.getAssessment().getSummary());
+        assertEquals(Long.valueOf(1001L), snapshot.getAssessment().getScaleId());
+        assertEquals(result.getResultSummary(), snapshot.getAssessment().getSummary());
         assertTrue(profile.getReadiness().getHasAssessment().booleanValue());
     }
 
@@ -66,21 +63,11 @@ class AssessmentWebApiTest {
                 profileService));
 
         AssessmentScaleDto scale = webApi.questions(Long.valueOf(1001L));
-        AssessmentSubmitRequest request = answers(answer(100101L, 100101L), answer(100102L, 100201L),
-                answer(100103L, 100301L), answer(100104L, 100401L),
-                answer(100105L, 100502L), answer(100106L, 100602L),
-                answer(100107L, 100702L), answer(100108L, 100802L),
-                answer(100109L, 100901L), answer(100110L, 101001L),
-                answer(100111L, 101101L), answer(100112L, 101201L),
-                answer(100113L, 101302L), answer(100114L, 101402L),
-                answer(100115L, 101502L), answer(100116L, 101602L));
-        request.setScaleId(scale.getScaleId());
-
-        AssessmentScoreResult result = webApi.submit(userId, null, request);
+        AssessmentScaleDto attempt = webApi.start(userId, Long.valueOf(1001L));
+        AssessmentScoreResult result = webApi.submit(userId, null, answersForAttempt(attempt));
 
         assertEquals(Integer.valueOf(16), webApi.scales().get(0).getQuestionCount());
         assertEquals(16, scale.getQuestions().size());
-        assertEquals("ENTP", result.getResultSummary());
         assertEquals(1, webApi.records(userId).size());
         assertEquals(result.getRecordId(), webApi.record(userId, result.getRecordId()).getRecordId());
     }
@@ -100,9 +87,9 @@ class AssessmentWebApiTest {
         AssessmentQuestionDto saved = webApi.saveQuestion(Long.valueOf(1002L), question);
 
         assertNotNull(saved.getQuestionId());
-        assertEquals(Integer.valueOf(13), webApi.questions(Long.valueOf(1002L)).getQuestionCount());
+        assertEquals(Integer.valueOf(13), webApi.questions(Long.valueOf(1002L)).getPoolQuestionCount());
         assertEquals(Boolean.TRUE, webApi.deleteQuestion(Long.valueOf(1002L), saved.getQuestionId()));
-        assertEquals(Integer.valueOf(12), webApi.questions(Long.valueOf(1002L)).getQuestionCount());
+        assertEquals(Integer.valueOf(12), webApi.questions(Long.valueOf(1002L)).getPoolQuestionCount());
     }
 
     private CareerProfileApplicationService profileService() {
@@ -147,6 +134,18 @@ class AssessmentWebApiTest {
         Map<Long, Long> answers = new LinkedHashMap<Long, Long>();
         for (long[] entry : entries) {
             answers.put(Long.valueOf(entry[0]), Long.valueOf(entry[1]));
+        }
+        request.setAnswers(answers);
+        return request;
+    }
+
+    private AssessmentSubmitRequest answersForAttempt(AssessmentScaleDto attempt) {
+        AssessmentSubmitRequest request = new AssessmentSubmitRequest();
+        request.setScaleId(attempt.getScaleId());
+        request.setAttemptId(attempt.getAttemptId());
+        Map<Long, Long> answers = new LinkedHashMap<Long, Long>();
+        for (AssessmentQuestionDto question : attempt.getQuestions()) {
+            answers.put(question.getQuestionId(), question.getOptions().get(0).getOptionId());
         }
         request.setAnswers(answers);
         return request;

@@ -30,7 +30,7 @@ public class InMemoryAssessmentCatalog implements AssessmentCatalog {
         List<AssessmentScaleDto> out = new ArrayList<AssessmentScaleDto>();
         for (AssessmentScaleDto scale : scales) {
             AssessmentScaleDto summary = copyScale(scale, false);
-            summary.setQuestionCount(Integer.valueOf(scale.getQuestions() == null ? 0 : scale.getQuestions().size()));
+            applyCounts(summary, scale.getQuestions() == null ? 0 : scale.getQuestions().size());
             out.add(summary);
         }
         return out;
@@ -104,6 +104,18 @@ public class InMemoryAssessmentCatalog implements AssessmentCatalog {
         scale.setQuestions(questions);
         withQuestionCount(scale);
         return deleted;
+    }
+
+    public synchronized AssessmentScaleDto saveAnswerQuestionCount(Long scaleId, Integer answerQuestionCount) {
+        AssessmentScaleDto scale = findScale(scaleId);
+        int poolSize = scale == null || scale.getQuestions() == null ? 0 : scale.getQuestions().size();
+        if (scale == null || answerQuestionCount == null
+                || answerQuestionCount.intValue() < 1 || answerQuestionCount.intValue() > poolSize) {
+            throw new IllegalArgumentException("作答题数必须在 1 到题库总数之间");
+        }
+        scale.setAnswerQuestionCount(answerQuestionCount);
+        withQuestionCount(scale);
+        return copyScale(scale, false);
     }
 
     private AssessmentScaleDto findScale(Long scaleId) {
@@ -311,8 +323,20 @@ public class InMemoryAssessmentCatalog implements AssessmentCatalog {
     }
 
     private AssessmentScaleDto withQuestionCount(AssessmentScaleDto scale) {
-        scale.setQuestionCount(Integer.valueOf(scale.getQuestions() == null ? 0 : scale.getQuestions().size()));
+        int poolSize = scale.getQuestions() == null ? 0 : scale.getQuestions().size();
+        applyCounts(scale, poolSize);
         return scale;
+    }
+
+    private void applyCounts(AssessmentScaleDto scale, int poolSize) {
+        int configured = scale.getAnswerQuestionCount() == null
+                ? poolSize : Math.min(scale.getAnswerQuestionCount().intValue(), poolSize);
+        if (poolSize > 0 && configured < 1) {
+            configured = poolSize;
+        }
+        scale.setPoolQuestionCount(Integer.valueOf(poolSize));
+        scale.setAnswerQuestionCount(Integer.valueOf(configured));
+        scale.setQuestionCount(Integer.valueOf(configured));
     }
 
     private AssessmentQuestionDto paired(long scaleId, long sortOrder, String text,
@@ -333,6 +357,7 @@ public class InMemoryAssessmentCatalog implements AssessmentCatalog {
         question.setQuestionType("SINGLE");
         question.setDimensionCode(dimension);
         question.setSortOrder(Integer.valueOf((int) sortOrder));
+        question.setPublished(true);
         left.setQuestionId(question.getQuestionId());
         right.setQuestionId(question.getQuestionId());
         question.setOptions(Arrays.asList(left, right));
@@ -357,6 +382,9 @@ public class InMemoryAssessmentCatalog implements AssessmentCatalog {
         copy.setDescription(source.getDescription());
         copy.setVersion(source.getVersion());
         copy.setQuestionCount(source.getQuestionCount());
+        copy.setPoolQuestionCount(source.getPoolQuestionCount());
+        copy.setAnswerQuestionCount(source.getAnswerQuestionCount());
+        copy.setAttemptId(source.getAttemptId());
         if (includeQuestions) {
             List<AssessmentQuestionDto> questions = new ArrayList<AssessmentQuestionDto>();
             for (AssessmentQuestionDto question : source.getQuestions()) {
@@ -377,6 +405,7 @@ public class InMemoryAssessmentCatalog implements AssessmentCatalog {
         copy.setQuestionType(source.getQuestionType());
         copy.setDimensionCode(source.getDimensionCode());
         copy.setSortOrder(source.getSortOrder());
+        copy.setPublished(source.isPublished());
         List<AssessmentOptionDto> options = new ArrayList<AssessmentOptionDto>();
         for (AssessmentOptionDto option : source.getOptions()) {
             options.add(copyOption(option));

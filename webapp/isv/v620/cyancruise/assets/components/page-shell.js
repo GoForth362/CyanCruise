@@ -5,11 +5,11 @@
 
   components.pageShell = {
     name: "page-shell",
-    description: "页面壳组件，承接普通页面、功能页面和页面顶部动作按钮。",
+    description: "页面壳组件，承接普通页面和功能页面。",
     feature: function (item, title, summary, innerHtml, context) {
       context.host.innerHTML =
         '<header class="feature-page-header">' +
-        '<div><p class="eyebrow">CyanCruise</p><h2>' + context.escapeHtml(title) + '</h2><p class="lead">' + context.escapeHtml(summary) + '</p></div>' +
+        '<div><p class="eyebrow">青途启航</p><h2>' + context.escapeHtml(title) + '</h2><p class="lead">' + context.escapeHtml(summary) + '</p></div>' +
         this.actions(item, context) +
         '</header>' +
         '<div class="feature-content">' + innerHtml + '</div>';
@@ -34,18 +34,16 @@
         '</header><div class="panel-grid">' + innerHtml + '</div>';
     },
     actions: function (item, context) {
-      if (item.key === "workbench" || (item.key === "assessment" && context.state.assessmentSelectedScaleId)) {
+      if (item.key === "assessment" && context.state && context.state.assessmentSelectedScaleId) {
+        return '<div class="page-actions"><button type="button" class="secondary" data-assessment-back>返回</button></div>';
+      }
+      var parent = typeof context.backRouteFor === "function" ? context.backRouteFor(item.key) : "";
+      if (!parent || parent === item.key) {
         return "";
       }
-      var back = context.backRouteFor(item.key);
-      var actions = [];
-      if (item.key === "interview" && (context.state.activeInterview || context.state.interviewReport || context.state.interviewViewMode === "transcript")) {
-        actions.push('<button type="button" class="secondary" data-interview-action="leave">返回 AI 面试中心</button>');
-      } else if (back) {
-        actions.push('<button type="button" class="secondary" data-back-route="' + context.escapeHtml(back) + '">返回</button>');
-      }
-      actions.push('<button type="button" class="secondary" data-link="workbench">首页</button>');
-      return actions.length ? '<div class="page-actions">' + actions.join("") + '</div>' : "";
+      var label = "返回";
+      return '<div class="page-actions"><button type="button" class="secondary" data-back-route="' +
+        context.escapeHtml(parent) + '">' + label + '</button></div>';
     }
   };
 }(window));

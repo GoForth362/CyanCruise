@@ -2,9 +2,7 @@
 
 ## Purpose
 定义 CyanCruise 考研陪伴能力，覆盖择校择专业、复习计划、错题解析、复试准备和对应 Cosmic WebAPI 契约。
-
 ## Requirements
-
 ### Requirement: 提供考研陪伴入口
 CyanCruise SHALL 提供考研陪伴页面，支持用户围绕择校择专业、复习计划、错题解析和复试准备完成一个连续的考研规划流程。页面和 WebAPI 可见文案 SHALL 使用普通中文表达，不得把内部接口名、代码枚举或行业黑话作为主要用户信息。
 
@@ -89,4 +87,17 @@ Postgraduate exam WebAPI SHALL save the request and result as the current user's
 #### Scenario: Save re-exam preparation result
 - **WHEN** a user generates re-exam preparation content
 - **THEN** the WebAPI SHALL persist the preparation request and checklist result as a further-study record
+
+### Requirement: 考研陪伴 SHALL 提供基于用户资料的完整路线入口
+考研陪伴 SHALL 将当前用户画像、目标院校和用户上传资料接入升学中心的完整路线生成，而不是只生成孤立的复习建议。
+
+#### Scenario: 从升学中心生成考研完整路线
+- **WHEN** 用户选择考研方向、保存目标院校并生成升学规划
+- **THEN** 系统 SHALL 调用考研规划智能体生成阶段路线、每周计划和每日行动
+- **AND** 生成结果 SHALL 保存为当前用户的考研路线
+
+#### Scenario: 用户资料发生变化
+- **WHEN** 用户新增或删除考研资料后再次确认生成路线
+- **THEN** 任务流输入 SHALL 使用最新的该用户资料集合
+- **AND** 已开始或已完成阶段 SHALL 按路线进度保护规则保留
 

@@ -100,6 +100,28 @@ public class PostgresqlAssessmentResultStorage extends PostgresqlStorageSupport 
         }
     }
 
+    public void updateResult(String userId, AssessmentScoreResult result) {
+        if (result == null || result.getRecordId() == null) {
+            throw new IllegalArgumentException("assessment result recordId is required");
+        }
+        String sql = "UPDATE " + table("cc_assessment_record") + " SET payload_json = ?::jsonb WHERE user_id = ? AND record_id = ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = connection();
+            statement = connection.prepareStatement(sql);
+            statement.setString(1, toJson(result));
+            statement.setString(2, requireText(userId, "userId"));
+            statement.setLong(3, result.getRecordId().longValue());
+            if (statement.executeUpdate() != 1) throw new IllegalArgumentException("assessment result does not exist or is not owned by user");
+        } catch (SQLException e) {
+            throw storageException("update assessment result", e);
+        } finally {
+            close(statement);
+            close(connection);
+        }
+    }
+
     public List<AssessmentScoreResult> listResults(String userId) {
         String sql = "SELECT payload_json FROM " + table("cc_assessment_record")
                 + " WHERE user_id = ? ORDER BY created_at DESC, record_id DESC";

@@ -9,7 +9,6 @@ public class AdminBroadcastRequest implements Serializable {
     private List<String> userIds;
     private String title;
     private String content;
-    private String link;
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
     public List<String> getUserIds() { return userIds; }
@@ -18,6 +17,4 @@ public class AdminBroadcastRequest implements Serializable {
     public void setTitle(String title) { this.title = title; }
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
-    public String getLink() { return link; }
-    public void setLink(String link) { this.link = link; }
 }

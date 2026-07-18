@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EmploymentInsightsResourcesApplicationServiceTest {
 
@@ -87,12 +88,19 @@ class EmploymentInsightsResourcesApplicationServiceTest {
     void resourcesIncludeVisibleAdminContentAndSkipHiddenContent() {
         InMemoryAdminGovernanceStorage adminStorage = new InMemoryAdminGovernanceStorage();
         AdminContentItemDto visible = new AdminContentItemDto();
+        visible.setContentId("z");
         visible.setType("ARTICLE");
         visible.setTitle("管理员发布的求职文章");
         visible.setSummary("这是一条后台配置的文章。");
         visible.setSourceUrl("https://example.com/article");
         visible.setPinned(Boolean.TRUE);
         adminStorage.saveContent(visible);
+        AdminContentItemDto unpinned = new AdminContentItemDto();
+        unpinned.setContentId("a");
+        unpinned.setType("ARTICLE");
+        unpinned.setTitle("Unpinned article");
+        unpinned.setSourceUrl("https://example.com/unpinned-article");
+        adminStorage.saveContent(unpinned);
         AdminContentItemDto hidden = new AdminContentItemDto();
         hidden.setType("VIDEO");
         hidden.setTitle("隐藏视频");
@@ -109,6 +117,8 @@ class EmploymentInsightsResourcesApplicationServiceTest {
         CareerResourceFeedDto feed = service.getResources(null);
 
         assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, feed.getStatus());
+        assertEquals(visible.getTitle(), feed.getArticles().get(0).getTitle());
+        assertTrue(Boolean.TRUE.equals(feed.getArticles().get(0).getPinned()));
         assertContainsSource(feed, "https://example.com/article");
         assertMissingSource(feed, "https://example.com/hidden-video");
     }

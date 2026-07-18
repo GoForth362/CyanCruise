@@ -4,22 +4,36 @@
   var PAGE_SIZE = 10;
   var pageByUser = {};
   var dataByUser = {};
+  var selectedMessageByUser = {};
   var registerPage = window.CYANCRUISE_REGISTER_PAGE_MODULE || function () {};
   var attachRenderer = window.CYANCRUISE_ATTACH_PAGE_RENDERER || function () {};
 
   registerPage("messages", ["messages"], "消息中心");
+  registerPage("message-detail", ["message-detail"], "消息详情");
 
-  attachRenderer("messages", function (item, context) {
+  attachRenderer("messages", renderMessagesRoute);
+  attachRenderer("message-detail", renderMessagesRoute);
+
+  function renderMessagesRoute(item, context) {
     var cached = currentData(context);
+    var detailRoute = item && item.key === "message-detail";
     if (cached) {
-      renderMessages(item, context, cached);
+      if (detailRoute) {
+        renderMessageDetail(item, context, cached);
+      } else {
+        renderMessages(item, context, cached);
+      }
       bindMessages(item, context);
     } else {
       renderLoading(item, context);
     }
     loadMessages(context).then(function (data) {
       storeData(context, data);
-      renderMessages(item, context, data);
+      if (detailRoute) {
+        renderMessageDetail(item, context, data);
+      } else {
+        renderMessages(item, context, data);
+      }
       bindMessages(item, context);
     }).catch(function (error) {
       if (cached) {
@@ -28,7 +42,7 @@
       }
       renderUnavailable(item, context, messageOf(error));
     });
-  });
+  }
 
   function loadMessages(context) {
     var userId = userIdOf(context);
@@ -100,7 +114,6 @@
     var admin = type === "ADMIN_BROADCAST";
     var typeLabel = admin ? "管理员公告" : first(notification.label, labelForType(type));
     var group = groupLabel(notification.groupKey, type);
-    var link = text(notification.link);
     var classes = "message-item" + (read ? " is-read" : " is-unread") + (admin ? " is-admin" : "");
     return '<article class="' + classes + '" data-message-id="' + esc(context, id) + '">' +
       '<div class="message-main">' +
@@ -114,9 +127,37 @@
       '</div>' +
       '<div class="message-actions">' +
       (read ? '<span class="message-read-badge">已读</span>' : '<button type="button" class="secondary" data-message-action="read" data-message-id="' + esc(context, id) + '">标为已读</button>') +
-      (link ? '<button type="button" class="secondary" data-message-action="open" data-message-link="' + esc(context, link) + '">前往查看</button>' : '') +
+      '<button type="button" class="secondary" data-message-action="open" data-message-id="' + esc(context, id) + '">前往查看</button>' +
       '<button type="button" class="secondary danger" data-message-action="delete" data-message-id="' + esc(context, id) + '">移出列表</button>' +
       '</div></article>';
+  }
+
+  function renderMessageDetail(item, context, data) {
+    var notification = selectedMessage(context, data && data.notifications);
+    if (!notification) {
+      context.renderShell(item, '<section class="feature-section full message-center">' +
+        '<div class="section-heading"><div><h3>消息详情</h3><p class="section-note">查看站内消息的完整内容。</p></div></div>' +
+        state(context, "消息不存在", "这条消息可能已被移出列表，请返回消息中心查看其他消息。", "empty") +
+        '<div class="actions-row"><button type="button" class="secondary" data-message-action="back">返回消息中心</button></div>' +
+        '</section>');
+      return;
+    }
+    var type = text(notification.type).toUpperCase();
+    var admin = type === "ADMIN_BROADCAST";
+    var typeLabel = admin ? "管理员公告" : first(notification.label, labelForType(type));
+    var group = groupLabel(notification.groupKey, type);
+    var body = '<section class="feature-section full message-center message-detail">' +
+      '<div class="section-heading"><div><h3>消息详情</h3><p class="section-note">完整展示消息正文内容。</p></div>' +
+      '<button type="button" class="secondary" data-message-action="back">返回消息中心</button></div>' +
+      '<article class="message-detail-content' + (admin ? ' is-admin' : '') + '">' +
+      '<div class="message-meta"><span>' + esc(context, group) + '</span>' +
+      '<span class="message-tag' + (admin ? ' admin' : '') + '">' + esc(context, typeLabel) + '</span>' +
+      '<span class="message-tag muted">已读</span>' +
+      '<span>' + esc(context, formatDate(notification.createdAt)) + '</span></div>' +
+      '<h2>' + esc(context, first(notification.title, admin ? "管理员公告" : "未命名通知")) + '</h2>' +
+      '<div class="message-detail-body">' + esc(context, first(notification.content, "暂无内容")) + '</div>' +
+      '</article></section>';
+    context.renderShell(item, body);
   }
 
   function renderPager(context, pageInfo, position) {
@@ -150,7 +191,9 @@
         } else if (action === "delete") {
           archiveMessage(item, context, target.getAttribute("data-message-id"));
         } else if (action === "open") {
-          openLink(context, target.getAttribute("data-message-link"));
+          openMessageDetail(context, target.getAttribute("data-message-id"));
+        } else if (action === "back") {
+          window.location.hash = "messages";
         } else if (action === "weekly-report") {
           runWeeklyReport(item, context);
         } else if (action === "page") {
@@ -237,64 +280,15 @@
     });
   }
 
-  function openLink(context, link) {
-    var target = targetFromLink(link);
-    if (target.route) {
-      window.location.hash = target.route;
-      return;
-    }
-    if (target.href) {
-      window.open(target.href, "_blank", "noopener,noreferrer");
-      return;
-    }
-    notice(context, "warning", "无法打开", "这条消息没有可识别的查看地址。");
-  }
-
-  function targetFromLink(link) {
-    var value = text(link);
-    if (!value) {
-      return {};
-    }
-    if (/^https?:\/\//i.test(value)) {
-      return targetFromUrl(value, value);
-    }
-    var direct = routeFromText(value);
-    if (direct) {
-      return { route: direct };
-    }
-    try {
-      var url = new URL(value, window.location.href);
-      return targetFromUrl(url.href, value);
-    } catch (ignored) {
-      return {};
-    }
-  }
-
-  function targetFromUrl(urlValue, originalValue) {
-    try {
-      var url = new URL(urlValue, window.location.href);
-      var route = routeFromText(url.searchParams.get("ccRoute") || url.searchParams.get("route") || url.hash.replace(/^#/, ""));
-      if (route) {
-        return { route: route };
-      }
-      if (/^https?:\/\//i.test(originalValue)) {
-        return { href: url.href };
-      }
-      return { route: routeFromText(url.pathname.split("/").pop()) };
-    } catch (ignored) {
-      return {};
-    }
-  }
-
-  function routeFromText(value) {
-    var route = text(value)
-      .replace(/^index\.html[#?]*/, "")
-      .replace(/^ccRoute=/, "")
-      .replace(/^route=/, "")
-      .replace(/^#/, "")
-      .split("&")[0]
-      .split("?")[0];
-    return route;
+  function openMessageDetail(context, notificationId) {
+    if (!notificationId) return;
+    setSelectedMessage(context, notificationId);
+    applyRead(context, notificationId);
+    context.post(context.endpoints.notificationRead, {
+      userId: userIdOf(context),
+      notificationId: notificationId
+    }).catch(function () {});
+    window.location.hash = "message-detail";
   }
 
   function refreshMessages(item, context, button, busyText) {
@@ -335,6 +329,28 @@
 
   function storeData(context, data) {
     dataByUser[userIdOf(context) || "anonymous"] = data || emptyData();
+  }
+
+  function setSelectedMessage(context, notificationId) {
+    var key = userIdOf(context) || "anonymous";
+    selectedMessageByUser[key] = text(notificationId);
+    try {
+      window.sessionStorage.setItem("cyancruise.selectedMessage." + key, text(notificationId));
+    } catch (ignored) {}
+  }
+
+  function selectedMessage(context, notifications) {
+    var key = userIdOf(context) || "anonymous";
+    var selectedId = selectedMessageByUser[key];
+    if (!selectedId) {
+      try {
+        selectedId = window.sessionStorage.getItem("cyancruise.selectedMessage." + key) || "";
+      } catch (ignored) {}
+    }
+    for (var i = 0; i < (notifications || []).length; i += 1) {
+      if (text(notifications[i].notificationId) === text(selectedId)) return notifications[i];
+    }
+    return null;
   }
 
   function emptyData() {

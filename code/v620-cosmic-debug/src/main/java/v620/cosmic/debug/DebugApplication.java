@@ -53,6 +53,7 @@ public class DebugApplication {
         setDefault("cc001.identity.login.provider.name", "RequestContext");
         setDefault("cc001.file.adapter.enabled", "true");
         configureStorage();
+        configureAgentPlatform();
         configureSharedRuntime();
         cosmic.set("server.bind.ip", config("cosmic.web.bind.ip", "COSMIC_WEB_BIND_IP", "0.0.0.0"));
         
@@ -84,6 +85,45 @@ public class DebugApplication {
         copyIfMissing("cc001.storage.postgresql.password", "cc001.profile.postgresql.password");
         copyIfMissing("cc001.storage.postgresql.schema", "cc001.profile.postgresql.schema");
         copyIfMissing("cc001.storage.postgresql.initialize", "cc001.profile.postgresql.initialize");
+    }
+
+    static void configureAgentPlatform() {
+        setConfiguredProperty("cc001.agent.platform.profile.enabled",
+                "CC001_AGENT_PLATFORM_PROFILE_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.profile.agentNumber",
+                "CC001_AGENT_PLATFORM_PROFILE_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.profile.taskFlowCode",
+                "CC001_AGENT_PLATFORM_PROFILE_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.resume.enabled",
+                "CC001_AGENT_PLATFORM_RESUME_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.resume.agentNumber",
+                "CC001_AGENT_PLATFORM_RESUME_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.resume.taskFlowCode",
+                "CC001_AGENT_PLATFORM_RESUME_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.employment.enabled",
+                "CC001_AGENT_PLATFORM_EMPLOYMENT_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.employment.agentNumber",
+                "CC001_AGENT_PLATFORM_EMPLOYMENT_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.employment.taskFlowCode",
+                "CC001_AGENT_PLATFORM_EMPLOYMENT_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.study.postgraduate.enabled",
+                "CC001_AGENT_PLATFORM_STUDY_POSTGRADUATE_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.study.postgraduate.agentNumber",
+                "CC001_AGENT_PLATFORM_STUDY_POSTGRADUATE_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.postgraduate.taskFlowCode",
+                "CC001_AGENT_PLATFORM_STUDY_POSTGRADUATE_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.study.recommendation.enabled",
+                "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.study.recommendation.agentNumber",
+                "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.recommendation.taskFlowCode",
+                "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.study.abroad.enabled",
+                "CC001_AGENT_PLATFORM_STUDY_ABROAD_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.study.abroad.agentNumber",
+                "CC001_AGENT_PLATFORM_STUDY_ABROAD_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.abroad.taskFlowCode",
+                "CC001_AGENT_PLATFORM_STUDY_ABROAD_TASKFLOWCODE");
     }
 
     private static void configureSharedRuntime() {

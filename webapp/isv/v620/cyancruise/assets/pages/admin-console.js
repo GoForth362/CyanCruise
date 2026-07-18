@@ -3,6 +3,20 @@
 
   var registerPage = window.CYANCRUISE_REGISTER_PAGE_MODULE || function () {};
   var attachRenderer = window.CYANCRUISE_ATTACH_PAGE_RENDERER || function () {};
+  var CONTENT_PAGE_SIZE = 5;
+  var QUESTION_PAGE_SIZE = 10;
+  var selectedContentType = "RESOURCE";
+  var selectedContentScope = "EMPLOYMENT";
+  var contentPageByType = { RESOURCE: 1, ARTICLE: 1, VIDEO: 1 };
+  var currentContentItems = [];
+  var currentStudyContentItems = [];
+  var showUnpublishedContentOnly = false;
+  var showUnpublishedInterviewQuestionsOnly = false;
+  var showUnpublishedAssessmentQuestionsOnly = false;
+  var interviewQuestionPage = 1;
+  var assessmentQuestionPageByScale = {};
+  var currentInterviewQuestions = [];
+  var currentAssessmentBanks = [];
 
   var NAV_ITEMS = [
     ["overview", "数智大屏"],
@@ -121,7 +135,7 @@
 
   function renderSidebar(context) {
     return '<aside class="admin-sidebar" aria-label="管理后台导航">' +
-      '<div class="admin-brand"><strong>CyanCruise</strong><span>数智管理后台</span></div>' +
+      '<div class="admin-brand"><strong>青途启航</strong><span>数智管理后台</span></div>' +
       '<nav class="admin-side-nav" role="tablist">' +
       NAV_ITEMS.map(function (item, index) {
         return '<button type="button" class="admin-nav-item' + (index === 0 ? " active" : "") +
@@ -143,7 +157,7 @@
     var analytics = data.analytics || {};
     var events = analytics.eventBreakdown30d || {};
     return '<div class="admin-kpi-grid">' +
-      kpi(context, "用户数量", analytics.totalUsers, "CyanCruise 已纳入管理的用户") +
+      kpi(context, "用户数量", analytics.totalUsers, "青途启航已纳入管理的用户") +
       kpi(context, "面试次数", first(analytics.totalInterviews, dashboard.interviewCount), "模拟面试累计") +
       kpi(context, "测评次数", analytics.totalAssessments, "能力测评累计") +
       kpi(context, "内容数量", events.CONTENT, "后台内容条目") +
@@ -175,7 +189,7 @@
       return question.reviewStatus === "REJECTED" || question.status === "HIDDEN";
     });
     var assessmentQuestionCount = banks.reduce(function (total, bank) {
-      return total + Number(first(bank.questionCount, bank.questions && bank.questions.length, 0));
+      return total + Number(first(bank.poolQuestionCount, bank.questions && bank.questions.length, 0));
     }, 0);
     var alerts = overviewAlerts(content, questions, banks);
     return '<div class="admin-kpi-grid">' +
@@ -224,65 +238,112 @@
 
   function renderUsers(data, context) {
     return panel(context, "用户管理", "管理注册用户和账号状态",
-      '<div class="admin-panel-tools"><input id="adminUserSearch" type="search" placeholder="搜索姓名、用户ID、学校或专业..."></div>' +
+      '<div class="admin-panel-tools"><input id="adminUserSearch" type="search" placeholder="搜索姓名或用户ID..."></div>' +
       '<div class="admin-users-region">' + renderUserTable(data, context) + '</div>');
   }
 
   function renderUserTable(data, context) {
     var users = data.users && data.users.items || [];
     return users.length ? table([
-        "用户", "身份类型", "学校/专业", "状态", "平台组织ID", "操作"
+        "用户", "身份类型", "状态", "操作"
       ], users.map(function (user) {
         var status = String(user.status || "ACTIVE");
         var banned = status === "BANNED";
         var currentAdmin = isCurrentAdminUser(data, user);
+        var operation = banned
+          ? actionButton(context, "unban-user", user.userId, "恢复用户端")
+          : (user.administrator
+            ? '<span class="admin-operation-note">' + (currentAdmin ? '不可禁用自己' : '管理员不可禁用') + '</span>'
+            : actionButton(context, "ban-user", user.userId, "禁用用户端"));
         return [
           identityCell(context, first(user.nickname, user.displayName, user.userName, user.userId), user.userId) +
             (currentAdmin ? '<small>当前管理员，管理权限请在金蝶安全管理调整</small>' : ""),
           badge(context, user.administrator ? "管理员" : "普通用户", user.administrator ? "ok" : ""),
-          twoLine(context, first(user.school, "-"), first(user.major, "")),
           badge(context, banned ? "用户端禁用" : "用户端正常", banned ? "warn" : "ok"),
-          esc(context, first(user.orgId, "-")),
-          actionButton(context, banned ? "unban-user" : "ban-user", user.userId, banned ? "恢复用户端" : "禁用用户端")
+          operation
         ];
-      })) : empty("未找到匹配用户", "请尝试其他姓名、用户ID、学校或专业关键字。", context);
+      })) : empty("未找到匹配用户", "请尝试其他姓名或用户ID关键字。", context);
   }
 
   function renderContent(data, context) {
     var content = data.content || [];
-    return panel(context, "内容管理", "管理首页文章、视频和资源展示",
+    var studyContent = data.studyContent || [];
+    currentContentItems = content;
+    currentStudyContentItems = studyContent;
+    return panel(context, "内容管理", "分别维护就业和升学的文章、视频与服务内容",
       contentForm(context) +
-      (content.length ? table(["标题", "展示分组", "展示状态", "外部链接", "操作"], content.map(function (item) {
+      '<div class="admin-content-group-lists">' + renderContentGroupLists(context) + '</div>');
+  }
+
+  function renderContentGroupLists(context) {
+    return CONTENT_GROUPS.map(function (group) {
+      return '<div class="admin-content-group-region' + (selectedContentType === group.type ? ' active' : '') +
+        '" data-content-group="' + escAttr(context, group.type) + '">' +
+        renderContentTable(contentItemsForGroup(group.type), group, context) + '</div>';
+    }).join("");
+  }
+
+  function contentItemsForGroup(type) {
+    var source = selectedContentScope === "STUDY" ? currentStudyContentItems : currentContentItems;
+    return source.filter(function (item) {
+      return normalizeContentType(item && item.type) === type &&
+        (!showUnpublishedContentOnly || !!item.hidden);
+    });
+  }
+
+  function renderContentTable(content, group, context) {
+    var totalPages = Math.max(1, Math.ceil(content.length / CONTENT_PAGE_SIZE));
+    var page = Math.min(Math.max(1, Number(contentPageByType[group.type]) || 1), totalPages);
+    var start = (page - 1) * CONTENT_PAGE_SIZE;
+    var pageItems = content.slice(start, start + CONTENT_PAGE_SIZE);
+    contentPageByType[group.type] = page;
+    var contentHtml = pageItems.length ? table(["标题", "展示分组", "展示状态", "外部链接", "操作"], pageItems.map(function (item) {
         return [
           twoLine(context, item.title, first(item.summary, item.contentId)),
           esc(context, contentGroupLabel(item.type, item.category)),
           badge(context, item.pinned ? "置顶" : "未置顶", item.pinned ? "ok" : "") + " " +
-            badge(context, item.hidden ? "已隐藏" : "展示中", item.hidden ? "warn" : "ok"),
+            badge(context, item.hidden ? "未发布" : "展示中", item.hidden ? "warn" : "ok"),
           linkCell(context, item.sourceUrl),
           editContentButton(context, item) +
             actionButton(context, "pin-content", item.contentId, item.pinned ? "取消置顶" : "置顶") +
             actionButton(context, "hide-content", item.contentId, item.hidden ? "恢复展示" : "隐藏") +
             actionButton(context, "delete-content", item.contentId, "删除", true)
         ];
-      })) : empty("暂无内容数据", "可以在上方新增文章、视频或资源入口；保存后会同步进入用户端资源页。", context)));
+      })) : (showUnpublishedContentOnly
+        ? empty("暂无未发布的" + group.label, "当前分组没有暂不展示给用户的内容。", context)
+        : empty("暂无" + group.label + "内容", "可以在上方新增" + group.label + "；保存后会同步进入用户端资源页。", context));
+    return contentHtml + renderContentPager(context, group.type, page, totalPages, content.length);
+  }
+
+  function renderContentPager(context, type, page, totalPages, total) {
+    return '<div class="admin-content-pager">' +
+      '<span>第 ' + esc(context, page) + ' / ' + esc(context, totalPages) + ' 页，共 ' + esc(context, total) + ' 条，每页 ' + CONTENT_PAGE_SIZE + ' 条</span>' +
+      '<div>' +
+      '<button type="button" class="admin-content-page" data-content-page-type="' + escAttr(context, type) +
+      '" data-content-page="' + escAttr(context, page - 1) + '"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+      '<button type="button" class="admin-content-page" data-content-page-type="' + escAttr(context, type) +
+      '" data-content-page="' + escAttr(context, page + 1) + '"' + (page >= totalPages ? ' disabled' : '') + '>下一页</button>' +
+      '</div></div>';
   }
 
   function contentForm(context) {
     return '<div class="admin-content-form">' +
       '<input type="hidden" id="adminContentId">' +
-      '<input type="hidden" id="adminContentType" value="RESOURCE">' +
-      '<input type="hidden" id="adminContentCategory" value="公共服务">' +
-      '<div class="admin-form-title"><strong>编辑内容</strong><span>保存后，未隐藏的内容会展示在用户端资源页。</span></div>' +
+      '<input type="hidden" id="adminContentType" value="' + escAttr(context, selectedContentType) + '">' +
+      '<input type="hidden" id="adminContentCategory" value="' + escAttr(context, categoryFromContentType(selectedContentType)) + '">' +
+      '<div class="admin-form-title"><strong>编辑内容</strong><span>保存后，已发布内容会展示在对应用户端页面。</span></div>' +
+      '<div class="admin-form-field wide"><span>内容归属</span><div class="admin-choice-tabs" role="tablist">' +
+      '<button type="button" class="admin-choice-tab' + (selectedContentScope === "EMPLOYMENT" ? " active" : "") + '" data-content-scope="EMPLOYMENT">就业资讯</button>' +
+      '<button type="button" class="admin-choice-tab' + (selectedContentScope === "STUDY" ? " active" : "") + '" data-content-scope="STUDY">升学资讯</button></div></div>' +
       '<div class="admin-form-field wide"><span>内容类型</span><div class="admin-choice-tabs" role="tablist">' +
       CONTENT_GROUPS.map(function (group, index) {
-        return '<button type="button" class="admin-choice-tab' + (index === 0 ? " active" : "") +
+        return '<button type="button" class="admin-choice-tab' + (selectedContentType === group.type ? " active" : "") +
           '" data-content-type="' + escAttr(context, group.type) + '" data-content-category="' +
           escAttr(context, group.category) + '">' + esc(context, group.label) + '</button>';
       }).join("") + '</div></div>' +
       '<div class="admin-form-grid">' +
       '<label><span>标题</span><input id="adminContentTitle" placeholder="例如：后端简历优化指南"></label>' +
       '<label><span>外部链接</span><input id="adminContentSourceUrl" placeholder="https://..."></label>' +
-      '<label><span>封面链接</span><input id="adminContentImageUrl" placeholder="可选，https://..."></label>' +
       '<label class="wide"><span>摘要</span><textarea id="adminContentSummary" rows="3" placeholder="写给用户看的简介"></textarea></label>' +
       '</div>' +
       '<div class="admin-form-row">' +
@@ -291,7 +352,9 @@
       '</div>' +
       '<div class="admin-form-actions">' +
       '<button type="button" class="admin-primary" id="adminContentSaveButton">保存内容</button>' +
-      '<button type="button" class="admin-secondary" id="adminContentResetButton">新建内容</button>' +
+      '<button type="button" class="admin-secondary' + (showUnpublishedContentOnly ? ' active' : '') +
+      '" id="adminContentVisibilityButton" aria-pressed="' + (showUnpublishedContentOnly ? 'true' : 'false') + '">' +
+      (showUnpublishedContentOnly ? '查看全部内容' : '查看未发布内容') + '</button>' +
       '</div>' +
       '</div>';
   }
@@ -299,6 +362,8 @@
   function renderQuestions(data, context) {
     var questions = data.questions || [];
     var banks = data.assessmentQuestionBanks || [];
+    currentInterviewQuestions = questions;
+    currentAssessmentBanks = banks;
     return panel(context, "题库管理", "管理面试题库，查看职业测评题库",
       '<div class="admin-bank-tabs" role="tablist">' +
       '<button type="button" class="admin-bank-tab active" data-bank-tab="interview">面试题库</button>' +
@@ -306,7 +371,20 @@
       '</div>' +
       '<div class="admin-bank-section active" data-bank-section="interview">' +
       questionForm(context) +
-      (questions.length ? table(["题目", "岗位/难度", "来源", "状态", "操作"], questions.map(function (question) {
+      '<div class="admin-interview-question-region">' + renderInterviewQuestionList(questions, context) + '</div>' +
+      '</div>' +
+      '<div class="admin-bank-section" data-bank-section="assessment">' +
+      assessmentQuestionForm(data, context) +
+      renderAssessmentBanks(banks, context) +
+      '</div>');
+  }
+
+  function renderInterviewQuestionList(questions, context) {
+    var displayedQuestions = showUnpublishedInterviewQuestionsOnly
+      ? questions.filter(isUnpublishedInterviewQuestion) : questions;
+    var pagination = paginateQuestions(displayedQuestions, interviewQuestionPage);
+    interviewQuestionPage = pagination.page;
+    var body = pagination.items.length ? table(["题目", "岗位/难度", "来源", "状态", "操作"], pagination.items.map(function (question) {
         var hidden = question.reviewStatus === "REJECTED" || question.status === "HIDDEN";
         return [
           twoLine(context, first(question.summary, question.content), first(question.content, "")),
@@ -318,12 +396,9 @@
             actionButton(context, "hide-question", question.questionId, "隐藏") +
             actionButton(context, "delete-question", question.questionId, "删除", true)
         ];
-      })) : empty("暂无面试题", "可以在上方新增面试题；发布后的题目可用于后续面试练习。", context)) +
-      '</div>' +
-      '<div class="admin-bank-section" data-bank-section="assessment">' +
-      assessmentQuestionForm(data, context) +
-      renderAssessmentBanks(banks, context) +
-      '</div>');
+      })) : empty(showUnpublishedInterviewQuestionsOnly ? "暂无未发布面试题" : "暂无面试题",
+        showUnpublishedInterviewQuestionsOnly ? "当前没有待审核或已隐藏的面试题。" : "可以在上方保存面试题；发布后的题目可用于后续面试练习。", context);
+    return body + renderQuestionPager(context, "interview", "", pagination);
   }
 
   function questionForm(context) {
@@ -337,14 +412,16 @@
       '</select></label>' +
       '<label><span>展示标题</span><input id="adminQuestionSummary" placeholder="例如：Redis 缓存一致性"></label>' +
       '<label><span>发布状态</span><select id="adminQuestionReviewStatus">' +
-      '<option value="PUBLISHED">发布</option><option value="PENDING_REVIEW">待审核</option><option value="REJECTED">隐藏</option>' +
+      '<option value="PENDING_REVIEW">待审核</option><option value="PUBLISHED">发布</option><option value="REJECTED">隐藏</option>' +
       '</select></label>' +
       '<label class="wide"><span>题目正文</span><textarea id="adminQuestionContent" rows="3" placeholder="写清楚候选人需要回答的问题"></textarea></label>' +
       '<label class="wide"><span>参考答案</span><textarea id="adminQuestionAnswer" rows="4" placeholder="可选，写给练习或后续解析使用"></textarea></label>' +
       '</div>' +
       '<div class="admin-form-actions">' +
       '<button type="button" class="admin-primary" id="adminQuestionSaveButton">保存题目</button>' +
-      '<button type="button" class="admin-secondary" id="adminQuestionResetButton">新建题目</button>' +
+      '<button type="button" class="admin-secondary' + (showUnpublishedInterviewQuestionsOnly ? ' active' : '') +
+      '" id="adminQuestionVisibilityButton" aria-pressed="' + (showUnpublishedInterviewQuestionsOnly ? 'true' : 'false') + '">' +
+      (showUnpublishedInterviewQuestionsOnly ? '查看全部题目' : '查看未发布题目') + '</button>' +
       '</div>' +
       '</div>';
   }
@@ -360,17 +437,24 @@
         return '<option value="' + escAttr(context, bank.scaleId) + '">' + esc(context, bank.title || bank.scaleId) + '</option>';
       }).join("") + '</select></label>' +
       '<label><span>排序</span><input id="adminAssessmentSortOrder" placeholder="留空自动追加"></label>' +
-      '<label><span>维度</span><input id="adminAssessmentDimension" placeholder="例如：EI、R/I、PLAN"></label>' +
-      '<label><span>题型</span><select id="adminAssessmentQuestionType"><option value="SINGLE">单选</option></select></label>' +
+      '<label><span>维度</span><input id="adminAssessmentDimension" placeholder="例如：EI、R/I、PLAN"><small class="admin-form-hint" id="adminAssessmentDimensionHint">选择量表后显示建议维度。</small></label>' +
+      '<label><span>题型</span><select id="adminAssessmentQuestionType"><option value="SINGLE">单选</option><option value="MULTI">多选</option></select><small class="admin-form-hint" id="adminAssessmentTypeHint">单选题填写 A/B 两个选项；多选题填写 A/B/C/D 四个选项。</small></label>' +
       '<label class="wide"><span>题目</span><textarea id="adminAssessmentQuestionText" rows="3" placeholder="请输入测评题目"></textarea></label>' +
       '<label><span>选项 A</span><input id="adminAssessmentOptionAText" placeholder="选项 A 文案"></label>' +
       '<label><span>A 维度</span><input id="adminAssessmentOptionADimension" placeholder="例如：E"></label>' +
       '<label><span>选项 B</span><input id="adminAssessmentOptionBText" placeholder="选项 B 文案"></label>' +
       '<label><span>B 维度</span><input id="adminAssessmentOptionBDimension" placeholder="例如：I"></label>' +
+      '<label class="admin-assessment-extra-option"><span>选项 C</span><input id="adminAssessmentOptionCText" placeholder="选项 C 文案"></label>' +
+      '<label class="admin-assessment-extra-option"><span>C 维度</span><input id="adminAssessmentOptionCDimension" placeholder="例如：S"></label>' +
+      '<label class="admin-assessment-extra-option"><span>选项 D</span><input id="adminAssessmentOptionDText" placeholder="选项 D 文案"></label>' +
+      '<label class="admin-assessment-extra-option"><span>D 维度</span><input id="adminAssessmentOptionDDimension" placeholder="例如：N"></label>' +
       '</div>' +
+      '<div class="admin-form-row"><label class="admin-check"><input type="checkbox" id="adminAssessmentQuestionPublished"><span>立即发布给用户</span></label></div>' +
       '<div class="admin-form-actions">' +
       '<button type="button" class="admin-primary" id="adminAssessmentQuestionSaveButton">保存测评题</button>' +
-      '<button type="button" class="admin-secondary" id="adminAssessmentQuestionResetButton">新建测评题</button>' +
+      '<button type="button" class="admin-secondary' + (showUnpublishedAssessmentQuestionsOnly ? ' active' : '') +
+      '" id="adminAssessmentQuestionVisibilityButton" aria-pressed="' + (showUnpublishedAssessmentQuestionsOnly ? 'true' : 'false') + '">' +
+      (showUnpublishedAssessmentQuestionsOnly ? '查看全部题目' : '查看未发布题目') + '</button>' +
       '</div>' +
       '</div>';
   }
@@ -379,13 +463,13 @@
     if (!banks.length) {
       return empty("暂无职业测评题库", "当前没有读取到职业测评量表。", context);
     }
-    return '<div class="admin-assessment-note">职业测评题库当前保存在应用运行期题库中；后续接入业务对象后可跨重启保留。</div>' +
+    return '<div class="admin-assessment-note">题库和每次作答题数会持久保存；用户开始测评时按维度均衡抽题。</div>' +
       '<div class="admin-assessment-type-tabs" role="tablist">' + banks.map(function (bank, index) {
         var questions = bank.questions || [];
         return '<button type="button" class="admin-assessment-tab' + (index === 0 ? " active" : "") +
           '" data-scale-id="' + escAttr(context, bank.scaleId) + '">' +
           '<strong>' + esc(context, bank.title || "职业测评") + '</strong><span>' +
-          esc(context, first(bank.questionCount, questions.length, 0)) + ' 题</span></button>';
+          esc(context, first(bank.poolQuestionCount, questions.length, 0)) + ' 题题库</span></button>';
       }).join("") + '</div>' +
       '<div class="admin-assessment-grid">' + banks.map(function (bank, index) {
         var questions = bank.questions || [];
@@ -393,21 +477,80 @@
           '" data-scale-id="' + escAttr(context, bank.scaleId) + '"><article class="admin-assessment-card">' +
           '<header><div><h4>' + esc(context, bank.title || "职业测评") + '</h4><p>' +
           esc(context, first(bank.description, "用于职业倾向和能力画像分析")) + '</p></div>' +
-          '<span>' + esc(context, first(bank.questionCount, questions.length, 0)) + ' 题</span></header>' +
+          '<span>每次 ' + esc(context, first(bank.answerQuestionCount, bank.questionCount, questions.length, 0)) + ' 题</span></header>' +
           '<div class="admin-assessment-meta">版本 ' + esc(context, first(bank.version, "-")) + '</div>' +
-          '<div class="admin-assessment-questions">' + questions.map(function (question) {
-            return '<div class="admin-assessment-question"><strong>' + esc(context, first(question.sortOrder, "")) +
-              '. ' + esc(context, question.questionText) + '</strong><small>' +
-              esc(context, first(question.dimensionCode, "未设置维度")) + '</small>' +
-              '<p>' + (question.options || []).map(function (option) {
-                return esc(context, option.optionLabel) + ". " + esc(context, option.optionText);
-              }).join(" / ") + '</p><div class="admin-assessment-actions">' +
-              editAssessmentQuestionButton(context, bank, question) +
-              actionButton(context, "delete-assessment-question", question.questionId, "删除", true,
-                ' data-scale-id="' + escAttr(context, bank.scaleId) + '"') +
-              '</div></div>';
-          }).join("") + '</div></article></div>';
+          '<div class="admin-assessment-settings">' +
+          '<label><span>题库总数</span><strong>' + esc(context, first(bank.poolQuestionCount, questions.length, 0)) + ' 题</strong></label>' +
+          '<label><span>每次作答题数</span><input type="number" min="1" max="' +
+          escAttr(context, first(bank.poolQuestionCount, questions.length, 1)) + '" value="' +
+          escAttr(context, first(bank.answerQuestionCount, bank.questionCount, questions.length, 1)) +
+          '" data-assessment-answer-count="' + escAttr(context, bank.scaleId) + '"></label>' +
+          '<button type="button" class="admin-secondary" data-save-assessment-scale="' +
+          escAttr(context, bank.scaleId) + '">保存作答题数</button></div>' +
+          '<div class="admin-assessment-questions-region">' + renderAssessmentQuestionList(bank, context) +
+          '</div></article></div>';
       }).join("") + '</div>';
+  }
+
+  function renderAssessmentQuestionList(bank, context) {
+    var scaleId = String(first(bank && bank.scaleId, ""));
+    var questions = bank && bank.questions || [];
+    var displayedQuestions = showUnpublishedAssessmentQuestionsOnly
+      ? questions.filter(isUnpublishedAssessmentQuestion) : questions;
+    var pagination = paginateQuestions(displayedQuestions, assessmentQuestionPageByScale[scaleId]);
+    assessmentQuestionPageByScale[scaleId] = pagination.page;
+    var body = pagination.items.length ? '<div class="admin-assessment-questions">' + pagination.items.map(function (question) {
+      return '<div class="admin-assessment-question"><strong>' + esc(context, first(question.sortOrder, "")) +
+        '. ' + esc(context, question.questionText) + '</strong><small>' +
+        esc(context, questionTypeText(question.questionType)) + ' · ' + esc(context, first(question.dimensionCode, "未设置维度")) +
+        ' · ' + (question && question.published === false ? '未发布' : '已发布') + '</small>' +
+        '<p>' + (question.options || []).map(function (option) {
+          return esc(context, option.optionLabel) + ". " + esc(context, option.optionText);
+        }).join(" / ") + '</p><div class="admin-assessment-actions">' +
+        editAssessmentQuestionButton(context, bank, question) +
+        actionButton(context, "delete-assessment-question", question.questionId, "删除", true,
+          ' data-scale-id="' + escAttr(context, scaleId) + '"') +
+        '</div></div>';
+    }).join("") + '</div>' : empty(showUnpublishedAssessmentQuestionsOnly ? "暂无未发布测评题" : "暂无测评题",
+      showUnpublishedAssessmentQuestionsOnly ? "当前量表没有未发布的测评题。" : "当前量表还没有题目，可以在上方保存。", context);
+    return body + renderQuestionPager(context, "assessment", scaleId, pagination);
+  }
+
+  function isUnpublishedInterviewQuestion(question) {
+    var reviewStatus = String(first(question && question.reviewStatus, "")).toUpperCase();
+    var status = String(first(question && question.status, "")).toUpperCase();
+    return reviewStatus !== "PUBLISHED" || status === "HIDDEN";
+  }
+
+  function isUnpublishedAssessmentQuestion(question) {
+    return question && question.published === false;
+  }
+
+  function paginateQuestions(questions, requestedPage) {
+    questions = questions || [];
+    var totalPages = Math.max(1, Math.ceil(questions.length / QUESTION_PAGE_SIZE));
+    var page = Math.min(Math.max(1, Number(requestedPage) || 1), totalPages);
+    var start = (page - 1) * QUESTION_PAGE_SIZE;
+    return {
+      items: questions.slice(start, start + QUESTION_PAGE_SIZE),
+      page: page,
+      totalPages: totalPages,
+      total: questions.length
+    };
+  }
+
+  function renderQuestionPager(context, kind, scaleId, pagination) {
+    var attributes = kind === "assessment"
+      ? ' data-assessment-question-page="' + escAttr(context, pagination.page) + '" data-scale-id="' + escAttr(context, scaleId) + '"'
+      : ' data-interview-question-page="' + escAttr(context, pagination.page) + '"';
+    var previousAttribute = kind === "assessment" ? "data-assessment-question-target" : "data-interview-question-target";
+    return '<div class="admin-question-pager">' +
+      '<span>第 ' + esc(context, pagination.page) + ' / ' + esc(context, pagination.totalPages) + ' 页，共 ' +
+      esc(context, pagination.total) + ' 道题，每页 ' + QUESTION_PAGE_SIZE + ' 道</span><div>' +
+      '<button type="button" class="admin-question-page" ' + previousAttribute + '="' + escAttr(context, pagination.page - 1) + '"' + attributes +
+      (pagination.page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+      '<button type="button" class="admin-question-page" ' + previousAttribute + '="' + escAttr(context, pagination.page + 1) + '"' + attributes +
+      (pagination.page >= pagination.totalPages ? ' disabled' : '') + '>下一页</button></div></div>';
   }
 
   function renderBroadcast(data, context) {
@@ -418,8 +561,7 @@
       '<div class="admin-form-title"><strong>发送公告</strong><span>可搜索并勾选多个接收用户；未选择时发送给所有用户端正常的用户。</span></div>' +
       '<div class="admin-form-grid">' +
       '<label class="wide"><span>接收用户</span><input id="adminBroadcastUserSearch" type="search" placeholder="搜索用户姓名、昵称或用户ID"></label>' +
-      '<label><span>标题</span><input id="adminBroadcastTitle" placeholder="例如：面试练习服务维护通知"></label>' +
-      '<label><span>链接</span><input id="adminBroadcastLink" placeholder="可选，例如 admin-console"></label>' +
+      '<label class="wide"><span>标题</span><input id="adminBroadcastTitle" placeholder="例如：面试练习服务维护通知"></label>' +
       '<label class="wide"><span>内容</span><textarea id="adminBroadcastContent" rows="4" placeholder="请输入公告内容"></textarea></label>' +
       '</div>' +
       '<div class="admin-recipient-tools">' +
@@ -478,8 +620,11 @@
     bindActionButtons(item, context, service, root);
     bindUserSearch(item, context, service, root);
     bindContentForm(item, context, service, root);
+    bindContentPager(item, context, service, root);
+    bindQuestionPager(item, context, service, root);
     bindQuestionForm(item, context, service, root);
     bindAssessmentQuestionForm(item, context, service, root);
+    bindAssessmentScaleSettings(item, context, service, root);
     bindQuestionBankTabs(root);
     bindAssessmentTabs(root);
     bindBroadcast(item, context, service, root);
@@ -570,6 +715,72 @@
       panel.classList.toggle("active", panel.getAttribute("data-scale-id") === String(scaleId));
     });
     setValue(root, "adminAssessmentScaleId", scaleId);
+    updateAssessmentQuestionFormHints(root);
+  }
+
+  function bindContentPager(item, context, service, root) {
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-content-page"), function (button) {
+      if (button.getAttribute("data-content-page-bound") === "true") return;
+      button.setAttribute("data-content-page-bound", "true");
+      button.addEventListener("click", function () {
+        var type = normalizeContentType(this.getAttribute("data-content-page-type"));
+        var page = Number(this.getAttribute("data-content-page"));
+        var group = contentGroupByType(type);
+        var region = root.querySelector('[data-content-group="' + type + '"]');
+        if (!region || !group || !isFinite(page) || page < 1) return;
+        contentPageByType[type] = page;
+        region.innerHTML = renderContentTable(contentItemsForGroup(type), group, context);
+        bindActionButtons(item, context, service, region);
+        bindContentPager(item, context, service, root);
+      });
+    });
+  }
+
+  function bindQuestionPager(item, context, service, root) {
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-question-page"), function (button) {
+      if (button.getAttribute("data-question-page-bound") === "true") return;
+      button.setAttribute("data-question-page-bound", "true");
+      button.addEventListener("click", function () {
+        var assessmentTarget = this.getAttribute("data-assessment-question-target");
+        if (assessmentTarget !== null) {
+          var scaleId = this.getAttribute("data-scale-id") || "";
+          var assessmentPage = Number(assessmentTarget);
+          var bank = assessmentBankByScaleId(scaleId);
+          var panel = findAssessmentPanel(root, scaleId);
+          var assessmentRegion = panel && panel.querySelector(".admin-assessment-questions-region");
+          if (!bank || !assessmentRegion || !isFinite(assessmentPage) || assessmentPage < 1) return;
+          assessmentQuestionPageByScale[scaleId] = assessmentPage;
+          assessmentRegion.innerHTML = renderAssessmentQuestionList(bank, context);
+          bindActionButtons(item, context, service, assessmentRegion);
+          bindQuestionPager(item, context, service, root);
+          return;
+        }
+        var interviewPage = Number(this.getAttribute("data-interview-question-target"));
+        var interviewRegion = root.querySelector(".admin-interview-question-region");
+        if (!interviewRegion || !isFinite(interviewPage) || interviewPage < 1) return;
+        interviewQuestionPage = interviewPage;
+        interviewRegion.innerHTML = renderInterviewQuestionList(currentInterviewQuestions, context);
+        bindActionButtons(item, context, service, interviewRegion);
+        bindQuestionPager(item, context, service, root);
+      });
+    });
+  }
+
+  function assessmentBankByScaleId(scaleId) {
+    for (var index = 0; index < currentAssessmentBanks.length; index += 1) {
+      if (String(currentAssessmentBanks[index] && currentAssessmentBanks[index].scaleId) === String(scaleId)) {
+        return currentAssessmentBanks[index];
+      }
+    }
+    return null;
+  }
+
+  function findAssessmentPanel(root, scaleId) {
+    var panels = root.querySelectorAll(".admin-assessment-panel[data-scale-id]");
+    for (var index = 0; index < panels.length; index += 1) {
+      if (panels[index].getAttribute("data-scale-id") === String(scaleId)) return panels[index];
+    }
+    return null;
   }
 
   function bindAssessmentTabs(root) {
@@ -582,10 +793,20 @@
 
   function bindQuestionForm(item, context, service, root) {
     var saveButton = root.querySelector("#adminQuestionSaveButton");
-    var resetButton = root.querySelector("#adminQuestionResetButton");
-    if (resetButton) {
-      resetButton.addEventListener("click", function () {
-        resetQuestionForm(root);
+    var visibilityButton = root.querySelector("#adminQuestionVisibilityButton");
+    if (visibilityButton) {
+      visibilityButton.addEventListener("click", function () {
+        showUnpublishedInterviewQuestionsOnly = !showUnpublishedInterviewQuestionsOnly;
+        interviewQuestionPage = 1;
+        visibilityButton.classList.toggle("active", showUnpublishedInterviewQuestionsOnly);
+        visibilityButton.setAttribute("aria-pressed", showUnpublishedInterviewQuestionsOnly ? "true" : "false");
+        visibilityButton.textContent = showUnpublishedInterviewQuestionsOnly ? "查看全部题目" : "查看未发布题目";
+        var region = root.querySelector(".admin-interview-question-region");
+        if (region) {
+          region.innerHTML = renderInterviewQuestionList(currentInterviewQuestions, context);
+          bindActionButtons(item, context, service, region);
+          bindQuestionPager(item, context, service, root);
+        }
       });
     }
     if (saveButton) {
@@ -610,10 +831,37 @@
 
   function bindAssessmentQuestionForm(item, context, service, root) {
     var saveButton = root.querySelector("#adminAssessmentQuestionSaveButton");
-    var resetButton = root.querySelector("#adminAssessmentQuestionResetButton");
-    if (resetButton) {
-      resetButton.addEventListener("click", function () {
-        resetAssessmentQuestionForm(root);
+    var visibilityButton = root.querySelector("#adminAssessmentQuestionVisibilityButton");
+    var scaleSelect = root.querySelector("#adminAssessmentScaleId");
+    var typeSelect = root.querySelector("#adminAssessmentQuestionType");
+    if (scaleSelect) {
+      scaleSelect.addEventListener("change", function () {
+        updateAssessmentQuestionFormHints(root);
+      });
+    }
+    if (typeSelect) {
+      typeSelect.addEventListener("change", function () {
+        updateAssessmentQuestionFormHints(root);
+      });
+    }
+    updateAssessmentQuestionFormHints(root);
+    if (visibilityButton) {
+      visibilityButton.addEventListener("click", function () {
+        showUnpublishedAssessmentQuestionsOnly = !showUnpublishedAssessmentQuestionsOnly;
+        Object.keys(assessmentQuestionPageByScale).forEach(function (scaleId) {
+          assessmentQuestionPageByScale[scaleId] = 1;
+        });
+        visibilityButton.classList.toggle("active", showUnpublishedAssessmentQuestionsOnly);
+        visibilityButton.setAttribute("aria-pressed", showUnpublishedAssessmentQuestionsOnly ? "true" : "false");
+        visibilityButton.textContent = showUnpublishedAssessmentQuestionsOnly ? "查看全部题目" : "查看未发布题目";
+        currentAssessmentBanks.forEach(function (bank) {
+          var panel = findAssessmentPanel(root, bank && bank.scaleId);
+          var region = panel && panel.querySelector(".admin-assessment-questions-region");
+          if (!region) return;
+          region.innerHTML = renderAssessmentQuestionList(bank, context);
+          bindActionButtons(item, context, service, region);
+        });
+        bindQuestionPager(item, context, service, root);
       });
     }
     if (saveButton) {
@@ -621,6 +869,10 @@
         var payload = readAssessmentQuestionForm(root);
         if (!payload.scaleId || !payload.question.questionText) {
           context.showMessage("error", "保存失败", "请先选择量表并填写测评题目。");
+          return;
+        }
+        if (!assessmentOptionsComplete(payload.question)) {
+          context.showMessage("error", "保存失败", payload.question.questionType === "MULTI" ? "多选题需要填写 A、B、C、D 四个选项及对应维度。" : "单选题需要填写 A、B 两个选项及对应维度。");
           return;
         }
         saveButton.disabled = true;
@@ -639,13 +891,53 @@
     }
   }
 
+  function bindAssessmentScaleSettings(item, context, service, root) {
+    Array.prototype.forEach.call(root.querySelectorAll("[data-save-assessment-scale]"), function (button) {
+      button.addEventListener("click", function () {
+        var scaleId = this.getAttribute("data-save-assessment-scale");
+        var input = root.querySelector('[data-assessment-answer-count="' + scaleId + '"]');
+        var answerQuestionCount = input ? Number(input.value) : 0;
+        var max = input ? Number(input.getAttribute("max")) : 0;
+        if (!answerQuestionCount || answerQuestionCount < 1 || (max && answerQuestionCount > max)) {
+          context.showMessage("error", "保存失败", "每次作答题数必须在 1 到题库总数之间。");
+          return;
+        }
+        button.disabled = true;
+        service.saveAssessmentScale(adminContext(context), scaleId, answerQuestionCount).then(function () {
+          return refreshAdminApp(item, context, service, "questions").then(function () {
+            var appRoot = context.pageHost && context.pageHost.querySelector(".admin-app");
+            activateBankTab(appRoot, "assessment");
+            activateAssessmentTab(appRoot, scaleId);
+            context.showMessage("info", "作答题数已保存", "用户下次开始该测评时会按新题数均衡抽题。");
+          });
+        }).catch(function (error) {
+          button.disabled = false;
+          context.showMessage("error", "保存失败", messageOf(error));
+        });
+      });
+    });
+  }
+
   function bindContentForm(item, context, service, root) {
     var saveButton = root.querySelector("#adminContentSaveButton");
-    var resetButton = root.querySelector("#adminContentResetButton");
+    var visibilityButton = root.querySelector("#adminContentVisibilityButton");
     bindContentTypeTabs(root);
-    if (resetButton) {
-      resetButton.addEventListener("click", function () {
-        resetContentForm(root);
+    Array.prototype.forEach.call(root.querySelectorAll("[data-content-scope]"), function (button) { button.addEventListener("click", function () { selectedContentScope = this.getAttribute("data-content-scope"); refreshAdminApp(item, context, service, "content"); }); });
+    if (visibilityButton) {
+      visibilityButton.addEventListener("click", function () {
+        showUnpublishedContentOnly = !showUnpublishedContentOnly;
+        CONTENT_GROUPS.forEach(function (group) {
+          contentPageByType[group.type] = 1;
+        });
+        visibilityButton.classList.toggle("active", showUnpublishedContentOnly);
+        visibilityButton.setAttribute("aria-pressed", showUnpublishedContentOnly ? "true" : "false");
+        visibilityButton.textContent = showUnpublishedContentOnly ? "查看全部内容" : "查看未发布内容";
+        var lists = root.querySelector(".admin-content-group-lists");
+        if (lists) {
+          lists.innerHTML = renderContentGroupLists(context);
+          bindActionButtons(item, context, service, lists);
+          bindContentPager(item, context, service, root);
+        }
       });
     }
     if (saveButton) {
@@ -656,9 +948,10 @@
           return;
         }
         saveButton.disabled = true;
-        service.saveContent(adminContext(context), payload).then(function () {
+        (selectedContentScope === "STUDY" ? service.saveStudyContent(adminContext(context), payload) : service.saveContent(adminContext(context), payload)).then(function () {
+          if (selectedContentScope === "STUDY") invalidateStudyCenterResources(context); else invalidateEmploymentResources(context);
           return refreshAdminApp(item, context, service, "content").then(function () {
-            context.showMessage("info", "内容已保存", "用户端资源页会展示未隐藏的内容。");
+          context.showMessage("info", "内容已保存", "已发布内容会展示在对应用户端页面。");
           });
         }).catch(function (error) {
           saveButton.disabled = false;
@@ -680,8 +973,7 @@
         userIds: userIds,
         userId: userIds.length === 1 ? userIds[0] : "",
         title: value(root, "adminBroadcastTitle"),
-        content: value(root, "adminBroadcastContent"),
-        link: value(root, "adminBroadcastLink")
+        content: value(root, "adminBroadcastContent")
       }).then(function (result) {
         return refreshAdminApp(item, context, service, activeTab).then(function () {
           context.showMessage("info", "公告已发送", "成功 " + first(result.successCount, 0) + " 个，失败 " + first(result.failedCount, 0) + " 个。");
@@ -821,15 +1113,18 @@
     var assessmentScaleId = button && button.getAttribute("data-scale-id");
     if (action === "delete-assessment-question") call = service.deleteAssessmentQuestion(
       adminContext(context), assessmentScaleId, id);
-    if (action === "pin-content") call = service.toggleContentPin(adminContext(context), id);
-    if (action === "hide-content") call = service.toggleContentHidden(adminContext(context), id);
-    if (action === "delete-content") call = service.deleteContent(adminContext(context), id);
+    if (action === "pin-content") call = selectedContentScope === "STUDY" ? service.toggleStudyContentPin(adminContext(context), id) : service.toggleContentPin(adminContext(context), id);
+    if (action === "hide-content") call = selectedContentScope === "STUDY" ? service.toggleStudyContentHidden(adminContext(context), id) : service.toggleContentHidden(adminContext(context), id);
+    if (action === "delete-content") call = selectedContentScope === "STUDY" ? service.deleteStudyContent(adminContext(context), id) : service.deleteContent(adminContext(context), id);
     if (!call) return;
     if (button) {
       button.disabled = true;
       button.classList.add("loading");
     }
     call.then(function () {
+      if (action === "pin-content" || action === "hide-content" || action === "delete-content") {
+        if (selectedContentScope === "STUDY") invalidateStudyCenterResources(context); else invalidateEmploymentResources(context);
+      }
       return refreshAdminApp(item, context, service, activeTab).then(function () {
         if (action === "delete-assessment-question") {
           var appRoot = context.pageHost && context.pageHost.querySelector(".admin-app");
@@ -845,6 +1140,18 @@
       }
       context.showMessage("error", "操作失败", messageOf(error));
     });
+  }
+
+  function invalidateEmploymentResources(context) {
+    if (context && typeof context.invalidateEmploymentResources === "function") {
+      context.invalidateEmploymentResources();
+    }
+  }
+
+  function invalidateStudyCenterResources(context) {
+    if (context && typeof context.invalidateStudyCenterResources === "function") {
+      context.invalidateStudyCenterResources();
+    }
   }
 
   function refreshAdminApp(item, context, service, activeTab) {
@@ -894,21 +1201,9 @@
       summary: value(root, "adminContentSummary"),
       category: categoryFromContentType(type),
       sourceUrl: value(root, "adminContentSourceUrl"),
-      imageUrl: value(root, "adminContentImageUrl"),
       pinned: checked(root, "adminContentPinned"),
       hidden: checked(root, "adminContentHidden")
     };
-  }
-
-  function resetContentForm(root) {
-    setValue(root, "adminContentId", "");
-    setContentType(root, "RESOURCE");
-    setValue(root, "adminContentTitle", "");
-    setValue(root, "adminContentSummary", "");
-    setValue(root, "adminContentSourceUrl", "");
-    setValue(root, "adminContentImageUrl", "");
-    setChecked(root, "adminContentPinned", false);
-    setChecked(root, "adminContentHidden", false);
   }
 
   function fillContentForm(root, button) {
@@ -919,7 +1214,6 @@
     setValue(root, "adminContentTitle", button.getAttribute("data-title") || "");
     setValue(root, "adminContentSummary", button.getAttribute("data-summary") || "");
     setValue(root, "adminContentSourceUrl", button.getAttribute("data-source-url") || "");
-    setValue(root, "adminContentImageUrl", button.getAttribute("data-image-url") || "");
     setChecked(root, "adminContentPinned", button.getAttribute("data-pinned") === "true");
     setChecked(root, "adminContentHidden", button.getAttribute("data-hidden") === "true");
     var input = root.querySelector("#adminContentTitle");
@@ -936,10 +1230,14 @@
 
   function setContentType(root, type) {
     type = normalizeContentType(type);
+    selectedContentType = type;
     setValue(root, "adminContentType", type);
     setValue(root, "adminContentCategory", categoryFromContentType(type));
     Array.prototype.forEach.call(root.querySelectorAll(".admin-choice-tab[data-content-type]"), function (button) {
       button.classList.toggle("active", button.getAttribute("data-content-type") === type);
+    });
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-content-group-region[data-content-group]"), function (region) {
+      region.classList.toggle("active", region.getAttribute("data-content-group") === type);
     });
   }
 
@@ -986,30 +1284,105 @@
     var questionId = value(root, "adminAssessmentQuestionId");
     var sortOrder = value(root, "adminAssessmentSortOrder");
     var dimension = value(root, "adminAssessmentDimension");
+    var questionType = value(root, "adminAssessmentQuestionType") || "SINGLE";
+    var optionLabels = questionType === "MULTI" ? ["A", "B", "C", "D"] : ["A", "B"];
     return {
       scaleId: scaleId,
       question: {
         questionId: questionId ? Number(questionId) : null,
         scaleId: scaleId ? Number(scaleId) : null,
         questionText: value(root, "adminAssessmentQuestionText"),
-        questionType: value(root, "adminAssessmentQuestionType") || "SINGLE",
+        questionType: questionType,
         dimensionCode: dimension,
         sortOrder: sortOrder ? Number(sortOrder) : null,
-        options: [
-          {
-            optionLabel: "A",
-            optionText: value(root, "adminAssessmentOptionAText"),
-            dimensionCode: value(root, "adminAssessmentOptionADimension") || dimension,
-            sortOrder: 0
-          },
-          {
-            optionLabel: "B",
-            optionText: value(root, "adminAssessmentOptionBText"),
-            dimensionCode: value(root, "adminAssessmentOptionBDimension") || dimension,
-            sortOrder: 1
-          }
-        ]
+        published: !!(root.querySelector("#adminAssessmentQuestionPublished") || {}).checked,
+        options: optionLabels.map(function (label, index) {
+          return {
+            optionLabel: label,
+            optionText: value(root, "adminAssessmentOption" + label + "Text"),
+            dimensionCode: value(root, "adminAssessmentOption" + label + "Dimension") || dimension,
+            sortOrder: index
+          };
+        })
       }
+    };
+  }
+
+  function assessmentOptionsComplete(question) {
+    var options = question && question.options || [];
+    var expected = question && question.questionType === "MULTI" ? 4 : 2;
+    if (options.length !== expected) return false;
+    for (var i = 0; i < options.length; i += 1) {
+      if (!first(options[i].optionText, "") || !first(options[i].dimensionCode, "")) return false;
+    }
+    return true;
+  }
+
+  function updateAssessmentQuestionFormHints(root) {
+    if (!root) return;
+    var type = value(root, "adminAssessmentQuestionType") || "SINGLE";
+    var scaleTitle = selectedAssessmentScaleTitle(root);
+    var hint = assessmentDimensionHint(scaleTitle);
+    var dimension = root.querySelector("#adminAssessmentDimension");
+    var hintNode = root.querySelector("#adminAssessmentDimensionHint");
+    if (dimension) dimension.setAttribute("placeholder", hint.placeholder);
+    if (hintNode) hintNode.textContent = hint.text;
+    ["A", "B", "C", "D"].forEach(function (label, index) {
+      var optionDimension = root.querySelector("#adminAssessmentOption" + label + "Dimension");
+      if (optionDimension) optionDimension.setAttribute("placeholder", hint.optionPlaceholders[index] || hint.optionPlaceholders[0] || "例如：E");
+    });
+    Array.prototype.forEach.call(root.querySelectorAll(".admin-assessment-extra-option"), function (node) {
+      node.hidden = type !== "MULTI";
+    });
+  }
+
+  function selectedAssessmentScaleTitle(root) {
+    var select = root && root.querySelector("#adminAssessmentScaleId");
+    if (!select || !select.options || select.selectedIndex < 0) return "";
+    return select.options[select.selectedIndex].text || "";
+  }
+
+  function assessmentDimensionHint(title) {
+    var text = String(title || "").toUpperCase();
+    if (text.indexOf("MBTI") >= 0) {
+      return {
+        placeholder: "例如：EI、SN、TF、JP",
+        text: "MBTI 建议填写成对维度：EI、SN、TF、JP；选项维度用 E/I/S/N/T/F/J/P。",
+        optionPlaceholders: ["例如：E", "例如：I", "例如：S", "例如：N"]
+      };
+    }
+    if (text.indexOf("RIASEC") >= 0) {
+      return {
+        placeholder: "例如：R/I、A/S、E/C",
+        text: "RIASEC 建议填写兴趣维度组合：R、I、A、S、E、C。",
+        optionPlaceholders: ["例如：R", "例如：I", "例如：A", "例如：S"]
+      };
+    }
+    if (text.indexOf("BIG5") >= 0 || text.indexOf("大五") >= 0) {
+      return {
+        placeholder: "例如：OPEN、CON、EXT、AGR、NEU",
+        text: "大五人格可使用 OPEN、CON、EXT、AGR、NEU 等维度。",
+        optionPlaceholders: ["例如：OPEN", "例如：CON", "例如：EXT", "例如：AGR"]
+      };
+    }
+    if (text.indexOf("价值") >= 0) {
+      return {
+        placeholder: "例如：ACH、SEC、AUT、SOC",
+        text: "职业价值观可使用 ACH、SEC、AUT、SOC、STA、VAR 等维度。",
+        optionPlaceholders: ["例如：ACH", "例如：SEC", "例如：AUT", "例如：SOC"]
+      };
+    }
+    if (text.indexOf("压力") >= 0) {
+      return {
+        placeholder: "例如：PLAN、SUPPORT、REFRAME",
+        text: "压力应对可使用 PROBLEM、EMOTION、PLAN、SUPPORT、REFRAME、AVOID 等维度。",
+        optionPlaceholders: ["例如：PROBLEM", "例如：EMOTION", "例如：PLAN", "例如：SUPPORT"]
+      };
+    }
+    return {
+      placeholder: "例如：EI、R/I、PLAN",
+      text: "请填写该题归属维度；选项维度用于统计画像补全结果。",
+      optionPlaceholders: ["例如：E", "例如：I", "例如：PLAN", "例如：SUPPORT"]
     };
   }
 
@@ -1023,6 +1396,11 @@
     setValue(root, "adminAssessmentOptionADimension", "");
     setValue(root, "adminAssessmentOptionBText", "");
     setValue(root, "adminAssessmentOptionBDimension", "");
+    setValue(root, "adminAssessmentOptionCText", "");
+    setValue(root, "adminAssessmentOptionCDimension", "");
+    setValue(root, "adminAssessmentOptionDText", "");
+    setValue(root, "adminAssessmentOptionDDimension", "");
+    setChecked(root, "adminAssessmentQuestionPublished", true);
   }
 
   function fillAssessmentQuestionForm(root, button) {
@@ -1037,6 +1415,12 @@
     setValue(root, "adminAssessmentOptionADimension", button.getAttribute("data-option-a-dimension") || "");
     setValue(root, "adminAssessmentOptionBText", button.getAttribute("data-option-b-text") || "");
     setValue(root, "adminAssessmentOptionBDimension", button.getAttribute("data-option-b-dimension") || "");
+    setValue(root, "adminAssessmentOptionCText", button.getAttribute("data-option-c-text") || "");
+    setValue(root, "adminAssessmentOptionCDimension", button.getAttribute("data-option-c-dimension") || "");
+    setValue(root, "adminAssessmentOptionDText", button.getAttribute("data-option-d-text") || "");
+    setValue(root, "adminAssessmentOptionDDimension", button.getAttribute("data-option-d-dimension") || "");
+    setChecked(root, "adminAssessmentQuestionPublished", button.getAttribute("data-published") !== "false");
+    updateAssessmentQuestionFormHints(root);
     var input = root.querySelector("#adminAssessmentQuestionText");
     if (input && input.focus) input.focus();
   }
@@ -1078,7 +1462,7 @@
       return question.reviewStatus === "PUBLISHED" || question.status === "APPROVED";
     });
     var emptyBanks = countWhere(banks, function (bank) {
-      return Number(first(bank.questionCount, bank.questions && bank.questions.length, 0)) === 0;
+      return Number(first(bank.poolQuestionCount, bank.questions && bank.questions.length, 0)) === 0;
     });
     if (!visibleContent) {
       alerts.push({ type: "warn", title: "资源页暂无可见内容", text: "请在内容管理中发布或恢复展示内容。" });
@@ -1130,7 +1514,6 @@
       ' data-summary="' + escAttr(context, item.summary || "") + '"' +
       ' data-category="' + escAttr(context, item.category || "") + '"' +
       ' data-source-url="' + escAttr(context, item.sourceUrl || "") + '"' +
-      ' data-image-url="' + escAttr(context, item.imageUrl || "") + '"' +
       ' data-pinned="' + (item.pinned ? "true" : "false") + '"' +
       ' data-hidden="' + (item.hidden ? "true" : "false") + '"';
     return actionButton(context, "edit-content", item.contentId, "编辑", false, attrs);
@@ -1151,17 +1534,28 @@
     var options = question.options || [];
     var firstOption = options[0] || {};
     var secondOption = options[1] || {};
+    var thirdOption = options[2] || {};
+    var fourthOption = options[3] || {};
     var attrs = ' data-scale-id="' + escAttr(context, bank.scaleId) + '"' +
       ' data-question-id="' + escAttr(context, question.questionId) + '"' +
       ' data-sort-order="' + escAttr(context, question.sortOrder || "") + '"' +
       ' data-dimension="' + escAttr(context, question.dimensionCode || "") + '"' +
       ' data-question-type="' + escAttr(context, question.questionType || "SINGLE") + '"' +
+      ' data-published="' + (question.published === false ? "false" : "true") + '"' +
       ' data-question-text="' + escAttr(context, question.questionText || "") + '"' +
       ' data-option-a-text="' + escAttr(context, firstOption.optionText || "") + '"' +
       ' data-option-a-dimension="' + escAttr(context, firstOption.dimensionCode || "") + '"' +
       ' data-option-b-text="' + escAttr(context, secondOption.optionText || "") + '"' +
-      ' data-option-b-dimension="' + escAttr(context, secondOption.dimensionCode || "") + '"';
+      ' data-option-b-dimension="' + escAttr(context, secondOption.dimensionCode || "") + '"' +
+      ' data-option-c-text="' + escAttr(context, thirdOption.optionText || "") + '"' +
+      ' data-option-c-dimension="' + escAttr(context, thirdOption.dimensionCode || "") + '"' +
+      ' data-option-d-text="' + escAttr(context, fourthOption.optionText || "") + '"' +
+      ' data-option-d-dimension="' + escAttr(context, fourthOption.dimensionCode || "") + '"';
     return actionButton(context, "edit-assessment-question", question.questionId, "编辑", false, attrs);
+  }
+
+  function questionTypeText(type) {
+    return type === "MULTI" ? "多选" : "单选";
   }
 
   function empty(title, text, context) {
@@ -1197,6 +1591,14 @@
     var allowed = ["公共服务", "精选文章", "相关视频"];
     if (allowed.indexOf(category) >= 0) return category;
     return categoryFromContentType(type);
+  }
+
+  function contentGroupByType(type) {
+    type = normalizeContentType(type);
+    for (var i = 0; i < CONTENT_GROUPS.length; i += 1) {
+      if (CONTENT_GROUPS[i].type === type) return CONTENT_GROUPS[i];
+    }
+    return null;
   }
 
   function sourceText(source) {
@@ -1237,10 +1639,8 @@
 
   function broadcastRecipientOption(context, user) {
     var name = first(user.nickname, user.displayName, user.userName, user.userId);
-    var detail = [first(user.userId, ""), first(user.school, ""), first(user.major, "")].filter(function (item) {
-      return !!item;
-    }).join(" / ");
-    var search = [name, detail, user.orgId].join(" ");
+    var detail = first(user.userId, "");
+    var search = [name, detail].join(" ");
     return '<label class="admin-recipient-option" data-search="' + escAttr(context, search) + '">' +
       '<input type="checkbox" class="admin-broadcast-user" value="' + escAttr(context, user.userId) + '">' +
       '<span><strong>' + esc(context, name) + '</strong><small>' + esc(context, first(detail, "无补充信息")) +

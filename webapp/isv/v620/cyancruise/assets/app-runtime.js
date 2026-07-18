@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  var APP_VERSION = "20260712-cyancruise-v168";
+  var APP_VERSION = "20260719-cyancruise-v249";
   var ACTIVE_USER_STORAGE_KEY = "cyancruise.activeUserId";
   var USER_SCOPED_STORAGE_KEYS = [
     "cyancruise.homeIntent",
@@ -21,13 +21,28 @@
     assessmentScales: "/cc001/assessment/scales",
     assessmentQuestions: "/cc001/assessment/questions",
     assessmentSubmit: "/cc001/assessment/submit",
+    assessmentAiInterpretation: "/cc001/assessment/ai-interpretation/generate",
     assessmentRecords: "/cc001/assessment/records",
     assessmentRecord: "/cc001/assessment/record/get",
+    deepProfileGenerate: "/cc001/career-profile/deep-profile/generate",
+    deepProfileLatest: "/cc001/career-profile/deep-profile/latest",
+    deepProfileHistory: "/cc001/career-profile/deep-profile/history",
+    deepProfileDetail: "/cc001/career-profile/deep-profile/detail",
     resumes: "/cc001/resume/list",
     resumeCreate: "/cc001/resume/create",
     resumeDelete: "/cc001/resume/delete",
     plan: "/cc001/career-plan/summary",
     ensurePlan: "/cc001/career-plan/ensure",
+    dailyPlan: "/cc001/career-plan/daily/get",
+    dailyTaskUpdate: "/cc001/career-plan/daily/task/update",
+    studyPlan: "/cc001/study-center/plan/summary",
+    studyEnsurePlan: "/cc001/study-center/plan/ensure",
+    studyGeneratePlan: "/cc001/study-center/plan/generate",
+    studyDailyPlan: "/cc001/study-center/daily/get",
+    studyDailyTaskUpdate: "/cc001/study-center/daily/task/update",
+    studyMaterialUpload: "/cc001/study-center/materials/upload",
+    studyMaterialList: "/cc001/study-center/materials/list",
+    studyMaterialDelete: "/cc001/study-center/materials/delete",
     interviews: "/cc001/interview/list",
     interviewPage: "/cc001/interview/page",
     startInterview: "/cc001/interview/start",
@@ -40,6 +55,10 @@
     assistantSessions: "/cc001/assistant-chat/session/list",
     employmentInsight: "/cc001/career-employment/insight/get",
     careerResources: "/cc001/career-employment/resources/list",
+    studyCenterSelection: "/cc001/study-center/selection/get",
+    studyCenterSelectionSave: "/cc001/study-center/selection/save",
+    studyCenterInsight: "/cc001/study-center/insight/get",
+    studyCenterResources: "/cc001/study-center/resources/list",
     notifications: "/cc001/notifications/list",
     notificationUnread: "/cc001/notifications/unread-count",
     notificationRead: "/cc001/notifications/read",
@@ -61,11 +80,18 @@
     adminQuestionDelete: "/cc001/admin/questions/delete",
     adminAssessmentQuestionSave: "/cc001/admin/assessment/questions/save",
     adminAssessmentQuestionDelete: "/cc001/admin/assessment/questions/delete",
+    adminAssessmentCatalog: "/cc001/admin/assessment/catalog",
+    adminAssessmentScaleSave: "/cc001/admin/assessment/scales/save",
     adminContent: "/cc001/admin/content/list",
     adminContentSave: "/cc001/admin/content/save",
     adminContentPin: "/cc001/admin/content/pin",
     adminContentHide: "/cc001/admin/content/hide",
     adminContentDelete: "/cc001/admin/content/delete",
+    studyCenterAdminResources: "/cc001/study-center/admin/resources/list",
+    studyCenterAdminResourceSave: "/cc001/study-center/admin/resources/save",
+    studyCenterAdminResourcePin: "/cc001/study-center/admin/resources/pin",
+    studyCenterAdminResourceHide: "/cc001/study-center/admin/resources/hide",
+    studyCenterAdminResourceDelete: "/cc001/study-center/admin/resources/delete",
     adminBroadcast: "/cc001/admin/broadcast",
     adminAnalytics: "/cc001/admin/analytics/summary",
     adminAuditLog: "/cc001/admin/audit-log/list",
@@ -76,6 +102,8 @@
     fileDelete: "/cc001/files/delete",
     fileExtractText: "/cc001/files/extract-text",
     resumeDiagnosis: "/cc001/resume-diagnosis/analyze",
+    resumeDiagnosisHistory: "/cc001/resume-diagnosis/history/list",
+    resumeDiagnosisHistoryDelete: "/cc001/resume-diagnosis/history/delete",
     keywordStatus: "/cc001/resume-diagnosis/keywords/status",
     postgraduateSchoolRecommend: "/cc001/postgraduate/school-recommend",
     postgraduatePlanGenerate: "/cc001/postgraduate/plan/generate",
@@ -105,9 +133,10 @@
   };
 
   var pages = [
-    page("workbench", "CyanCruise 首页", "available", "user", "填写用户画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
-    page("employment-home", "就业", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
-    page("further-study-home", "深造", "available", "user", "考研、保研和留学方向规划入口。", ["snapshot", "plan"]),
+    page("workbench", "CyanCruise 首页", "available", "user", "填写自画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
+    page("employment-home", "就业中心", "available", "user", "查看就业洞察、简历准备、面试练习与就业资讯。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+    page("further-study-home", "升学中心", "available", "user", "选择升学方向，管理规划资料并生成个性化升学路线。", ["snapshot", "studyPlan", "studyEnsurePlan", "studyGeneratePlan", "studyDailyPlan", "studyMaterialUpload", "studyMaterialList", "studyMaterialDelete", "studyCenterResources"]),
+    page("study-resources", "全部升学资源", "available", "public", "查看升学官方服务、精选文章和相关视频。", ["studyCenterResources"], { defaultNav: false, debugNav: false }),
     page("postgraduate", "考研陪伴", "available", "user", "围绕择校、复习计划、错题解析和复试准备完成考研全周期规划。", ["postgraduateSchoolRecommend", "postgraduatePlanGenerate", "postgraduateMistakeAnalyze", "postgraduateReexamPrepare"]),
     page("postgraduate-school", "择校择专业", "available", "user", "输入本科学校、成绩、英语水平和期望地区，生成稳、冲、保三档择校建议。", ["postgraduateSchoolRecommend"], { defaultNav: false }),
     page("postgraduate-plan", "复习计划", "available", "user", "按目标院校、考试日期、科目和每周时间生成基础、提高、冲刺三轮计划。", ["postgraduatePlanGenerate"], { defaultNav: false }),
@@ -126,19 +155,19 @@
     page("study-abroad-visa", "签证网申", "available", "user", "根据目标国家、申请季、录取状态和材料状态生成签证与网申清单。", ["studyAbroadVisaChecklist"], { defaultNav: false }),
     page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
     page("today-action", "今日行动", "entry-only", "user", "根据路径规划拆解每天应该推进的事项。", ["today"]),
-    page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
-    page("resume-home", "简历", "available", "user", "简历制作和简历诊断入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+    page("assessment", "画像补全", "entry-only", "user", "先补充人格、性格和偏好信息，让后续路径规划和行动建议更准确。", ["assessmentSubmit"]),
+    page("deep-profile-detail", "深度画像详情", "entry-only", "user", "查看最新深度画像的完整分析和过往生成记录。", ["deepProfileLatest", "deepProfileHistory", "deepProfileDetail"], { defaultNav: false }),
     page("resume", "简历", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
     page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
     page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumes", "snapshot", "filePreview", "resumeDiagnosis", "keywordStatus"]),
-    page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
-    page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并进入独立记录页。", ["interviews"]),
+    page("career-plan", "路径规划", "entry-only", "user", "根据当前就业或升学路线展示对应的独立规划。", ["plan", "ensurePlan", "studyPlan", "studyEnsurePlan"]),
     page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
-    page("interview-history", "AI 模拟面试记录", "available", "user", "分页查看已保存的 AI 模拟面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"]),
+    page("interview-history", "AI 模拟面试记录", "available", "user", "分页查看已保存的 AI 模拟面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"], { defaultNav: false }),
     page("interview-panorama", "全景仿真面试", "available", "user", "在沉浸式面试环境中使用摄像头与 AI 面试官面对面练习。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
-    page("interview-panorama-history", "全景仿真面试记录", "available", "user", "分页查看已保存的全景仿真面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"]),
+    page("interview-panorama-history", "全景仿真面试记录", "available", "user", "分页查看已保存的全景仿真面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"], { defaultNav: false }),
     page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
     page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "notificationReadAll", "notificationDelete", "subscriptionQuota", "weeklyReport"]),
+    page("message-detail", "消息详情", "entry-only", "user", "查看站内消息的完整正文。", ["notifications", "notificationRead"], { defaultNav: false }),
     page("employment-insight", "就业洞察", "available", "user", "按学校、专业和目标岗位查看就业洞察。", ["employmentInsight"]),
     page("career-resources", "职业资源", "available", "public", "查看文章、视频、咨询和职业路径资源。", ["careerResources"], { defaultNav: false, debugNav: true }),
     page("admin-console", "管理后台", "entry-only", "admin", "管理员治理入口，仅对 ADMIN 或平台管理员开放。", ["adminWhoami", "adminDashboard", "adminUsersBan", "adminQuestions", "adminContent", "adminBroadcast", "adminAuditLog"], { defaultNav: false, debugNav: true })
@@ -148,16 +177,7 @@
   var featureGroups = {
     "employment-home": [
       feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
-      feature("简历诊断", "诊", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
-      feature("面试中心", "面", "选择全景仿真面试或 AI 模拟面试并查看记录", "interview-home", "已接入")
-    ],
-    "resume-home": [
-      feature("简历制作", "简", "沿用 IPD 简历创建流程，上传或创建简历并关联 PDF", "resume", "已接入"),
-      feature("简历诊断", "诊", "沿用 IPD 简历诊断逻辑，围绕目标岗位给出优化建议", "resume-diagnosis", "已接入")
-    ],
-    "interview-home": [
-      feature("全景仿真面试", "仿", "开启摄像头进入沉浸式面试房间", "interview-panorama", "已接入"),
-      feature("AI 模拟面试", "面", "进入 AI 文字问答练习并查看该类型记录", "interview", "已接入")
+      feature("简历诊断", "诊", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入")
     ],
     "further-study-home": [
       feature("考研陪伴", "研", "完成择校建议、复习计划、错题解析和复试准备", "postgraduate", "已接入"),
@@ -178,6 +198,8 @@
     diagnosisResumeListLoading: false,
     diagnosisLoading: false,
     diagnosisResult: null,
+    diagnosisHistoryByResume: {},
+    diagnosisHistoryLoading: false,
     diagnosisDraft: null,
     diagnosisMessage: null,
     selectedDiagnosisResumeId: null,
@@ -185,6 +207,10 @@
     messageTimer: null,
     previewUrls: {},
     plan: null,
+    employmentPlan: null,
+    studyPlan: null,
+    employmentDailyPlan: null,
+    studyDailyPlan: null,
     planEnsuring: false,
     interviews: null,
     activeInterview: null,
@@ -222,9 +248,11 @@
     panoramaNotice: null,
     panoramaMediaDiagnostics: [],
     panoramaRecognition: null,
+    panoramaRecognitionToken: 0,
     panoramaAnswering: false,
     panoramaSpeaking: false,
     panoramaSpeechSupported: null,
+    panoramaSpeechToken: 0,
     panoramaLastSpokenQuestion: null,
     panoramaDifficulty: "Normal",
     panoramaSeconds: 0,
@@ -237,6 +265,19 @@
     employmentInsight: null,
     employmentInsightLoading: false,
     employmentInsightError: null,
+    studyCenterSelection: null,
+    studyCenterSelectionLoading: false,
+    studyCenterSaving: false,
+    studyCenterInsight: null,
+    studyCenterInsightLoading: false,
+    studyCenterInsightError: null,
+    studyCenterResources: null,
+    studyCenterResourcesLoading: false,
+    studyCenterResourcesError: null,
+    studyPlanningMaterials: null,
+    studyPlanningMaterialsLoading: false,
+    studyPlanningMaterialsUploading: false,
+    studyPlanningMaterialsError: null,
     planProgress: null,
     assessmentScales: null,
     assessmentScale: null,
@@ -247,7 +288,17 @@
     assessmentRecords: null,
     assessmentLoading: false,
     assessmentSubmitting: false,
+    assessmentAiInterpretationLoadingId: null,
+    assessmentAiInterpretationError: null,
+    assessmentAiInterpretationErrorRecordId: null,
     assessmentError: null,
+    deepProfile: null,
+    deepProfileHistory: null,
+    deepProfileHistoryLoading: false,
+    deepProfileHistoryError: null,
+    deepProfileSelected: null,
+    deepProfileGenerating: false,
+    deepProfileError: null,
     postgraduateSchoolResult: null,
     postgraduatePlanResult: null,
     postgraduateMistakeResult: null,
@@ -273,6 +324,7 @@
     previousRoute: "",
     identityDiagnostic: ""
   };
+  var appSelectSequence = 0;
 
   function page(key, title, status, audience, summary, endpointKeys, options) {
     var meta = options || {};
@@ -362,6 +414,7 @@
     state.identity = resolveIdentity();
     updateIdentityState();
     bindEvents();
+    warmPanoramaVoices();
     loadPlatformIdentity().then(function () {
       handleRouteChange();
       if (state.identityDiagnostic) {
@@ -396,7 +449,21 @@
     window.addEventListener("popstate", handleRouteChange);
     window.addEventListener("beforeunload", stopPanoramaMedia);
     els.pageHost.addEventListener("click", handlePageHostClick);
+    els.pageHost.addEventListener("keydown", handleAppSelectKeydown);
     els.pageHost.addEventListener("change", handlePageHostChange);
+    document.addEventListener("click", function (event) {
+      if (!closestAppSelect(event.target)) {
+        closeAppSelects();
+      }
+    });
+    document.addEventListener("focusin", function (event) {
+      closeAppSelects(closestAppSelect(event.target));
+    });
+    if (typeof MutationObserver === "function") {
+      new MutationObserver(function () {
+        enhanceAppSelects(els.pageHost);
+      }).observe(els.pageHost, { childList: true, subtree: true });
+    }
     els.saveUserIdButton.addEventListener("click", saveDevelopmentUser);
     els.userIdInput.addEventListener("keydown", function (event) {
       if (event.key === "Enter") {
@@ -466,12 +533,18 @@
     } else {
       if (previous && previous !== key) {
         rememberRouteScroll(previous);
-        rememberReturnRoute(key, previous);
+        clearReturnRoute(key);
+      }
+      if (key === "deep-profile-detail" && previous !== key) {
+        state.deepProfileSelected = state.deepProfile;
       }
       state.route = key;
       if (needsCanonicalRoute(key)) {
         replaceRouteInLocation(key);
       }
+    }
+    if (state.route === "workbench" || state.route === "career-plan" || state.route === "today-action") {
+      syncCurrentRoutePlanningState();
     }
     markActiveNav();
     renderPage(pageByKey[state.route]);
@@ -510,15 +583,19 @@
       return;
     }
     if (renderPageModule(item)) {
+      enhanceAppSelects(els.pageHost);
       return;
     }
     if (item.key === "onboarding") {
       renderOnboarding(item);
     } else if (item.key === "career-resources") {
       renderCareerResourcesPage(item);
+    } else if (item.key === "study-resources") {
+      renderStudyResourcesPage(item);
     } else {
       renderContractPage(item);
     }
+    enhanceAppSelects(els.pageHost);
   }
 
   function renderPageModule(item) {
@@ -538,6 +615,8 @@
       hasUserIdentity: hasUserIdentity,
       hideMessage: hideMessage,
       identity: state.identity,
+      invalidateEmploymentResources: invalidateEmploymentResources,
+      invalidateStudyCenterResources: invalidateStudyCenterResources,
       isFilePreview: isFilePreview,
       normalizeArray: normalizeArray,
       pageByKey: pageByKey,
@@ -550,12 +629,13 @@
       renderers: {
         renderAdminConsolePage: renderContractPage,
         renderAssessmentPage: renderAssessmentPage,
+        renderDeepProfileDetailPage: renderDeepProfileDetailPage,
         renderAssistantPage: renderContractPage,
         renderCareerPlanPage: renderCareerPlanPage,
         renderContractPage: renderContractPage,
         renderEmploymentHome: renderEmploymentHome,
+        renderFurtherStudyHome: renderFurtherStudyHome,
         renderInterviewHistoryPage: renderInterviewHistoryPage,
-        renderInterviewHub: renderInterviewHub,
         renderInterviewPage: renderInterviewPage,
         renderMessagesPage: renderContractPage,
         renderPanoramaHistoryPage: renderPanoramaHistoryPage,
@@ -616,21 +696,22 @@
       major: firstText(intent.major, getValue(state.snapshot, "onboarding.education.major"), intent.schoolMajor, onboarding.schoolMajor),
       schoolMajor: firstText(intent.schoolMajor, onboarding.schoolMajor),
       resumeStatus: firstText(intent.resumeStatus, onboarding.resumeStatus),
-      experience: firstText(intent.experience, onboarding.experience, onboarding.strengths)
+      selectedResumeId: firstText(intent.selectedResumeId, onboarding.selectedResumeId, getValue(state.snapshot, "resume.lastResumeId")),
+      experience: firstText(intent.experience, onboarding.experience, onboarding.strengths),
+      selfProfileSupplement: firstText(intent.selfProfileSupplement, onboarding.selfProfileSupplement)
     };
     var targetRole = firstText(intent.targetRole, onboarding.targetRole, textFromSnapshot("preferences.targetRole"));
+    var targetSchool = firstText(intent.targetSchool, onboarding.targetSchool);
     var preference = firstText(intent.preference, onboarding.preference);
-    var selectedGoal = resolveHomeGoal(intent.goal, targetRole, preference);
+    var selectedGoal = resolveHomeGoal(firstText(onboarding.routeGoal, intent.goal), targetRole, preference, targetSchool);
     var intentPanel = isHomeIntentCollapsed(intent)
-      ? homeIntentSummaryPanel(selectedGoal, profile, targetRole, preference)
-      : homeIntentFormPanel(selectedGoal, profile, targetRole, preference);
+      ? homeIntentSummaryPanel(selectedGoal, profile, targetRole, targetSchool, preference)
+      : homeIntentFormPanel(selectedGoal, profile, targetRole, targetSchool, preference);
     renderFeatureShell(item, homeWelcomeTitle(), "这里汇总你的路线、今日行动、简历和面试进展。",
       intentPanel +
       overviewStrip(selectedGoal) +
       '<section class="feature-section"><h3>路线入口</h3><div class="feature-grid">' +
-      featureCards(homeRouteFeatures(selectedGoal)) + '</div></section>' +
-      '<section class="feature-section"><h3>推荐工具</h3><div class="feature-grid">' +
-      featureCards(homeRecommendedFeatures(selectedGoal)) + '</div></section>');
+      featureCards(homeRouteFeatures(selectedGoal)) + '</div></section>');
     var form = $("homeIntentForm");
     if (form) {
       form.addEventListener("submit", submitHomeIntent);
@@ -689,9 +770,10 @@
     return "";
   }
 
-  function homeIntentFormPanel(selectedGoal, onboarding, targetRole, preference) {
+  function homeIntentFormPanel(selectedGoal, onboarding, targetRole, targetSchool, preference) {
+    var resumeOptions = profileResumeOptions();
     return '<section class="panel full home-intent-panel">' +
-      '<h3>用户画像</h3>' +
+      '<h3>自画像</h3>' +
       '<form class="form-grid" id="homeIntentForm">' +
       '<h4 class="form-section-title full">个人情况</h4>' +
       field("profileIdentityType", "身份类型", "select", firstText(onboarding.identityType, "student"), [["student", "在校学生"], ["graduate", "应届毕业生"], ["career_switcher", "转行求职"]]) +
@@ -699,22 +781,38 @@
       field("profileSchool", "学校", "text", firstText(onboarding.school, "")) +
       field("profileMajor", "专业", "text", firstText(onboarding.major, onboarding.schoolMajor, "")) +
       field("resumeStatus", "简历/材料状态", "select", firstText(onboarding.resumeStatus, "none"), [["none", "还没有简历"], ["draft", "已有初稿"], ["ready", "已有可投递简历"], ["materials", "已有升学材料"]]) +
+      field("profileSelectedResume", "选择已有简历", "select", String(firstText(onboarding.selectedResumeId, "")), resumeOptions) +
+      '<small class="profile-resume-reference-note full">所选简历将用于就业洞察展示，并作为求职或升学规划的分析参考。</small>' +
       '<label class="full">经历与优势<textarea id="profileExperience" placeholder="可以写课程、项目、实习、竞赛、语言、技能、研究方向等。">' + escapeHtml(firstText(onboarding.experience, onboarding.strengths, "")) + '</textarea></label>' +
+      '<label class="full">自画像补充<textarea id="selfProfileSupplement" placeholder="可填写深度画像建议补充的真实信息，例如项目职责、技术基础、学习时间、协作经历或目标限制。">' + escapeHtml(firstText(onboarding.selfProfileSupplement, "")) + '</textarea><small>保存后，重新生成深度画像时会优先参考这些信息，后续简历诊断和规划也会读取最新内容。</small></label>' +
       '<h4 class="form-section-title full">路线选择</h4>' +
-      field("homeGoal", "当前路线", "select", selectedGoal, [["employment", "就业"], ["study", "深造"], ["explore", "先了解一下"]]) +
-      field("homeTargetRole", "目标岗位或方向", "text", targetRole) +
-      field("homePreference", "路线偏好说明", "text", preference) +
-      '<div class="full actions-row"><button type="submit">保存用户画像</button><button type="button" class="secondary" id="cancelHomeIntentButton">取消修改</button>' + homeDirectionButtons(selectedGoal) + '</div>' +
+      field("homeGoal", "当前路线", "select", selectedGoal, [["employment", "就业"], ["study", "深造"]]) +
+      homeTargetField(selectedGoal, targetRole, targetSchool) +
+      '<div class="full actions-row"><button type="submit">保存自画像</button><button type="button" class="secondary" id="cancelHomeIntentButton">取消修改</button></div>' +
       '</form></section>';
   }
 
-  function homeIntentSummaryPanel(selectedGoal, onboarding, targetRole, preference) {
+  function homeTargetField(selectedGoal, targetRole, targetSchool) {
+    var study = selectedGoal === "study";
+    var label = study ? "目标院校" : "目标岗位或方向";
+    var value = study ? targetSchool : targetRole;
+    var placeholder = study ? "例如：电子科技大学" : "例如：后端开发、产品经理";
+    return '<label id="homeTargetField"><span id="homeTargetLabel">' + label + '</span>' +
+      '<input id="homeTargetRole" value="' + escapeAttr(value) + '" placeholder="' + escapeAttr(placeholder) + '"' +
+      ' data-current-goal="' + (study ? "study" : "employment") + '"' +
+      ' data-role-value="' + escapeAttr(targetRole) + '" data-school-value="' + escapeAttr(targetSchool) + '"></label>';
+  }
+
+  function homeIntentSummaryPanel(selectedGoal, onboarding, targetRole, targetSchool, preference) {
     var expanded = getUserStorageItem("cyancruise.homeProfileExpanded") === "true";
+    var targetLabel = selectedGoal === "study" ? "目标院校" : "目标岗位或方向";
+    var targetValue = selectedGoal === "study" ? targetSchool : targetRole;
     var summaryRows = [
       ["当前路线", labelForGoal(selectedGoal)],
-      ["目标岗位或方向", firstText(targetRole, "待确认")],
+      [targetLabel, firstText(targetValue, "待确认")],
       ["身份类型", labelForIdentity(firstText(onboarding.identityType, "student"))],
-      ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))]
+      ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))],
+      ["规划参考简历", selectedProfileResumeTitle(onboarding.selectedResumeId)]
     ];
     var detailRows = [
       ["身份类型", labelForIdentity(firstText(onboarding.identityType, "student"))],
@@ -722,19 +820,48 @@
       ["学校", firstText(onboarding.school, "未填写")],
       ["专业", firstText(onboarding.major, onboarding.schoolMajor, "未填写")],
       ["简历/材料状态", labelForResumeStatus(firstText(onboarding.resumeStatus, "none"))],
+      ["规划参考简历", selectedProfileResumeTitle(onboarding.selectedResumeId)],
       ["经历与优势", firstText(onboarding.experience, "未填写")],
+      ["自画像补充", firstText(onboarding.selfProfileSupplement, "未填写")],
       ["当前路线", labelForGoal(selectedGoal)],
-      ["目标岗位或方向", firstText(targetRole, "待确认")],
-      ["路线偏好说明", firstText(preference, "未填写")]
+      [targetLabel, firstText(targetValue, "待确认")]
     ];
     var rows = expanded ? detailRows : summaryRows;
     return '<section class="panel full home-intent-panel">' +
-      '<h3>用户画像已保存</h3>' +
+      '<h3>自画像已保存</h3>' +
       '<div class="metric-list profile-summary-grid">' + rows.map(function (row) {
         return '<div class="metric"><span class="label">' + escapeHtml(row[0]) + '</span><strong>' + escapeHtml(row[1]) + '</strong></div>';
       }).join("") + '</div>' +
-      '<div class="actions-row"><button type="button" class="secondary" id="toggleHomeProfileButton">' + (expanded ? "收起画像" : "展开画像") + '</button><button type="button" class="secondary" id="editHomeIntentButton">修改用户画像</button></div>' +
+      '<div class="actions-row"><button type="button" class="secondary" id="toggleHomeProfileButton">' + (expanded ? "收起自画像" : "展开自画像") + '</button><button type="button" class="secondary" id="editHomeIntentButton">修改自画像</button>' + homeDirectionButtons(selectedGoal) + '</div>' +
       '</section>';
+  }
+
+  function profileResumeOptions() {
+    var resumes = normalizeArray(state.resumes);
+    if (!resumes.length) {
+      return [["", "暂无可选简历"]];
+    }
+    return resumes.map(function (resume) {
+      return [String(firstText(resume.resumeId, resume.id, "")), firstText(resume.title, resume.resumeName, "未命名简历")];
+    });
+  }
+
+  function selectedProfileResume(selectedResumeId) {
+    var resumes = normalizeArray(state.resumes);
+    var selectedId = String(firstText(selectedResumeId,
+      getValue(state.snapshot, "onboarding.selectedResumeId"),
+      getValue(state.snapshot, "resume.lastResumeId"), ""));
+    for (var i = 0; i < resumes.length; i += 1) {
+      if (String(firstText(resumes[i].resumeId, resumes[i].id, "")) === selectedId) {
+        return resumes[i];
+      }
+    }
+    return resumes.length ? resumes[0] : null;
+  }
+
+  function selectedProfileResumeTitle(selectedResumeId) {
+    var resume = selectedProfileResume(selectedResumeId);
+    return resume ? firstText(resume.title, resume.resumeName, "未命名简历") : "暂未选择";
   }
 
   function editHomeIntent() {
@@ -752,7 +879,7 @@
       removeUserStorageItem("cyancruise.previewProfile");
     }
     renderPage(pageByKey.workbench);
-    showMessage("info", "已取消修改", "页面已恢复到修改前的用户画像。");
+    showMessage("info", "已取消修改", "页面已恢复到修改前的自画像。");
   }
 
   function toggleHomeProfile() {
@@ -763,52 +890,56 @@
 
   function homeDirectionButtons(goal) {
     var buttons = [];
-    if (goal === "employment" || goal === "explore") {
-      buttons.push('<button type="button" class="secondary" data-link="employment-home" data-platform-link="true">进入就业</button>');
+    if (goal === "employment") {
+      buttons.push('<button type="button" class="secondary" data-link="employment-home" data-platform-link="true">前往就业中心</button>');
     }
-    if (goal === "study" || goal === "explore") {
-      buttons.push('<button type="button" class="secondary" data-link="further-study-home" data-platform-link="true">进入深造</button>');
+    if (goal === "study") {
+      buttons.push('<button type="button" class="secondary" data-link="further-study-home" data-platform-link="true">前往升学中心</button>');
     }
     return buttons.join("");
   }
 
   function homeRouteFeatures(goal) {
-    var employment = feature("就业", "就", "进入简历制作、简历诊断、全景仿真面试和模拟面试", "employment-home", "已接入");
-    var study = feature("深造", "深", "进入考研、保研、留学规划入口，后续接入规划智能体", "further-study-home", "规划中");
+    var employment = feature("就业中心", "就", "查看就业洞察、简历准备、面试练习与就业资讯", "employment-home", "已接入");
+    var study = feature("升学中心", "学", "选择升学方向，查看准备建议与升学资讯", "further-study-home", "已接入");
     var plan = feature("路径规划", "路", "根据当前方向生成实现路径规划，后续接入规划智能体", "career-plan", "规划中");
-    var assessment = feature("职业测评", "测", "通过答题分析人格、性格和偏好，补全用户画像", "assessment", "规划中");
+    var assessment = feature("画像补全", "补", "先补充人格、性格和偏好信息，让后续分析更准确", "assessment", "规划中");
     var today = feature("今日行动", "今", "根据路径规划拆解每天应该推进的事项", "today-action", "已接入");
     employment.platformLink = true;
     study.platformLink = true;
     if (goal === "employment") {
-      return [employment, today, plan, assessment];
+      return [assessment, employment, today, plan];
     }
     if (goal === "study") {
-      return [study, today, plan, assessment];
+      return [assessment, study, today, plan];
     }
-    return [employment, today, plan, assessment, study];
-  }
-
-  function homeRecommendedFeatures(goal) {
-    if (goal === "study") {
-      return featureGroups["further-study-home"];
-    }
-    return [
-      feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护记录", "resume", "已接入"),
-      feature("简历诊断", "诊", "根据目标岗位诊断简历匹配度", "resume-diagnosis", "已接入"),
-      feature("面试中心", "面", "选择全景仿真面试或 AI 模拟面试并查看记录", "interview-home", "已接入")
-    ];
+    return [assessment, employment, today, plan, study];
   }
 
   function changeHomeGoal() {
     setUserStorageItem("cyancruise.homeIntentEditing", "true");
+    syncHomeTargetField(valueOf("homeGoal"));
   }
 
-  function resolveHomeGoal(goal, target, preference) {
+  function syncHomeTargetField(goal) {
+    var input = $("homeTargetRole");
+    var label = $("homeTargetLabel");
+    if (!input || !label) return;
+    var previousGoal = input.getAttribute("data-current-goal") || "employment";
+    input.setAttribute(previousGoal === "study" ? "data-school-value" : "data-role-value", input.value);
+    var study = goal === "study";
+    input.value = input.getAttribute(study ? "data-school-value" : "data-role-value") || "";
+    input.setAttribute("data-current-goal", study ? "study" : "employment");
+    input.setAttribute("placeholder", study ? "例如：电子科技大学" : "例如：后端开发、产品经理");
+    label.textContent = study ? "目标院校" : "目标岗位或方向";
+  }
+
+  function resolveHomeGoal(goal, target, preference, targetSchool) {
     var normalized = trim(goal);
-    if (normalized === "employment" || normalized === "study" || normalized === "explore") {
+    if (normalized === "employment" || normalized === "study") {
       return normalized;
     }
+    if (trim(targetSchool)) return "study";
     var text = firstText(target, preference);
     if (/考研|保研|留学|升学|深造|研究生|院校|GPA|雅思|托福|申请/.test(text)) {
       return "study";
@@ -816,9 +947,46 @@
     return "employment";
   }
 
+  function currentRouteGoal() {
+    var onboarding = getValue(state.snapshot, "onboarding") || {};
+    return resolveHomeGoal(firstText(onboarding.routeGoal, readHomeIntent().goal),
+      firstText(onboarding.targetRole, textFromSnapshot("preferences.targetRole")),
+      firstText(onboarding.preference, ""),
+      firstText(onboarding.targetSchool, readHomeIntent().targetSchool));
+  }
+
+  function isStudyRoute() {
+    return currentRouteGoal() === "study";
+  }
+
+  function syncCurrentRoutePlanningState() {
+    if (isStudyRoute()) {
+      state.plan = state.studyPlan;
+      state.dailyPlan = state.studyDailyPlan;
+    } else {
+      state.plan = state.employmentPlan;
+      state.dailyPlan = state.employmentDailyPlan;
+    }
+  }
+
+  function currentPlanEndpoint() { return isStudyRoute() ? endpoints.studyPlan : endpoints.plan; }
+  function currentEnsurePlanEndpoint(preferAgent) {
+    if (isStudyRoute()) return preferAgent ? endpoints.studyGeneratePlan : endpoints.studyEnsurePlan;
+    return preferAgent && endpoints.generatePlan ? endpoints.generatePlan : endpoints.ensurePlan;
+  }
+  function currentDailyPlanEndpoint() { return isStudyRoute() ? endpoints.studyDailyPlan : endpoints.dailyPlan; }
+  function currentDailyTaskUpdateEndpoint() { return isStudyRoute() ? endpoints.studyDailyTaskUpdate : endpoints.dailyTaskUpdate; }
+  function shouldEnsureCurrentPlan(plan) {
+    return !plan || (!plan.unavailable && !hasExistingCareerPlan(plan));
+  }
+
   function renderFeatureHome(item) {
     if (item.key === "employment-home") {
       renderEmploymentHome(item);
+      return;
+    }
+    if (item.key === "further-study-home") {
+      renderFurtherStudyHome(item);
       return;
     }
     var cards = featureGroups[item.key] || [];
@@ -829,12 +997,10 @@
 
   function renderEmploymentHome(item) {
     ensureEmploymentHomeData();
-    renderFeatureShell(item, item.title, "先看路线图，再进入简历、面试、就业洞察和公开就业资源。",
+    renderFeatureShell(item, item.title, "围绕目标岗位完成简历准备、面试练习，查看就业洞察和就业资讯。",
       employmentRoadmapPanel() +
       employmentInsightPanel() +
-      employmentResourcePanels() +
-      '<section class="feature-section"><h3>就业工具</h3><div class="feature-grid">' +
-      featureCards(featureGroups[item.key] || []) + '</div></section>');
+      employmentResourcePanels());
   }
 
   function ensureEmploymentHomeData() {
@@ -885,7 +1051,8 @@
   }
 
   function employmentRoadmapPanel() {
-    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    var employmentPlan = state.employmentPlan || (!isStudyRoute() ? state.plan : null);
+    var plan = employmentPlan && !employmentPlan.unavailable ? employmentPlan : {};
     var hasPlan = !!(plan && Object.keys(plan).length);
     var targetRole = employmentTargetRole(plan);
     var weeklyFocus = normalizeArray(plan.weeklyFocus || getValue(plan, "weeklyPlan.actions") || plan.weekFocus || plan.actions || plan.nextActions).slice(0, 3);
@@ -893,31 +1060,19 @@
       weeklyFocus = defaultRoadmapFocus(targetRole);
     }
     var phases = normalizeArray(plan.phases);
-    var summary = firstText(plan.startStateSummary, plan.summary, plan.planSummary, "当前先使用规则版路线图组织就业动作；接入智能体后，这里会升级为个性化路径规划。");
-    var planLabel = hasPlan ? planModeLabel(plan) : "规则版";
+    var summary = firstText(plan.startStateSummary, plan.summary, plan.planSummary, "根据你的目标岗位和现有准备情况生成分阶段就业路线图。");
     return '<section class="feature-section roadmap-section">' +
       '<div class="section-heading"><div><h3>就业路线图</h3><p class="section-note">优先展示下一步怎么走，工具入口放在路线之后。</p></div>' +
       '<div class="section-actions">' +
       '<button type="button" class="secondary" data-link="career-plan">完整规划</button>' +
       '<button type="button" data-ensure-plan ' + (state.planEnsuring ? 'disabled aria-disabled="true"' : '') + '>' +
-      (state.planEnsuring ? "生成中" : hasPlan ? "刷新路线图" : "生成路线图") + '</button></div></div>' +
+      (state.planEnsuring ? "生成中" : planGenerationButtonLabel(plan, hasPlan ? "重新生成路线图" : "生成路线图")) + '</button></div></div>' +
       '<div class="roadmap-panel">' +
-      '<div class="roadmap-summary"><span class="resource-type">' + escapeHtml(planLabel) + '</span>' +
-      '<strong>' + escapeHtml(targetRole) + '</strong><p>' + escapeHtml(summary) + '</p>' +
+      '<div class="roadmap-summary"><span class="resource-type">就业规划</span>' +
+      '<strong>' + escapeHtml(targetRole) + '</strong>' + renderPlanProfileStatus(plan, summary) +
       '<ul class="compact-list">' + weeklyFocus.map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul></div>' +
       '<div class="roadmap-steps">' + (phases.length ? phases.slice(0, 4).map(planPhaseStepCard).join("") : employmentRoadmapSteps(targetRole).map(roadmapStepCard).join("")) + '</div>' +
       '</div></section>';
-  }
-
-  function planModeLabel(plan) {
-    var mode = firstText(plan && plan.planningMode, "");
-    if (mode === "AGENT") {
-      return "智能体生成";
-    }
-    if (mode === "RULE_FALLBACK") {
-      return "规则版";
-    }
-    return "已生成";
   }
 
   function planPhaseStepCard(phase, index) {
@@ -967,7 +1122,7 @@
         status: resumeCount ? resumeCount + " 份简历" : "待开始",
         active: hasTarget && !resumeCount,
         desc: "把项目、实习、课程和竞赛证据写进简历。",
-        route: "resume-home"
+        route: "resume"
       },
       {
         title: "资讯与投递",
@@ -981,7 +1136,7 @@
         status: interviewCount ? interviewCount + " 次练习" : "待练习",
         active: !!resumeCount && !interviewCount,
         desc: "用模拟面试验证表达、追问和复盘质量。",
-        route: "interview-home"
+        route: "interview"
       }
     ];
   }
@@ -994,16 +1149,16 @@
       '<span class="step-status">' + escapeHtml(step.status) + '</span></button>';
   }
 
-  function ensureEmploymentPlan() {
+  function ensureEmploymentPlan(preferAgent) {
     if (state.planEnsuring) {
       return;
     }
     if (isFilePreview()) {
       var previewPlan = {
-        startStateSummary: "预览模式下展示规则版路线图；部署后可调用 CyanCruise 路径规划接口生成并保存。",
+        startStateSummary: "根据当前目标岗位和准备情况，整理分阶段路线与本周行动。",
         planningMode: "RULE_FALLBACK",
         agentStatus: "FALLBACK_READY",
-        horizonYears: 3,
+        horizonYears: 1,
         targetRole: employmentTargetRole({}),
         weeklyFocus: defaultRoadmapFocus(employmentTargetRole({})),
         weeklyPlan: {
@@ -1026,12 +1181,21 @@
       return;
     }
     state.planEnsuring = true;
+    var currentEmploymentPlan = state.employmentPlan || (!isStudyRoute() ? state.plan : null);
+    var refreshState = careerPlanRefreshState(currentEmploymentPlan && !currentEmploymentPlan.unavailable ? currentEmploymentPlan : {});
     renderPage(pageByKey[state.route]);
-    post(endpoints.ensurePlan, state.identity.userId).then(function (plan) {
-      state.plan = mergeRefreshedPlan(state.plan, plan || {});
-      showMessage("info", "路线图已刷新", "未开始的阶段已更新，已完成的阶段保持不变。");
+    var endpoint = preferAgent && endpoints.generatePlan ? endpoints.generatePlan : endpoints.ensurePlan;
+    post(endpoint, state.identity.userId).then(function (plan) {
+      state.employmentPlan = mergeRefreshedPlan(state.employmentPlan, plan || {});
+      if (!isStudyRoute()) state.plan = state.employmentPlan;
+      return post(endpoints.dailyPlan, state.identity.userId).then(function (dailyPlan) {
+        state.employmentDailyPlan = dailyPlan || {};
+        if (!isStudyRoute()) state.dailyPlan = state.employmentDailyPlan;
+        showMessage("info", preferAgent && refreshState.protectedCount > 0 ? "未开始阶段已更新" : (preferAgent ? "智能路线图已生成" : "路线图已刷新"),
+          refreshState.protectedCount > 0 ? "进行中和已完成阶段及其进度已保留。" : "每日计划已按新路线从第一步开始安排。");
+      });
     }).catch(function (error) {
-      showMessage("error", "路线图生成失败", error.message || "路径规划接口暂不可用。");
+      showMessage("error", "路线图生成失败", error.message || "智能规划暂不可用，原有路线图已保留，请稍后重试。");
     }).then(function () {
       state.planEnsuring = false;
       if (state.route === "employment-home" || state.route === "career-plan" || state.route === "today-action") {
@@ -1058,18 +1222,487 @@
     }
     var insight = state.employmentInsight;
     var rows = employmentInsightProfileRows(insight);
-    if (insight.latestYear) {
-      rows.push(["最近年份", insight.latestYear]);
-    }
-    var resumeSummary = employmentResumeSummary();
-    var summaryText = firstText(resumeSummary, chineseInsightSummary(insight), "暂无简历摘要。完成简历创建和智能分析后，这里会展示简历摘要。");
     return '<section class="feature-section"><div class="section-heading">' +
-      '<h3>就业洞察</h3><button type="button" class="secondary" data-link="employment-insight">查看详情</button></div>' +
+      '<h3>就业洞察</h3></div>' +
       '<div class="insight-summary">' +
-      metricsPanel("用户画像", rows) +
-      '<section class="panel"><h3>简历摘要</h3><p>' + escapeHtml(summaryText) + '</p>' +
-      insightHighlights(insight) + '</section>' +
+      metricsPanel("自画像", rows) +
+      employmentResumeSummaryPanel(insight) +
       '</div></section>';
+  }
+
+  function ensureStudyPlan(preferAgent) {
+    if (state.planEnsuring) return;
+    var profile = furtherStudyProfile();
+    if (!profile.directionCode) {
+      showMessage("warning", "请先选择升学方向", "请选择考研、保研或留学并保存，再生成对应方向的规划。");
+      return;
+    }
+    if (!hasUserIdentity()) {
+      showMessage("warning", "需要身份", "生成升学路线图前需要登录身份。");
+      return;
+    }
+    state.planEnsuring = true;
+    var previous = state.studyPlan && !state.studyPlan.unavailable ? state.studyPlan : {};
+    var refreshState = studyPlanRefreshState(previous);
+    renderPage(pageByKey[state.route]);
+    post(preferAgent ? endpoints.studyGeneratePlan : endpoints.studyEnsurePlan, state.identity.userId).then(function (plan) {
+      // 升学路线的阶段保护已由服务端按真实持久化进度处理。这里必须完全采用
+      // 服务端结果，避免浏览器把历史单阶段兜底路线再次合并回来。
+      state.studyPlan = plan || {};
+      if (isStudyRoute()) state.plan = state.studyPlan;
+      return post(endpoints.studyDailyPlan, state.identity.userId).then(function (dailyPlan) {
+        state.studyDailyPlan = dailyPlan || {};
+        if (isStudyRoute()) state.dailyPlan = state.studyDailyPlan;
+      }).catch(function () { return null; });
+    }).then(function () {
+      showMessage("success", preferAgent ? "升学路线图已生成" : "升学路线图已准备",
+        refreshState.protectedCount > 0 ? "进行中和已完成阶段已保留。" : "今日行动已按所选升学方向安排。");
+    }).catch(function (error) {
+      // 生成失败时也重新读取服务端状态。服务端可能已清理无效历史路线，不能让
+      // 浏览器继续显示本地缓存中的虚假阶段；有效旧路线则会由服务端原样返回。
+      return post(endpoints.studyPlan, state.identity.userId).then(function (plan) {
+        state.studyPlan = plan || {};
+        if (isStudyRoute()) state.plan = state.studyPlan;
+      }).catch(function () { return null; }).then(function () {
+        showMessage("error", "升学路线图生成失败", error.message || "未保存无效路线，请稍后重试真实智能规划。");
+      });
+    }).then(function () {
+      state.planEnsuring = false;
+      renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function ensureCurrentRoutePlan(preferAgent) {
+    if (isStudyRoute()) ensureStudyPlan(preferAgent);
+    else ensureEmploymentPlan(preferAgent);
+  }
+
+  function ensureStudyCenterData() {
+    loadStudyCenterResources();
+    if (hasUserIdentity()) {
+      loadStudyCenterSelection();
+      if (state.studyCenterSelection) loadStudyPlanningMaterials(false);
+    }
+  }
+
+  function loadStudyCenterSelection() {
+    if (state.studyCenterSelectionLoading || state.studyCenterSelection || !hasUserIdentity()) return;
+    state.studyCenterSelectionLoading = true;
+    post(endpoints.studyCenterSelection, state.identity.userId).then(function (selection) {
+      state.studyCenterSelection = selection || {};
+      state.studyCenterInsight = null;
+      loadStudyCenterInsight();
+      loadStudyPlanningMaterials(false);
+    }).catch(function (error) {
+      state.studyCenterInsightError = error.message || "升学中心暂不可用。";
+    }).then(function () {
+      state.studyCenterSelectionLoading = false;
+      if (state.route === "further-study-home") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function loadStudyCenterInsight() {
+    if (state.studyCenterInsightLoading || state.studyCenterInsight || state.studyCenterInsightError || !hasUserIdentity()) return;
+    state.studyCenterInsightLoading = true;
+    post(endpoints.studyCenterInsight, state.identity.userId).then(function (insight) {
+      state.studyCenterInsight = insight || {};
+    }).catch(function (error) {
+      state.studyCenterInsightError = error.message || "升学洞察暂不可用。";
+    }).then(function () {
+      state.studyCenterInsightLoading = false;
+      if (state.route === "further-study-home") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function loadStudyCenterResources() {
+    if (state.studyCenterResourcesLoading || state.studyCenterResources || state.studyCenterResourcesError) return;
+    state.studyCenterResourcesLoading = true;
+    post(endpoints.studyCenterResources, "").then(function (feed) {
+      state.studyCenterResources = feed || {};
+    }).catch(function (error) {
+      state.studyCenterResourcesError = error.message || "升学资讯暂不可用。";
+    }).then(function () {
+      state.studyCenterResourcesLoading = false;
+      if (state.route === "further-study-home" || state.route === "study-resources") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function loadStudyPlanningMaterials(force) {
+    if (!hasUserIdentity()) return;
+    var selection = state.studyCenterSelection || {};
+    if (firstText(selection.direction, "") !== "POSTGRADUATE") {
+      state.studyPlanningMaterials = [];
+      state.studyPlanningMaterialsError = null;
+      return;
+    }
+    if (state.studyPlanningMaterialsLoading || (!force && state.studyPlanningMaterials)) return;
+    state.studyPlanningMaterialsLoading = true;
+    state.studyPlanningMaterialsError = null;
+    post(endpoints.studyMaterialList, {
+      userId: state.identity.userId,
+      direction: "POSTGRADUATE"
+    }).then(function (materials) {
+      state.studyPlanningMaterials = Array.isArray(materials) ? materials : [];
+    }).catch(function (error) {
+      state.studyPlanningMaterialsError = error.message || "规划资料暂时无法读取。";
+    }).then(function () {
+      state.studyPlanningMaterialsLoading = false;
+      if (state.route === "further-study-home") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function uploadStudyPlanningMaterial() {
+    if (state.studyPlanningMaterialsUploading || !hasUserIdentity()) return;
+    var input = $("studyPlanningMaterialFile");
+    var file = input && input.files && input.files[0];
+    if (!file) {
+      showMessage("warning", "请选择资料", "请选择一份 PDF、Word、TXT 或 Markdown 文件。");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showMessage("warning", "文件过大", "单份规划资料不能超过 5MB。");
+      return;
+    }
+    if (isFilePreview()) {
+      showMessage("info", "本地预览不上传资料", "请在应用服务中测试资料上传。");
+      return;
+    }
+    state.studyPlanningMaterialsUploading = true;
+    renderPage(pageByKey[state.route]);
+    readFileAsBase64(file).then(function (base64) {
+      return post(endpoints.studyMaterialUpload, {
+        userId: state.identity.userId,
+        request: {
+          direction: "POSTGRADUATE",
+          materialType: valueOf("studyPlanningMaterialType") || "OTHER",
+          title: file.name,
+          mediaType: file.type || "",
+          file: {
+            originalFilename: file.name,
+            base64: base64
+          }
+        }
+      });
+    }).then(function (material) {
+      state.studyPlanningMaterials = null;
+      loadStudyPlanningMaterials(true);
+      if (material && material.extractionStatus === "OK") {
+        showMessage("success", "资料已保存", "正文读取成功，将用于下一次考研智能路线生成。");
+      } else {
+        showMessage("warning", "资料已保存", "文件已保存，但没有读取到可用正文；这份资料暂不会用于智能规划。");
+      }
+    }).catch(function (error) {
+      showMessage("error", "资料上传失败", error.message || "请稍后重试。");
+    }).then(function () {
+      state.studyPlanningMaterialsUploading = false;
+      if (state.route === "further-study-home") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function deleteStudyPlanningMaterial(materialId) {
+    if (!materialId || !hasUserIdentity()) return;
+    showConfirmDialog("删除规划资料",
+      "删除后，这份资料不会再作为考研路线生成依据，且文件无法恢复。",
+      "确认删除", function () {
+        return post(endpoints.studyMaterialDelete, {
+          userId: state.identity.userId,
+          materialId: materialId
+        }).then(function () {
+          state.studyPlanningMaterials = null;
+          loadStudyPlanningMaterials(true);
+          showMessage("success", "资料已删除", "下一次生成路线时将不再使用这份资料。");
+        }).catch(function (error) {
+          showMessage("error", "删除失败", error.message || "请稍后重试。");
+        });
+      }, { danger: true });
+  }
+
+  function saveStudyCenterDirection() {
+    var select = document.getElementById("studyCenterDirection");
+    if (!select || !select.value) { showMessage("warning", "请选择升学方向", "请选择考研、保研或留学后再保存。"); return; }
+    if (!hasUserIdentity() || state.studyCenterSaving) return;
+    state.studyCenterSaving = true;
+    setStudyCenterSaveButtonBusy(true);
+    post(endpoints.studyCenterSelectionSave, {
+      userId: state.identity.userId,
+      direction: select.value
+    }).then(function (selection) {
+      state.studyCenterSelection = selection || {};
+      state.studyCenterInsight = null;
+      state.studyCenterInsightError = null;
+      state.studyPlanningMaterials = null;
+      state.studyPlanningMaterialsError = null;
+      return post(endpoints.studyPlan, state.identity.userId).then(function (plan) {
+        state.studyPlan = plan || {};
+        if (isStudyRoute()) state.plan = state.studyPlan;
+      }).catch(function () { return null; });
+    }).then(function () {
+      showMessage("success", "升学方向已保存", "升学中心已按新方向更新准备建议。");
+      loadStudyCenterInsight();
+      loadStudyPlanningMaterials(true);
+    }).catch(function (error) {
+      showMessage("error", "保存失败", error.message || "请稍后重试。");
+    }).then(function () {
+      state.studyCenterSaving = false;
+      setStudyCenterSaveButtonBusy(false);
+      if (state.route === "further-study-home") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function setStudyCenterSaveButtonBusy(busy) {
+    var button = document.querySelector('[data-save-study-direction="true"]');
+    if (!button) return;
+    button.disabled = !!busy;
+    button.setAttribute("aria-disabled", busy ? "true" : "false");
+    button.setAttribute("aria-busy", busy ? "true" : "false");
+    button.textContent = busy ? "保存中..." : "保存升学方向";
+  }
+
+  function renderFurtherStudyHome(item) {
+    ensureStudyCenterData();
+    renderFeatureShell(item, item.title, "先选择升学方向，再查看准备建议、升学洞察和升学资讯。",
+      furtherStudyRoadmapPanel() +
+      studyPlanningMaterialsPanel() +
+      studyCenterInsightPanel() + studyCenterResourcePanels());
+  }
+
+  function furtherStudyRoadmapPanel() {
+    var profile = furtherStudyProfile();
+    var steps = furtherStudyRoadmapSteps(profile);
+    var studyPlan = state.studyPlan && !state.studyPlan.unavailable ? state.studyPlan : {};
+    var planButtonLabel = studyPlanGenerationButtonLabel(studyPlan, profile.directionCode);
+    return '<section class="feature-section roadmap-section further-study-roadmap">' +
+      '<div class="section-heading"><div><h3>升学中心</h3>' +
+      '<p class="section-note">根据当前自画像整理准备顺序，先明确方向，再逐步推进关键节点。</p></div>' +
+      '<div class="section-actions"><button type="button" class="secondary" data-link="career-plan"' + (!profile.hasDirection ? ' disabled aria-disabled="true"' : '') + '>完整规划</button>' +
+      '<button type="button" data-ensure-study-plan="true"' + (!profile.hasDirection || state.planEnsuring ? ' disabled aria-disabled="true"' : '') + '>' +
+      (state.planEnsuring ? "生成中" : planButtonLabel) + '</button></div></div>' +
+      '<div class="form-grid"><label>选择具体升学方向<select id="studyCenterDirection"><option value="">请选择</option><option value="POSTGRADUATE"' + (profile.directionCode === "POSTGRADUATE" ? " selected" : "") + '>考研</option><option value="RECOMMENDATION"' + (profile.directionCode === "RECOMMENDATION" ? " selected" : "") + '>保研</option><option value="STUDY_ABROAD"' + (profile.directionCode === "STUDY_ABROAD" ? " selected" : "") + '>留学</option></select></label>' +
+      '<div class="profile-derived-field"><div class="profile-derived-label"><span>目标院校</span><small>来自升学自画像</small></div>' +
+      '<div class="profile-derived-value"' + (profile.targetSchool ? "" : ' data-empty="true"') + '>' +
+      escapeHtml(firstText(profile.targetSchool, "请先在首页的升学自画像中填写目标院校")) + '</div></div>' +
+      '<div class="actions-row"><button type="button" data-save-study-direction="true"' +
+      (state.studyCenterSaving ? ' disabled aria-disabled="true" aria-busy="true"' : ' aria-disabled="false" aria-busy="false"') +
+      '>' + (state.studyCenterSaving ? "保存中..." : "保存升学方向") + '</button></div></div>' +
+      '<div class="roadmap-panel">' +
+      '<div class="roadmap-summary"><span class="resource-type">升学规划</span>' +
+      '<strong>' + escapeHtml(profile.direction) + '</strong>' +
+      '<p>' + escapeHtml(profile.summary) + '</p>' +
+      '<ul class="compact-list">' + profile.focus.map(function (item) {
+        return '<li>' + escapeHtml(item) + '</li>';
+      }).join("") + '</ul></div>' +
+      '<div class="roadmap-steps">' + steps.map(furtherStudyRoadmapStepCard).join("") + '</div>' +
+      '</div></section>';
+  }
+
+  function studyPlanningMaterialsPanel() {
+    var selection = state.studyCenterSelection || {};
+    if (firstText(selection.direction, "") !== "POSTGRADUATE") return "";
+    var materials = Array.isArray(state.studyPlanningMaterials) ? state.studyPlanningMaterials : [];
+    var availableCount = materials.filter(function (item) {
+      return item && item.extractionStatus === "OK" && firstText(item.extractedText, "");
+    }).length;
+    var status = "";
+    if (state.studyPlanningMaterialsLoading) {
+      status = statePanel("正在读取规划资料", "请稍候。", "pending");
+    } else if (state.studyPlanningMaterialsError) {
+      status = statePanel("资料暂时无法读取", state.studyPlanningMaterialsError, "warning");
+    } else if (!materials.length) {
+      status = statePanel("还没有规划资料", "可以上传目标院校招生说明、专业目录、考试科目说明或个人学习证明。", "empty");
+    } else {
+      status = '<div class="study-material-list">' + materials.map(function (material) {
+        var usable = material.extractionStatus === "OK" && firstText(material.extractedText, "");
+        return '<article class="study-material-item"><div><strong>' +
+          escapeHtml(firstText(material.title, material.originalFilename, "未命名资料")) +
+          '</strong><p>' + escapeHtml(studyMaterialTypeLabel(material.materialType)) + " · " +
+          escapeHtml(usable ? "可用于智能规划" : "正文暂不可用") +
+          (material.extractedCharCount ? " · " + escapeHtml(String(material.extractedCharCount)) + " 字" : "") +
+          '</p></div><button type="button" class="secondary danger-text" data-delete-study-material="' +
+          escapeHtml(firstText(material.materialId, "")) + '">删除</button></article>';
+      }).join("") + '</div>';
+    }
+    return '<section class="feature-section study-material-section"><div class="section-heading"><div>' +
+      '<h3>规划依据资料</h3><p class="section-note">成功读取正文的资料会与用户画像、目标院校一起用于下一次考研智能路线生成，不会写入公共知识库。</p>' +
+      '</div><span class="resource-type">可用 ' + availableCount + ' 份</span></div>' +
+      '<div class="form-grid study-material-upload"><label>资料类型<select id="studyPlanningMaterialType">' +
+      '<option value="ADMISSION_GUIDE">招生说明</option><option value="MAJOR_CATALOG">专业目录与考试科目</option>' +
+      '<option value="SCORE_OR_TRANSCRIPT">成绩或学习证明</option><option value="STUDY_PROGRESS">学习进度记录</option>' +
+      '<option value="OTHER">其他相关资料</option></select></label>' +
+      '<label>选择文件<input id="studyPlanningMaterialFile" type="file" accept=".pdf,.doc,.docx,.txt,.md,application/pdf,text/plain"></label>' +
+      '<div class="actions-row"><button type="button" data-upload-study-material="true"' +
+      (state.studyPlanningMaterialsUploading ? ' disabled aria-disabled="true"' : '') + '>' +
+      (state.studyPlanningMaterialsUploading ? "上传并读取中" : "上传资料") + '</button></div></div>' + status + '</section>';
+  }
+
+  function studyMaterialTypeLabel(value) {
+    var labels = {
+      ADMISSION_GUIDE: "招生说明",
+      MAJOR_CATALOG: "专业目录与考试科目",
+      SCORE_OR_TRANSCRIPT: "成绩或学习证明",
+      STUDY_PROGRESS: "学习进度记录",
+      OTHER: "其他相关资料"
+    };
+    return labels[value] || "相关资料";
+  }
+
+  function furtherStudyProfile() {
+    var onboarding = getValue(state.snapshot, "onboarding") || {};
+    var preferences = getValue(state.snapshot, "preferences") || {};
+    var educationStageValue = firstText(onboarding.educationStage, onboarding.stage, preferences.educationStage, "");
+    var educationStage = educationStageValue ? labelForEducationStage(educationStageValue) : "教育阶段待补充";
+    var school = firstText(onboarding.school, preferences.school, "");
+    var major = firstText(onboarding.major, onboarding.schoolMajor, preferences.major, "");
+    var selected = state.studyCenterSelection || {};
+    var targetSchool = firstText(onboarding.targetSchool, "");
+    var directionCode = firstText(selected.direction, "");
+    var direction = directionCode ? studyCenterDirectionLabel(directionCode) : resolveFurtherStudyDirection(onboarding, preferences);
+    var missing = [];
+    if (!educationStageValue) missing.push("当前教育阶段");
+    if (!school) missing.push("当前学校");
+    if (!major) missing.push("所学专业");
+    var details = [educationStage];
+    if (school) details.push(school);
+    if (major) details.push(major);
+    if (targetSchool) details.push("目标院校：" + targetSchool);
+    var focus = [];
+    if (direction === "具体升学方向待选择") {
+      focus.push("先在下方选择考研、保研或留学方向");
+    } else if (targetSchool) {
+      focus.push("围绕“" + targetSchool + "”核对招生、申请和时间要求");
+    } else {
+      focus.push("已选择“" + direction + "”，可继续核对目标与时间安排");
+    }
+    if (missing.length) {
+      focus.push("补充" + missing.join("、") + "，便于判断准备差距");
+    } else {
+      focus.push("基础教育信息已填写，可开始评估优势与差距");
+    }
+    focus.push("按阶段完成备考、申请材料和关键节点准备");
+    return {
+      directionCode: directionCode,
+      targetSchool: targetSchool,
+      direction: direction,
+      hasDirection: direction !== "具体升学方向待选择",
+      profileComplete: missing.length === 0,
+      summary: "当前情况：" + details.join(" · "),
+      focus: focus
+    };
+  }
+
+  function resolveFurtherStudyDirection(onboarding, preferences) {
+    var value = firstText(
+      onboarding.studyDirection,
+      onboarding.furtherStudyDirection,
+      preferences.studyDirection,
+      preferences.furtherStudyDirection,
+      ""
+    );
+    if (/保研|推免|recommendation/i.test(value)) return "保研";
+    if (/留学|海外|abroad|overseas/i.test(value)) return "留学";
+    if (/考研|统考|postgraduate/i.test(value)) return "考研";
+    return "具体升学方向待选择";
+  }
+
+  function studyCenterDirectionLabel(value) {
+    if (value === "POSTGRADUATE") return "考研";
+    if (value === "RECOMMENDATION") return "保研";
+    if (value === "STUDY_ABROAD") return "留学";
+    return "具体升学方向待选择";
+  }
+
+  function furtherStudyRoadmapSteps(profile) {
+    var activeIndex = !profile.hasDirection ? 0 : !profile.profileComplete ? 1 : 2;
+    return [
+      {
+        title: "明确升学方向",
+        desc: "结合个人目标，在考研、保研和留学中确定当前主路线。",
+        status: profile.hasDirection ? "已明确" : "当前优先"
+      },
+      {
+        title: "评估基础与差距",
+        desc: "梳理教育背景、成绩、语言能力和经历，确认需要补齐的条件。",
+        status: profile.profileComplete ? "可继续推进" : "待补信息"
+      },
+      {
+        title: "制定备考或申请计划",
+        desc: "围绕目标院校、考试或申请季，安排阶段任务与时间节点。",
+        status: profile.hasDirection ? "待制定" : "等待方向"
+      },
+      {
+        title: "推进材料与关键节点",
+        desc: "按路线准备复习成果、申请材料、联系沟通和提交事项。",
+        status: "后续阶段"
+      }
+    ].map(function (step, index) {
+      step.active = index === activeIndex;
+      return step;
+    });
+  }
+
+  function furtherStudyRoadmapStepCard(step, index) {
+    var cls = "roadmap-step" + (step.active ? " active" : "");
+    return '<article class="' + cls + '">' +
+      '<span class="step-index">' + (index + 1) + '</span><span class="step-copy">' +
+      '<strong>' + escapeHtml(step.title) + '</strong><small>' + escapeHtml(step.desc) + '</small></span>' +
+      '<span class="step-status">' + escapeHtml(step.status) + '</span></article>';
+  }
+
+  function renderPlanProfileStatus(plan, fallbackSummary) {
+    var stage = plan && plan.currentStage;
+    var score = plan && plan.profileCompletenessScore;
+    var missing = normalizeArray(plan && plan.missingSignals);
+    var html = '<p>' + escapeHtml(stage ? '你现在正处于：' + plainStageLabel(stage) : fallbackSummary) + '</p>';
+    if (score === null || score === undefined || score === '') {
+      return html;
+    }
+    html += '<div class="roadmap-profile-status"><strong>自画像完整度 ' + escapeHtml(score) + '%</strong>';
+    if (missing.length) {
+      html += '<p>还差这些信息，补齐后规划会更贴合你：</p><ul>' + missing.map(function (signal) {
+        var key = signal && signal.key;
+        var label = firstText(signal && signal.label, '一项关键信息');
+        return '<li><span>' + escapeHtml(label) + '</span><small>' + escapeHtml(missingSignalAction(key)) + '</small></li>';
+      }).join('') + '</ul>';
+    } else {
+      html += '<p>关键信息已补齐，后续会继续根据简历和面试记录更新建议。</p>';
+    }
+    return html + '</div>';
+  }
+
+  function plainStageLabel(stage) {
+    var labels = {
+      GRADUATE_RESUME_UPLOAD: '先准备好一份可投递的简历',
+      ASSESSMENT_BASELINE: '先完成一次画像补全，明确适合的发展方向',
+      RESUME_BOOTSTRAP: '先创建或上传简历，整理好基础经历',
+      RESUME_IMPROVEMENT: '先把简历优化到可以投递',
+      INTERVIEW_BOOTSTRAP: '开始模拟面试练习，准备常见问题',
+      INTERVIEW_IMPROVEMENT: '重点提升面试表现，再争取更多机会',
+      EXECUTION_RHYTHM: '建立稳定的求职节奏，持续完成每周行动',
+      CAREER_MOMENTUM: '持续投递和复盘，积累求职成果'
+    };
+    return labels[stage] || '按当前路线图继续推进';
+  }
+
+  function missingSignalAction(key) {
+    var actions = {
+      target_role: '在自画像里填写目标岗位或发展方向',
+      assessment: '进入画像补全，完成一份测评',
+      resume: '进入简历制作，创建或上传简历',
+      interview: '完成一次 AI 模拟面试或全景仿真面试',
+      target_city: '在自画像补充里填写期望工作城市',
+      weekly_hours: '在自画像补充里填写每周可投入的时间',
+      career_plan: '点击刷新路线图，生成你的行动计划'
+    };
+    return actions[key] || '补充这项信息，让建议更贴合你的情况';
+  }
+
+  function invalidateEmploymentResources() {
+    state.employmentResources = null;
+    state.employmentResourcesError = null;
+  }
+
+  function invalidateStudyCenterResources() {
+    state.studyCenterResources = null;
+    state.studyCenterResourcesError = null;
   }
 
   function employmentInsightProfileRows(insight) {
@@ -1090,11 +1723,10 @@
     ];
   }
 
-  function employmentResumeSummary() {
+  function employmentResumeSummaryPanel(insight) {
     var resumeBlock = getValue(state.snapshot, "resume") || {};
-    var resumes = normalizeArray(state.resumes);
-    var latest = resumes.length ? resumes[0] : {};
-    var summary = firstText(
+    var latest = selectedProfileResume(getValue(state.snapshot, "onboarding.selectedResumeId")) || {};
+    var rawSummary = firstText(
       latest.aiSummary,
       latest.resumeSummary,
       latest.summary,
@@ -1102,19 +1734,66 @@
       resumeBlock.summary,
       resumeBlock.aiSummary
     );
-    if (isDisplayChinese(summary)) {
-      return shortText(summary, 180);
-    }
-    var score = firstText(latest.diagnosisScore, resumeBlock.diagnosisScore, "");
-    if (score) {
-      return "当前简历诊断分为 " + score + "，建议结合目标岗位继续补充项目证据、技能关键词和成果量化。";
-    }
-    var title = firstText(latest.title, latest.resumeName, resumeBlock.title, "");
+    var title = firstText(latest.title, latest.resumeName, resumeBlock.title, "最新简历");
     var target = firstText(latest.targetJob, latest.targetRole, resumeBlock.targetJob, textFromSnapshot("preferences.targetRole", "onboarding.targetRole"));
-    if (title || target) {
-      return "当前已维护" + (title ? "《" + title + "》" : "简历记录") + (target ? "，目标岗位为" + target : "") + "。完成简历智能分析后，这里会展示更完整的简历摘要。";
+    var score = firstText(latest.diagnosisScore, resumeBlock.diagnosisScore, "");
+    var sections = resumeSummarySections(rawSummary);
+    var fallback = firstText(chineseInsightSummary(insight), "暂无简历摘要。完成简历创建和智能分析后，这里会展示简历摘要。");
+    var meta = "";
+    if (target) {
+      meta += '<span class="resume-summary-chip">目标方向：' + escapeHtml(target) + '</span>';
     }
-    return "";
+    if (score) {
+      meta += '<span class="resume-summary-chip score">诊断分：' + escapeHtml(score) + '</span>';
+    }
+    var sectionHtml = sections.map(function (section) {
+      return '<div class="resume-summary-section"><span>' + escapeHtml(section.label) + '</span><p>' +
+        escapeHtml(section.text) + '</p></div>';
+    }).join("");
+    if (!sectionHtml) {
+      sectionHtml = '<p class="resume-summary-empty">' + escapeHtml(fallback) + '</p>';
+    }
+    return '<section class="panel employment-resume-summary">' +
+      '<div class="resume-summary-head"><div><h3>简历摘要</h3><p>' + escapeHtml(title) + '</p></div></div>' +
+      (meta ? '<div class="resume-summary-meta">' + meta + '</div>' : '') +
+      '<div class="resume-summary-sections">' + sectionHtml + '</div>' +
+      insightHighlights(insight) + '</section>';
+  }
+
+  function resumeSummarySections(summary) {
+    var parts = String(summary || "")
+      .replace(/[\u0000-\u001f]+/g, " ")
+      .replace(/[\u25A0-\u25FF\u2700-\u27BF\uE000-\uF8FF\uFFFD]+/g, " ")
+      .split(/\s*[|｜]\s*|\s*;\s*|\s*；\s*|\r?\n+/)
+      .map(function (part) {
+        return part.replace(/[\u0000-\u001f\u25A0-\u25FF\u2700-\u27BF\uE000-\uF8FF\uFFFD]+/g, " ")
+          .replace(/\s+/g, " ").trim();
+      })
+      .filter(function (part) {
+        return part.length > 1 && !/^\d{6,}$/.test(part.replace(/\s+/g, "")) &&
+          !/^1\d{10}$/.test(part.replace(/\s+/g, "")) && !/@/.test(part);
+      });
+    var groups = [
+      { label: "教育背景", pattern: /大学|学院|本科|硕士|博士|学历|教育经历/ },
+      { label: "经历亮点", pattern: /项目|实习|经历|大赛|获奖|作品|著作权|成果/ },
+      { label: "专业技能", pattern: /专业技能|技能|HTML|CSS|JavaScript|TypeScript|Java|Python|熟悉|掌握/i }
+    ];
+    var used = {};
+    var sections = [];
+    groups.forEach(function (group) {
+      var matches = [];
+      for (var i = 0; i < parts.length && matches.length < 2; i += 1) {
+        if (!used[i] && group.pattern.test(parts[i])) {
+          used[i] = true;
+          matches.push(shortText(parts[i], 86));
+        }
+      }
+      if (matches.length) sections.push({ label: group.label, text: matches.join("；") });
+    });
+    if (!sections.length && parts.length) {
+      sections.push({ label: "个人概览", text: shortText(parts.slice(0, 3).join("；"), 180) });
+    }
+    return sections;
   }
 
   function chineseInsightStatus(insight) {
@@ -1147,13 +1826,13 @@
     }
     var status = firstText(insight.status, "");
     if (status === "MISSING_SCHOOL") {
-      return "用户画像中还缺少学校信息，补充学校和专业后可生成更准确的就业洞察。";
+      return "自画像中还缺少学校信息，补充学校和专业后可生成更准确的就业洞察。";
     }
     if (status === "UNSUPPORTED_SCHOOL" || status === "NO_SOURCES") {
-      return "当前学校的可追溯就业来源尚未接入，页面会先展示用户画像与简历摘要。";
+      return "当前学校的可追溯就业来源尚未接入，页面会先展示自画像与简历摘要。";
     }
     if (status === "MISSING_TARGET_ROLE") {
-      return "用户画像中还缺少目标岗位，补充后可结合岗位方向生成就业洞察。";
+      return "自画像中还缺少目标岗位，补充后可结合岗位方向生成就业洞察。";
     }
     return "";
   }
@@ -1167,7 +1846,7 @@
       "Unknown target role": "目标岗位待补充",
       "Matched to profile signals": "已结合画像匹配",
       "Using school-level public sources": "使用学校公开来源",
-      "School is required before source-backed employment insight can be generated.": "用户画像中还缺少学校信息，补充学校后可生成就业洞察。",
+      "School is required before source-backed employment insight can be generated.": "自画像中还缺少学校信息，补充学校后可生成就业洞察。",
       "This school is not connected to verified employment insight sources yet.": "当前学校的可验证就业来源尚未接入。",
       "No traceable employment source is available for this school yet.": "当前学校暂无可追溯就业来源。",
       "Complete the target role to get role-specific employment insight. Current response only uses school-level sources.": "补充目标岗位后，可生成更贴合岗位方向的就业洞察。"
@@ -1214,9 +1893,9 @@
         '</section>';
     }
     var feed = state.employmentResources || {};
-    var articles = normalizeArray(feed.articles);
-    var services = normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths));
-    var videos = normalizeArray(feed.videos);
+    var articles = pinnedResourcesFirst(feed.articles);
+    var services = pinnedResourcesFirst(normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths)));
+    var videos = pinnedResourcesFirst(feed.videos);
     var total = articles.length + services.length + videos.length;
     if (!total) {
       return '<section class="feature-section"><h3>就业资讯与文章</h3>' +
@@ -1242,9 +1921,9 @@
       return;
     }
     var feed = state.employmentResources || {};
-    var articles = normalizeArray(feed.articles);
-    var services = normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths));
-    var videos = normalizeArray(feed.videos);
+    var articles = pinnedResourcesFirst(feed.articles);
+    var services = pinnedResourcesFirst(normalizeArray(feed.consultations).concat(normalizeArray(feed.careerPaths)));
+    var videos = pinnedResourcesFirst(feed.videos);
     var total = articles.length + services.length + videos.length;
     var body = "";
     if (state.employmentResourcesError) {
@@ -1270,7 +1949,7 @@
   }
 
   function resourceColumn(title, cards, type, limit) {
-    var items = normalizeArray(cards).slice(0, limit || 4);
+    var items = pinnedResourcesFirst(cards).slice(0, limit || 4);
     if (!items.length) {
       return '<section class="resource-column"><h4>' + escapeHtml(title) + '</h4><p class="panel-note">暂无内容。</p></section>';
     }
@@ -1278,11 +1957,194 @@
       items.map(function (item) { return resourceCard(item, type); }).join("") + '</div></section>';
   }
 
+  function studyCenterInsightPanel() {
+    if (state.studyCenterInsightLoading || state.studyCenterSelectionLoading) return '<section class="feature-section"><h3>升学洞察</h3>' + statePanel("正在生成升学洞察", "正在读取你的方向选择和自画像信息。", "pending") + '</section>';
+    if (state.studyCenterInsightError) return '<section class="feature-section"><h3>升学洞察</h3>' + statePanel("洞察暂不可用", state.studyCenterInsightError, "warning") + '</section>';
+    var insight = state.studyCenterInsight;
+    if (!insight) return '<section class="feature-section"><h3>升学洞察</h3>' + statePanel("请选择升学方向", "选择考研、保研或留学后，这里会给出对应的准备建议。", "empty") + '</section>';
+    var rows = [["当前方向", firstText(insight.directionLabel, "待选择")], ["学校", firstText(insight.school, "待补充")], ["专业", firstText(insight.major, "待补充")], ["资讯来源", String(insight.sourceCount || 0) + " 条"]];
+    return '<section class="feature-section"><div class="section-heading"><h3>升学洞察</h3></div><div class="insight-summary">' + metricsPanel("升学自画像", rows) + '<article class="resume-summary-panel"><h3>准备建议</h3><p>' + escapeHtml(firstText(insight.summary, "选择方向后生成建议。")) + '</p><ul class="compact-list">' + normalizeArray(insight.focusItems).map(function (item) { return '<li>' + escapeHtml(item) + '</li>'; }).join("") + '</ul></article></div></section>';
+  }
+
+  function studyCenterResourcePanels() {
+    if (state.studyCenterResourcesLoading) return '<section class="feature-section"><h3>升学资讯与文章</h3>' + statePanel("正在加载升学资讯", "升学中心只展示独立维护的升学内容。", "pending") + '</section>';
+    if (state.studyCenterResourcesError) return '<section class="feature-section"><h3>升学资讯与文章</h3>' + statePanel("资讯暂不可用", state.studyCenterResourcesError, "warning") + '</section>';
+    var feed = state.studyCenterResources || {};
+    var services = pinnedResourcesFirst(feed.consultations);
+    var articles = pinnedResourcesFirst(feed.articles);
+    var videos = pinnedResourcesFirst(feed.videos);
+    return '<section class="feature-section"><div class="section-heading"><h3>升学资讯与文章</h3>' +
+      '<button type="button" class="secondary" data-link="study-resources">全部资源</button></div><div class="employment-resource-layout">' +
+      resourceColumn("官方服务", services, "service", 2) +
+      resourceColumn("精选文章", articles, "article", 2) +
+      resourceColumn("相关视频", videos, "video", 2) +
+      '</div></section>';
+  }
+
+  function renderStudyResourcesPage(item) {
+    loadStudyCenterResources();
+    if (state.studyCenterResourcesLoading && !state.studyCenterResources) {
+      renderFeatureShell(item, item.title, item.summary,
+        '<section class="feature-section">' +
+        statePanel("正在加载升学资源", "正在读取官方服务、精选文章和相关视频。", "pending") +
+        '</section>');
+      return;
+    }
+    var feed = state.studyCenterResources || {};
+    var services = pinnedResourcesFirst(feed.consultations);
+    var articles = pinnedResourcesFirst(feed.articles);
+    var videos = pinnedResourcesFirst(feed.videos);
+    var total = services.length + articles.length + videos.length;
+    var body = "";
+    if (state.studyCenterResourcesError) {
+      body += '<section class="feature-section">' +
+        statePanel("升学资源暂不可用", state.studyCenterResourcesError + " 请稍后重试。", "warning") +
+        '</section>';
+    }
+    if (!total) {
+      body += '<section class="feature-section">' +
+        statePanel("暂无升学资源", firstText(feed.message, "当前还没有配置升学资讯与文章。"), "empty") +
+        '</section>';
+    } else {
+      body += '<section class="feature-section">' +
+        '<div class="section-heading"><div><h3>全部升学资源</h3>' +
+        '<p class="section-note">按官方服务、精选文章和相关视频分类展示，可直接打开来源平台。</p></div></div>' +
+        '<div class="employment-resource-layout">' +
+        resourceColumn("官方服务", services, "service", services.length) +
+        resourceColumn("精选文章", articles, "article", articles.length) +
+        resourceColumn("相关视频", videos, "video", videos.length) +
+        '</div></section>';
+    }
+    renderFeatureShell(item, item.title, item.summary, body);
+  }
+
+  function pinnedResourcesFirst(cards) {
+    return normalizeArray(cards).slice().sort(function (left, right) {
+      return (right && right.pinned === true ? 1 : 0) - (left && left.pinned === true ? 1 : 0);
+    });
+  }
+
+  function requestAgentCareerPlanGeneration() {
+    if (isStudyRoute()) {
+      ensureStudyPlan(true);
+      return;
+    }
+    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+    if (!hasExistingCareerPlan(plan)) {
+      ensureEmploymentPlan(true);
+      return;
+    }
+    var refreshState = careerPlanRefreshState(plan);
+    if (refreshState.refreshableCount === 0) {
+      showConfirmDialog(
+        "当前计划不能继续更新",
+        "路线图中的所有阶段都已经开始或完成。为避免丢失执行进度，系统不会替换这些阶段，请继续完成现有计划。",
+        "我知道了",
+        null,
+        { danger: true, acknowledgeOnly: true }
+      );
+      return;
+    }
+    showConfirmDialog(
+      refreshState.protectedCount > 0 ? "更新未开始阶段？" : "重新生成路线图？",
+      refreshState.protectedCount > 0
+        ? "系统会保留 " + refreshState.protectedCount + " 个进行中或已完成阶段及其进度，只替换 " + refreshState.refreshableCount + " 个未开始阶段。被替换的未开始内容无法恢复。"
+        : "重新生成会替换当前路线图中的全部阶段、本周计划和每日建议，原内容无法恢复。",
+      refreshState.protectedCount > 0 ? "确认更新未开始阶段" : "确认重新生成",
+      function () { ensureEmploymentPlan(true); },
+      { danger: true }
+    );
+  }
+
+  function currentPlanningTarget(plan) {
+    if (!isStudyRoute()) return employmentTargetRole(plan);
+    var direction = firstText(plan && plan.studyDirection, getValue(state.studyCenterSelection, "direction"));
+    return firstText(
+      plan && plan.targetRole,
+      plan && plan.targetSchool,
+      textFromSnapshot("onboarding.targetSchool"),
+      direction ? studyCenterDirectionLabel(direction) + "规划" : "",
+      "升学目标待确认"
+    );
+  }
+
+  function hasExistingCareerPlan(plan) {
+    return !!(plan && (plan.hasPlan === true || normalizeArray(plan.phases).length));
+  }
+
+  function careerPlanRefreshState(plan) {
+    var phases = normalizeArray(plan && plan.phases);
+    var progressState = readPlanProgress(plan || {}, employmentTargetRole(plan || {}), phases);
+    var protectedCount = 0;
+    var refreshableCount = 0;
+    for (var phaseIndex = 0; phaseIndex < phases.length; phaseIndex += 1) {
+      if (isStartedPlanStatus(phases[phaseIndex] && phases[phaseIndex].status)
+          || isPhaseStartedByProgress(phases[phaseIndex], phaseIndex, progressState)) protectedCount += 1;
+      else refreshableCount += 1;
+    }
+    return { protectedCount: protectedCount, refreshableCount: refreshableCount };
+  }
+
+  function planGenerationButtonLabel(plan, emptyLabel) {
+    if (isStudyRoute()) {
+      var direction = firstText(plan && plan.studyDirection, getValue(state.studyCenterSelection, "direction"));
+      return studyPlanGenerationButtonLabel(plan, direction, emptyLabel);
+    }
+    if (!hasExistingCareerPlan(plan)) return emptyLabel;
+    var refreshState = careerPlanRefreshState(plan);
+    if (refreshState.refreshableCount === 0) return "计划已全部开始";
+    return refreshState.protectedCount > 0 ? "更新未开始阶段" : emptyLabel;
+  }
+
+  function studyPlanGenerationButtonLabel(plan, direction, fallbackLabel) {
+    var emptyLabel = direction === "POSTGRADUATE" ? "生成考研规划" : firstText(fallbackLabel, "生成升学规划");
+    if (!hasVerifiedStudyPlan(plan, direction)) return emptyLabel;
+    var refreshState = studyPlanRefreshState(plan);
+    if (refreshState.refreshableCount === 0) return "计划已全部开始";
+    return refreshState.protectedCount > 0 ? "更新未开始阶段" : emptyLabel;
+  }
+
+  function hasVerifiedStudyPlan(plan, direction) {
+    if (!plan || plan.unavailable || plan.hasPlan !== true) return false;
+    var phases = normalizeArray(plan.phases);
+    var routeDirection = firstText(plan.studyDirection, direction, getValue(state.studyCenterSelection, "direction"));
+    if (routeDirection !== "POSTGRADUATE") return phases.length > 0;
+    return phases.length >= 3
+      && firstText(plan.planningMode, "").toUpperCase() === "AGENT"
+      && firstText(plan.agentStatus, "").toUpperCase() === "AGENT_GENERATED";
+  }
+
+  function studyPlanRefreshState(plan) {
+    if (!hasVerifiedStudyPlan(plan)) return { protectedCount: 0, refreshableCount: 0 };
+    var phases = normalizeArray(plan.phases);
+    var protectedCount = 0;
+    var refreshableCount = 0;
+    for (var phaseIndex = 0; phaseIndex < phases.length; phaseIndex += 1) {
+      if (isStartedPlanStatus(phases[phaseIndex] && phases[phaseIndex].status)) protectedCount += 1;
+      else refreshableCount += 1;
+    }
+    return { protectedCount: protectedCount, refreshableCount: refreshableCount };
+  }
+
+  function isStartedPlanStatus(status) {
+    var raw = trim(status);
+    var normalized = raw.toUpperCase().replace(/[-\s]+/g, "_");
+    return normalized === "IN_PROGRESS" || normalized === "STARTED" || normalized === "COMPLETED"
+      || normalized === "DONE" || normalized === "FINISHED"
+      || raw === "执行中" || raw === "进行中" || raw === "已开始" || raw === "已完成";
+  }
+
+  function isCompletedPlanStatus(status) {
+    var raw = trim(status);
+    var normalized = raw.toUpperCase().replace(/[-\s]+/g, "_");
+    return normalized === "COMPLETED" || normalized === "DONE" || normalized === "FINISHED" || raw === "已完成";
+  }
+
   function resourceCard(item, type) {
     var rawUrl = firstText(item.sourceUrl, item.url, "");
     var url = externalResourceUrl(item, rawUrl);
     var detailKey = url ? "" : resourceDetailKey(item, rawUrl);
-    var meta = [resourceTypeLabel(item.type || type), firstText(item.category, item.keyword, ""), shortDate(item.publishedAt)].filter(Boolean).join(" · ");
+    var meta = [item.pinned === true ? "置顶" : "", resourceTypeLabel(item.type || type), firstText(item.category, item.keyword, ""), shortDate(item.publishedAt)].filter(Boolean).join(" · ");
     return '<article class="resource-card">' +
       '<div><span class="resource-type">' + escapeHtml(meta || "就业资源") + '</span>' +
       '<strong>' + escapeHtml(resourceTitle(item)) + '</strong>' +
@@ -1424,8 +2286,7 @@
     renderFeatureShell(item, item.title, item.summary,
       '<section class="panel full">' +
       '<h3>' + escapeHtml(item.title) + '规划</h3>' +
-      '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度智能体、用户画像智能体和对应规划智能体；当前可以先回到深造页选择方向，或回到首页调整路线信息。</p>' +
-      '<div class="actions-row"><button type="button" data-link="further-study-home">返回深造</button><button type="button" class="secondary" data-link="workbench">返回首页</button></div>' +
+      '<p class="panel-note">这个方向先作为深造路线入口预留。后续会接入主调度智能体、自画像补全能力和对应规划智能体。</p>' +
       '</section>');
   }
 
@@ -1800,7 +2661,7 @@
   }
 
   function recommendationBackActions() {
-    return '<div class="actions-row"><button type="button" class="secondary" data-link="postgraduate-recommendation">返回保研陪伴</button><button type="button" class="secondary" data-link="further-study-home">返回深造</button></div>';
+    return '';
   }
 
   function recommendationProfileFormHtml(buttonText, loadingType, formId, includePlanButton) {
@@ -1911,7 +2772,7 @@
   }
 
   function postgraduateBackActions() {
-    return '<div class="actions-row"><button type="button" class="secondary" data-link="postgraduate">返回考研陪伴</button><button type="button" class="secondary" data-link="further-study-home">返回深造</button></div>';
+    return '';
   }
 
   function renderPostgraduatePage(item) {
@@ -2237,7 +3098,7 @@
   }
 
   function studyAbroadBackActions() {
-    return '<div class="actions-row"><button type="button" class="secondary" data-link="study-abroad">返回留学陪伴</button><button type="button" class="secondary" data-link="further-study-home">返回深造</button></div>';
+    return '';
   }
 
   function renderStudyAbroadPage(item) {
@@ -2387,13 +3248,15 @@
   }
 
   function renderTodayPage(item) {
-    if (hasUserIdentity() && !state.plan && !state.planEnsuring && !isFilePreview()) {
-      ensureEmploymentPlan();
+    if (hasUserIdentity() && shouldEnsureCurrentPlan(state.plan) && !state.planEnsuring && !isFilePreview()) {
+      ensureCurrentRoutePlan();
     }
     var view = buildPlanViewModel();
     if (!view.dailyPlan.items.length) {
       renderShell(item,
-        statePanel("等待路径规划", "今日行动会从路径规划里的当前阶段和本周计划拆解出来。请先生成路线图。", "pending")
+        statePanel(state.plan ? "每日计划暂不可用" : "等待路径规划",
+          firstText(view.dailyPlan.summary, "今日行动会从路径规划里的当前阶段按顺序生成。请稍后重试。"),
+          state.plan ? "warning" : "pending")
       );
       return;
     }
@@ -2403,16 +3266,30 @@
       '</section>' +
       '<section class="feature-section route-control-grid">' +
       metricsPanel("今日来源", [
-        ["目标岗位", view.targetRole],
+        [isStudyRoute() ? "升学目标" : "目标岗位", view.targetRole],
         ["当前阶段", view.progressSummary.activePhaseTitle],
         ["规划周期", view.selectedYears + " 年"],
         ["完成进度", view.progressSummary.completedTasks + " / " + view.progressSummary.totalTasks + " 项"]
       ]) +
       '<section class="panel route-control-card"><div class="route-card-head"><div><span class="resource-type">继续规划</span><h3>路线图</h3></div></div>' +
-      '<p class="route-goal">今日行动来自路径规划。调整阶段、周期或刷新规划后，这里会跟着变化。</p>' +
+      '<p class="route-goal">今日行动来自路径规划。调整当前阶段或刷新规划后，这里会跟着变化。</p>' +
+      renderRouteControlProgress(view.progressSummary) +
       '<div class="actions-row"><button type="button" data-link="career-plan">查看路径规划</button></div></section>' +
       '</section>';
     renderFeatureShell(item, item.title, "根据路径规划拆解今天应该推进的小事项。", body);
+  }
+
+  function renderRouteControlProgress(progressSummary) {
+    var summary = progressSummary || {};
+    var total = Number(summary.totalTasks || 0);
+    var completed = Number(summary.completedTasks || 0);
+    var percent = total > 0 ? Math.round(completed * 100 / total) : 0;
+    return '<div class="route-control-progress">' +
+      '<div class="route-control-progress-head"><span>路线图进度</span><strong>' + percent + '%</strong></div>' +
+      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' + percent + '%"></span></div>' +
+      '<div class="route-control-progress-meta"><span>已完成 ' + completed + ' / ' + total + ' 项</span>' +
+      '<span>当前聚焦：' + escapeHtml(firstText(summary.activePhaseTitle, '按路线图继续推进')) + '</span></div>' +
+      '</div>';
   }
 
   function renderResumePage(item) {
@@ -2490,7 +3367,7 @@
       '<button type="button" class="secondary"' +
       (hasFile ? ' data-preview-file="' + escapeAttr(fileKey) + '"' : ' disabled title="请先上传并关联 PDF 文件"') +
       '>预览</button>' +
-      '<button type="button" data-link="resume-diagnosis">去诊断</button>' +
+      '<button type="button" data-diagnose-resume="' + escapeAttr(id) + '">去诊断</button>' +
       '<button type="button" class="secondary danger" data-delete-resume="' + escapeHtml(id) + '">删除</button>' +
       '</div>' +
       "</article>";
@@ -2802,7 +3679,7 @@
     }
     body += '<section class="feature-section resume-revision-grid">' +
       diagnosisFormPanel(resumes, selected, draft) +
-      diagnosisResultPanel() +
+      diagnosisResultPanel() + diagnosisHistoryPanel(selected) +
       '</section>';
     if (isDebugMode()) {
       body += metricsPanel("接口契约", [
@@ -2815,9 +3692,15 @@
     }
     renderFeatureShell(item, "简历诊断", "基于已有简历、目标岗位和画像上下文生成诊断与优化建议。", body);
     bindResumeDiagnosisEvents();
+    ensureDiagnosisHistory(selected);
   }
 
   function selectedDiagnosisResume(resumes) {
+    var pendingId = getUserStorageItem("cyancruise.pendingDiagnosisResumeId");
+    if (pendingId) {
+      state.selectedDiagnosisResumeId = pendingId;
+      removeUserStorageItem("cyancruise.pendingDiagnosisResumeId");
+    }
     var selectedId = firstText(state.selectedDiagnosisResumeId, getValue(state.diagnosisDraft, "resumeId"));
     if (!selectedId && resumes.length) {
       selectedId = firstText(resumes[0].resumeId, resumes[0].id);
@@ -2854,10 +3737,21 @@
       return '<section class="panel"><h3>选择简历</h3><p>还没有真实简历记录。请先创建或上传简历，再回来做诊断和修改。</p>' +
         '<div class="actions-row"><button type="button" data-link="resume">去创建简历</button></div></section>';
     }
-    var options = resumes.map(function (resume) {
+    var resumeOptions = resumes.map(function (resume) {
       var id = firstText(resume.resumeId, resume.id, "");
       var label = firstText(resume.title, resume.resumeName, "简历 " + id);
-      return '<option value="' + escapeAttr(id) + '"' + (String(id) === String(draft.resumeId) ? " selected" : "") + '>' + escapeHtml(label) + '</option>';
+      return { id: id, label: label, selected: String(id) === String(draft.resumeId) };
+    });
+    var options = resumeOptions.map(function (option) {
+      return '<option value="' + escapeAttr(option.id) + '"' + (option.selected ? " selected" : "") + '>' + escapeHtml(option.label) + '</option>';
+    }).join("");
+    var selectedResumeLabel = firstText(resumeOptions.filter(function (option) { return option.selected; }).map(function (option) {
+      return option.label;
+    })[0], resumeOptions[0] && resumeOptions[0].label, "请选择简历");
+    var resumePickerOptions = resumeOptions.map(function (option) {
+      return '<button type="button" class="diagnosis-select-option' + (option.selected ? ' active' : '') +
+        '" data-diagnosis-resume-id="' + escapeAttr(option.id) + '" role="option" aria-selected="' +
+        (option.selected ? 'true' : 'false') + '">' + escapeHtml(option.label) + '</button>';
     }).join("");
     var selectedFileKey = firstText(selected && selected.fileKey, selected && selected.objectKey, "");
     var selectedContent = firstText(selected && selected.parsedContent, "");
@@ -2873,11 +3767,17 @@
         : "当前记录只有标题和岗位，没有关联文件或简历正文。请先补充简历文本或重新上传 PDF。");
     return '<section class="panel"><h3>诊断输入</h3>' +
       '<form class="form-grid" id="resumeDiagnosisForm">' +
-      '<label>已有简历<select id="diagnosisResumeId">' + options + '</select></label>' +
-      '<input id="diagnosisTargetJob" type="hidden" value="' + escapeAttr(draft.targetJob) + '">' +
-      '<div class="diagnosis-target-display"><span class="label">目标岗位</span><strong>' +
-      escapeHtml(targetMissing ? "尚未设置" : draft.targetJob) + '</strong><small>' +
-      escapeHtml(targetMissing ? "请回到简历页补充这份简历的目标岗位" : "来自所选简历，切换简历时会自动更新") + '</small></div>' +
+      '<div class="diagnosis-context-grid full">' +
+      '<div class="diagnosis-context-field diagnosis-resume-picker"><span>选择简历</span>' +
+      '<div class="diagnosis-select" id="diagnosisResumePicker"><select id="diagnosisResumeId" class="diagnosis-native-select" aria-hidden="true" tabindex="-1">' + options + '</select>' +
+      '<button type="button" class="diagnosis-select-trigger" id="diagnosisResumeTrigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="diagnosisResumeMenu">' +
+      '<span>' + escapeHtml(selectedResumeLabel) + '</span><span class="diagnosis-select-chevron" aria-hidden="true"></span></button>' +
+      '<div class="diagnosis-select-menu" id="diagnosisResumeMenu" role="listbox" aria-label="选择简历">' + resumePickerOptions + '</div></div>' +
+      '<small>切换后会读取对应的简历正文和目标岗位。</small></div>' +
+      '<label class="diagnosis-context-field"><span>目标岗位</span>' +
+      '<input id="diagnosisTargetJob" value="' + escapeAttr(draft.targetJob) + '" placeholder="尚未设置" readonly aria-readonly="true">' +
+      '<small>' + escapeHtml(targetMissing ? "请先回到简历页补充这份简历的目标岗位。" : "来自所选简历，无需重复填写。") + '</small></label>' +
+      '</div>' +
       '<p class="form-note full">' + escapeHtml(contentHint) + '</p>' +
       '<label class="full">目标岗位要求<textarea id="diagnosisJobDescription" placeholder="粘贴目标岗位的招聘要求或岗位说明，未填写时会使用目标岗位和画像作为上下文。">' + escapeHtml(draft.jobDescription) + '</textarea></label>' +
       '<label class="full">简历正文<textarea id="diagnosisResumeText" placeholder="文本型 PDF 会自动读取；扫描版或纯图片 PDF 可在这里粘贴简历文字。">' + escapeHtml(draft.resumeText) + '</textarea></label>' +
@@ -2890,6 +3790,52 @@
       '</form></section>';
   }
 
+  function diagnosisHistoryPanel(selected) {
+    var resumeId = firstText(selected && selected.resumeId, selected && selected.id, "");
+    if (!resumeId) return "";
+    if (state.diagnosisHistoryLoading && !Object.prototype.hasOwnProperty.call(state.diagnosisHistoryByResume, String(resumeId))) {
+      return statePanel("诊断记录", "正在读取这份简历的历史诊断记录。", "pending");
+    }
+    var records = normalizeArray(state.diagnosisHistoryByResume[String(resumeId)]).filter(function (record) {
+      return record && record.fallbackStatus === "AGENT_AI";
+    });
+    if (!records.length) {
+      return '<section class="panel diagnosis-history-panel"><h3>诊断记录</h3><p class="panel-note">暂时没有已保存的诊断记录。生成诊断后，结果会保存在这里。</p></section>';
+    }
+    return '<section class="panel diagnosis-history-panel"><h3>诊断记录</h3><p class="panel-note">同一份简历的历史结果仅对你可见，可随时查看或删除。</p><div class="item-list">' +
+      records.map(function (record) {
+        var score = firstText(record.overallScore, "--");
+        var time = formatDiagnosisTime(record.diagnosedAt);
+        return '<article class="item diagnosis-history-item"><div><strong>' + escapeHtml(time) + '</strong><p>' +
+          escapeHtml(firstText(record.targetJob, "未填写目标岗位")) + ' · ' + escapeHtml(String(score)) + ' / 100 分</p></div>' +
+          '<div class="actions-row"><button type="button" class="secondary" data-view-diagnosis="' + escapeAttr(record.diagnosisId) + '">查看</button>' +
+          '<button type="button" class="danger" data-delete-diagnosis="' + escapeAttr(record.diagnosisId) + '">删除</button></div></article>';
+      }).join("") + '</div></section>';
+  }
+
+  function ensureDiagnosisHistory(selected) {
+    var resumeId = firstText(selected && selected.resumeId, selected && selected.id, "");
+    if (!resumeId || isFilePreview() || state.diagnosisHistoryLoading
+        || Object.prototype.hasOwnProperty.call(state.diagnosisHistoryByResume, String(resumeId))) {
+      return;
+    }
+    state.diagnosisHistoryLoading = true;
+    listDiagnosisHistoryByService(resumeId).then(function (records) {
+      state.diagnosisHistoryByResume[String(resumeId)] = normalizeArray(records);
+    }).catch(function () {
+      state.diagnosisHistoryByResume[String(resumeId)] = [];
+    }).then(function () {
+      state.diagnosisHistoryLoading = false;
+      if (state.route === "resume-diagnosis") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function formatDiagnosisTime(value) {
+    if (!value) return "历史诊断";
+    var text = String(value).replace("T", " ");
+    return text.length > 16 ? text.substring(0, 16) : text;
+  }
+
   function diagnosisResultPanel() {
     var result = state.diagnosisResult;
     if (state.diagnosisLoading) {
@@ -2900,8 +3846,9 @@
     }
     var plan = result.revisionPlan || {};
     var suggestions = normalizeArray(result.revisionSuggestions);
+    var diagnosisNote = "本次由 AI 简历诊断智能体生成，已结合简历、目标岗位、岗位要求和自画像分析。";
     var body = '<section class="panel"><h3>诊断结果</h3>' +
-      '<p class="panel-note">当前为基础规则诊断。总分由内容完整度、目标岗位匹配、经历证据和表达清晰度四项组成。</p>' +
+      '<p class="panel-note">' + escapeHtml(diagnosisNote) + '</p>' +
       metricsPanel("诊断概览", [
         ["诊断总分", firstText(result.overallScore, "--") + " / 100"],
         ["建议数", firstText(plan.totalSuggestions, suggestions.length, 0)],
@@ -2949,9 +3896,20 @@
         var percent = maxScore > 0 ? Math.max(0, Math.min(100, Math.round(score * 100 / maxScore))) : 0;
         return '<div class="diagnosis-score-item"><div class="diagnosis-score-head"><strong>' +
           escapeHtml(userFacingText(item.name)) + '</strong><span>' + score + ' / ' + maxScore + ' 分</span></div>' +
-          '<div class="diagnosis-score-track"><span style="width:' + percent + '%"></span></div><p>' +
-          escapeHtml(userFacingText(item.reason) || "暂无评分说明") + '</p></div>';
+          '<div class="diagnosis-score-track"><span style="width:' + percent + '%"></span></div><div class="diagnosis-score-reason">' +
+          renderDiagnosisNumberedText(item.reason, "暂无评分说明") + '</div></div>';
       }).join("") + '</div></section>';
+  }
+
+  function renderDiagnosisNumberedText(value, fallback) {
+    var text = userFacingText(value || fallback || "");
+    var parts = text.replace(/([。；])(?=\S)/g, "$1\n").split(/\n+/).map(function (item) {
+      return String(item || "").trim().replace(/^\d+[.、]\s*/, "");
+    }).filter(Boolean);
+    if (parts.length <= 1) return escapeHtml(text);
+    return '<ol class="diagnosis-numbered-list">' + parts.map(function (item) {
+      return '<li>' + escapeHtml(item) + '</li>';
+    }).join("") + '</ol>';
   }
 
   function revisionSuggestionList(suggestions) {
@@ -2961,11 +3919,19 @@
     return '<div class="item-list revision-list">' + suggestions.map(function (item) {
       return '<article class="item revision-item">' +
         '<div><strong>' + escapeHtml(priorityLabel(item.priority)) + " · " + escapeHtml(resumeSectionLabel(item.resumeSection)) + '</strong>' +
-        '<p class="revision-problem">问题：' + escapeHtml(userFacingText(firstText(item.problem, item.action, "需要补充简历证据"))) + '</p>' +
-        '<p>怎么改：' + escapeHtml(userFacingText(firstText(item.action, "围绕目标岗位补充经历证据"))) + '</p>' +
-        '<p>参考写法：' + escapeHtml(userFacingText(firstText(item.rewriteExample, "用具体行动、方法、结果和个人贡献重写经历。"))) + '</p>' +
+        '<p class="revision-problem">问题：' + renderDiagnosisText(item.problem || item.action, false, "需要补充简历证据") + '</p>' +
+        '<p>怎么改：' + renderDiagnosisText(item.action, false, "围绕目标岗位补充经历证据") + '</p>' +
+        '<p>参考写法：' + renderDiagnosisText(item.rewriteExample, false, "用具体行动、方法、结果和个人贡献重写经历。") + '</p>' +
         '<p>建议补充：' + escapeHtml(userFacingList(item.targetKeywords).join(" / ") || "与目标岗位相关的真实证据") + '</p></div></article>';
     }).join("") + '</div>';
+  }
+
+  function renderDiagnosisText(value, splitSentences, fallback) {
+    var text = userFacingText(value || fallback || "");
+    if (splitSentences) {
+      text = text.replace(/([。；])(?=\S)/g, "$1\n");
+    }
+    return escapeHtml(text).replace(/\n/g, "<br>");
   }
 
   function diagnosisContextLabel(sources) {
@@ -2974,8 +3940,8 @@
       if (value.indexOf("resume:") === 0) return "当前简历";
       if (value === "resume.targetJob") return "简历目标岗位";
       if (value === "resume.fileText") return "PDF 简历正文";
-      if (value === "profile.assessment") return "职业测评";
-      if (value === "profile.snapshot") return "用户画像";
+      if (value === "profile.assessment") return "画像补全";
+      if (value === "profile.snapshot") return "自画像";
       if (value === "profile.preferences.targetRole") return "画像目标岗位";
       if (value === "profile.resume.targetJob") return "画像中的简历岗位";
       if (value === "request.jobDescription") return "岗位要求";
@@ -3001,9 +3967,21 @@
 
   function userFacingText(value) {
     return String(value || "")
+      // Some model responses double-escape line breaks inside JSON strings.
+      .replace(/\\\\r\\\\n|\\\\n|\\\\r/g, "\n")
+      .replace(/\r\n?/g, "\n")
+      // Do not present placeholder brackets as resume facts. Make the required
+      // user-provided evidence explicit instead.
+      .replace(/\[([^\]\n]{1,80})\]/g, "（请补充：$1）")
+      .replace(/[□]/g, "")
+      .replace(/[ \t]+\n/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
       .replace(/\bJD\b/gi, "岗位要求")
+      .replace(/jobDescription/g, "岗位要求")
+      .replace(/profileContext/g, "自画像")
+      .replace(/resumeText/g, "简历正文")
       .replace(/resume\.targetJob/g, "简历目标岗位")
-      .replace(/profile\.assessment/g, "职业测评")
+      .replace(/profile\.assessment/g, "画像补全")
       .replace(/targetJob/g, "目标岗位")
       .replace(/\bTODO\b/g, "待处理");
   }
@@ -3023,13 +4001,46 @@
       form.addEventListener("submit", submitResumeDiagnosis);
     }
     var select = $("diagnosisResumeId");
-    if (select) {
-      select.addEventListener("change", function () {
-        state.selectedDiagnosisResumeId = select.value;
-        state.diagnosisDraft = { resumeId: select.value, targetJob: "", jobDescription: "", resumeText: "" };
-        state.diagnosisResult = null;
-        state.diagnosisMessage = null;
-        renderPage(pageByKey[state.route]);
+    var picker = $("diagnosisResumePicker");
+    var trigger = $("diagnosisResumeTrigger");
+    function closeResumePicker() {
+      if (!picker || !trigger) return;
+      picker.classList.remove("open");
+      trigger.setAttribute("aria-expanded", "false");
+    }
+    function chooseDiagnosisResume(resumeId) {
+      if (!select || !resumeId || String(select.value) === String(resumeId)) {
+        closeResumePicker();
+        return;
+      }
+      select.value = resumeId;
+      state.selectedDiagnosisResumeId = select.value;
+      state.diagnosisDraft = { resumeId: select.value, targetJob: "", jobDescription: "", resumeText: "" };
+      state.diagnosisResult = null;
+      state.diagnosisMessage = null;
+      renderPage(pageByKey[state.route]);
+    }
+    if (trigger && picker) {
+      trigger.addEventListener("click", function () {
+        var isOpen = picker.classList.toggle("open");
+        trigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      });
+      trigger.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeResumePicker();
+        }
+        if (event.key === "ArrowDown" && !picker.classList.contains("open")) {
+          event.preventDefault();
+          picker.classList.add("open");
+          trigger.setAttribute("aria-expanded", "true");
+        }
+      });
+    }
+    var resumeOptions = els.pageHost.querySelectorAll("[data-diagnosis-resume-id]");
+    for (var optionIndex = 0; optionIndex < resumeOptions.length; optionIndex += 1) {
+      resumeOptions[optionIndex].addEventListener("click", function (event) {
+        chooseDiagnosisResume(event.currentTarget.getAttribute("data-diagnosis-resume-id"));
       });
     }
     var retry = $("retryDiagnosisResumesButton");
@@ -3042,6 +4053,18 @@
     if (rerun) {
       rerun.addEventListener("click", function () {
         submitResumeDiagnosis();
+      });
+    }
+    var historyViews = els.pageHost.querySelectorAll("[data-view-diagnosis]");
+    for (var viewIndex = 0; viewIndex < historyViews.length; viewIndex += 1) {
+      historyViews[viewIndex].addEventListener("click", function (event) {
+        viewDiagnosisHistory(event.currentTarget.getAttribute("data-view-diagnosis"));
+      });
+    }
+    var historyDeletes = els.pageHost.querySelectorAll("[data-delete-diagnosis]");
+    for (var deleteIndex = 0; deleteIndex < historyDeletes.length; deleteIndex += 1) {
+      historyDeletes[deleteIndex].addEventListener("click", function (event) {
+        deleteDiagnosisHistory(event.currentTarget.getAttribute("data-delete-diagnosis"));
       });
     }
     var previews = els.pageHost.querySelectorAll("[data-preview-file]");
@@ -3090,11 +4113,12 @@
       }
     }
     if (isFilePreview()) {
-      state.diagnosisResult = previewDiagnosisResult(draft);
-      state.diagnosisMessage = { type: "info", text: "file:// 预览模式已生成本地诊断示例。" };
+      state.diagnosisResult = null;
+      state.diagnosisMessage = { type: "warning", text: "本地预览模式不支持 AI 简历诊断，请在已部署的应用中重试。" };
       renderPage(pageByKey[state.route]);
       return;
     }
+    state.diagnosisResult = null;
     state.diagnosisLoading = true;
     state.diagnosisMessage = {
       type: "info",
@@ -3106,6 +4130,9 @@
     diagnoseResumeByService(diagnosisRequest(draft)).then(function (result) {
       state.diagnosisResult = result || {};
       syncDiagnosisScoreToResumeList(draft.resumeId, state.diagnosisResult.overallScore);
+      if (draft.resumeId) {
+        delete state.diagnosisHistoryByResume[String(draft.resumeId)];
+      }
       state.diagnosisMessage = { type: "info", text: "诊断完成。可按优先级处理建议后再次诊断。" };
       return Promise.all([refreshSnapshotAfterResume(), refreshResumeList(false)]);
     }).then(function () {
@@ -3163,6 +4190,58 @@
       });
     }
     return post(endpoints.resumeDiagnosis, { userId: state.identity.userId, request: request });
+  }
+
+  function listDiagnosisHistoryByService(resumeId) {
+    var context = { endpoints: endpoints, post: post, userId: state.identity.userId, resumeId: Number(resumeId) };
+    if (window.CYANCRUISE_SERVICES && window.CYANCRUISE_SERVICES.resume
+        && typeof window.CYANCRUISE_SERVICES.resume.listDiagnosisHistory === "function") {
+      return window.CYANCRUISE_SERVICES.resume.listDiagnosisHistory(context);
+    }
+    return post(endpoints.resumeDiagnosisHistory, { userId: state.identity.userId, resumeId: Number(resumeId) });
+  }
+
+  function viewDiagnosisHistory(diagnosisId) {
+    var resumeId = firstText(state.selectedDiagnosisResumeId, getValue(state.diagnosisDraft, "resumeId"));
+    var records = normalizeArray(state.diagnosisHistoryByResume[String(resumeId)]);
+    for (var i = 0; i < records.length; i += 1) {
+      if (String(records[i].diagnosisId) === String(diagnosisId)) {
+        state.diagnosisResult = records[i];
+        state.diagnosisMessage = { type: "info", text: "已查看历史诊断记录。" };
+        renderPage(pageByKey[state.route]);
+        return;
+      }
+    }
+  }
+
+  function deleteDiagnosisHistory(diagnosisId) {
+    var resumeId = firstText(state.selectedDiagnosisResumeId, getValue(state.diagnosisDraft, "resumeId"));
+    if (!resumeId || !diagnosisId) return;
+    showConfirmDialog("删除诊断记录", "删除后无法恢复，确认删除这条诊断记录吗？", "删除", function () {
+      performDeleteDiagnosisHistory(resumeId, diagnosisId);
+    });
+  }
+
+  function performDeleteDiagnosisHistory(resumeId, diagnosisId) {
+    var request = { userId: state.identity.userId, resumeId: Number(resumeId), diagnosisId: Number(diagnosisId) };
+    var remove = window.CYANCRUISE_SERVICES && window.CYANCRUISE_SERVICES.resume
+      && typeof window.CYANCRUISE_SERVICES.resume.deleteDiagnosisHistory === "function"
+      ? window.CYANCRUISE_SERVICES.resume.deleteDiagnosisHistory({ endpoints: endpoints, post: post, userId: request.userId, resumeId: request.resumeId, diagnosisId: request.diagnosisId })
+      : post(endpoints.resumeDiagnosisHistoryDelete, request);
+    remove.then(function () {
+      var records = normalizeArray(state.diagnosisHistoryByResume[String(resumeId)]).filter(function (item) {
+        return String(item.diagnosisId) !== String(diagnosisId);
+      });
+      state.diagnosisHistoryByResume[String(resumeId)] = records;
+      if (state.diagnosisResult && String(state.diagnosisResult.diagnosisId) === String(diagnosisId)) {
+        state.diagnosisResult = records.length ? records[0] : null;
+      }
+      state.diagnosisMessage = { type: "info", text: "诊断记录已删除。" };
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      state.diagnosisMessage = { type: "warning", text: error.message || "删除诊断记录失败，请稍后重试。" };
+      renderPage(pageByKey[state.route]);
+    });
   }
 
   function profileContextText() {
@@ -3230,61 +4309,124 @@
   }
 
   function renderCareerPlanPage(item) {
-    if (hasUserIdentity() && !state.plan && !state.planEnsuring && !isFilePreview()) {
-      ensureEmploymentPlan();
+    if (hasUserIdentity() && shouldEnsureCurrentPlan(state.plan) && !state.planEnsuring && !isFilePreview()) {
+      ensureCurrentRoutePlan();
     }
     var view = buildPlanViewModel();
-    var summary = firstText(view.plan.startStateSummary, view.plan.summary, "根据用户画像、简历记录和目标岗位生成分阶段路线图，后续可直接接入 agent 自动规划。");
-    var metrics = [
-      ["规划模式", planModeLabel(view.plan)],
-      ["目标岗位", view.targetRole],
-      ["规划周期", view.selectedYears + " 年"],
-      ["Agent 状态", firstText(view.plan.agentStatus, "待接入")]
-    ];
+    var summary = firstText(view.plan.startStateSummary, view.plan.summary,
+      isStudyRoute() ? "根据升学方向、目标院校和个人情况生成分阶段升学路线图。" : "根据个人情况、简历记录和目标岗位生成分阶段就业路线图。");
     var phaseHtml = view.visiblePhases.length ? view.visiblePhases.map(function (phase, index) {
-      return renderPlanPhaseCard(phase, index, view.progressState, view.activePhaseId);
+      return renderPlanPhaseCard(phase, index, view.progressState, view.activePhaseId, view.currentPhaseId);
     }).join("") :
-      statePanel("路线图待生成", "当前还没有可展示的路线图，点击“生成路线图”后会先使用规则版规划，后续可平滑切换到 agent。", "pending");
+      statePanel(isStudyRoute() ? "尚未生成真实考研规划" : "路线图待生成",
+        isStudyRoute() ? "当前没有通过智能体校验的考研路线，点击“生成智能路线图”后才会展示规划。" : "当前还没有可展示的路线图，点击“生成智能路线图”即可开始规划。", "pending");
     var timelineHtml = view.visiblePhases.length ? renderPlanTimeline(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
     var flowHtml = view.visiblePhases.length ? renderPlanFlow(view.visiblePhases, view.activePhaseId, view.progressSummary) : "";
-    renderFeatureShell(item, item.title, summary,
+    renderFeatureShell(item, item.title, isStudyRoute() ? "根据升学方向、目标院校和个人情况整理未来一年的行动路线。" : "根据你的个人情况、简历和目标岗位整理未来一年的行动路线。",
+      renderPlanSummaryCard(summary, view.plan) +
       '<section class="feature-section route-execution-grid daily-first">' +
       renderDailyPlanCard(view.dailyPlan, view.progressState) +
       renderWeeklyPlanCard(view.weeklyPlan, view.weeklyActions, view.weeklyDeliverables, view.targetRole, view.progressState) +
       '</section>' +
-      '<section class="feature-section route-control-grid">' +
-      planningHorizonPanel(view.selectedYears) +
-      metricsPanel("路线概览", metrics) +
-      '</section>' +
       timelineHtml +
-      '<section class="feature-section"><div class="section-heading"><div><h3>阶段路线图</h3><p class="section-note">先给出 1 年和 3 年的大阶段，再细化到周和每天。</p></div>' +
+      '<section class="feature-section"><div class="section-heading"><div><h3>阶段路线图</h3><p class="section-note">展示未来 1 年的阶段目标，并细化到本周和每天。</p></div>' +
       '<div class="section-actions"><button type="button" data-ensure-plan ' + (state.planEnsuring ? 'disabled aria-disabled="true"' : '') + '>' +
-      (state.planEnsuring ? "生成中" : "刷新路线图") + '</button></div></div>' +
+      (state.planEnsuring ? "生成中" : planGenerationButtonLabel(view.plan, "生成智能路线图")) + '</button></div></div>' +
       flowHtml +
       '<div class="route-phase-grid">' + phaseHtml + '</div></section>' +
       '');
   }
 
+  function renderPlanSummaryCard(summary, plan) {
+    var items = planSummaryItems(summary, plan);
+    if (!items.length) {
+      return "";
+    }
+    return '<section class="panel full plan-summary-card">' +
+      '<div class="route-card-head"><div><span class="resource-type">规划依据</span><h3>当前情况概览</h3></div></div>' +
+      '<ul class="plan-summary-list">' + items.map(function (item, index) {
+        return '<li><span class="plan-summary-label">' + escapeHtml(planSummaryLabel(item, index)) + '</span>' +
+          '<p>' + escapeHtml(item) + '</p></li>';
+      }).join("") + '</ul></section>';
+  }
+
+  function planSummaryItems(summary, plan) {
+    var items = splitPlanSummary(summary);
+    if (!isStudyRoute()) {
+      return items;
+    }
+    var direction = studyCenterDirectionLabel(firstText(plan && plan.studyDirection,
+      getValue(state.studyCenterSelection, "direction"), "POSTGRADUATE"));
+    var targetSchool = firstText(plan && plan.targetSchool,
+      getValue(state.snapshot, "onboarding.targetSchool"), "");
+    var hasStudyTarget = items.some(function (item) {
+      return /考研目标|升学目标|目标院校|报考院校|目标专业/.test(item);
+    });
+    if (!hasStudyTarget && (direction || targetSchool)) {
+      items.push("升学目标：" + direction +
+        (targetSchool ? "，目标院校为“" + targetSchool + "”" : "，目标院校待确认"));
+    }
+    return items;
+  }
+
+  function splitPlanSummary(summary) {
+    var text = trim(summary);
+    if (!text) {
+      return [];
+    }
+    var items = text.split(/[；;\n]+/).map(cleanPlanSummaryItem).filter(Boolean);
+    if (items.length === 1 && text.length > 90) {
+      items = text.split(/[。！？]+/).map(cleanPlanSummaryItem).filter(Boolean);
+    }
+    return items;
+  }
+
+  function cleanPlanSummaryItem(item) {
+    return trim(item).replace(/^[，,、\s]+|[。；;，,\s]+$/g, "");
+  }
+
+  function planSummaryLabel(item, index) {
+    var text = trim(item);
+    var study = isStudyRoute();
+    if (/当前处于|当前阶段|目前处于|求职阶段|备考阶段|复习阶段/.test(text)) return "当前阶段";
+    if (/已具备|已有|优势|基础|经验/.test(text)) return "已有基础";
+    if (/缺口|不足|短板|薄弱|需要补|亟需|差距/.test(text)) return study ? "准备差距" : "能力缺口";
+    if (/尚未确认|未确认|待确认|信息不足|缺少信息/.test(text)) return "待确认信息";
+    if (/时间|窗口|截止|周期|日期|来不及|错过/.test(text)) return "时间提醒";
+    if (/资料|招生说明|专业目录|成绩单/.test(text) && study) return "规划资料";
+    if (/目标|期望|城市|偏好|岗位|院校|升学|报考/.test(text)) return study ? "考研目标" : "求职目标";
+    return "情况 " + (index + 1);
+  }
+
   function buildPlanViewModel() {
     var plan = state.plan && !state.plan.unavailable ? state.plan : {};
-    var targetRole = employmentTargetRole(plan);
+    if (isStudyRoute() && !hasVerifiedStudyPlan(plan)) plan = {};
+    var targetRole = currentPlanningTarget(plan);
     var phases = normalizeArray(plan.phases);
     var weeklyPlan = plan.weeklyPlan || {};
-    if (!phases.length && isFilePreview()) {
+    if (!phases.length && isFilePreview() && !isStudyRoute()) {
       phases = previewPlanPhases(targetRole);
     }
-    var selectedYears = readSelectedPlanHorizon(plan, targetRole);
+    var selectedYears = 1;
     var visiblePhases = filterPlanPhasesByYears(phases, selectedYears);
-    if (!visiblePhases.length) {
-      visiblePhases = phases;
-    }
     var progressState = readPlanProgress(plan, targetRole, phases);
+    mergeDailyCompletionIntoProgress(state.dailyPlan, progressState, visiblePhases);
+    if (!progressState.phaseCursorInitialized || isSelectedPlanPhaseComplete(phases, progressState)) {
+      syncPlanPhaseCursor(phases, progressState);
+      progressState.phaseCursorInitialized = true;
+      persistPlanProgress(plan, targetRole, progressState);
+    }
+    var currentPhaseId = firstIncompletePlanPhaseId(visiblePhases, progressState);
     var activePhaseId = firstText(progressState.activePhaseId, visiblePhases.length ? phaseKey(visiblePhases[0], 0) : "");
     if (!containsPhaseId(visiblePhases, activePhaseId)) {
       activePhaseId = visiblePhases.length ? phaseKey(visiblePhases[0], 0) : "";
     }
-    var dailyPlan = deriveDailyPlan(visiblePhases, weeklyPlan, progressState, activePhaseId, targetRole);
-    var progressSummary = summarizePlanProgress(visiblePhases, progressState);
+    var dailyPlan = state.dailyPlan && !state.dailyPlan.unavailable
+      ? normalizeServerDailyPlan(state.dailyPlan, visiblePhases, activePhaseId)
+      : isFilePreview() && !isStudyRoute()
+        ? deriveDailyPlan(visiblePhases, weeklyPlan, progressState, activePhaseId, targetRole)
+        : { items: [], summary: "每日计划暂时无法加载，请稍后重试；系统不会用无关任务替代。" };
+    var progressSummary = summarizePlanProgress(visiblePhases, progressState, currentPhaseId);
     return {
       plan: plan,
       targetRole: targetRole,
@@ -3296,6 +4438,7 @@
       selectedYears: selectedYears,
       progressState: progressState,
       activePhaseId: activePhaseId,
+      currentPhaseId: currentPhaseId,
       dailyPlan: dailyPlan,
       progressSummary: progressSummary
     };
@@ -3307,6 +4450,65 @@
       renderLinkedTaskList("今日小事", dailyPlan.items, progressState) + '</section>';
   }
 
+  function normalizeServerDailyPlan(dailyPlan, phases, activePhaseId) {
+    var items = normalizeArray(dailyPlan.items).map(function (item) {
+      return {
+        taskId: item.taskId,
+        sourceTaskId: planProgressTaskId(item.sourceTaskId, phases),
+        text: item.text,
+        completed: String(item.status || "").toUpperCase() === "COMPLETED",
+        carriedOver: !!item.carriedOver,
+        persisted: true
+      };
+    });
+    return {
+      items: items,
+      summary: firstText(dailyPlan.summary, "今天按当前阶段的顺序完成这些事项。"),
+      planDate: dailyPlan.planDate,
+      phaseId: firstText(dailyPlan.phaseId, activePhaseId)
+    };
+  }
+
+  function mergeDailyCompletionIntoProgress(dailyPlan, progressState, phases) {
+    if (!dailyPlan || dailyPlan.unavailable || !progressState) return;
+    normalizeArray(dailyPlan.completedSourceTaskIds).forEach(function (sourceTaskId) {
+      var progressTaskId = planProgressTaskId(sourceTaskId, phases);
+      if (progressTaskId) progressState.checked[progressTaskId] = true;
+    });
+    normalizeArray(dailyPlan.items).forEach(function (item) {
+      if (item && item.sourceTaskId && String(item.status || "").toUpperCase() === "COMPLETED") {
+        progressState.checked[planProgressTaskId(item.sourceTaskId, phases)] = true;
+      }
+    });
+  }
+
+  function planProgressTaskId(sourceTaskId, phases) {
+    var source = firstText(sourceTaskId, "");
+    if (!source) return "";
+    var phaseList = normalizeArray(phases);
+    for (var i = 0; i < phaseList.length; i += 1) {
+      var phase = phaseList[i];
+      var phaseId = phaseKey(phase, i);
+      var resolved = planProgressTaskFromGroup(source, phaseId + ".actions", normalizeArray(phase.actions));
+      if (resolved) return resolved;
+      resolved = planProgressTaskFromGroup(source, phaseId + ".kpis", normalizeArray(phase.kpis));
+      if (resolved) return resolved;
+      var subStages = normalizeArray(phase.subStages);
+      for (var j = 0; j < subStages.length; j += 1) {
+        resolved = planProgressTaskFromGroup(source, phaseId + ".substage." + j + ".actions", normalizeArray(subStages[j].actions));
+        if (resolved) return resolved;
+      }
+    }
+    return source;
+  }
+
+  function planProgressTaskFromGroup(sourceTaskId, scope, items) {
+    if (sourceTaskId.indexOf(scope + ".") !== 0) return "";
+    var index = Number(sourceTaskId.substring((scope + ".").length));
+    if (!Number.isInteger(index) || index < 0 || index >= items.length) return "";
+    return scope + "." + index + "." + sanitizeKey(items[index]);
+  }
+
   function renderWeeklyPlanCard(weeklyPlan, weeklyActions, weeklyDeliverables, targetRole, progressState) {
     return '<section class="panel route-weekly-card"><div class="route-card-head"><div><span class="resource-type">本周计划</span><h3>' +
       escapeHtml(firstText(weeklyPlan.weekTitle, "本周推进重点")) + '</h3></div></div><p class="route-goal">' +
@@ -3316,10 +4518,10 @@
       '</section>';
   }
 
-  function renderPlanPhaseCard(phase, phaseIndex, progressState, activePhaseId) {
+  function renderPlanPhaseCard(phase, phaseIndex, progressState, activePhaseId, currentPhaseId) {
     var subStages = normalizeArray(phase && phase.subStages);
     var phaseId = phaseKey(phase, phaseIndex);
-    var phaseStatus = phaseProgressStatus(phase, phaseIndex, progressState);
+    var phaseStatus = phaseProgressStatus(phase, phaseIndex, progressState, currentPhaseId);
     var cls = "panel route-phase-card" + (phaseId === activePhaseId ? " active" : "");
     return '<article class="' + cls + '" data-phase-card="' + escapeAttr(phaseId) + '">' +
       '<div class="route-card-head"><div><span class="resource-type">' + escapeHtml(firstText(phase && phase.horizon, "阶段")) + '</span>' +
@@ -3377,24 +4579,13 @@
     }
     return '<div class="route-list-block"><span class="label">' + escapeHtml(title) + '</span><ul class="route-task-list">' +
       list.map(function (item) {
-        var checked = !!(progressState.checked && progressState.checked[item.taskId]);
+        var checked = item.persisted ? !!item.completed : !!(progressState.checked && progressState.checked[item.taskId]);
         return '<li class="route-task-item' + (checked ? " done" : "") + '">' +
-          '<label class="route-task-toggle"><input type="checkbox" data-plan-task="' + escapeAttr(item.taskId) + '"' + (checked ? " checked" : "") + '>' +
-          '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item.text) + '</span></label></li>';
+          '<label class="route-task-toggle"><input type="checkbox" ' + (item.persisted ? 'data-daily-task' : 'data-plan-task') + '="' + escapeAttr(item.taskId) + '"' +
+          (item.sourceTaskId ? ' data-source-task="' + escapeAttr(item.sourceTaskId) + '"' : '') + (checked ? " checked" : "") + '>' +
+          '<span class="route-checkmark"></span><span class="route-task-text">' + escapeHtml(item.text) +
+          (item.carriedOver ? '<small class="route-task-carry">昨日未完成，已优先顺延</small>' : '') + '</span></label></li>';
       }).join("") + '</ul></div>';
-  }
-
-  function planningHorizonPanel(selectedYears) {
-    return '<section class="panel route-control-card"><div class="route-card-head"><div><span class="resource-type">规划周期</span><h3>查看周期</h3></div></div>' +
-      '<p class="route-goal">可以先聚焦 1 年内目标，也可以切回完整 3 年路线图。</p>' +
-      '<div class="route-horizon-toggle">' +
-      horizonButton(1, selectedYears) +
-      horizonButton(3, selectedYears) +
-      '</div></section>';
-  }
-
-  function horizonButton(years, selectedYears) {
-    return '<button type="button" class="route-horizon-button' + (years === selectedYears ? " active" : "") + '" data-plan-horizon="' + years + '">' + years + '年</button>';
   }
 
   function renderPlanTimeline(phases, activePhaseId, progressSummary) {
@@ -3427,7 +4618,7 @@
     }).join('<span class="route-arrow-connector" aria-hidden="true">→</span>') + '</div>';
   }
 
-  function summarizePlanProgress(phases, progressState) {
+  function summarizePlanProgress(phases, progressState, currentPhaseId) {
     var totalTasks = 0;
     var completedTasks = 0;
     var phaseMap = {};
@@ -3445,8 +4636,10 @@
       completedTasks += phaseMap[phaseId].completed;
     }
     var activePhaseTitle = "";
-    if (progressState.activePhaseId && phaseMap[progressState.activePhaseId]) {
-      activePhaseTitle = phaseMap[progressState.activePhaseId].title;
+    if (currentPhaseId && phaseMap[currentPhaseId]) {
+      activePhaseTitle = phaseMap[currentPhaseId].title;
+    } else if (totalTasks > 0 && completedTasks >= totalTasks) {
+      activePhaseTitle = "全部阶段已完成";
     } else if (phases.length) {
       activePhaseTitle = firstText(phases[0].title, phases[0].horizon, "阶段目标");
     }
@@ -3663,28 +4856,10 @@
     return phases.length ? { phase: phases[0], index: 0 } : null;
   }
 
-  function readSelectedPlanHorizon(plan, targetRole) {
-    var key = planHorizonStorageKey(plan, targetRole);
-    var stored = parseInt(trim(localStorage.getItem(key)), 10);
-    if (stored === 1 || stored === 3) {
-      return stored;
-    }
-    var planYears = Number(plan && plan.horizonYears);
-    return planYears === 1 ? 1 : 3;
-  }
-
-  function persistSelectedPlanHorizon(plan, targetRole, years) {
-    localStorage.setItem(planHorizonStorageKey(plan, targetRole), String(years));
-  }
-
-  function planHorizonStorageKey(plan, targetRole) {
-    var userId = hasUserIdentity() ? state.identity.userId : "preview";
-    var role = sanitizeKey(firstText(plan && plan.targetRole, targetRole, "general"));
-    return "cyancruise.planHorizon." + sanitizeKey(userId) + "." + role;
-  }
-
   function filterPlanPhasesByYears(phases, selectedYears) {
-    return normalizeArray(phases).filter(function (phase) {
+    var list = normalizeArray(phases);
+    if (isStudyRoute()) return list;
+    return list.filter(function (phase) {
       return phaseHorizonMaxYears(phase) <= selectedYears;
     });
   }
@@ -3739,26 +4914,22 @@
     var incoming = nextPlan || {};
     var existing = previousPlan || {};
     var nextPhases = normalizeArray(incoming.phases);
-    if (targetRoleChanged(existing, incoming)) {
-      return incoming;
-    }
     if (!nextPhases.length) {
       return incoming;
     }
     var targetRole = employmentTargetRole(existing);
     var progressState = readPlanProgress(existing, targetRole, normalizeArray(existing.phases));
-    var completedPhaseMap = {};
     var existingPhases = normalizeArray(existing.phases);
-    for (var i = 0; i < existingPhases.length; i += 1) {
-      var existingPhase = existingPhases[i];
-      if (isPhaseCompletedByProgress(existingPhase, i, progressState)) {
-        completedPhaseMap[phaseIdentityKey(existingPhase, i)] = existingPhase;
-      }
+    var mergedPhases = [];
+    var phaseCount = Math.max(existingPhases.length, nextPhases.length);
+    for (var phaseIndex = 0; phaseIndex < phaseCount; phaseIndex += 1) {
+      var currentPhase = existingPhases[phaseIndex];
+      var nextPhase = nextPhases[phaseIndex];
+      if (currentPhase && (isStartedPlanStatus(currentPhase.status)
+          || isPhaseStartedByProgress(currentPhase, phaseIndex, progressState))) mergedPhases.push(currentPhase);
+      else if (nextPhase) mergedPhases.push(nextPhase);
     }
-    incoming.phases = nextPhases.map(function (phase, index) {
-      var identity = phaseIdentityKey(phase, index);
-      return completedPhaseMap[identity] || phase;
-    });
+    incoming.phases = mergedPhases;
     if (!firstText(progressState.activePhaseId) && incoming.phases.length) {
       progressState.activePhaseId = phaseKey(incoming.phases[0], 0);
       persistPlanProgress(incoming, employmentTargetRole(incoming), progressState);
@@ -3766,48 +4937,72 @@
     return incoming;
   }
 
-  function targetRoleChanged(previousPlan, nextPlan) {
-    var previousTarget = previousPlan && previousPlan.targetRole;
-    var nextTarget = nextPlan && nextPlan.targetRole;
-    return firstText(previousTarget) && firstText(nextTarget) && !sameTargetRole(previousTarget, nextTarget);
-  }
-
   function sameTargetRole(first, second) {
     return trim(first) === trim(second);
   }
 
-  function isPhaseCompletedByProgress(phase, index, progressState) {
+  function phaseProgressStatus(phase, index, progressState, currentPhaseId) {
     var phaseId = phaseKey(phase, index);
-    var counters = { total: 0, completed: 0 };
-    countTaskGroup(normalizeArray(phase && phase.actions), phaseId + ".actions", progressState, counters);
-    countTaskGroup(normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState, counters);
-    var subStages = normalizeArray(phase && phase.subStages);
-    for (var i = 0; i < subStages.length; i += 1) {
-      countTaskGroup(normalizeArray(subStages[i].actions), phaseId + ".substage." + i + ".actions", progressState, counters);
-    }
-    return counters.total > 0 && counters.completed >= counters.total;
-  }
-
-  function phaseIdentityKey(phase, index) {
-    return sanitizeKey(firstText(phase && phase.horizon, "")) + "::" + sanitizeKey(firstText(phase && phase.title, phaseKey(phase, index)));
-  }
-
-  function phaseProgressStatus(phase, index, progressState) {
-    var phaseId = phaseKey(phase, index);
-    var counters = { total: 0, completed: 0 };
-    countTaskGroup(normalizeArray(phase && phase.actions), phaseId + ".actions", progressState, counters);
-    countTaskGroup(normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState, counters);
-    var subStages = normalizeArray(phase && phase.subStages);
-    for (var i = 0; i < subStages.length; i += 1) {
-      countTaskGroup(normalizeArray(subStages[i].actions), phaseId + ".substage." + i + ".actions", progressState, counters);
-    }
-    if (counters.total > 0 && counters.completed >= counters.total) {
+    var counters = phaseTaskCounters(phase, index, progressState);
+    if (isPlanPhaseComplete(phase, index, progressState)) {
       return { code: "done", label: "已完成" };
     }
-    if (counters.completed > 0) {
+    if (phaseId === currentPhaseId || isStartedPlanStatus(phase && phase.status) || counters.completed > 0) {
       return { code: "active", label: "进行中" };
     }
     return { code: "idle", label: "未开始" };
+  }
+
+  function isPhaseStartedByProgress(phase, index, progressState) {
+    return phaseTaskCounters(phase, index, progressState).completed > 0;
+  }
+
+  function phaseTaskCounters(phase, index, progressState) {
+    var phaseId = phaseKey(phase, index);
+    var counters = { total: 0, completed: 0 };
+    countTaskGroup(normalizeArray(phase && phase.actions), phaseId + ".actions", progressState, counters);
+    countTaskGroup(normalizeArray(phase && phase.kpis), phaseId + ".kpis", progressState, counters);
+    var subStages = normalizeArray(phase && phase.subStages);
+    for (var i = 0; i < subStages.length; i += 1) {
+      countTaskGroup(normalizeArray(subStages[i].actions), phaseId + ".substage." + i + ".actions", progressState, counters);
+    }
+    return counters;
+  }
+
+  function isPlanPhaseComplete(phase, index, progressState) {
+    var counters = phaseTaskCounters(phase, index, progressState);
+    return isCompletedPlanStatus(phase && phase.status)
+      || (counters.total > 0 && counters.completed >= counters.total);
+  }
+
+  function firstIncompletePlanPhaseId(phases, progressState) {
+    for (var i = 0; i < phases.length; i += 1) {
+      if (!isPlanPhaseComplete(phases[i], i, progressState)) {
+        return phaseKey(phases[i], i);
+      }
+    }
+    return "";
+  }
+
+  function isSelectedPlanPhaseComplete(phases, progressState) {
+    var selectedPhaseId = firstText(progressState && progressState.activePhaseId, "");
+    if (!selectedPhaseId) return false;
+    for (var i = 0; i < phases.length; i += 1) {
+      if (phaseKey(phases[i], i) === selectedPhaseId) {
+        return isPlanPhaseComplete(phases[i], i, progressState);
+      }
+    }
+    return false;
+  }
+
+  function syncPlanPhaseCursor(phases, progressState) {
+    if (!progressState || !phases.length) return "";
+    var nextPhaseId = firstIncompletePlanPhaseId(phases, progressState);
+    if (!nextPhaseId) {
+      nextPhaseId = phaseKey(phases[phases.length - 1], phases.length - 1);
+    }
+    progressState.activePhaseId = nextPhaseId;
+    return nextPhaseId;
   }
 
   function performDeleteResumeRecord(resumeId) {
@@ -3941,10 +5136,12 @@
     var body = "";
 
     if (state.assessmentLoading && !state.assessmentScales) {
-      body += statePanel("正在加载职业测评", "正在读取 CyanCruise 职业测评题库和最近结果。", "pending");
+      body += statePanel("正在加载画像补全", "正在读取青途启航画像补全题组和最近结果。", "pending");
     }
-    if (state.assessmentError) {
-      body += statePanel("测评暂不可用", state.assessmentError, "warning");
+    // A scale-specific failure belongs on its detail page. The assessment home
+    // only reports deep-profile availability through deepProfileError.
+    if (state.assessmentError && state.assessmentSelectedScaleId) {
+      body += statePanel("画像补全暂不可用", state.assessmentError, "warning");
     }
 
     if (!state.assessmentSelectedScaleId) {
@@ -3954,87 +5151,44 @@
     }
 
     var scale = state.assessmentScale || selectedAssessmentScaleSummary() || previewAssessmentScale();
+    var detailItem = assessmentDetailPageItem(item, scale);
     var questions = normalizeArray(scale.questions);
     var answered = assessmentAnsweredCount(questions);
     var total = questions.length;
     var result = state.assessmentResult;
     var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(total - 1, 0)));
     var currentQuestion = questions[currentIndex];
-
-    body += '<section class="panel assessment-panel"><h3>' + escapeHtml(scale.title || "职业测评") + '</h3>' +
-      '<p>' + escapeHtml(scale.description || "完成答题后，系统会生成职业画像结果，并写入 CyanCruise 职业画像。") + '</p>' +
-      '<div class="route-progress-card"><div class="route-progress-head"><strong>' + answered + "/" + total +
-      '</strong><span>' + escapeHtml(estimateAssessmentMinutes(scale) + " 分钟") + '</span></div>' +
-      '<div class="route-progress-track"><span class="route-progress-fill" style="width:' +
-      (total ? Math.round(answered * 100 / total) : 0) + '%"></span></div></div>' +
-      '</section>';
 
     if (result && (result.resultSummary || result.summary)) {
-      body += assessmentResultPanel(result);
-    }
-
-    body += '<section class="panel assessment-quiz"><h3>开始答题</h3>' +
-      questions.map(assessmentQuestionCard).join("") +
-      '<div class="actions-row"><button type="button" data-assessment-submit ' +
-      (state.assessmentSubmitting || answered < total ? 'disabled aria-disabled="true"' : '') + '>' +
-      (state.assessmentSubmitting ? "提交中" : "提交测评") + '</button>' +
-      '<button type="button" class="secondary" data-assessment-back>返回测评列表</button></div>' +
-      '</section>';
-
-    renderShell(item, body);
-  }
-
-  function renderAssessmentPage(item) {
-    if (!state.assessmentScales && !state.assessmentLoading) {
-      loadAssessment();
-    }
-    var body = "";
-
-    if (state.assessmentLoading && !state.assessmentScales) {
-      body += statePanel("正在加载职业测评", "正在读取 CyanCruise 职业测评题库和最近结果。", "pending");
-    }
-    if (state.assessmentError) {
-      body += statePanel("测评暂不可用", state.assessmentError, "warning");
-    }
-
-    if (!state.assessmentSelectedScaleId) {
-      body += renderAssessmentList();
-      renderShell(item, body);
+      body += '<section class="panel full assessment-result-wrap">' + assessmentResultPanel(result) +
+        assessmentAnswerReviewPanel(result) + assessmentAiInterpretationPanel(result) +
+        '<div class="actions-row"><button type="button" class="secondary" data-assessment-back>返回题组列表</button>' +
+        '<button type="button" data-assessment-retake="' + escapeAttr(result.scaleId || state.assessmentSelectedScaleId) + '">重新测评</button></div></section>';
+      renderShell(detailItem, body);
       return;
     }
 
-    var scale = state.assessmentScale || selectedAssessmentScaleSummary() || previewAssessmentScale();
-    var questions = normalizeArray(scale.questions);
-    var answered = assessmentAnsweredCount(questions);
-    var total = questions.length;
-    var result = state.assessmentResult;
-    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(total - 1, 0)));
-    var currentQuestion = questions[currentIndex];
-
-    body += '<section class="panel full assessment-panel"><h3>' + escapeHtml(scale.title || "职业测评") + '</h3>' +
-      '<p>' + escapeHtml(scale.description || "完成答题后，系统会生成职业画像结果，并写入 CyanCruise 职业画像。") + '</p>' +
+    body += '<section class="panel full assessment-panel">' +
       '<div class="route-progress-card"><div class="route-progress-head"><strong>' + answered + "/" + total +
       '</strong><span>' + escapeHtml(total ? "第 " + (currentIndex + 1) + " / " + total + " 题" : "暂无题目") + '</span></div>' +
       '<div class="route-progress-track"><span class="route-progress-fill" style="width:' +
       (total ? Math.round(answered * 100 / total) : 0) + '%"></span></div></div>' +
       '</section>';
 
-    if (result && (result.resultSummary || result.summary)) {
-      body += '<section class="panel full assessment-result-wrap">' + assessmentResultPanel(result) +
-        '<div class="actions-row"><button type="button" data-assessment-back>返回测评列表</button></div></section>';
-      renderShell(item, body);
-      return;
-    }
-
     body += '<section class="panel full assessment-quiz"><h3>开始答题</h3>' +
       (currentQuestion ? assessmentQuestionCard(currentQuestion, currentIndex) : statePanel("暂无题目", "当前测评题库为空。", "warning")) +
       '<div class="actions-row"><button type="button" class="secondary" data-assessment-prev ' +
       (currentIndex <= 0 || state.assessmentSubmitting ? 'disabled aria-disabled="true"' : '') + '>上一题</button>' +
-      '<button type="button" class="secondary" data-assessment-back>返回测评列表</button>' +
+      '<button type="button" class="secondary" data-assessment-back>返回题组列表</button>' +
+      (currentQuestion && currentIndex < total - 1
+        ? '<button type="button" data-assessment-next ' +
+          (state.assessmentSubmitting || !assessmentQuestionAnswered(currentQuestion) ? 'disabled aria-disabled="true"' : '') + '>下一题</button>'
+        : '<button type="button" data-assessment-submit ' +
+          (state.assessmentSubmitting || answered < total ? 'disabled aria-disabled="true"' : '') + '>提交补全结果</button>') +
       (state.assessmentSubmitting ? '<button type="button" disabled aria-disabled="true">提交中</button>' : '') + '</div>' +
       '</section>';
 
-    renderShell(item, body);
+    renderShell(detailItem, body);
   }
 
   function loadAssessment() {
@@ -4044,6 +5198,7 @@
       state.assessmentScales = previewAssessmentScaleSummaries();
       state.assessmentScale = null;
       state.assessmentRecords = [];
+      state.deepProfile = null;
       state.assessmentLoading = false;
       if (state.route === "assessment") {
         renderPage(pageByKey.assessment);
@@ -4052,17 +5207,19 @@
     }
     Promise.all([
       post(endpoints.assessmentScales, {}),
-      hasUserIdentity() ? post(endpoints.assessmentRecords, state.identity.userId).catch(function () { return []; }) : Promise.resolve([])
+      hasUserIdentity() ? post(endpoints.assessmentRecords, state.identity.userId).catch(function () { return []; }) : Promise.resolve([]),
+      hasUserIdentity() ? post(endpoints.deepProfileLatest, state.identity.userId).catch(function () { return null; }) : Promise.resolve(null)
     ]).then(function (results) {
       state.assessmentScales = normalizeArray(results[0]);
       state.assessmentRecords = normalizeArray(results[1]);
+      state.deepProfile = results[2] || null;
       if (!state.assessmentScales.length) {
-        throw new Error("没有可用的职业测评量表");
+        throw new Error("没有可用的画像补全题组");
       }
       state.assessmentScale = null;
       state.assessmentError = null;
     }).catch(function (error) {
-      state.assessmentError = error.message || "职业测评题库暂不可用。";
+      state.assessmentError = error.message || "画像补全题组暂不可用。";
       state.assessmentScales = previewAssessmentScaleSummaries();
       state.assessmentScale = null;
     }).then(function () {
@@ -4079,8 +5236,8 @@
       scales = previewAssessmentScaleSummaries();
     }
     var completed = completedAssessmentScaleIds();
-    return '<section class="feature-section assessment-list-section full"><div class="section-heading">' +
-      '<div><h3>选择职业测评</h3><p class="section-note">按你当前最想了解的问题选择测评，结果会写入职业画像。</p></div></div>' +
+    return deepProfileActionPanel() + '<section class="feature-section assessment-list-section full"><div class="section-heading">' +
+      '<div><h3>选择画像补全题组</h3><p class="section-note">先补齐人格、性格和偏好信息，结果会写入自画像。</p></div></div>' +
       '<div class="assessment-list">' + scales.map(function (scale, index) {
         var done = completed[String(scale.scaleId)];
         var tone = index === 0 ? "app-icon-tile--cyan" : "app-icon-tile--candy";
@@ -4093,11 +5250,247 @@
           '<span class="tag tag-blue">' + escapeHtml(firstText(scale.questionCount, normalizeArray(scale.questions).length, 0)) + ' 题</span>' +
           (done ? '<span class="tag tag-done">已完成</span>' : '') + '</div></div></div>' +
           '<div class="card-right"><button type="button" class="btn-start" data-assessment-scale="' +
-          escapeAttr(scale.scaleId) + '">' + (done ? "重新测" : "开始") + '</button></div></article>';
+          escapeAttr(scale.scaleId) + '">' + (done ? "查看上次结果" : "开始测评") + '</button></div></article>';
       }).join("") + '</div></section>';
   }
 
+  function deepProfileActionPanel() {
+    var completedCount = Object.keys(completedAssessmentScaleIds()).length;
+    var profile = state.deepProfile;
+    var action = state.deepProfileGenerating
+      ? '<button type="button" class="btn-start" disabled="disabled">正在生成深度画像...</button>'
+      : '<button type="button" class="btn-start" data-deep-profile-generate="true">' +
+        (profile ? '重新生成深度画像' : '生成深度画像') + '</button>';
+    var hint = completedCount
+      ? '将根据已完成的测评结果生成深度画像，供后续规划与简历诊断使用。'
+      : '完成至少一份测评后，即可生成深度画像。';
+    var html = '<section class="feature-section assessment-list-section full"><div class="section-heading">' +
+      '<div><h3>深度画像</h3><p class="section-note">' + hint + '</p></div></div>';
+    if (state.deepProfileError) {
+      html += '<div class="state-panel warning"><strong>深度画像生成失败</strong><p>' +
+        escapeHtml(state.deepProfileError) + '</p></div>';
+    }
+    if (profile) {
+      html += renderDeepProfileSummary(profile, action);
+    } else {
+      html += '<div class="actions-row">' + action + '</div>';
+    }
+    return html + '</section>';
+  }
+
+  function renderDeepProfileSummary(profile, generateAction) {
+    var html = '<article class="route-control-card"><div class="route-card-head"><div><h3>最新深度画像</h3>' +
+      '<p class="section-note">' + escapeHtml(formatDeepProfileDate(profile.generatedAt)) + '</p></div>' +
+      '<span class="tag tag-done">已保存</span></div>';
+    return html + '<div class="actions-row">' + generateAction +
+      '<button type="button" class="secondary" data-link="deep-profile-detail">查看详情与历史</button></div></article>';
+  }
+
+  function renderDeepProfileDetailPage(item) {
+    if (state.deepProfileHistory === null && !state.deepProfileHistoryLoading) {
+      state.deepProfileHistoryLoading = true;
+      window.setTimeout(loadDeepProfileHistory, 0);
+    }
+    var selected = state.deepProfileSelected || state.deepProfile || normalizeArray(state.deepProfileHistory)[0];
+    var body = '<section class="feature-section full"><div class="section-heading"><div><h3>画像详情</h3>' +
+      '<p class="section-note">后续规划和诊断始终参考最新一条深度画像，历史记录仅用于回顾。</p></div></div>';
+    if (state.deepProfileHistoryLoading && !selected) {
+      body += statePanel('正在读取深度画像', '正在加载最新画像和过往记录。', 'pending');
+    } else if (selected) {
+      body += renderDeepProfile(selected);
+    } else {
+      body += statePanel('暂无深度画像', '请先完成至少一份测评并生成深度画像。', 'warning');
+    }
+    body += '</section>' + renderDeepProfileHistory();
+    renderShell(item, body);
+  }
+
+  function assessmentDetailPageItem(item, scale) {
+    return {
+      key: item.key,
+      title: firstText(scale && scale.title, "测评"),
+      summary: firstText(scale && scale.description, "完成答题后将补充到自画像，供后续分析使用。"),
+      status: item.status,
+      audience: item.audience
+    };
+  }
+
+  function loadDeepProfileHistory() {
+    state.deepProfileHistoryError = null;
+    if (isFilePreview()) {
+      state.deepProfileHistory = state.deepProfile ? [state.deepProfile] : [];
+      state.deepProfileSelected = state.deepProfile || null;
+      state.deepProfileHistoryLoading = false;
+      if (state.route === 'deep-profile-detail') {
+        renderPage(pageByKey['deep-profile-detail']);
+      }
+      return;
+    }
+    Promise.all([
+      post(endpoints.deepProfileHistory, state.identity.userId),
+      state.deepProfile ? Promise.resolve(state.deepProfile) : post(endpoints.deepProfileLatest, state.identity.userId).catch(function () { return null; })
+    ]).then(function (results) {
+      state.deepProfileHistory = normalizeArray(results[0]);
+      state.deepProfile = results[1] || state.deepProfile || state.deepProfileHistory[0] || null;
+      state.deepProfileSelected = state.deepProfileSelected || state.deepProfile || state.deepProfileHistory[0] || null;
+    }).catch(function (error) {
+      state.deepProfileHistory = [];
+      state.deepProfileHistoryError = error.message || '深度画像历史暂时无法读取，请稍后重试。';
+    }).then(function () {
+      state.deepProfileHistoryLoading = false;
+      if (state.route === 'deep-profile-detail') {
+        renderPage(pageByKey['deep-profile-detail']);
+      }
+    });
+  }
+
+  function renderDeepProfileHistory() {
+    var history = normalizeArray(state.deepProfileHistory);
+    var html = '<section class="feature-section full"><div class="section-heading"><div><h3>过往记录</h3>' +
+      '<p class="section-note">最多保留最近 20 次成功生成的深度画像。</p></div></div>';
+    if (state.deepProfileHistoryError) {
+      html += statePanel('历史记录暂不可用', state.deepProfileHistoryError, 'warning');
+    } else if (!state.deepProfileHistoryLoading && !history.length) {
+      html += '<p class="section-note">暂无可查看的历史记录。旧版生成的画像仍可在上方查看，但不会自动补入历史列表。</p>';
+    } else {
+      html += '<div class="assessment-list">' + history.map(function (profile, index) {
+        var selected = state.deepProfileSelected && profile.recordId && String(state.deepProfileSelected.recordId) === String(profile.recordId);
+        return '<article class="assessment-card app-card-soft deep-profile-history-card"><div class="card-left"><div class="card-info">' +
+          '<strong class="a-title">' + escapeHtml(index === 0 ? '最新深度画像' : '历史深度画像') + '</strong>' +
+          '<div class="tags"><span class="tag tag-time">' + escapeHtml(formatDeepProfileDate(profile.generatedAt)) + '</span>' +
+          (index === 0 ? '<span class="tag tag-done">当前使用</span>' : '') + '</div></div></div>' +
+          '<div class="card-right"><button type="button" class="secondary" data-deep-profile-record="' +
+          escapeAttr(profile.recordId || '') + '" ' + (!profile.recordId || selected ? 'disabled aria-disabled="true"' : '') + '>' +
+          (selected ? '正在查看' : '查看此版本') + '</button></div></article>';
+      }).join('') + '</div>';
+    }
+    return html + '</section>';
+  }
+
+  function selectDeepProfileRecord(recordId) {
+    if (!recordId || state.deepProfileHistoryLoading) { return; }
+    state.deepProfileHistoryLoading = true;
+    state.deepProfileHistoryError = null;
+    renderPage(pageByKey['deep-profile-detail']);
+    post(endpoints.deepProfileDetail, { userId: state.identity.userId, recordId: recordId }).then(function (profile) {
+      if (!profile) {
+        throw new Error('未找到这条深度画像记录');
+      }
+      state.deepProfileSelected = profile;
+    }).catch(function (error) {
+      state.deepProfileHistoryError = error.message || '这条深度画像暂时无法读取，请稍后重试。';
+    }).then(function () {
+      state.deepProfileHistoryLoading = false;
+      if (state.route === 'deep-profile-detail') {
+        renderPage(pageByKey['deep-profile-detail']);
+      }
+    });
+  }
+
+  function formatDeepProfileDate(value) {
+    if (!value) { return '生成时间未记录'; }
+    var date = new Date(value);
+    if (isNaN(date.getTime())) { return String(value); }
+    return date.getFullYear() + '-' + padDatePart(date.getMonth() + 1) + '-' + padDatePart(date.getDate()) + ' ' +
+      padDatePart(date.getHours()) + ':' + padDatePart(date.getMinutes());
+  }
+
+  function padDatePart(value) {
+    return Number(value) < 10 ? '0' + Number(value) : String(value);
+  }
+
+  function renderDeepProfile(profile) {
+    var preferences = profile.workPreferences || {};
+    var html = '<article class="route-control-card"><div class="route-card-head"><h3>最新深度画像</h3>' +
+      '<span class="tag tag-done">已保存</span></div>';
+    html += deepProfileList('画像概述', [profile.profileSummary]);
+    html += deepProfileList('画像标签', profile.profileTags);
+    html += deepProfileList('优势特点', profile.strengths);
+    html += deepProfileList('工作偏好', [preferences.collaborationStyle, preferences.workEnvironment, preferences.decisionStyle].concat(normalizeArray(preferences.motivation)));
+    html += deepProfileList('学习偏好', profile.studyPreferences);
+    html += deepProfileList('职业倾向', profile.careerInclinations);
+    html += deepProfileList('发展建议', profile.developmentSuggestions);
+    var evidence = normalizeArray(profile.evidence).map(function (item) {
+      if (!item) { return ''; }
+      return firstText(item.conclusion, '') + (item.basis ? '：' + item.basis : '');
+    });
+    html += deepProfileList('分析依据', evidence);
+    html += deepProfileList('仍需补充的信息', profile.dataGaps);
+    return html + '</article>';
+  }
+
+  function deepProfileList(title, values) {
+    var items = normalizeArray(values).filter(function (value) { return value; });
+    if (!items.length) { return ''; }
+    return '<div class="assessment-result-block"><h4>' + escapeHtml(title) + '</h4><ol>' +
+      items.map(function (value) { return '<li>' + escapeHtml(value) + '</li>'; }).join('') + '</ol></div>';
+  }
+
+  function generateDeepProfile() {
+    if (state.deepProfileGenerating) { return; }
+    if (!Object.keys(completedAssessmentScaleIds()).length) {
+      state.deepProfileError = '请先完成至少一份测评，再生成深度画像。';
+      renderPage(pageByKey.assessment);
+      return;
+    }
+    state.deepProfileGenerating = true;
+    state.deepProfileError = null;
+    renderPage(pageByKey.assessment);
+    post(endpoints.deepProfileGenerate, state.identity.userId).then(function (profile) {
+      state.deepProfile = profile || null;
+      if (!state.deepProfile) {
+        throw new Error('未返回有效的深度画像，请稍后重试。');
+      }
+      state.deepProfileSelected = state.deepProfile;
+      state.deepProfileHistory = null;
+      state.deepProfileHistoryError = null;
+    }).catch(function (error) {
+      state.deepProfileError = error.message || '深度画像生成失败，请稍后重试。';
+    }).then(function () {
+      state.deepProfileGenerating = false;
+      if (state.route === 'assessment') {
+        renderPage(pageByKey.assessment);
+      }
+    });
+  }
+
   function startAssessmentScale(scaleId) {
+    if (!scaleId) {
+      return;
+    }
+    var previous = latestAssessmentRecord(scaleId) || latestAssessmentFromSnapshot(scaleId);
+    state.assessmentSelectedScaleId = String(scaleId);
+    state.assessmentScale = null;
+    state.assessmentAnswers = {};
+    state.assessmentCurrentIndex = 0;
+    state.assessmentResult = previous;
+    state.assessmentError = null;
+    if (previous) {
+      renderPage(pageByKey.assessment);
+      if (!isFilePreview() && previous.recordId && endpoints.assessmentRecord) {
+        state.assessmentLoading = true;
+        post(endpoints.assessmentRecord, {
+          userId: state.identity.userId,
+          recordId: previous.recordId
+        }).then(function (result) {
+          if (result) {
+            state.assessmentResult = result;
+          }
+        }).catch(function (error) {
+          state.assessmentError = error.message || "上次测评详情暂时无法读取。";
+        }).then(function () {
+          state.assessmentLoading = false;
+          if (state.route === "assessment") {
+            renderPage(pageByKey.assessment);
+          }
+        });
+      }
+      return;
+    }
+    startNewAssessmentScale(scaleId);
+  }
+
+  function startNewAssessmentScale(scaleId) {
     if (!scaleId) {
       return;
     }
@@ -4114,11 +5507,14 @@
     }
     state.assessmentLoading = true;
     renderPage(pageByKey.assessment);
-    post(endpoints.assessmentQuestions, { scaleId: scaleId }).then(function (scale) {
-      state.assessmentScale = scale || previewAssessmentScale(scaleId);
+    post(endpoints.assessmentQuestions, { userId: state.identity.userId, scaleId: scaleId }).then(function (scale) {
+      if (!scale || !scale.attemptId || !normalizeArray(scale.questions).length) {
+        throw new Error("未能创建本次测评，请重试。");
+      }
+      state.assessmentScale = scale;
     }).catch(function (error) {
-      state.assessmentError = error.message || "职业测评题目暂不可用。";
-      state.assessmentScale = previewAssessmentScale(scaleId);
+      state.assessmentError = error.message || "画像补全题目暂不可用，请稍后重试。";
+      state.assessmentScale = null;
     }).then(function () {
       state.assessmentLoading = false;
       if (state.route === "assessment") {
@@ -4138,11 +5534,15 @@
 
   function assessmentQuestionCard(question, index) {
     var options = normalizeArray(question.options);
-    var selected = state.assessmentAnswers[String(question.questionId)];
+    var selected = assessmentSelectedOptionIds(question.questionId);
+    var multi = isMultiAssessmentQuestion(question);
     return '<div class="route-control-card assessment-question"><div class="route-card-head"><h3>' +
-      (index + 1) + ". " + escapeHtml(question.questionText) + '</h3></div><div class="assessment-options">' +
+      (index + 1) + ". " + escapeHtml(question.questionText) + '</h3>' +
+      (multi ? '<span class="tag tag-blue">多选</span>' : '<span class="tag tag-time">单选</span>') +
+      '</div>' + (multi ? '<p class="section-note">可以选择多个符合你的选项。</p>' : '') +
+      '<div class="assessment-options">' +
       options.map(function (option) {
-        var active = String(option.optionId) === String(selected) ? " active" : "";
+        var active = selected.indexOf(String(option.optionId)) >= 0 ? " active" : "";
         return '<button type="button" class="route-horizon-button' + active + '" data-assessment-question="' +
           escapeAttr(question.questionId) + '" data-assessment-option="' + escapeAttr(option.optionId) + '">' +
           '<strong>' + escapeHtml(option.optionLabel) + '</strong><span>' + escapeHtml(option.optionText) + '</span></button>';
@@ -4153,9 +5553,27 @@
     if (!questionId || !optionId || state.assessmentSubmitting) {
       return;
     }
-    state.assessmentAnswers[String(questionId)] = String(optionId);
     var questions = normalizeArray(state.assessmentScale && state.assessmentScale.questions);
     var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(questions.length - 1, 0)));
+    var question = findAssessmentQuestion(questionId);
+    if (isMultiAssessmentQuestion(question)) {
+      var selected = assessmentSelectedOptionIds(questionId);
+      var optionText = String(optionId);
+      var index = selected.indexOf(optionText);
+      if (index >= 0) {
+        selected.splice(index, 1);
+      } else {
+        selected.push(optionText);
+      }
+      if (selected.length) {
+        state.assessmentAnswers[String(questionId)] = selected;
+      } else {
+        delete state.assessmentAnswers[String(questionId)];
+      }
+      renderPage(pageByKey.assessment);
+      return;
+    }
+    state.assessmentAnswers[String(questionId)] = [String(optionId)];
     if (questions.length && currentIndex < questions.length - 1) {
       state.assessmentCurrentIndex = currentIndex + 1;
     } else if (questions.length) {
@@ -4165,16 +5583,52 @@
     renderPage(pageByKey.assessment);
   }
 
+  function nextAssessmentQuestion() {
+    var questions = normalizeArray(state.assessmentScale && state.assessmentScale.questions);
+    var currentIndex = Math.max(0, Math.min(Number(state.assessmentCurrentIndex || 0), Math.max(questions.length - 1, 0)));
+    if (!questions.length || !assessmentQuestionAnswered(questions[currentIndex])) {
+      return;
+    }
+    state.assessmentCurrentIndex = Math.min(currentIndex + 1, questions.length - 1);
+    renderPage(pageByKey.assessment);
+  }
+
   function previousAssessmentQuestion() {
     state.assessmentCurrentIndex = Math.max(0, Number(state.assessmentCurrentIndex || 0) - 1);
     renderPage(pageByKey.assessment);
+  }
+
+  function findAssessmentQuestion(questionId) {
+    var questions = normalizeArray(state.assessmentScale && state.assessmentScale.questions);
+    for (var i = 0; i < questions.length; i += 1) {
+      if (String(questions[i].questionId) === String(questionId)) {
+        return questions[i];
+      }
+    }
+    return null;
+  }
+
+  function isMultiAssessmentQuestion(question) {
+    return question && String(question.questionType || "").toUpperCase() === "MULTI";
+  }
+
+  function assessmentSelectedOptionIds(questionId) {
+    var value = state.assessmentAnswers[String(questionId)];
+    if (Array.isArray(value)) {
+      return value.map(function (item) { return String(item); });
+    }
+    return value ? [String(value)] : [];
+  }
+
+  function assessmentQuestionAnswered(question) {
+    return question && assessmentSelectedOptionIds(question.questionId).length > 0;
   }
 
   function submitAssessment() {
     var scale = state.assessmentScale;
     var questions = normalizeArray(scale && scale.questions);
     if (!scale || !scale.scaleId || !questions.length) {
-      showMessage("warning", "无法提交", "职业测评题库尚未加载完成。");
+      showMessage("warning", "无法提交", "画像补全题组尚未加载完成。");
       return;
     }
     if (!hasUserIdentity() || isFilePreview()) {
@@ -4188,7 +5642,7 @@
       };
       updateOverviewCards();
       renderPage(pageByKey.assessment);
-      showMessage("info", "已生成预览结果", "当前未调用受保护后端，部署后会写入 CyanCruise 职业画像。");
+      showMessage("info", "已生成预览结果", "当前未调用受保护后端，部署后会写入青途启航职业画像。");
       return;
     }
     state.assessmentSubmitting = true;
@@ -4196,7 +5650,9 @@
     post(endpoints.assessmentSubmit, {
       userId: state.identity.userId,
       scaleId: scale.scaleId,
-      answers: assessmentAnswersPayload()
+      attemptId: scale.attemptId,
+      answers: assessmentLegacyAnswersPayload(),
+      answerOptionIds: assessmentAnswersPayload()
     }).then(function (result) {
       state.assessmentResult = result;
       state.assessmentRecords = [result].concat(state.assessmentRecords || []);
@@ -4206,9 +5662,9 @@
         state.snapshot = snapshot;
       }
       updateOverviewCards();
-      showMessage("info", "测评已完成", "结果已写入 CyanCruise 职业画像。");
+      showMessage("info", "测评已完成", "结果已写入青途启航职业画像。");
     }).catch(function (error) {
-      showMessage("error", "提交失败", error.message || "职业测评提交接口暂不可用。");
+      showMessage("error", "提交失败", error.message || "画像补全提交接口暂不可用。");
     }).then(function () {
       state.assessmentSubmitting = false;
       if (state.route === "assessment") {
@@ -4220,7 +5676,18 @@
   function assessmentAnswersPayload() {
     var out = {};
     Object.keys(state.assessmentAnswers).forEach(function (key) {
-      out[key] = state.assessmentAnswers[key];
+      out[key] = assessmentSelectedOptionIds(key);
+    });
+    return out;
+  }
+
+  function assessmentLegacyAnswersPayload() {
+    var out = {};
+    Object.keys(state.assessmentAnswers).forEach(function (key) {
+      var selected = assessmentSelectedOptionIds(key);
+      if (selected.length) {
+        out[key] = selected[0];
+      }
     });
     return out;
   }
@@ -4228,7 +5695,7 @@
   function assessmentAnsweredCount(questions) {
     var count = 0;
     questions.forEach(function (question) {
-      if (state.assessmentAnswers[String(question.questionId)]) {
+      if (assessmentQuestionAnswered(question)) {
         count += 1;
       }
     });
@@ -4236,21 +5703,167 @@
   }
 
   function assessmentResultPanel(result) {
-    var summary = firstText(result.resultSummary, result.summary, "已完成");
+    var summary = assessmentPlainLanguageSummary(result);
+    var rawSummary = firstText(result.resultSummary, result.summary, "");
     var roles = normalizeArray(result.suggestedRoles);
     var counts = result.dimensionCounts || {};
     var rows = [
-      ["结果", summary],
-      ["量表", firstText(result.scaleTitle, getValue(state.snapshot, "assessment.scaleTitle"), "职业测评")],
-      ["记录", firstText(result.recordId, getValue(state.snapshot, "assessment.lastRecordId"), "预览")]
+      ["你的测评结论", summary],
+      ["测评名称", firstText(result.scaleTitle, getValue(state.snapshot, "assessment.scaleTitle"), "画像补全")]
     ];
-    return metricsPanel("测评结果", rows) +
-      '<section class="panel"><h3>推荐方向</h3><ul class="compact-list">' +
-      (roles.length ? roles : defaultAssessmentRoles(summary)).map(function (role) {
+    return metricsPanel("你的测评结果", rows) +
+      '<section class="panel"><h3>可能适合你的方向</h3><ul class="compact-list">' +
+      (roles.length ? roles : defaultAssessmentRoles(rawSummary)).map(function (role) {
         return '<li>' + escapeHtml(role) + '</li>';
-      }).join("") + '</ul><p class="section-note">维度计数：' +
-      escapeHtml(Object.keys(counts).map(function (key) { return key + "=" + counts[key]; }).join(" / ") || "预览结果") +
-      '</p></section>';
+      }).join("") + '</ul><p class="section-note">这些方向用于帮助你探索，不代表能力高低或唯一选择。</p>' +
+      assessmentDimensionDistribution(result) + '</section>';
+  }
+
+  function assessmentPlainLanguageSummary(result) {
+    var raw = firstText(result && result.resultSummary, result && result.summary, "");
+    var title = firstText(result && result.scaleTitle, getValue(state.snapshot, "assessment.scaleTitle"), "");
+    var scaleId = String(firstText(result && result.scaleId, state.assessmentSelectedScaleId, ""));
+    var counts = result && result.dimensionCounts || {};
+    if (scaleId === "1001" || /MBTI|性格倾向/i.test(title)) {
+      return mbtiPlainLanguageSummary(raw, counts);
+    }
+    if (scaleId === "1002" || /RIASEC|职业兴趣/i.test(title)) {
+      return dimensionPlainLanguageSummary(raw, counts,
+        ["R", "I", "A", "S", "E", "C"],
+        { R: "动手实践", I: "分析研究", A: "创意表达", S: "帮助他人", E: "推动事情和影响他人", C: "按规则整理和执行" },
+        "你更容易被{items}类的工作吸引。");
+    }
+    if (scaleId === "1003" || /BIG5|大五人格/i.test(title)) {
+      return dimensionPlainLanguageSummary(raw, counts,
+        ["O", "C", "E", "A", "N"],
+        { O: "喜欢新想法和新体验", C: "做事有计划并重视完成质量", E: "乐于交流和表达", A: "重视合作与他人感受", N: "对压力和负面反馈比较敏感" },
+        "你比较突出的特点是{items}。");
+    }
+    if (scaleId === "1004" || /职业价值观/i.test(title)) {
+      return dimensionPlainLanguageSummary(raw, counts,
+        ["ACH", "SEC", "AUT", "SOC", "STA", "VAR"],
+        { ACH: "获得成果和成就感", SEC: "稳定与安全保障", AUT: "自主安排和决定", SOC: "帮助他人并创造社会价值", STA: "平台认可和个人影响力", VAR: "工作有变化和挑战" },
+        "选择工作时，你更看重{items}。");
+    }
+    if (scaleId === "1005" || /压力应对/i.test(title)) {
+      return dimensionPlainLanguageSummary(raw, counts,
+        ["PROBLEM", "EMOTION", "PLAN", "SUPPORT", "REFRAME", "AVOID"],
+        { PROBLEM: "直接拆解并解决问题", EMOTION: "先照顾和稳定情绪", PLAN: "提前制定计划", SUPPORT: "主动寻求他人支持", REFRAME: "复盘并换个角度看问题", AVOID: "暂时回避、等状态恢复" },
+        "面对压力时，你更常通过{items}来应对。");
+    }
+    return /[\u3400-\u9fff]/.test(raw) ? raw : "你已完成本次测评，可以结合下方建议进一步了解自己。";
+  }
+
+  function mbtiPlainLanguageSummary(raw, counts) {
+    var code = String(raw || "").toUpperCase();
+    var preferences = [
+      assessmentPreference(code, 0, counts, "E", "I", "更愿意通过交流获得能量", "更喜欢通过独处恢复精力"),
+      assessmentPreference(code, 1, counts, "S", "N", "更关注具体事实和实际经验", "更关注整体方向和未来可能"),
+      assessmentPreference(code, 2, counts, "T", "F", "做决定时更看重逻辑和原则", "做决定时更重视感受和关系"),
+      assessmentPreference(code, 3, counts, "J", "P", "做事偏好提前计划、明确安排", "做事偏好保持灵活、边走边调整")
+    ];
+    return "你的性格倾向是：" + preferences.join("；") + "。";
+  }
+
+  function assessmentPreference(code, index, counts, left, right, leftText, rightText) {
+    var selected = /^[EISNTFJP]{4}$/.test(code) ? code.charAt(index) :
+      ((Number(counts[left] || 0) >= Number(counts[right] || 0)) ? left : right);
+    return selected === left ? leftText : rightText;
+  }
+
+  function dimensionPlainLanguageSummary(raw, counts, codes, labels, template) {
+    var topCodes = assessmentTopDimensionCodes(raw, counts, codes);
+    var items = topCodes.map(function (code) { return labels[code]; }).filter(function (value) { return value; });
+    if (!items.length) return "你已完成本次测评，可以结合下方建议进一步了解自己。";
+    return template.replace("{items}", joinChineseItems(items));
+  }
+
+  function assessmentTopDimensionCodes(raw, counts, codes) {
+    var ranked = codes.filter(function (code) { return Object.prototype.hasOwnProperty.call(counts || {}, code); });
+    ranked.sort(function (left, right) {
+      var difference = Number(counts[right] || 0) - Number(counts[left] || 0);
+      return difference || codes.indexOf(left) - codes.indexOf(right);
+    });
+    if (ranked.length) return ranked.slice(0, 3);
+    var text = String(raw || "").toUpperCase();
+    return codes.slice().sort(function (left, right) { return right.length - left.length; }).filter(function (code) {
+      if (text.indexOf(code) < 0) return false;
+      text = text.replace(code, "");
+      return true;
+    }).slice(0, 3);
+  }
+
+  function joinChineseItems(items) {
+    if (items.length < 2) return items[0] || "";
+    if (items.length === 2) return items[0] + "和" + items[1];
+    return items.slice(0, -1).join("、") + "和" + items[items.length - 1];
+  }
+
+  function assessmentDimensionDistribution(result) {
+    var counts = result && result.dimensionCounts || {};
+    var labels = assessmentDimensionLabels(result);
+    var items = Object.keys(counts || {}).map(function (code) {
+      return { code: code, count: Number(counts[code] || 0), label: labels[code] || "其他倾向" };
+    }).sort(function (left, right) {
+      return right.count - left.count || left.label.localeCompare(right.label, "zh-CN");
+    });
+    if (!items.length) return "";
+    return '<div class="assessment-dimension-summary"><strong>本次选择更偏向</strong><div class="assessment-dimension-tags">' +
+      items.map(function (item) {
+        return '<span>' + escapeHtml(item.label) + ' ' + escapeHtml(String(item.count)) + ' 次</span>';
+      }).join("") + '</div></div>';
+  }
+
+  function assessmentDimensionLabels(result) {
+    var scaleId = String(firstText(result && result.scaleId, state.assessmentSelectedScaleId, ""));
+    var title = firstText(result && result.scaleTitle, getValue(state.snapshot, "assessment.scaleTitle"), "");
+    if (scaleId === "1001" || /MBTI|性格倾向/i.test(title)) {
+      return { E: "乐于交流", I: "偏好独处", S: "关注事实", N: "关注可能",
+        T: "重视逻辑", F: "重视感受", J: "偏好计划", P: "偏好灵活" };
+    }
+    if (scaleId === "1002" || /RIASEC|职业兴趣/i.test(title)) {
+      return { R: "动手实践", I: "分析研究", A: "创意表达", S: "帮助他人",
+        E: "推动与影响", C: "规则与整理" };
+    }
+    if (scaleId === "1003" || /BIG5|大五人格/i.test(title)) {
+      return { O: "开放探索", C: "计划与责任", E: "交流表达",
+        A: "合作与体谅", N: "压力敏感" };
+    }
+    if (scaleId === "1004" || /职业价值观/i.test(title)) {
+      return { ACH: "成就感", SEC: "稳定保障", AUT: "自主空间",
+        SOC: "帮助他人", STA: "平台认可", VAR: "变化挑战" };
+    }
+    return { PROBLEM: "解决问题", EMOTION: "调节情绪", PLAN: "制定计划",
+      SUPPORT: "寻求支持", REFRAME: "换角度复盘", AVOID: "暂时回避" };
+  }
+
+  function assessmentAnswerReviewPanel(result) {
+    var answers = normalizeArray(result && result.answers);
+    if (!answers.length) {
+      return '<section class="panel"><h3>上次答题记录</h3><p class="section-note">这条较早的测评记录没有保存题目与选项文本，仍可参考上方测评结论。</p></section>';
+    }
+    var grouped = [];
+    var byQuestion = {};
+    answers.forEach(function (answer, index) {
+      if (!answer) { return; }
+      var key = String(firstText(answer.questionId, answer.questionText, index));
+      if (!byQuestion[key]) {
+        byQuestion[key] = {
+          questionText: firstText(answer.questionText, "第 " + (grouped.length + 1) + " 题"),
+          optionTexts: []
+        };
+        grouped.push(byQuestion[key]);
+      }
+      var optionText = firstText(answer.optionText, answer.optionId ? "选项 " + answer.optionId : "");
+      if (optionText && byQuestion[key].optionTexts.indexOf(optionText) < 0) {
+        byQuestion[key].optionTexts.push(optionText);
+      }
+    });
+    return '<section class="panel"><h3>上次答题记录</h3><p class="section-note">以下内容来自最近一次已完成测评，仅供回顾。</p>' +
+      '<ol class="compact-list assessment-answer-review">' + grouped.map(function (item) {
+        return '<li><strong>' + escapeHtml(item.questionText) + '</strong><span>' +
+          escapeHtml(item.optionTexts.join('、') || '未记录所选项') + '</span></li>';
+      }).join('') + '</ol></section>';
   }
 
   function latestAssessmentFromSnapshot() {
@@ -4266,6 +5879,78 @@
       suggestedRoles: assessment.suggestedRoles || [],
       dimensionCounts: {}
     };
+  }
+
+  function assessmentAiInterpretationPanel(result) {
+    if (!result || !result.recordId) { return ''; }
+    var value = result.aiInterpretation;
+    var loading = String(state.assessmentAiInterpretationLoadingId || '') === String(result.recordId);
+    var failed = String(state.assessmentAiInterpretationErrorRecordId || '') === String(result.recordId)
+      ? state.assessmentAiInterpretationError
+      : null;
+    if (!value) {
+      if (loading) {
+        return '<section class="panel"><h3>AI 测评解读</h3><p class="section-note">正在结合本次答题与测评结果生成分析，请稍候。</p>' +
+          '<button type="button" class="secondary" disabled aria-disabled="true">正在分析中...</button></section>';
+      }
+      if (failed) {
+        return '<section class="panel"><h3>AI 测评解读</h3>' +
+          '<div class="state-panel warning"><strong>AI 测评解读生成失败</strong><p>' + escapeHtml(failed) + '</p></div>' +
+          '<button type="button" class="secondary" data-assessment-ai-interpretation="' + escapeAttr(result.recordId) + '">重新生成 AI 解读</button></section>';
+      }
+      return '<section class="panel"><h3>AI 测评解读</h3><p class="section-note">基于本次答题与测评结果生成解释性分析。</p>' +
+        '<button type="button" class="secondary" data-assessment-ai-interpretation="' + escapeAttr(result.recordId) + '">生成 AI 解读</button></section>';
+    }
+    if (isInvalidAssessmentAiInterpretation(value)) {
+      return '<section class="panel"><h3>AI 测评解读</h3>' +
+        '<div class="state-panel warning"><strong>这份解读未能正确生成</strong>' +
+        '<p>AI 服务返回了无法阅读的中间处理信息，系统已将其隐藏。请重新生成解读。</p></div>' +
+        '<button type="button" class="secondary" data-assessment-ai-interpretation="' +
+        escapeAttr(result.recordId) + '">重新生成 AI 解读</button></section>';
+    }
+    return '<section class="panel"><h3>AI 测评解读</h3><p>' + escapeHtml(value.summary || '') + '</p>' +
+      renderSimpleNumberedList('本次观察', value.insights) +
+      renderSimpleNumberedList('建议行动', value.suggestions) +
+      renderSimpleNumberedList('仍需补充的信息', value.dataGaps) + '</section>';
+  }
+
+  function isInvalidAssessmentAiInterpretation(value) {
+    if (!value) { return false; }
+    var summary = String(value.summary || '').trim();
+    if (!summary) { return true; }
+    return /"(?:Thought|Action|Action_input|thought|action|action_input)"\s*:/.test(summary) ||
+      (summary.indexOf('画像补全任务流') >= 0 && summary.indexOf('Action_input') >= 0);
+  }
+
+  function renderSimpleNumberedList(title, values) {
+    var items = normalizeArray(values).filter(function (value) { return value; });
+    if (!items.length) { return ''; }
+    return '<div class="assessment-result-block"><h4>' + escapeHtml(title) + '</h4><ol>' +
+      items.map(function (value) { return '<li>' + escapeHtml(value) + '</li>'; }).join('') + '</ol></div>';
+  }
+
+  function generateAssessmentAiInterpretation(recordId) {
+    if (!recordId || !hasUserIdentity() || isFilePreview()) { return; }
+    if (state.assessmentAiInterpretationLoadingId) { return; }
+    state.assessmentAiInterpretationError = null;
+    state.assessmentAiInterpretationErrorRecordId = null;
+    state.assessmentAiInterpretationLoadingId = String(recordId);
+    renderPage(pageByKey.assessment);
+    post(endpoints.assessmentAiInterpretation, { userId: state.identity.userId, recordId: recordId }).then(function (result) {
+      state.assessmentAiInterpretationError = null;
+      state.assessmentAiInterpretationErrorRecordId = null;
+      state.assessmentAiInterpretationLoadingId = null;
+      state.assessmentResult = result;
+      state.assessmentRecords = normalizeArray(state.assessmentRecords).map(function (record) {
+        return String(record.recordId) === String(result.recordId) ? result : record;
+      });
+      renderPage(pageByKey.assessment);
+    }).catch(function (error) {
+      state.assessmentAiInterpretationLoadingId = null;
+      state.assessmentAiInterpretationErrorRecordId = String(recordId);
+      state.assessmentAiInterpretationError = error && error.message ? error.message : 'AI 测评解读生成失败，请稍后重试。';
+      renderPage(pageByKey.assessment);
+    });
   }
 
   function previewAssessmentScaleSummary() {
@@ -4307,13 +5992,12 @@
   function previewAssessmentResult(scale) {
     var counts = {};
     normalizeArray(scale.questions).forEach(function (question) {
-      var optionId = state.assessmentAnswers[String(question.questionId)];
-      var option = normalizeArray(question.options).filter(function (item) {
-        return String(item.optionId) === String(optionId);
-      })[0];
-      if (option && option.dimensionCode) {
-        counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
-      }
+      var selected = assessmentSelectedOptionIds(question.questionId);
+      normalizeArray(question.options).forEach(function (option) {
+        if (selected.indexOf(String(option.optionId)) >= 0 && option.dimensionCode) {
+          counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
+        }
+      });
     });
     var summary = (counts.E >= counts.I ? "E" : "I") +
       (counts.S >= counts.N ? "S" : "N") +
@@ -4380,6 +6064,17 @@
       out[String(assessment.scaleId)] = true;
     }
     return out;
+  }
+
+  function latestAssessmentRecord(scaleId) {
+    var records = normalizeArray(state.assessmentRecords);
+    for (var index = 0; index < records.length; index += 1) {
+      var record = records[index];
+      if (record && record.scaleId && String(record.scaleId) === String(scaleId)) {
+        return record;
+      }
+    }
+    return null;
   }
 
   function estimateAssessmentMinutes(scale) {
@@ -4455,13 +6150,12 @@
   function previewAssessmentResult(scale) {
     var counts = {};
     normalizeArray(scale.questions).forEach(function (question) {
-      var optionId = state.assessmentAnswers[String(question.questionId)];
-      var option = normalizeArray(question.options).filter(function (item) {
-        return String(item.optionId) === String(optionId);
-      })[0];
-      if (option && option.dimensionCode) {
-        counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
-      }
+      var selected = assessmentSelectedOptionIds(question.questionId);
+      normalizeArray(question.options).forEach(function (option) {
+        if (selected.indexOf(String(option.optionId)) >= 0 && option.dimensionCode) {
+          counts[option.dimensionCode] = (counts[option.dimensionCode] || 0) + 1;
+        }
+      });
     });
     var isMbti = String(scale.title || "").toUpperCase().indexOf("MBTI") >= 0;
     var summary = isMbti
@@ -4518,10 +6212,10 @@
     } else if (item.key === "interview") {
       body += listPanel("面试历史", state.interviews, "暂无面试历史。");
     } else if (item.key === "assessment") {
-      body += statePanel("职业测评", "后续通过答题分析人格、性格、偏好和行动风格，并把结果补入完整用户画像，用于指导路径规划和今日行动。当前先保留入口，不展开题组。", "pending");
+      body += statePanel("画像补全", "后续通过答题补充人格、性格、偏好和行动风格，并把结果写入完整自画像，用于指导路径规划和今日行动。当前先保留入口，不展开题组。", "pending");
     } else if (item.key === "assistant") {
       body += renderAgentAssistantPanel();
-      body += statePanel("助手会话", "仍保留发送消息和会话列表接口契约，便于后续把平台智能体结果同步回 CyanCruise 会话记录。", "pending");
+      body += statePanel("助手会话", "仍保留发送消息和会话列表接口契约，便于后续把平台智能体结果同步回青途启航会话记录。", "pending");
     } else if (item.key === "messages") {
       body += statePanel("站内消息", "消息列表、未读数、已读和订阅配额契约已映射；微信真实发送暂不迁移。", "pending");
     } else if (item.key === "file-upload-preview") {
@@ -4533,7 +6227,7 @@
     } else if (!body) {
       body += statePanel(item.title, item.summary, "empty");
     }
-    renderShell(item, body);
+    renderShell(detailItem, body);
   }
 
   function renderAgentAssistantPanel() {
@@ -4563,24 +6257,6 @@
     renderShell(item, body);
   }
 
-  function renderInterviewHub(item) {
-    var body = '<section class="feature-section full"><div class="section-heading"><div><h3>选择面试方式</h3>' +
-      '<p class="section-note">两种练习方式使用不同页面，记录也分别保存和展示。</p></div></div>' +
-      '<div class="feature-grid interview-type-grid">' +
-      '<article class="feature-card"><div class="app-icon-tile app-icon-tile--cyan"><span class="icon-glyph">智</span></div>' +
-      '<h3>AI 模拟面试</h3><p>通过文字问答练习岗位表达，结束后获得结构化复盘。</p>' +
-      '<button type="button" data-link="interview">进入 AI 模拟面试</button></article>' +
-      '<article class="feature-card"><div class="app-icon-tile app-icon-tile--candy"><span class="icon-glyph">景</span></div>' +
-      '<h3>全景仿真面试</h3><p>独立的全景面试方式，用于更贴近真实场景的综合练习。</p>' +
-      '<button type="button" data-link="interview-panorama">进入全景仿真面试</button></article></div></section>' +
-      '<div class="interview-record-entry-grid full">' +
-      '<section class="panel interview-history-entry"><div><h3>AI 模拟面试记录</h3><p class="panel-note">每页查看 10 条记录，包括评分和问答详情。</p></div>' +
-      '<button type="button" class="secondary" data-link="interview-history">查看 AI 模拟面试记录</button></section>' +
-      '<section class="panel interview-history-entry"><div><h3>全景仿真面试记录</h3><p class="panel-note">查看沉浸式练习的完成状态、分数和全景记录。</p></div>' +
-      '<button type="button" class="secondary" data-link="interview-panorama-history">查看全景仿真面试记录</button></section></div>';
-    renderShell(item, body);
-  }
-
   function renderPanoramaInterviewPage(item) {
     if (state.panoramaViewMode === "transcript" && state.panoramaSession) {
       renderShell(item, renderPanoramaTranscript()); return;
@@ -4588,7 +6264,6 @@
     var body = state.panoramaReport ? renderPanoramaReport() : state.panoramaSession ? renderPanoramaRoom() : renderPanoramaPreparation();
     renderShell(item, body);
     attachPanoramaCamera();
-    if (state.panoramaSession && state.panoramaQuestion && !state.panoramaReport && !state.panoramaBusy) startPanoramaTimer();
     if (state.panoramaSession && state.panoramaQuestion && !state.panoramaReport && !state.panoramaBusy) setTimeout(function () { speakPanoramaQuestion(false); }, 0);
   }
 
@@ -4600,7 +6275,7 @@
     return '<section class="panorama-experience panorama-preparation full"><div class="panorama-overlay">' +
       '<div class="panorama-topbar"><div><span class="resource-type">沉浸式练习</span><h3>全景仿真面试</h3>' +
       '<p>面试画面只在当前浏览器中实时预览，不会上传或保存视频。</p></div>' +
-      '<button type="button" class="secondary" data-link="interview-home">返回面试中心</button></div>' +
+      '<button type="button" class="secondary" data-link="interview-panorama-history">查看面试记录</button></div>' +
       '<div class="panorama-setup-grid"><div class="panorama-camera-card">' +
       (cameraReady ? '<video id="panoramaCamera" autoplay muted playsinline aria-label="摄像头实时预览"></video>' :
         '<div class="panorama-camera-placeholder"><span class="camera-glyph">摄</span><strong>' +
@@ -4632,7 +6307,9 @@
   function renderPanoramaRoom() {
     var transcript = state.panoramaTranscript || "";
     var questionNumber = state.panoramaAnswerCount + 1;
-    var speechText = state.panoramaSpeaking ? "AI 面试官正在提问，请听完后回答" : (state.panoramaSpeechSupported === false ? "当前浏览器可能无法朗读题目，请点击播放题目" : "请听 AI 面试官读题后回答");
+    var speechText = state.panoramaSpeaking ? "AI 面试官正在提问，请听完后回答" :
+      (state.panoramaAnswering ? "题目已读完，语音输入已自动开始，请回答" :
+      (state.panoramaSpeechSupported === false ? "当前浏览器可能无法朗读题目，请点击播放题目" : "请听 AI 面试官读题，读完后将自动开始语音输入"));
     return '<section class="panorama-experience panorama-live full"><div class="panorama-overlay">' +
       '<div class="panorama-question panorama-question-audio"><span>' + questionNumber + '</span><p id="panoramaSpeechStatus">' + escapeHtml(speechText) + '</p>' +
       '<button type="button" class="secondary" data-panorama-action="speak">播放题目</button></div>' +
@@ -4641,9 +6318,9 @@
       '<div class="panorama-camera-off"><span>摄像头未连接</span><strong>你仍可继续完成 AI 面试</strong></div>') +
       '<span class="panorama-live-badge">' + (state.panoramaStream ? "摄像头已连接 · 仅本地预览" : "无摄像头模式") + '</span></div></div>' +
       '<div class="panorama-answer-panel"><div class="panorama-timer"><small>剩余时间</small><strong id="panoramaTimer">' + formatPanoramaTime(state.panoramaSeconds) + '</strong></div>' +
-      '<label>回答内容（可修改）<textarea id="panoramaAnswer" rows="3" placeholder="题目出现后已自动计时；你可以开启语音输入，也可以直接输入">' + escapeHtml(transcript) + '</textarea></label>' +
-      '<div class="actions-row"><button type="button" data-panorama-action="listen" ' + (state.panoramaBusy ? "disabled" : "") + '>' +
-      (state.panoramaAnswering ? "正在聆听" : "开启语音输入") + '</button>' +
+      '<label>回答内容（可修改）<textarea id="panoramaAnswer" rows="3" placeholder="AI 读完题目后会自动开始语音输入；识别文字可继续修改">' + escapeHtml(transcript) + '</textarea></label>' +
+      '<div class="actions-row"><button type="button" data-panorama-action="listen" ' + (state.panoramaBusy || state.panoramaSpeaking || state.panoramaAnswering ? "disabled" : "") + '>' +
+      (state.panoramaSpeaking ? "听题中" : (state.panoramaAnswering ? "正在录音" : "重新开启语音输入")) + '</button>' +
       '<button type="button" data-panorama-action="answer" ' + (state.panoramaBusy ? "disabled" : "") + '>回答完毕</button>' +
       '<button type="button" class="secondary" data-panorama-action="finish" ' + (state.panoramaBusy ? "disabled" : "") + '>结束面试</button></div>' +
       (state.panoramaError ? '<p class="panorama-error">' + escapeHtml(state.panoramaError) + '</p>' : '') +
@@ -4656,7 +6333,7 @@
       '<div class="metric-value">' + escapeHtml(firstText(report.overallScore, 0)) + ' 分</div><p>' +
       escapeHtml(firstText(report.textSummary, "本次全景仿真面试已经完成。")) + '</p>' +
       '<div class="actions-row"><button type="button" data-panorama-action="reset">再练一次</button>' +
-      '<button type="button" class="secondary" data-link="interview-home">返回面试中心</button></div></section>';
+      '<button type="button" class="secondary" data-link="interview-panorama-history">查看全景仿真面试记录</button></div></section>';
   }
 
   function renderInterviewSetup() {
@@ -4673,8 +6350,9 @@
         return '<option value="' + escapeAttr(resume.resumeId) + '"' + selected + '>' + escapeHtml(firstText(resume.title, "简历 " + resume.resumeId)) + '</option>';
       }).join("") + '</select></label>' +
       '<label>练习难度<select id="interviewDifficulty"><option value="Easy"' + (draftDifficulty === "Easy" ? " selected" : "") + '>入门</option><option value="Normal"' + (draftDifficulty === "Normal" ? " selected" : "") + '>常规</option><option value="Hard"' + (draftDifficulty === "Hard" ? " selected" : "") + '>进阶</option></select></label>' +
-      '<div class="actions-row"><button type="button" data-interview-action="start" ' + (state.interviewBusy ? 'disabled' : '') + '>' +
-      (state.interviewBusy ? "正在准备" : "开始练习") + '</button></div></section>';
+      '<div class="actions-row interview-entry-actions"><button type="button" data-interview-action="start" ' + (state.interviewBusy ? 'disabled' : '') + '>' +
+      (state.interviewBusy ? "正在准备" : "开始练习") + '</button>' +
+      '<button type="button" class="secondary" data-link="interview-history">查看面试记录</button></div></section>';
   }
 
   function renderInterviewRoom() {
@@ -4691,7 +6369,7 @@
       (state.interviewError ? '<p class="interview-inline-error">' + escapeHtml(state.interviewError) + '</p>' : '') +
       '<div class="actions-row"><button type="button" data-interview-action="answer" ' + (state.interviewBusy ? 'disabled' : '') + '>' +
       (state.interviewAnswerCount >= 6 ? "提交并生成复盘" : "提交回答，进入下一题") + '</button>' +
-      (state.interviewAnswerCount > 0 ? '<button type="button" class="secondary" data-interview-action="finish" ' + (state.interviewBusy ? 'disabled' : '') + '>提前结束并评分</button>' : '') +
+      '<button type="button" class="secondary" data-interview-action="finish" ' + (state.interviewBusy ? 'disabled' : '') + '>提前结束并评分</button>' +
       '</div></div></section>';
   }
 
@@ -4705,7 +6383,8 @@
       '<div class="report-advice-grid">' + renderAdviceList("做得好的地方", report.strengths, "完成更多回答后会出现具体评价。", "strength") +
       renderAdviceList("改进方向", report.improvements, "暂无改进建议。", "improvement") + '</div>' +
       '<div class="actions-row"><button type="button" data-interview-action="reset">再练一次</button>' +
-      '<button type="button" class="secondary" data-interview-action="current-transcript">查看本次问答</button></div></section>';
+      '<button type="button" class="secondary" data-interview-action="current-transcript">查看本次问答</button>' +
+      '<button type="button" class="secondary" data-link="interview-history">查看 AI 模拟面试记录</button></div></section>';
   }
 
   function scoreDimension(label, value) {
@@ -4970,7 +6649,7 @@
     if (action === "history-page") { loadPanoramaHistoryPage(target.getAttribute("data-page"), true); return; }
     if (action === "open-record") { openPanoramaRecord(target.getAttribute("data-interview-id"), target.getAttribute("data-view")); return; }
     if (action === "delete-record") { deleteInterviewRecord(target.getAttribute("data-interview-id")); return; }
-    if (action === "resume-record") { state.panoramaViewMode = "practice"; state.panoramaCameraState = "fallback"; renderPage(pageByKey["interview-panorama"]); if (state.panoramaQuestion) startPanoramaTimer(); return; }
+    if (action === "resume-record") { state.panoramaViewMode = "practice"; state.panoramaCameraState = "fallback"; renderPage(pageByKey["interview-panorama"]); return; }
     if (action === "camera") { startPanoramaCamera(); return; }
     if (action === "fallback") { usePanoramaWithoutCamera(); return; }
     if (action === "start") { startPanoramaInterview(); return; }
@@ -5152,43 +6831,91 @@
       state.panoramaMessages = [result.openingMessage]; state.panoramaViewMode = "practice";
       state.panoramaAnswerCount = 0; state.panoramaTranscript = ""; state.panoramaLastSpokenQuestion = null;
       state.panoramaSeconds = panoramaAnswerLimit(state.panoramaDifficulty);
-      state.panoramaDeadlineAt = Date.now() + state.panoramaSeconds * 1000;
+      state.panoramaDeadlineAt = null;
       state.interviews = [result.session].concat(normalizeArray(state.interviews));
     }).catch(function (error) {
       state.panoramaError = error.message || "全景面试暂时无法开始，请稍后重试。";
     }).then(function () {
       state.panoramaBusy = false; renderPage(pageByKey["interview-panorama"]);
-      if (state.panoramaSession && state.panoramaQuestion) startPanoramaTimer();
     });
   }
 
-  function startPanoramaAnswer() {
+  function startPanoramaAnswer(automatic) {
     if (state.panoramaAnswering || state.panoramaBusy) return;
     stopPanoramaQuestionSpeech();
-    state.panoramaError = null; state.panoramaAnswering = true;
+    state.panoramaError = null;
     var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) {
+      state.panoramaAnswering = false;
       state.panoramaError = "当前浏览器不支持语音转文字，请直接在回答框中输入内容。摄像头预览仍会继续。";
       renderPage(pageByKey["interview-panorama"]);
       var fallbackInput = document.getElementById("panoramaAnswer"); if (fallbackInput) fallbackInput.focus();
       return;
     }
     var recognition = new Recognition();
+    var recognitionToken = Number(state.panoramaRecognitionToken || 0) + 1;
+    state.panoramaRecognitionToken = recognitionToken;
     recognition.lang = "zh-CN"; recognition.continuous = true; recognition.interimResults = true;
+    recognition.onstart = function () {
+      if (state.panoramaRecognitionToken !== recognitionToken || state.panoramaRecognition !== recognition) return;
+      state.panoramaAnswering = true;
+      updatePanoramaAnsweringUi(true, automatic ?
+        "AI 已读完题目，语音输入已自动开始；系统只会把语音转成文字，不保存音频。" :
+        "语音输入已开始；系统只会把语音转成文字，不保存音频。");
+    };
     recognition.onresult = function (event) {
+      if (state.panoramaRecognitionToken !== recognitionToken || state.panoramaRecognition !== recognition) return;
       var text = "";
       for (var i = 0; i < event.results.length; i += 1) text += event.results[i][0].transcript;
       state.panoramaTranscript = text;
       var input = document.getElementById("panoramaAnswer"); if (input) input.value = text;
     };
     recognition.onerror = function () {
-      state.panoramaError = "语音识别暂时不可用，你可以继续手工输入回答。";
-      state.panoramaAnswering = false; renderPage(pageByKey["interview-panorama"]);
+      if (state.panoramaRecognitionToken !== recognitionToken || state.panoramaRecognition !== recognition) return;
+      state.panoramaRecognition = null;
+      state.panoramaError = automatic ?
+        "浏览器没有允许自动开启语音输入，请点击“重新开启语音输入”，或直接输入回答。" :
+        "语音识别暂时不可用，你可以重新开启或直接输入回答。";
+      state.panoramaAnswering = false;
+      renderPage(pageByKey["interview-panorama"]);
     };
-    recognition.onend = function () { state.panoramaAnswering = false; };
+    recognition.onend = function () {
+      if (state.panoramaRecognitionToken !== recognitionToken || state.panoramaRecognition !== recognition) return;
+      state.panoramaRecognition = null;
+      state.panoramaAnswering = false;
+      updatePanoramaAnsweringUi(false, "语音输入已停止；如需继续，请点击“重新开启语音输入”。");
+    };
     state.panoramaRecognition = recognition;
-    try { recognition.start(); } catch (error) { state.panoramaAnswering = false; }
+    try {
+      recognition.start();
+      state.panoramaAnswering = true;
+      state.panoramaNotice = automatic ?
+        "AI 已读完题目，正在自动开启语音输入；系统只会把语音转成文字，不保存音频。" :
+        "正在开启语音输入；系统只会把语音转成文字，不保存音频。";
+    } catch (error) {
+      state.panoramaRecognition = null;
+      state.panoramaAnswering = false;
+      state.panoramaError = automatic ?
+        "浏览器没有允许自动开启语音输入，请点击“重新开启语音输入”，或直接输入回答。" :
+        "语音输入启动失败，请重试或直接输入回答。";
+    }
     renderPage(pageByKey["interview-panorama"]);
+  }
+
+  function updatePanoramaAnsweringUi(answering, message) {
+    state.panoramaAnswering = !!answering;
+    state.panoramaNotice = message || null;
+    var status = document.getElementById("panoramaSpeechStatus");
+    if (status) status.textContent = answering ? "题目已读完，语音输入已自动开始，请回答" : "语音输入已停止，可以重新开启或直接输入";
+    var interviewerStatus = document.getElementById("panoramaInterviewerStatus");
+    if (interviewerStatus) interviewerStatus.textContent = answering ? "正在听你回答" : "正在与你面对面交流";
+    var listenButton = document.querySelector('[data-panorama-action="listen"]');
+    if (listenButton) {
+      listenButton.textContent = answering ? "正在录音" : "重新开启语音输入";
+      listenButton.disabled = !!answering;
+    }
+    var notice = document.querySelector(".panorama-notice");
+    if (notice && message) notice.textContent = message;
   }
 
   function submitPanoramaAnswer(timedOut) {
@@ -5209,19 +6936,17 @@
         shouldFinish = state.panoramaAnswerCount >= 7 || !result.interviewerMessage;
         state.panoramaQuestion = shouldFinish ? null : result.interviewerMessage.content;
         state.panoramaSeconds = shouldFinish ? 0 : panoramaAnswerLimit(state.panoramaDifficulty);
-        state.panoramaDeadlineAt = shouldFinish ? null : Date.now() + state.panoramaSeconds * 1000;
+        state.panoramaDeadlineAt = null;
       }).catch(function (error) { state.panoramaError = error.message || "回答提交失败，请稍后重试。"; })
       .then(function () {
         state.panoramaBusy = false;
         if (shouldFinish) { finishPanoramaInterview(); return; }
         renderPage(pageByKey["interview-panorama"]);
-        if (!state.panoramaError) startPanoramaTimer();
       });
   }
 
   function finishPanoramaInterview() {
     if (!state.panoramaSession || state.panoramaBusy) return;
-    if (!state.panoramaAnswerCount) { state.panoramaError = "请至少完成一道回答后再结束面试。"; renderPage(pageByKey["interview-panorama"]); return; }
     stopPanoramaRecognition(); stopPanoramaTimer(); state.panoramaDeadlineAt = null; state.panoramaBusy = true;
     post(endpoints.guidedInterviewFinish, { userId: state.identity.userId, interviewId: state.panoramaSession.interviewId })
       .then(function (report) {
@@ -5250,6 +6975,9 @@
     var questionKey = String(state.panoramaAnswerCount + 1) + ":" + question;
     if (!question || state.panoramaReport || !state.panoramaSession) return;
     if (!force && state.panoramaLastSpokenQuestion === questionKey) return;
+    stopPanoramaRecognition();
+    stopPanoramaTimer();
+    state.panoramaDeadlineAt = null;
     state.panoramaLastSpokenQuestion = questionKey;
     if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
       state.panoramaSpeechSupported = false;
@@ -5258,15 +6986,70 @@
     }
     state.panoramaSpeechSupported = true;
     try { window.speechSynthesis.cancel(); } catch (error) {}
+    var speechToken = Number(state.panoramaSpeechToken || 0) + 1;
+    state.panoramaSpeechToken = speechToken;
     var utterance = new SpeechSynthesisUtterance(question);
     utterance.lang = "zh-CN";
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-    utterance.onstart = function () { updatePanoramaSpeechUi(true, "AI 面试官正在提问，请听完后回答"); };
-    utterance.onend = function () { updatePanoramaSpeechUi(false, "请开始回答，必要时可重新播放题目"); };
-    utterance.onerror = function () { state.panoramaSpeechSupported = false; updatePanoramaSpeechUi(false, "浏览器没有播放出题目，请点击“播放题目”再试一次"); };
+    utterance.rate = 0.9;
+    utterance.pitch = 0.82;
+    utterance.volume = 1;
+    var matureMaleVoice = panoramaMatureMaleVoice();
+    if (matureMaleVoice) {
+      utterance.voice = matureMaleVoice;
+      utterance.lang = matureMaleVoice.lang || "zh-CN";
+    }
+    utterance.onstart = function () {
+      if (state.panoramaSpeechToken !== speechToken) return;
+      updatePanoramaSpeechUi(true, "AI 面试官正在提问，请听完后回答");
+    };
+    utterance.onend = function () {
+      if (state.panoramaSpeechToken !== speechToken || !state.panoramaSession || !state.panoramaQuestion || state.panoramaReport) return;
+      updatePanoramaSpeechUi(false, "题目已读完，正在自动开启语音输入");
+      startPanoramaTimer();
+      startPanoramaAnswer(true);
+    };
+    utterance.onerror = function () {
+      if (state.panoramaSpeechToken !== speechToken) return;
+      state.panoramaSpeechSupported = false;
+      updatePanoramaSpeechUi(false, "浏览器没有播放出题目，请点击“播放题目”再试一次");
+    };
     updatePanoramaSpeechUi(true, "AI 面试官正在准备提问");
     try { window.speechSynthesis.speak(utterance); } catch (error) { state.panoramaSpeechSupported = false; updatePanoramaSpeechUi(false, "浏览器没有播放出题目，请点击“播放题目”再试一次"); }
+  }
+
+  function panoramaMatureMaleVoice() {
+    if (!("speechSynthesis" in window) || typeof window.speechSynthesis.getVoices !== "function") return null;
+    var voices = [];
+    try { voices = window.speechSynthesis.getVoices() || []; } catch (error) { return null; }
+    var maleName = /yunxi|yunyang|yunhao|yunjian|yunfeng|yunze|yunfan|yunjhe|wanlung|kangkang|li[-_\s]?mu|male|男声|男音/i;
+    var femaleName = /xiaoxiao|xiaoyi|xiaohan|xiaomeng|xiaomo|xiaoqiu|xiaorui|xiaoshuang|xiaoxuan|xiaoyan|xiaoyou|xiaozhen|ting[-_\s]?ting|meijia|female|女声|女音/i;
+    var ranked = voices.filter(function (voice) {
+      return voice && /^zh(?:-|_)/i.test(String(voice.lang || ""));
+    }).map(function (voice) {
+      var name = String(voice.name || "") + " " + String(voice.voiceURI || "");
+      var score = 0;
+      if (/^zh(?:-|_)cn/i.test(String(voice.lang || ""))) score += 40;
+      if (maleName.test(name)) score += 100;
+      if (femaleName.test(name)) score -= 100;
+      if (/natural|neural|online/i.test(name)) score += 15;
+      if (voice.localService) score += 5;
+      return { voice: voice, score: score };
+    }).filter(function (entry) {
+      return entry.score >= 100;
+    }).sort(function (left, right) {
+      return right.score - left.score;
+    });
+    return ranked.length ? ranked[0].voice : null;
+  }
+
+  function warmPanoramaVoices() {
+    if (!("speechSynthesis" in window) || typeof window.speechSynthesis.getVoices !== "function") return;
+    try { window.speechSynthesis.getVoices(); } catch (error) { return; }
+    if (typeof window.speechSynthesis.addEventListener === "function") {
+      window.speechSynthesis.addEventListener("voiceschanged", function () {
+        try { window.speechSynthesis.getVoices(); } catch (error) {}
+      }, { once: true });
+    }
   }
 
   function updatePanoramaSpeechUi(isSpeaking, message) {
@@ -5280,6 +7063,7 @@
   }
 
   function stopPanoramaQuestionSpeech() {
+    state.panoramaSpeechToken = Number(state.panoramaSpeechToken || 0) + 1;
     if ("speechSynthesis" in window) {
       try { window.speechSynthesis.cancel(); } catch (error) {}
     }
@@ -5309,6 +7093,7 @@
   }
   function formatPanoramaTime(seconds) { var safe = Math.max(0, Number(seconds) || 0); return String(Math.floor(safe / 60)).padStart(2, "0") + ":" + String(safe % 60).padStart(2, "0"); }
   function stopPanoramaRecognition() {
+    state.panoramaRecognitionToken = Number(state.panoramaRecognitionToken || 0) + 1;
     if (state.panoramaRecognition) { try { state.panoramaRecognition.stop(); } catch (error) {} }
     state.panoramaRecognition = null; state.panoramaAnswering = false;
   }
@@ -5486,7 +7271,7 @@
     }
     els.pageHost.innerHTML =
       '<header class="feature-page-header">' +
-      '<div><p class="eyebrow">CyanCruise</p><h2>' + escapeHtml(title) + '</h2><p class="lead">' + escapeHtml(summary) + '</p></div>' +
+      '<div><p class="eyebrow">青途启航</p><h2>' + escapeHtml(title) + '</h2><p class="lead">' + escapeHtml(summary) + '</p></div>' +
       pageHeaderActions(item) +
       '</header>' +
       '<div class="feature-content">' + innerHtml + '</div>';
@@ -5522,18 +7307,16 @@
         && typeof window.CYANCRUISE_COMPONENTS.pageShell.actions === "function") {
       return window.CYANCRUISE_COMPONENTS.pageShell.actions(item, pageShellContext());
     }
-    if (item.key === "workbench" || (item.key === "assessment" && state.assessmentSelectedScaleId)) {
+    if (item.key === "assessment" && state.assessmentSelectedScaleId) {
+      return '<div class="page-actions"><button type="button" class="secondary" data-assessment-back>返回</button></div>';
+    }
+    var parent = backRouteFor(item.key);
+    if (!parent || parent === item.key) {
       return "";
     }
-    var back = backRouteFor(item.key);
-    var actions = [];
-    if (item.key === "interview" && (state.activeInterview || state.interviewReport || state.interviewViewMode === "transcript")) {
-      actions.push('<button type="button" class="secondary" data-interview-action="leave">返回 AI 面试中心</button>');
-    } else if (back) {
-      actions.push('<button type="button" class="secondary" data-back-route="' + escapeHtml(back) + '">返回</button>');
-    }
-    actions.push('<button type="button" class="secondary" data-link="workbench">首页</button>');
-    return actions.length ? '<div class="page-actions">' + actions.join("") + '</div>' : "";
+    var label = "返回";
+    return '<div class="page-actions"><button type="button" class="secondary" data-back-route="' +
+      escapeHtml(parent) + '">' + label + '</button></div>';
   }
 
   function pageShellContext() {
@@ -5548,14 +7331,7 @@
 
   function backRouteFor(key) {
     if (window.CYANCRUISE_NAVIGATION && typeof window.CYANCRUISE_NAVIGATION.backRouteFor === "function") {
-      return window.CYANCRUISE_NAVIGATION.backRouteFor(key, {
-        pageByKey: pageByKey,
-        returnRoutes: state.returnRoutes
-      });
-    }
-    var source = state.returnRoutes && state.returnRoutes[key];
-    if (source && source !== key && pageByKey[source]) {
-      return source;
+      return window.CYANCRUISE_NAVIGATION.backRouteFor(key);
     }
     return parentRouteFor(key);
   }
@@ -5567,43 +7343,247 @@
     var parents = {
       "employment-home": "workbench",
       "further-study-home": "workbench",
-      "resume-home": "employment-home",
-      "resume": "resume-home",
-      "resume-diagnosis": "resume-home",
-      "interview-home": "employment-home",
-      "interview": "interview-home",
+      "resume": "employment-home",
+      "resume-diagnosis": "employment-home",
+      "interview": "",
       "interview-history": "interview",
-      "interview-panorama": "interview-home",
-      "interview-panorama-history": "interview-home",
-      "postgraduate": "further-study-home",
-      "postgraduate-recommendation": "further-study-home",
-      "study-abroad": "further-study-home",
+      "interview-panorama": "",
+      "interview-panorama-history": "interview-panorama",
+      "postgraduate": "",
+      "postgraduate-school": "",
+      "postgraduate-plan": "",
+      "postgraduate-mistake": "",
+      "postgraduate-reexam": "",
+      "postgraduate-recommendation": "",
+      "recommendation-ranking": "",
+      "recommendation-background": "",
+      "recommendation-material": "",
+      "recommendation-tutor": "",
+      "study-abroad": "",
+      "study-abroad-profile": "",
+      "study-abroad-language": "",
+      "study-abroad-school": "",
+      "study-abroad-statement": "",
+      "study-abroad-visa": "",
       "today-action": "workbench",
       "assessment": "workbench",
+      "deep-profile-detail": "assessment",
       "career-plan": "workbench",
       "assistant": "workbench",
       "messages": "workbench",
+      "message-detail": "messages",
       "employment-insight": "employment-home",
       "career-resources": "employment-home",
-      "file-upload-preview": "resume-home",
+      "study-resources": "further-study-home",
+      "file-upload-preview": "resume",
       "onboarding": "workbench",
       "admin-console": "workbench"
     };
     return parents[key] || "";
   }
 
+  function enhanceAppSelects(root) {
+    if (!root || !root.querySelectorAll) { return; }
+    var selects = root.querySelectorAll("select:not([multiple])");
+    for (var selectIndex = 0; selectIndex < selects.length; selectIndex += 1) {
+      var select = selects[selectIndex];
+      if (select.classList.contains("diagnosis-native-select") || select.classList.contains("app-native-select") || select.hasAttribute("data-native-select")) {
+        continue;
+      }
+      appSelectSequence += 1;
+      if (!select.id) {
+        select.id = "appNativeSelect" + appSelectSequence;
+      }
+      var wrapper = document.createElement("div");
+      wrapper.className = "app-select";
+      wrapper.setAttribute("data-app-select-for", select.id);
+      select.parentNode.insertBefore(wrapper, select);
+      wrapper.appendChild(select);
+      select.classList.add("app-native-select");
+      select.setAttribute("aria-hidden", "true");
+      select.setAttribute("tabindex", "-1");
+
+      var trigger = document.createElement("button");
+      trigger.type = "button";
+      trigger.className = "app-select-trigger";
+      trigger.setAttribute("data-app-select-trigger", "true");
+      trigger.setAttribute("aria-haspopup", "listbox");
+      trigger.setAttribute("aria-expanded", "false");
+      trigger.disabled = select.disabled;
+      var value = document.createElement("span");
+      value.className = "app-select-value";
+      var chevron = document.createElement("span");
+      chevron.className = "app-select-chevron";
+      chevron.setAttribute("aria-hidden", "true");
+      trigger.appendChild(value);
+      trigger.appendChild(chevron);
+
+      var menu = document.createElement("div");
+      menu.className = "app-select-menu";
+      menu.id = "appSelectMenu" + appSelectSequence;
+      menu.setAttribute("role", "listbox");
+      trigger.setAttribute("aria-controls", menu.id);
+      for (var optionIndex = 0; optionIndex < select.options.length; optionIndex += 1) {
+        var nativeOption = select.options[optionIndex];
+        var optionButton = document.createElement("button");
+        optionButton.type = "button";
+        optionButton.className = "app-select-option";
+        optionButton.setAttribute("data-app-select-option", String(optionIndex));
+        optionButton.setAttribute("role", "option");
+        optionButton.disabled = nativeOption.disabled;
+        optionButton.textContent = nativeOption.text;
+        menu.appendChild(optionButton);
+      }
+      wrapper.appendChild(trigger);
+      wrapper.appendChild(menu);
+      syncAppSelect(wrapper);
+    }
+  }
+
+  function syncAppSelect(wrapper) {
+    if (!wrapper) { return; }
+    var select = wrapper.querySelector("select.app-native-select");
+    var trigger = wrapper.querySelector("[data-app-select-trigger]");
+    var value = wrapper.querySelector(".app-select-value");
+    if (!select || !trigger || !value) { return; }
+    var selected = select.options[select.selectedIndex];
+    value.textContent = selected ? selected.text : "请选择";
+    trigger.disabled = select.disabled;
+    var options = wrapper.querySelectorAll("[data-app-select-option]");
+    for (var index = 0; index < options.length; index += 1) {
+      var active = index === select.selectedIndex;
+      options[index].classList.toggle("active", active);
+      options[index].setAttribute("aria-selected", active ? "true" : "false");
+    }
+  }
+
+  function closestAppSelect(node) {
+    while (node && node !== document) {
+      if (node.classList && node.classList.contains("app-select")) { return node; }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function closeAppSelects(except) {
+    if (!els.pageHost) { return; }
+    var openSelects = els.pageHost.querySelectorAll(".app-select.open");
+    for (var index = 0; index < openSelects.length; index += 1) {
+      if (openSelects[index] === except) { continue; }
+      openSelects[index].classList.remove("open");
+      var trigger = openSelects[index].querySelector("[data-app-select-trigger]");
+      if (trigger) { trigger.setAttribute("aria-expanded", "false"); }
+    }
+  }
+
+  function toggleAppSelect(wrapper, focusDirection) {
+    if (!wrapper) { return; }
+    var trigger = wrapper.querySelector("[data-app-select-trigger]");
+    if (!trigger || trigger.disabled) { return; }
+    var opening = focusDirection ? true : !wrapper.classList.contains("open");
+    closeAppSelects(opening ? wrapper : null);
+    if (opening) {
+      var rect = trigger.getBoundingClientRect();
+      var estimatedMenuHeight = Math.min(288, Math.max(58, wrapper.querySelectorAll("[data-app-select-option]").length * 48 + 14));
+      var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      wrapper.classList.toggle("drop-up", viewportHeight - rect.bottom < estimatedMenuHeight && rect.top > viewportHeight - rect.bottom);
+    }
+    wrapper.classList.toggle("open", opening);
+    trigger.setAttribute("aria-expanded", opening ? "true" : "false");
+    if (opening && focusDirection) {
+      var options = wrapper.querySelectorAll("[data-app-select-option]:not(:disabled)");
+      if (!options.length) { return; }
+      var selected = wrapper.querySelector(".app-select-option.active:not(:disabled)");
+      var target = selected || (focusDirection < 0 ? options[options.length - 1] : options[0]);
+      window.setTimeout(function () { target.focus(); }, 0);
+    }
+  }
+
+  function chooseAppSelectOption(optionButton, restoreKeyboardFocus) {
+    var wrapper = closestAppSelect(optionButton);
+    var select = wrapper && wrapper.querySelector("select.app-native-select");
+    var trigger = wrapper && wrapper.querySelector("[data-app-select-trigger]");
+    var optionIndex = Number(optionButton.getAttribute("data-app-select-option"));
+    if (!select || !select.options[optionIndex] || select.options[optionIndex].disabled) { return; }
+    var changed = select.selectedIndex !== optionIndex;
+    select.selectedIndex = optionIndex;
+    syncAppSelect(wrapper);
+    closeAppSelects();
+    if (restoreKeyboardFocus && trigger) {
+      trigger.focus();
+    } else {
+      optionButton.blur();
+      if (trigger) { trigger.blur(); }
+    }
+    if (changed) {
+      var changeEvent;
+      if (typeof Event === "function") {
+        changeEvent = new Event("change", { bubbles: true });
+      } else {
+        changeEvent = document.createEvent("Event");
+        changeEvent.initEvent("change", true, false);
+      }
+      select.dispatchEvent(changeEvent);
+    }
+  }
+
+  function handleAppSelectKeydown(event) {
+    var trigger = findAttributeTarget(event.target, "data-app-select-trigger");
+    if (trigger && event.key === "Escape") {
+      event.preventDefault();
+      closeAppSelects();
+      trigger.focus();
+      return;
+    }
+    if (trigger && (event.key === "Enter" || event.key === " " || event.key === "ArrowDown" || event.key === "ArrowUp")) {
+      event.preventDefault();
+      var direction = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+      toggleAppSelect(closestAppSelect(trigger), direction);
+      return;
+    }
+    var option = findAttributeTarget(event.target, "data-app-select-option");
+    if (!option) { return; }
+    var wrapper = closestAppSelect(option);
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeAppSelects();
+      var wrapperTrigger = wrapper.querySelector("[data-app-select-trigger]");
+      if (wrapperTrigger) { wrapperTrigger.focus(); }
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp" && event.key !== "Home" && event.key !== "End") { return; }
+    event.preventDefault();
+    var options = Array.prototype.slice.call(wrapper.querySelectorAll("[data-app-select-option]:not(:disabled)"));
+    var current = options.indexOf(option);
+    var next = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1 :
+      (current + (event.key === "ArrowUp" ? -1 : 1) + options.length) % options.length;
+    if (options[next]) { options[next].focus(); }
+  }
+
   function handlePageHostClick(event) {
+    var appSelectOption = findAttributeTarget(event.target, "data-app-select-option");
+    if (appSelectOption) {
+      event.preventDefault();
+      event.stopPropagation();
+      chooseAppSelectOption(appSelectOption, event.detail === 0);
+      return;
+    }
+    var appSelectTrigger = findAttributeTarget(event.target, "data-app-select-trigger");
+    if (appSelectTrigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleAppSelect(closestAppSelect(appSelectTrigger));
+      return;
+    }
+    if (event.target && event.target.classList && event.target.classList.contains("app-native-select")) {
+      event.preventDefault();
+      return;
+    }
+    closeAppSelects();
     var panoramaTarget = findAttributeTarget(event.target, "data-panorama-action");
     if (panoramaTarget) { event.preventDefault(); event.stopPropagation(); handlePanoramaAction(panoramaTarget); return; }
     var interviewTarget = findAttributeTarget(event.target, "data-interview-action");
     if (interviewTarget) { event.preventDefault(); event.stopPropagation(); handleInterviewAction(interviewTarget); return; }
-    var planHorizonTarget = findPlanHorizonTarget(event.target);
-    if (planHorizonTarget) {
-      event.preventDefault();
-      event.stopPropagation();
-      updatePlanHorizon(planHorizonTarget.getAttribute("data-plan-horizon"));
-      return;
-    }
     var planFocusTarget = findPlanFocusTarget(event.target);
     if (planFocusTarget) {
       event.preventDefault();
@@ -5611,11 +7591,30 @@
       focusPlanPhase(planFocusTarget.getAttribute("data-plan-focus"));
       return;
     }
+    var studyPlanTarget = findAttributeTarget(event.target, "data-ensure-study-plan");
+    if (studyPlanTarget && !studyPlanTarget.disabled) {
+      event.preventDefault();
+      event.stopPropagation();
+      ensureStudyPlan(true);
+      return;
+    }
     var ensurePlanTarget = findEnsurePlanTarget(event.target);
     if (ensurePlanTarget) {
       event.preventDefault();
       event.stopPropagation();
-      ensureEmploymentPlan();
+      requestAgentCareerPlanGeneration();
+      return;
+    }
+    var studyDirectionTarget = findAttributeTarget(event.target, "data-save-study-direction");
+    if (studyDirectionTarget) { event.preventDefault(); event.stopPropagation(); saveStudyCenterDirection(); return; }
+    var studyMaterialUploadTarget = findAttributeTarget(event.target, "data-upload-study-material");
+    if (studyMaterialUploadTarget && !studyMaterialUploadTarget.disabled) {
+      event.preventDefault(); event.stopPropagation(); uploadStudyPlanningMaterial(); return;
+    }
+    var studyMaterialDeleteTarget = findAttributeTarget(event.target, "data-delete-study-material");
+    if (studyMaterialDeleteTarget) {
+      event.preventDefault(); event.stopPropagation();
+      deleteStudyPlanningMaterial(studyMaterialDeleteTarget.getAttribute("data-delete-study-material"));
       return;
     }
     var resourceTarget = findResourceDetailTarget(event.target);
@@ -5623,6 +7622,34 @@
       event.preventDefault();
       event.stopPropagation();
       showResourceDetailDialog(resourceTarget.getAttribute("data-resource-detail"));
+      return;
+    }
+    var deepProfileGenerateTarget = findAttributeTarget(event.target, "data-deep-profile-generate");
+    if (deepProfileGenerateTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      generateDeepProfile();
+      return;
+    }
+    var deepProfileRecordTarget = findAttributeTarget(event.target, "data-deep-profile-record");
+    if (deepProfileRecordTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      selectDeepProfileRecord(deepProfileRecordTarget.getAttribute("data-deep-profile-record"));
+      return;
+    }
+    var assessmentAiInterpretationTarget = findAttributeTarget(event.target, "data-assessment-ai-interpretation");
+    if (assessmentAiInterpretationTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      generateAssessmentAiInterpretation(assessmentAiInterpretationTarget.getAttribute("data-assessment-ai-interpretation"));
+      return;
+    }
+    var assessmentRetakeTarget = findAttributeTarget(event.target, "data-assessment-retake");
+    if (assessmentRetakeTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      startNewAssessmentScale(assessmentRetakeTarget.getAttribute("data-assessment-retake"));
       return;
     }
     var assessmentOptionTarget = findAssessmentOptionTarget(event.target);
@@ -5656,11 +7683,25 @@
       previousAssessmentQuestion();
       return;
     }
+    var assessmentNextTarget = findAssessmentNextTarget(event.target);
+    if (assessmentNextTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      nextAssessmentQuestion();
+      return;
+    }
     var assessmentSubmitTarget = findAssessmentSubmitTarget(event.target);
     if (assessmentSubmitTarget) {
       event.preventDefault();
       event.stopPropagation();
       submitAssessment();
+      return;
+    }
+    var diagnosisResumeTarget = findAttributeTarget(event.target, "data-diagnose-resume");
+    if (diagnosisResumeTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      openResumeDiagnosisFor(diagnosisResumeTarget.getAttribute("data-diagnose-resume"));
       return;
     }
     var target = findPageLinkTarget(event.target);
@@ -5675,6 +7716,24 @@
       return;
     }
     navigateToRoute(target.getAttribute("data-link"));
+  }
+
+  function openResumeDiagnosisFor(resumeId) {
+    if (!resumeId) {
+      navigateToRoute("resume-diagnosis");
+      return;
+    }
+    state.selectedDiagnosisResumeId = String(resumeId);
+    state.diagnosisDraft = {
+      resumeId: String(resumeId),
+      targetJob: "",
+      jobDescription: "",
+      resumeText: ""
+    };
+    state.diagnosisResult = null;
+    state.diagnosisMessage = null;
+    setUserStorageItem("cyancruise.pendingDiagnosisResumeId", String(resumeId));
+    navigateToRoute("resume-diagnosis");
   }
 
   function findAttributeTarget(node, attribute) {
@@ -5697,6 +7756,9 @@
     if (!target || !target.getAttribute) {
       return;
     }
+    if (target.classList && target.classList.contains("app-native-select")) {
+      syncAppSelect(closestAppSelect(target));
+    }
     if (target.id === "interviewPosition" || target.id === "interviewResume" || target.id === "interviewDifficulty") {
       syncInterviewSetupDraftFromPage();
       return;
@@ -5705,7 +7767,75 @@
     var taskId = target.getAttribute("data-plan-task");
     if (taskId) {
       setPlanTaskChecked(taskId, target.checked);
+      return;
     }
+    var dailyTaskId = target.getAttribute("data-daily-task");
+    if (dailyTaskId) {
+      updateDailyTask(dailyTaskId, target.getAttribute("data-source-task"), target.checked);
+    }
+  }
+
+  function updateDailyTask(taskId, sourceTaskId, completed) {
+    var endpoint = currentDailyTaskUpdateEndpoint();
+    if (!hasUserIdentity() || !endpoint) return;
+    post(endpoint, {
+      userId: state.identity.userId,
+      request: { taskId: taskId, completed: !!completed }
+    }).then(function (dailyPlan) {
+      state.dailyPlan = dailyPlan || {};
+      var plan = state.plan && !state.plan.unavailable ? state.plan : {};
+      var targetRole = currentPlanningTarget(plan);
+      var phases = normalizeArray(plan.phases);
+      var progressState = readPlanProgress(plan, targetRole, phases);
+      if (sourceTaskId) {
+        progressState.checked[sourceTaskId] = !!completed;
+        progressState.checked[taskId] = !!completed;
+      }
+      mergeDailyCompletionIntoProgress(state.dailyPlan, progressState, phases);
+      syncPlanPhaseCursor(phases, progressState);
+      progressState.phaseCursorInitialized = true;
+      persistPlanProgress(plan, targetRole, progressState);
+      return refreshCareerPlanAfterDailyUpdate();
+    }).then(function () {
+      updateOverviewCards();
+      renderPage(pageByKey[state.route]);
+    }).catch(function (error) {
+      renderPage(pageByKey[state.route]);
+      showMessage("error", "任务状态未保存", error.message || "请稍后重试。");
+    });
+  }
+
+  function loadDailyPlan() {
+    var endpoint = currentDailyPlanEndpoint();
+    if (!hasUserIdentity() || !endpoint || isFilePreview()) return Promise.resolve(null);
+    return post(endpoint, state.identity.userId).then(function (dailyPlan) {
+      state.dailyPlan = dailyPlan || {};
+      if (isStudyRoute()) state.studyDailyPlan = state.dailyPlan;
+      else state.employmentDailyPlan = state.dailyPlan;
+      return state.dailyPlan;
+    });
+  }
+
+  function refreshCareerPlanAfterDailyUpdate() {
+    var endpoint = currentPlanEndpoint();
+    if (!hasUserIdentity() || !endpoint || isFilePreview()) return Promise.resolve(null);
+    return post(endpoint, state.identity.userId).then(function (plan) {
+      if (plan && !plan.unavailable) {
+        state.plan = plan;
+        if (isStudyRoute()) state.studyPlan = plan;
+        else state.employmentPlan = plan;
+        var targetRole = currentPlanningTarget(plan);
+        var phases = normalizeArray(plan.phases);
+        var progressState = readPlanProgress(plan, targetRole, phases);
+        mergeDailyCompletionIntoProgress(state.dailyPlan, progressState, phases);
+        syncPlanPhaseCursor(phases, progressState);
+        progressState.phaseCursorInitialized = true;
+        persistPlanProgress(plan, targetRole, progressState);
+      }
+      return state.plan;
+    }).catch(function () {
+      return state.plan;
+    });
   }
 
   function syncInterviewSetupDraftFromPage() {
@@ -5770,6 +7900,16 @@
     return null;
   }
 
+  function findAssessmentNextTarget(node) {
+    while (node && node !== els.pageHost) {
+      if (node.getAttribute && node.getAttribute("data-assessment-next") != null) {
+        return node.disabled ? null : node;
+      }
+      node = node.parentNode;
+    }
+    return null;
+  }
+
   function findAssessmentSubmitTarget(node) {
     while (node && node !== els.pageHost) {
       if (node.getAttribute && node.getAttribute("data-assessment-submit") != null) {
@@ -5790,24 +7930,17 @@
     return null;
   }
 
-  function findPlanHorizonTarget(node) {
-    while (node && node !== els.pageHost) {
-      if (node.getAttribute && node.getAttribute("data-plan-horizon")) {
-        return node.disabled ? null : node;
-      }
-      node = node.parentNode;
-    }
-    return null;
-  }
-
   function setPlanTaskChecked(taskId, checked) {
     if (!taskId) {
       return;
     }
     var plan = state.plan && !state.plan.unavailable ? state.plan : {};
-    var targetRole = employmentTargetRole(plan);
-    var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
+    var targetRole = currentPlanningTarget(plan);
+    var phases = normalizeArray(plan.phases);
+    var progressState = readPlanProgress(plan, targetRole, phases);
     progressState.checked[taskId] = !!checked;
+    syncPlanPhaseCursor(phases, progressState);
+    progressState.phaseCursorInitialized = true;
     persistPlanProgress(plan, targetRole, progressState);
     updateOverviewCards();
     renderPage(pageByKey[state.route]);
@@ -5818,24 +7951,10 @@
       return;
     }
     var plan = state.plan && !state.plan.unavailable ? state.plan : {};
-    var targetRole = employmentTargetRole(plan);
+    var targetRole = currentPlanningTarget(plan);
     var progressState = readPlanProgress(plan, targetRole, normalizeArray(plan.phases));
     progressState.activePhaseId = phaseId;
     persistPlanProgress(plan, targetRole, progressState);
-    renderPage(pageByKey[state.route]);
-  }
-
-  function updatePlanHorizon(value) {
-    if (state.route !== "career-plan") {
-      return;
-    }
-    var years = parseInt(trim(value), 10);
-    if (years !== 1 && years !== 3) {
-      return;
-    }
-    var plan = state.plan && !state.plan.unavailable ? state.plan : {};
-    var targetRole = employmentTargetRole(plan);
-    persistSelectedPlanHorizon(plan, targetRole, years);
     renderPage(pageByKey[state.route]);
   }
 
@@ -5940,19 +8059,12 @@
 
   function overviewRows(goal) {
     if (goal === "study") {
+      var selection = state.studyCenterSelection || {};
       return [
-        ["目标方向", textFromSnapshot("preferences.targetRole", "onboarding.targetRole") || "待确认"],
-        ["规划状态", state.plan && !state.plan.unavailable ? firstText(state.plan.summary, state.plan.weekFocus, "已生成") : "规划中"],
-        ["方向入口", "考研 / 保研 / 留学"],
-        ["下一步", "选择深造方向"]
-      ];
-    }
-    if (goal === "explore") {
-      return [
-        ["当前路线", "先了解一下"],
-        ["就业入口", "可进入"],
-        ["深造入口", "可进入"],
-        ["下一步", "选择方向"]
+        ["目标院校", textFromSnapshot("onboarding.targetSchool") || "待确认"],
+        ["升学方向", studyCenterDirectionLabel(firstText(selection.direction, getValue(state.studyPlan, "studyDirection")))],
+        ["今日行动", todayOverviewStatus()],
+        ["路径规划", state.plan && !state.plan.unavailable && state.plan.hasPlan !== false ? "已生成" : "待生成"]
       ];
     }
     return [
@@ -5969,7 +8081,8 @@
       if (view.dailyPlan && view.dailyPlan.nextItem) {
         return firstText(view.dailyPlan.nextItem.text, "今日可推进");
       }
-      if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length) {
+      if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length
+          && Number(view.dailyPlan.completedCount || 0) === Number(view.dailyPlan.totalCount || view.dailyPlan.items.length)) {
         return "今日小事已完成";
       }
       if (view.dailyPlan && view.dailyPlan.items && view.dailyPlan.items.length) {
@@ -6039,7 +8152,13 @@
       state.today = overview.today;
       state.resumes = overview.resumes;
       state.plan = overview.plan;
+      state.employmentPlan = overview.employmentPlan;
+      state.studyPlan = overview.studyPlan;
       state.interviews = overview.interviews;
+      state.dailyPlan = overview.dailyPlan;
+      state.employmentDailyPlan = overview.employmentDailyPlan;
+      state.studyDailyPlan = overview.studyDailyPlan;
+      syncCurrentRoutePlanningState();
       updateOverviewCards();
       renderPage(pageByKey[state.route]);
     }).catch(function (error) {
@@ -6059,20 +8178,22 @@
         normalizeArray: normalizeArray
       });
     }
-    return Promise.all([
-      post(endpoints.snapshot, state.identity.userId).catch(asUnavailable),
-      post(endpoints.today, state.identity.userId).catch(asUnavailable),
-      post(endpoints.resumes, state.identity.userId).catch(asUnavailable),
-      post(endpoints.plan, state.identity.userId).catch(asUnavailable),
-      post(endpoints.interviews, state.identity.userId).catch(asUnavailable)
-    ]).then(function (results) {
-      return {
-        snapshot: results[0],
-        today: results[1],
-        resumes: normalizeArray(results[2]),
-        plan: results[3],
-        interviews: normalizeArray(results[4])
-      };
+    return post(endpoints.snapshot, state.identity.userId).catch(asUnavailable).then(function (snapshot) {
+      return Promise.all([
+        post(endpoints.today, state.identity.userId).catch(asUnavailable),
+        post(endpoints.resumes, state.identity.userId).catch(asUnavailable),
+        post(endpoints.plan, state.identity.userId).catch(asUnavailable),
+        post(endpoints.interviews, state.identity.userId).catch(asUnavailable),
+        post(endpoints.dailyPlan, state.identity.userId).catch(asUnavailable),
+        post(endpoints.studyPlan, state.identity.userId).catch(asUnavailable),
+        post(endpoints.studyDailyPlan, state.identity.userId).catch(asUnavailable)
+      ]).then(function (results) {
+        var study = snapshot && snapshot.onboarding && snapshot.onboarding.routeGoal === "study";
+        return { snapshot: snapshot, today: results[0], resumes: normalizeArray(results[1]),
+          employmentPlan: results[2], interviews: normalizeArray(results[3]), employmentDailyPlan: results[4],
+          studyPlan: results[5], studyDailyPlan: results[6],
+          plan: study ? results[5] : results[2], dailyPlan: study ? results[6] : results[4] };
+      });
     });
   }
 
@@ -6092,6 +8213,7 @@
       var previewPreviousTarget = currentProfileTargetRole();
       setUserStorageItem("cyancruise.previewProfile", JSON.stringify(request));
       state.snapshot = { onboarding: request, preferences: { targetRole: request.targetRole } };
+      syncCurrentRoutePlanningState();
       updateOverviewCards();
       refreshPlanAfterProfileTargetChange(previewPreviousTarget);
       showMessage("info", "已保存到本地预览", "file:// 模式不调用后端。");
@@ -6100,6 +8222,7 @@
     var previousTarget = currentProfileTargetRole();
     post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
       state.snapshot = snapshot;
+      syncCurrentRoutePlanningState();
       updateOverviewCards();
       if (!refreshPlanAfterProfileTargetChange(previousTarget)) {
         renderPage(pageByKey[state.route]);
@@ -6116,17 +8239,29 @@
 
   function submitHomeIntent(event) {
     event.preventDefault();
+    var goal = valueOf("homeGoal");
+    var targetInput = $("homeTargetRole");
+    syncHomeTargetField(goal);
+    var targetRole = goal === "study"
+      ? firstText(targetInput && targetInput.getAttribute("data-role-value"), "")
+      : valueOf("homeTargetRole");
+    var targetSchool = goal === "study"
+      ? valueOf("homeTargetRole")
+      : firstText(targetInput && targetInput.getAttribute("data-school-value"), "");
     var intent = {
-      goal: valueOf("homeGoal"),
-      targetRole: valueOf("homeTargetRole"),
-      preference: valueOf("homePreference"),
+      goal: goal,
+      targetRole: targetRole,
+      targetSchool: targetSchool,
+      preference: "",
       identityType: valueOf("profileIdentityType"),
       educationStage: valueOf("profileEducationStage"),
       school: valueOf("profileSchool"),
       major: valueOf("profileMajor"),
       schoolMajor: valueOf("profileMajor"),
       resumeStatus: valueOf("resumeStatus"),
-      experience: valueOf("profileExperience")
+      selectedResumeId: valueOf("profileSelectedResume"),
+      experience: valueOf("profileExperience"),
+      selfProfileSupplement: valueOf("selfProfileSupplement")
     };
     setUserStorageItem("cyancruise.homeIntent", JSON.stringify(intent));
     var request = {
@@ -6141,37 +8276,43 @@
         major: intent.major
       },
       targetRole: intent.targetRole,
+      targetSchool: intent.targetSchool,
       resumeStatus: intent.resumeStatus,
+      selectedResumeId: intent.selectedResumeId,
       experience: intent.experience,
+      selfProfileSupplement: intent.selfProfileSupplement,
       routeGoal: intent.goal,
-      preference: ["路线：" + labelForGoal(intent.goal), intent.preference].filter(Boolean).join("；")
+      preference: "路线：" + labelForGoal(intent.goal)
     };
     if (!hasUserIdentity() || isFilePreview()) {
       var previewPreviousTarget = currentProfileTargetRole();
       setUserStorageItem("cyancruise.previewProfile", JSON.stringify(request));
       state.snapshot = { onboarding: request, preferences: { targetRole: request.targetRole } };
+      syncCurrentRoutePlanningState();
       updateOverviewCards();
       refreshPlanAfterProfileTargetChange(previewPreviousTarget);
       setUserStorageItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
-      showMessage("info", "已保存", "用户画像草稿已保存到当前浏览器。");
+      showMessage("info", "已保存", "自画像草稿已保存到当前浏览器。");
       return;
     }
     var previousTarget = currentProfileTargetRole();
+    var previousResumeId = getValue(state.snapshot, "onboarding.selectedResumeId");
     post(endpoints.onboarding, { userId: state.identity.userId, request: request }).then(function (snapshot) {
       setUserStorageItem("cyancruise.homeIntentSaved", "true");
       removeUserStorageItem("cyancruise.homeIntentEditing");
       removeUserStorageItem("cyancruise.previewProfile");
       state.snapshot = snapshot;
+      syncCurrentRoutePlanningState();
       updateOverviewCards();
-      if (!refreshPlanAfterProfileTargetChange(previousTarget)) {
+      if (!refreshPlanAfterProfileTargetChange(previousTarget, previousResumeId)) {
         renderPage(pageByKey[state.route]);
       }
-      showMessage("info", "已保存", "用户画像草稿已写入职业画像。");
+      showMessage("info", "已保存", "自画像草稿已保存。");
     }).catch(function (error) {
       setUserStorageItem("cyancruise.homeIntentEditing", "true");
       renderPage(pageByKey[state.route]);
-      showMessage("warning", "已本地保存", "平台暂未写入成功，但用户画像草稿已保存在当前浏览器。");
+      showMessage("warning", "已本地保存", "平台暂未写入成功，但自画像草稿已保存在当前浏览器。");
     });
   }
 
@@ -6179,9 +8320,11 @@
     return textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob");
   }
 
-  function refreshPlanAfterProfileTargetChange(previousTarget) {
+  function refreshPlanAfterProfileTargetChange(previousTarget, previousResumeId) {
     var nextTarget = currentProfileTargetRole();
-    if (sameTargetRole(previousTarget, nextTarget)) {
+    var nextResumeId = getValue(state.snapshot, "onboarding.selectedResumeId");
+    var resumeChanged = previousResumeId !== undefined && String(firstText(previousResumeId, "")) !== String(firstText(nextResumeId, ""));
+    if (sameTargetRole(previousTarget, nextTarget) && !resumeChanged) {
       return false;
     }
     state.plan = null;
@@ -6192,7 +8335,7 @@
     if (!hasUserIdentity() && !isFilePreview()) {
       return false;
     }
-    ensureEmploymentPlan();
+    ensureCurrentRoutePlan();
     return true;
   }
 
@@ -6234,9 +8377,6 @@
     if (goal === "study") {
       return "深造";
     }
-    if (goal === "explore") {
-      return "先了解一下";
-    }
     return "就业";
   }
 
@@ -6254,7 +8394,9 @@
   }
 
   function updateOverviewCards() {
-    var target = textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob");
+    var target = isStudyRoute()
+      ? textFromSnapshot("onboarding.targetSchool")
+      : textFromSnapshot("preferences.targetRole", "onboarding.targetRole", "resume.targetJob");
     var resume = getValue(state.snapshot, "resume") || {};
     var assessment = getValue(state.snapshot, "assessment") || {};
     var score = calculateReadiness(target, resume, assessment);
@@ -6935,7 +9077,7 @@
       "pages/resume-ai/index": "resume-diagnosis",
       "pages/assessment/index": "assessment",
       "pages/postgraduate/index": "postgraduate",
-      "pages/interview/index": "interview-home",
+      "pages/interview/index": "interview",
       "pages/interview/start": "interview",
       "pages/interview/chat": "interview",
       "pages/interview/history": "interview-history",
@@ -7197,7 +9339,9 @@
       window.clearTimeout(state.messageTimer);
       state.messageTimer = null;
     }
-    els.messagePanel.className = "message-panel " + type;
+    var success = type === "success" || (type === "info" && isSuccessMessageTitle(title));
+    var resolvedType = success ? "success" : type;
+    els.messagePanel.className = "message-panel " + resolvedType;
     els.messagePanel.innerHTML =
       '<div class="message-copy"><strong>' + escapeHtml(title) + "</strong><span>" + escapeHtml(text) + "</span></div>" +
       '<button type="button" class="message-close" aria-label="关闭提示">×</button>';
@@ -7205,30 +9349,38 @@
     if (close) {
       close.addEventListener("click", hideMessage);
     }
-    if (type === "info") {
+    if (success) {
+      state.messageTimer = window.setTimeout(hideMessage, 3000);
+    } else if (type === "info") {
       state.messageTimer = window.setTimeout(hideMessage, 5000);
     }
   }
 
-  function showConfirmDialog(title, text, confirmText, onConfirm) {
+  function isSuccessMessageTitle(title) {
+    return /已保存|保存成功|已生成|生成成功|已创建|创建成功|已删除|删除成功|已完成|更新成功|已更新|已准备|已取消/.test(String(title || ""));
+  }
+
+  function showConfirmDialog(title, text, confirmText, onConfirm, options) {
+    options = options || {};
     if (window.CYANCRUISE_COMPONENTS && window.CYANCRUISE_COMPONENTS.dialog
         && typeof window.CYANCRUISE_COMPONENTS.dialog.confirm === "function") {
       window.CYANCRUISE_COMPONENTS.dialog.confirm(title, text, confirmText, onConfirm, {
         escapeHtml: escapeHtml,
-        hide: hideConfirmDialog
+        hide: hideConfirmDialog,
+        options: options
       });
       return;
     }
     hideConfirmDialog();
     var previousFocus = document.activeElement;
     var overlay = document.createElement("div");
-    overlay.className = "confirm-overlay";
+    overlay.className = "confirm-overlay" + (options.danger ? " danger-overlay" : "");
     overlay.innerHTML =
-      '<div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogText">' +
+      '<div class="confirm-dialog' + (options.danger ? ' danger-dialog' : '') + '" role="dialog" aria-modal="true" aria-labelledby="confirmDialogTitle" aria-describedby="confirmDialogText">' +
       '<div class="confirm-copy"><strong id="confirmDialogTitle">' + escapeHtml(title) + '</strong>' +
       '<span id="confirmDialogText">' + escapeHtml(text) + '</span></div>' +
       '<div class="confirm-actions">' +
-      '<button type="button" class="secondary" data-confirm-cancel>取消</button>' +
+      (options.acknowledgeOnly ? '' : '<button type="button" class="secondary" data-confirm-cancel>取消</button>') +
       '<button type="button" class="danger" data-confirm-ok>' + escapeHtml(confirmText || "确认") + '</button>' +
       '</div></div>';
     document.body.appendChild(overlay);
@@ -7251,7 +9403,9 @@
         close();
       }
     });
-    cancel.addEventListener("click", close);
+    if (cancel) {
+      cancel.addEventListener("click", close);
+    }
     ok.addEventListener("click", function () {
       close();
       if (typeof onConfirm === "function") {

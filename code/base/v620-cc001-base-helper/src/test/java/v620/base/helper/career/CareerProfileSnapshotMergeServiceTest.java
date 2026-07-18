@@ -26,6 +26,7 @@ class CareerProfileSnapshotMergeServiceTest {
         CareerProfileOnboardingRequest request = new CareerProfileOnboardingRequest();
         request.setIdentityType("new_graduate");
         request.setPainPoint("resume_weak");
+        request.setSelfProfileSupplement("每周可稳定学习 12 小时，负责过项目接口联调");
 
         UserProfileSnapshot merged = service.mergeOnboarding(snapshot, request);
 
@@ -33,6 +34,8 @@ class CareerProfileSnapshotMergeServiceTest {
         assertEquals("Java Resume", merged.getResume().getTitle());
         assertEquals("new_graduate", merged.getOnboarding().getIdentityType());
         assertEquals("resume_weak", merged.getOnboarding().getPainPoint());
+        assertEquals("每周可稳定学习 12 小时，负责过项目接口联调",
+                merged.getOnboarding().getSelfProfileSupplement());
         assertNotNull(merged.getUpdatedAt());
     }
 
@@ -52,6 +55,22 @@ class CareerProfileSnapshotMergeServiceTest {
 
         assertEquals("Java Backend Engineer", merged.getPreferences().getTargetRole());
         assertEquals("student", merged.getOnboarding().getIdentityType());
+    }
+
+    @Test
+    void mergeOnboardingStoresTargetSchoolSeparatelyFromTargetRole() {
+        UserProfileSnapshot snapshot = new UserProfileSnapshot();
+        UserProfileSnapshot.PreferencesBlock preferences = new UserProfileSnapshot.PreferencesBlock();
+        preferences.setTargetRole("Java Backend Engineer");
+        snapshot.setPreferences(preferences);
+
+        CareerProfileOnboardingRequest request = new CareerProfileOnboardingRequest();
+        request.setTargetSchool("电子科技大学");
+
+        UserProfileSnapshot merged = service.mergeOnboarding(snapshot, request);
+
+        assertEquals("电子科技大学", merged.getOnboarding().getTargetSchool());
+        assertEquals("Java Backend Engineer", merged.getPreferences().getTargetRole());
     }
 
     @Test

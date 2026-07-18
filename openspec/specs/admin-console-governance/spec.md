@@ -81,7 +81,7 @@ CyanCruise SHALL provide administrator contracts for career path and career node
 
 ### Requirement: Question bank moderation
 
-CyanCruise SHALL expose administrator “题库管理” contracts that include “面试题库”和“职业测评题库”, and retain moderation coverage for hidden, AI-generated, user-contributed, and pending-review questions.
+CyanCruise SHALL expose administrator “题库管理” contracts that include “面试题库”和“职业测评题库”, retain moderation coverage for hidden, AI-generated, user-contributed, and pending-review questions, and manage the persistent career assessment catalog including questions, options, dimensions, pool question count, and the configured answer question count for each scale.
 
 #### Scenario: Admin manages interview questions
 
@@ -114,9 +114,19 @@ CyanCruise SHALL expose administrator “题库管理” contracts that include 
 
 - **GIVEN** 当前用户具备管理后台权限
 - **WHEN** 管理员进入“题库管理”的“职业测评题库”
-- **THEN** 页面 SHALL 展示现有职业测评量表、题目数量、题目文本、维度和选项
+- **THEN** 页面 SHALL 展示现有职业测评量表、题库总数、实际作答题数、题目文本、维度和选项
 - **AND** 管理员 SHALL be able to 新增、编辑和删除职业测评题目
-- **AND** 页面 SHALL 说明职业测评题库当前保存在应用运行期题库中
+- **AND** 修改 SHALL 持久化并在服务重启后继续生效
+
+#### Scenario: 管理员配置作答题数
+
+- **WHEN** 管理员将量表作答题数设置为 1 到当前题库总数之间的整数
+- **THEN** 系统 SHALL 保存配置并用于后续新建的测评批次
+
+#### Scenario: 非法作答题数
+
+- **WHEN** 管理员设置的作答题数小于 1 或大于当前题库总数
+- **THEN** 系统 SHALL 拒绝保存并显示普通中文提示
 
 #### Scenario: Admin question bank errors hide implementation details
 
@@ -417,3 +427,26 @@ CyanCruise SHALL show management console labels, buttons, empty states, errors, 
 - **WHEN** 当前登录用户不具备管理员等价角色并进入管理后台路由
 - **THEN** 页面 SHALL 在内容区域水平和垂直居中显示规定的标题与说明
 - **AND** 页面 SHALL NOT 显示“无管理员权限”、`/cc001/admin/*`、返回按钮或其他管理内容
+
+### Requirement: 用户管理个人数据最小化
+
+用户管理页面和对应 WebAPI SHALL 仅提供账号治理所需信息。系统 SHALL NOT 在用户管理列表或详情中展示、返回或搜索用户的学校和专业；系统 SHALL NOT 在用户管理页面展示原始平台组织 ID。平台组织 ID SHALL 仅用于服务端组织归属、权限范围和数据隔离。
+
+#### Scenario: 管理员查看用户列表
+
+- **WHEN** 管理员打开用户管理页面
+- **THEN** 页面 SHALL 展示用户标识、身份类型、账号状态和可执行操作
+- **AND** 页面 SHALL NOT 展示学校、专业或平台组织 ID
+
+#### Scenario: 管理员搜索用户
+
+- **WHEN** 管理员输入姓名或用户 ID 搜索用户
+- **THEN** 系统 SHALL 按姓名或用户 ID 返回匹配结果
+- **AND** 系统 SHALL NOT 使用学校或专业作为搜索条件
+
+#### Scenario: 用户管理接口返回数据
+
+- **WHEN** 管理员请求用户列表或用户详情
+- **THEN** 返回数据 SHALL NOT 包含学校、专业或平台组织 ID 的值
+- **AND** 服务端 SHALL 继续使用平台组织 ID 执行组织归属和数据隔离
+

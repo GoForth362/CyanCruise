@@ -105,6 +105,8 @@ docs/cyancruise-apifox.postman_collection.json
 | --- | --- | --- |
 | 获取职业计划摘要 | `/cc001/career-plan/summary` | `{"userId":"{{userId}}"}` |
 | 确保生成职业计划 | `/cc001/career-plan/ensure` | `{"userId":"{{userId}}"}` |
+| 获取今天的路线任务 | `/cc001/career-plan/daily/get` | `{"userId":"{{userId}}"}` |
+| 更新每日任务状态 | `/cc001/career-plan/daily/task/update` | `{"userId":"{{userId}}","request":{"taskId":"daily-v1-2026-07-16-0-xxxx","completed":true}}` |
 | 获取面试列表 | `/cc001/interview/list` | `{"userId":"{{userId}}"}` |
 | 分页获取面试列表 | `/cc001/interview/page` | `{"userId":"{{userId}}","page":1,"mode":"text"}` |
 | 开始模拟面试 | `/cc001/interview/start` | `{"userId":"{{userId}}","request":{"positionName":"Java开发工程师","difficulty":"normal","mode":"text"}}` |
@@ -194,3 +196,14 @@ docs/cyancruise-apifox.postman_collection.json
 - 返回 `USER_BANNED`：当前用户被管理端禁用，需使用管理端解除禁用。
 - 管理端接口失败：确认 `adminId` 对应用户具备管理权限。
 
+# 升学路线规划与今日行动
+
+升学中心使用独立于就业规划的接口和数据库记录。调用 `/cc001/study-center/selection/save` 保存 `POSTGRADUATE`、`RECOMMENDATION` 或 `STUDY_ABROAD` 后，可使用：
+
+- `POST /cc001/study-center/plan/summary`
+- `POST /cc001/study-center/plan/ensure`
+- `POST /cc001/study-center/plan/generate`
+- `POST /cc001/study-center/daily/get`
+- `POST /cc001/study-center/daily/task/update`
+
+除任务更新接口使用 `{ "userId": "...", "request": { "taskId": "...", "completed": true } }` 外，其余规划和每日行动接口请求体均为 `{ "userId": "..." }`。生成失败时原升学规划保持不变；切换当前路线不会删除就业规划。

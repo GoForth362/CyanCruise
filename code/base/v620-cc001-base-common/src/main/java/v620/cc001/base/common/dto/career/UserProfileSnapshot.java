@@ -18,6 +18,8 @@ public class UserProfileSnapshot implements Serializable {
     private InterviewBlock interview;
     private PreferencesBlock preferences;
     private OnboardingBlock onboarding;
+    private AiDeepProfileBlock aiDeepProfile;
+    private List<AiDeepProfileBlock> aiDeepProfileHistory;
 
     public Integer getVersion() {
         return version;
@@ -73,6 +75,90 @@ public class UserProfileSnapshot implements Serializable {
 
     public void setOnboarding(OnboardingBlock onboarding) {
         this.onboarding = onboarding;
+    }
+
+    public AiDeepProfileBlock getAiDeepProfile() {
+        return aiDeepProfile;
+    }
+
+    public void setAiDeepProfile(AiDeepProfileBlock aiDeepProfile) {
+        this.aiDeepProfile = aiDeepProfile;
+    }
+
+    public List<AiDeepProfileBlock> getAiDeepProfileHistory() {
+        return aiDeepProfileHistory;
+    }
+
+    public void setAiDeepProfileHistory(List<AiDeepProfileBlock> aiDeepProfileHistory) {
+        this.aiDeepProfileHistory = aiDeepProfileHistory;
+    }
+
+    /**
+     * AI-derived interpretation of completed assessments. This is intentionally separate
+     * from user-provided facts in onboarding and preferences.
+     */
+    public static class AiDeepProfileBlock implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private String recordId;
+        private String profileSummary;
+        private List<String> profileTags;
+        private List<String> strengths;
+        private String collaborationStyle;
+        private String workEnvironment;
+        private String decisionStyle;
+        private List<String> motivation;
+        private List<String> studyPreferences;
+        private List<String> careerInclinations;
+        private List<String> developmentSuggestions;
+        private List<AiProfileEvidence> evidence;
+        private List<String> dataGaps;
+        private String source;
+        private LocalDateTime generatedAt;
+
+        public String getRecordId() { return recordId; }
+        public void setRecordId(String recordId) { this.recordId = recordId; }
+        public String getProfileSummary() { return profileSummary; }
+        public void setProfileSummary(String profileSummary) { this.profileSummary = profileSummary; }
+        public List<String> getProfileTags() { return profileTags; }
+        public void setProfileTags(List<String> profileTags) { this.profileTags = profileTags; }
+        public List<String> getStrengths() { return strengths; }
+        public void setStrengths(List<String> strengths) { this.strengths = strengths; }
+        public String getCollaborationStyle() { return collaborationStyle; }
+        public void setCollaborationStyle(String collaborationStyle) { this.collaborationStyle = collaborationStyle; }
+        public String getWorkEnvironment() { return workEnvironment; }
+        public void setWorkEnvironment(String workEnvironment) { this.workEnvironment = workEnvironment; }
+        public String getDecisionStyle() { return decisionStyle; }
+        public void setDecisionStyle(String decisionStyle) { this.decisionStyle = decisionStyle; }
+        public List<String> getMotivation() { return motivation; }
+        public void setMotivation(List<String> motivation) { this.motivation = motivation; }
+        public List<String> getStudyPreferences() { return studyPreferences; }
+        public void setStudyPreferences(List<String> studyPreferences) { this.studyPreferences = studyPreferences; }
+        public List<String> getCareerInclinations() { return careerInclinations; }
+        public void setCareerInclinations(List<String> careerInclinations) { this.careerInclinations = careerInclinations; }
+        public List<String> getDevelopmentSuggestions() { return developmentSuggestions; }
+        public void setDevelopmentSuggestions(List<String> developmentSuggestions) { this.developmentSuggestions = developmentSuggestions; }
+        public List<AiProfileEvidence> getEvidence() { return evidence; }
+        public void setEvidence(List<AiProfileEvidence> evidence) { this.evidence = evidence; }
+        public List<String> getDataGaps() { return dataGaps; }
+        public void setDataGaps(List<String> dataGaps) { this.dataGaps = dataGaps; }
+        public String getSource() { return source; }
+        public void setSource(String source) { this.source = source; }
+        public LocalDateTime getGeneratedAt() { return generatedAt; }
+        public void setGeneratedAt(LocalDateTime generatedAt) { this.generatedAt = generatedAt; }
+    }
+
+    public static class AiProfileEvidence implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private String conclusion;
+        private String basis;
+        private String confidence;
+
+        public String getConclusion() { return conclusion; }
+        public void setConclusion(String conclusion) { this.conclusion = conclusion; }
+        public String getBasis() { return basis; }
+        public void setBasis(String basis) { this.basis = basis; }
+        public String getConfidence() { return confidence; }
+        public void setConfidence(String confidence) { this.confidence = confidence; }
     }
 
     public static class AssessmentBlock implements Serializable {
@@ -287,13 +373,17 @@ public class UserProfileSnapshot implements Serializable {
         private String painPoint;
         private String hasResume;
         private String resumeStatus;
+        private Long selectedResumeId;
         private String experience;
+        private String selfProfileSupplement;
         private String timeline;
         private EducationBlock education;
         private String weeklyAvailability;
         private String priorityHelp;
         private String recommendedEntry;
         private String onboardingCompletedAt;
+        private String targetSchool;
+        private String routeGoal;
 
         public String getIdentityType() {
             return identityType;
@@ -335,12 +425,28 @@ public class UserProfileSnapshot implements Serializable {
             this.resumeStatus = resumeStatus;
         }
 
+        public Long getSelectedResumeId() {
+            return selectedResumeId;
+        }
+
+        public void setSelectedResumeId(Long selectedResumeId) {
+            this.selectedResumeId = selectedResumeId;
+        }
+
         public String getExperience() {
             return experience;
         }
 
         public void setExperience(String experience) {
             this.experience = experience;
+        }
+
+        public String getSelfProfileSupplement() {
+            return selfProfileSupplement;
+        }
+
+        public void setSelfProfileSupplement(String selfProfileSupplement) {
+            this.selfProfileSupplement = selfProfileSupplement;
         }
 
         public String getTimeline() {
@@ -390,6 +496,17 @@ public class UserProfileSnapshot implements Serializable {
         public void setOnboardingCompletedAt(String onboardingCompletedAt) {
             this.onboardingCompletedAt = onboardingCompletedAt;
         }
+
+        public String getTargetSchool() {
+            return targetSchool;
+        }
+
+        public void setTargetSchool(String targetSchool) {
+            this.targetSchool = targetSchool;
+        }
+
+        public String getRouteGoal() { return routeGoal; }
+        public void setRouteGoal(String routeGoal) { this.routeGoal = routeGoal; }
     }
 
     public static class EducationBlock implements Serializable {
