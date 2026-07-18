@@ -8,8 +8,9 @@ import v620.cc001.cloud01.app01.mservice.storage.StudyCenterStorage;
 /** Adapts independent study daily tasks to the shared daily execution engine. */
 public class StudyDailyTaskStorageAdapter implements CareerDailyTaskStorage {
     private final StudyCenterStorage storage;
-    public StudyDailyTaskStorageAdapter(StudyCenterStorage storage) { this.storage = storage; }
-    public List<CareerDailyTaskDto> list(String userId) { return storage.listDailyTasks(userId); }
-    public CareerDailyTaskDto find(String userId, String taskId) { return storage.findDailyTask(userId, taskId); }
-    public void save(String userId, CareerDailyTaskDto task) { storage.saveDailyTask(userId, task); }
+    private final String direction;
+    public StudyDailyTaskStorageAdapter(StudyCenterStorage storage, String direction) { this.storage = storage; this.direction = direction; }
+    public List<CareerDailyTaskDto> list(String userId) { return storage.listDailyTasks(userId, direction); }
+    public CareerDailyTaskDto find(String userId, String taskId) { return storage.findDailyTask(userId, direction, taskId); }
+    public void save(String userId, CareerDailyTaskDto task) { storage.saveDailyTask(userId, direction, task); }
 }

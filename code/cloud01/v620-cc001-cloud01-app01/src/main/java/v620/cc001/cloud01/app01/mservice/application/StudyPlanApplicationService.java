@@ -41,7 +41,7 @@ public class StudyPlanApplicationService {
     private final CareerProfileApplicationService profileService;
     private final StudyPlanSummaryService summaryService;
     private final StudyPlanAiGenerator aiGenerator;
-    private final CareerDailyPlanApplicationService dailyService;
+    private final Clock clock;
 
     public StudyPlanApplicationService() {
         this(CyanCruiseStorageFactory.studyCenterStorage(), new CareerProfileApplicationService(),
@@ -57,8 +57,7 @@ public class StudyPlanApplicationService {
         this.profileService = profileService;
         this.summaryService = summaryService;
         this.aiGenerator = aiGenerator;
-        this.dailyService = new CareerDailyPlanApplicationService(new StudyPlanStorageAdapter(storage),
-                new StudyDailyTaskStorageAdapter(storage), clock, CareerRouteContext.STUDY);
+        this.clock = clock;
     }
 
     public CareerPlanSummaryDto getSummary(String userId) {
@@ -125,7 +124,7 @@ public class StudyPlanApplicationService {
             generated.setGeneratedAt(existing.getGeneratedAt() == null ? now : existing.getGeneratedAt());
             generated.setVersion(existing.getVersion() == null ? Integer.valueOf(1) : existing.getVersion());
         }
-        storage.savePlan(safeUserId, generated);
+        storage.savePlan(safeUserId, selection.getDirection(), generated);
         return summaryService.summarize(generated, now);
     }
 
@@ -133,20 +132,21 @@ public class StudyPlanApplicationService {
         String safeUserId = requireUserId(userId);
         StudyCenterSelectionDto selection = requireSelection(safeUserId);
         loadVerifiedPlan(safeUserId, selection);
-        return dailyService.getToday(safeUserId);
+        return dailyService(selection.getDirection()).getToday(safeUserId);
     }
 
     public CareerDailyPlanDto updateToday(String userId, CareerDailyTaskUpdateRequest request) {
         String safeUserId = requireUserId(userId);
         StudyCenterSelectionDto selection = requireSelection(safeUserId);
         loadVerifiedPlan(safeUserId, selection);
-        return dailyService.update(safeUserId, request);
+        return dailyService(selection.getDirection()).update(safeUserId, request);
     }
 
     private StudyCenterSelectionDto selection(String userId) { return storage.loadSelection(userId); }
     private List<StudyPlanningMaterialDto> usableMaterials(String userId, String direction) {
         List<StudyPlanningMaterialDto> usable = new ArrayList<StudyPlanningMaterialDto>();
-        if (!CareerRouteContext.POSTGRADUATE.equals(direction)) return usable;
+        if (!CareerRouteContext.POSTGRADUATE.equals(direction)
+                && !CareerRouteContext.RECOMMENDATION.equals(direction)) return usable;
         List<StudyPlanningMaterialDto> stored = storage.listMaterials(userId, direction);
         if (stored == null) return usable;
         for (StudyPlanningMaterialDto material : stored) {
@@ -172,10 +172,12 @@ public class StudyPlanApplicationService {
                 || "study-rule-fallback".equalsIgnoreCase(text(plan.getModelUsed()));
     }
     private CareerPlanRecordDto loadVerifiedPlan(String userId, StudyCenterSelectionDto selection) {
-        CareerPlanRecordDto plan = storage.loadPlan(userId);
+        String direction = selection == null ? null : selection.getDirection();
+        if (!CareerRouteContext.isStudyDirection(direction)) return null;
+        CareerPlanRecordDto plan = storage.loadPlan(userId, direction);
         if (isInvalidHistoricalPlan(plan, selection)) {
-            storage.deleteDailyTasks(userId);
-            storage.deletePlan(userId);
+            storage.deleteDailyTasks(userId, direction);
+            storage.deletePlan(userId, direction);
             return null;
         }
         return plan;
@@ -184,9 +186,10 @@ public class StudyPlanApplicationService {
         if (plan == null) return false;
         if (isRuleFallback(plan)) return true;
         boolean postgraduatePlan = CareerRouteContext.POSTGRADUATE.equals(plan.getStudyDirection());
+        boolean recommendationPlan = CareerRouteContext.RECOMMENDATION.equals(plan.getStudyDirection());
         boolean untypedPostgraduatePlan = !hasText(plan.getStudyDirection()) && selection != null
                 && CareerRouteContext.POSTGRADUATE.equals(selection.getDirection());
-        if (!postgraduatePlan && !untypedPostgraduatePlan) return false;
+        if (!postgraduatePlan && !recommendationPlan && !untypedPostgraduatePlan) return false;
         return !hasCompleteRoute(plan)
                 || !PostgraduateRouteCoverage.coversTwelveContinuousMonths(plan.getPhases())
                 || !"AGENT".equalsIgnoreCase(text(plan.getPlanningMode()))
@@ -245,6 +248,10 @@ public class StudyPlanApplicationService {
         return userId.trim();
     }
     private boolean hasText(String value) { return value != null && value.trim().length() > 0; }
+    private CareerDailyPlanApplicationService dailyService(String direction) {
+        return new CareerDailyPlanApplicationService(new StudyPlanStorageAdapter(storage, direction),
+                new StudyDailyTaskStorageAdapter(storage, direction), clock, CareerRouteContext.STUDY);
+    }
     private String safeMessage(String value) {
         if (!hasText(value)) return "none";
         String sanitized = value.replace('\r', ' ').replace('\n', ' ');
@@ -254,7 +261,8 @@ public class StudyPlanApplicationService {
     private static StudyPlanAiGenerator defaultAiGenerator() {
         Map<String, AgentPlatformTaskFlowConfig> configs = new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
         configs.put(CareerRouteContext.POSTGRADUATE, AgentPlatformTaskFlowConfig.fromSystemProperties(AgentPlatformStudyPlanGenerator.POSTGRADUATE_PREFIX));
-        configs.put(CareerRouteContext.RECOMMENDATION, AgentPlatformTaskFlowConfig.fromSystemProperties(AgentPlatformStudyPlanGenerator.RECOMMENDATION_PREFIX));
+        configs.put(CareerRouteContext.RECOMMENDATION, AgentPlatformTaskFlowConfig.fromSystemProperties(
+                AgentPlatformStudyPlanGenerator.RECOMMENDATION_PREFIX));
         configs.put(CareerRouteContext.STUDY_ABROAD, AgentPlatformTaskFlowConfig.fromSystemProperties(AgentPlatformStudyPlanGenerator.STUDY_ABROAD_PREFIX));
         Map<String, AgentPlatformTaskFlowClient> clients = new LinkedHashMap<String, AgentPlatformTaskFlowClient>();
         for (Map.Entry<String, AgentPlatformTaskFlowConfig> entry : configs.entrySet()) {

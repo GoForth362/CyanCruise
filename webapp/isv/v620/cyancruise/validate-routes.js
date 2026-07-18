@@ -677,6 +677,20 @@ for (const marker of ['data-link="study-resources">全部资源', "function rend
   }
 }
 
+for (const marker of ['direction === "RECOMMENDATION" ? "生成保研规划"',
+    'direction !== "POSTGRADUATE" && direction !== "RECOMMENDATION"',
+    'direction: firstText(getValue(state.studyCenterSelection, "direction"), "")']) {
+  if (!appSources.includes(marker)) {
+    fail(`Missing recommendation planning isolation marker: ${marker}`);
+  }
+}
+const studyMaterialDeleteApi = routeMap.routes.flatMap((route) => route.webApis || [])
+  .find((api) => api.path === "/cc001/study-center/materials/delete");
+if (!studyMaterialDeleteApi || !Array.isArray(studyMaterialDeleteApi.body)
+    || !studyMaterialDeleteApi.body.includes("direction")) {
+  fail("Study planning material deletion must carry the selected direction");
+}
+
 for (const key of ["interview-history", "interview-panorama-history"]) {
   if (routeMap.platformMounts.some((mount) => mount.routeKey === key)) {
     fail(`Interview history must only be entered from its interview page: ${key}`);

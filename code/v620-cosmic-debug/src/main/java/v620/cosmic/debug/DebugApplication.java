@@ -116,8 +116,6 @@ public class DebugApplication {
                 "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_ENABLED");
         setConfiguredProperty("cc001.agent.platform.study.recommendation.agentNumber",
                 "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_AGENTNUMBER");
-        setConfiguredProperty("cc001.agent.platform.study.recommendation.taskFlowCode",
-                "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_TASKFLOWCODE");
         setConfiguredProperty("cc001.agent.platform.study.abroad.enabled",
                 "CC001_AGENT_PLATFORM_STUDY_ABROAD_ENABLED");
         setConfiguredProperty("cc001.agent.platform.study.abroad.agentNumber",

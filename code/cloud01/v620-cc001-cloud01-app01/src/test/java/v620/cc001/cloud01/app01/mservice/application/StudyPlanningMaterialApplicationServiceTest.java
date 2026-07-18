@@ -41,14 +41,14 @@ class StudyPlanningMaterialApplicationServiceTest {
         assertEquals(1, service.list("user-a", CareerRouteContext.POSTGRADUATE).size());
         assertTrue(service.list("user-b", CareerRouteContext.POSTGRADUATE).isEmpty());
         assertThrows(IllegalArgumentException.class,
-                () -> service.delete("user-b", saved.getMaterialId()));
-        assertTrue(service.delete("user-a", saved.getMaterialId()).getDeleted().booleanValue());
+                () -> service.delete("user-b", CareerRouteContext.POSTGRADUATE, saved.getMaterialId()));
+        assertTrue(service.delete("user-a", CareerRouteContext.POSTGRADUATE, saved.getMaterialId()).getDeleted().booleanValue());
         assertFalse(fileStorage.delete(saved.getObjectKey()));
         assertTrue(service.list("user-a", CareerRouteContext.POSTGRADUATE).isEmpty());
     }
 
     @Test
-    void rejectsOversizedOrNonPostgraduateMaterial() {
+    void acceptsRecommendationMaterialAndKeepsDirectionsIsolated() {
         InMemoryStudyCenterStorage studyStorage = new InMemoryStudyCenterStorage();
         FileTextExtractor extractor = new FileTextExtractor() {
             public String extract(byte[] bytes, String objectKey) { return "text"; }
@@ -61,7 +61,13 @@ class StudyPlanningMaterialApplicationServiceTest {
         StudyPlanningMaterialUploadRequest request = request("guide.txt", "content");
         request.setDirection(CareerRouteContext.RECOMMENDATION);
 
-        assertThrows(IllegalArgumentException.class, () -> service.upload("user-a", request));
+        StudyPlanningMaterialDto saved = service.upload("user-a", request);
+
+        assertEquals(CareerRouteContext.RECOMMENDATION, saved.getDirection());
+        assertEquals(1, service.list("user-a", CareerRouteContext.RECOMMENDATION).size());
+        assertTrue(service.list("user-a", CareerRouteContext.POSTGRADUATE).isEmpty());
+        assertThrows(IllegalArgumentException.class,
+                () -> service.delete("user-a", CareerRouteContext.POSTGRADUATE, saved.getMaterialId()));
     }
 
     private StudyPlanningMaterialUploadRequest request(String filename, String text) {

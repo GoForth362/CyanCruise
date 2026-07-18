@@ -459,7 +459,8 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/study-center/materials/delete".equals(path)) {
                 return ApiResult.success(studyCenterWebApi.deleteMaterial(
-                        extractUserId(body), textOrNull(value(body, "materialId"))));
+                        extractUserId(body), textOrNull(value(body, "direction")),
+                        textOrNull(value(body, "materialId"))));
             }
             if ("/cc001/study-center/admin/resources/list".equals(path)) {
                 return ApiResult.success(studyCenterWebApi.adminResources(extractAdminId(body)));

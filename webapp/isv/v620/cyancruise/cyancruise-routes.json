@@ -513,7 +513,7 @@
           "name": "delete study planning material",
           "method": "POST",
           "path": "/cc001/study-center/materials/delete",
-          "body": ["userId", "materialId"],
+          "body": ["userId", "direction", "materialId"],
           "userIdRequired": true,
           "dto": "StudyPlanningMaterialDeleteResult",
           "fallback": "保留资料记录并提示删除失败。"

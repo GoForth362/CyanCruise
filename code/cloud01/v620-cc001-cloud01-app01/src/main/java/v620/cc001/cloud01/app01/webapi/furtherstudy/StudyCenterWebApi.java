@@ -85,8 +85,8 @@ public class StudyCenterWebApi {
             @ApiRequestBody(value = "任务状态", required = true) CareerDailyTaskUpdateRequest request) {
         return planService.updateToday(identityBoundary.requireUser(userId), request);
     }
-    @ApiPostMapping(value = "/materials/upload", desc = "上传考研规划资料", methodParamNames = {"userId", "request"})
-    public @ApiResponseBody(value = "考研规划资料") StudyPlanningMaterialDto uploadMaterial(
+    @ApiPostMapping(value = "/materials/upload", desc = "上传升学规划资料", methodParamNames = {"userId", "request"})
+    public @ApiResponseBody(value = "升学规划资料") StudyPlanningMaterialDto uploadMaterial(
             @ApiRequestBody(value = "userId", required = true) String userId,
             @ApiRequestBody(value = "资料", required = true) StudyPlanningMaterialUploadRequest request) {
         return materialService.upload(identityBoundary.requireUser(userId), request);
@@ -97,11 +97,12 @@ public class StudyCenterWebApi {
             @ApiRequestBody(value = "direction", required = true) String direction) {
         return materialService.list(identityBoundary.requireUser(userId), direction);
     }
-    @ApiPostMapping(value = "/materials/delete", desc = "删除升学规划资料", methodParamNames = {"userId", "materialId"})
+    @ApiPostMapping(value = "/materials/delete", desc = "删除升学规划资料", methodParamNames = {"userId", "direction", "materialId"})
     public @ApiResponseBody(value = "删除结果") StudyPlanningMaterialDeleteResult deleteMaterial(
             @ApiRequestBody(value = "userId", required = true) String userId,
+            @ApiRequestBody(value = "direction", required = true) String direction,
             @ApiRequestBody(value = "materialId", required = true) String materialId) {
-        return materialService.delete(identityBoundary.requireUser(userId), materialId);
+        return materialService.delete(identityBoundary.requireUser(userId), direction, materialId);
     }
     @ApiPostMapping(value = "/admin/resources/list", desc = "管理升学资讯", methodParamNames = {"adminId"})
     public @ApiResponseBody(value = "升学资讯列表") List<AdminContentItemDto> adminResources(@ApiRequestBody(value = "adminId", required = true) String adminId) { return applicationService.listResourcesForAdmin(adminId); }

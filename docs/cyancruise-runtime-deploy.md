@@ -194,19 +194,25 @@ psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-career-daily-
 psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-study-center-planning.sql
 ```
 
-升学规划按方向配置三套独立规划服务，属性前缀分别为 `cc001.agent.platform.study.postgraduate`、`cc001.agent.platform.study.recommendation` 和 `cc001.agent.platform.study.abroad`。机器生成路线时优先配置已发布的 `taskFlowCode`，避免对话智能体在任务流执行后把结构化 JSON 改写成说明文字；`agentNumber` 可保留给对话入口使用。切换当前路线只改变首页读取哪套规划，不会删除另一套规划和每日任务。
+升学规划按方向配置三套独立规划服务，属性前缀分别为 `cc001.agent.platform.study.postgraduate`、`cc001.agent.platform.study.recommendation` 和 `cc001.agent.platform.study.abroad`。保研规划与就业规划、考研规划使用相同的智能体直连方式，只需配置已发布智能体的 `agentNumber`；切换当前路线只改变首页读取哪套规划，不会删除另一套规划和每日任务。
 
 考研规划示例：
 
 ```properties
 cc001.agent.platform.study.postgraduate.enabled=true
 cc001.agent.platform.study.postgraduate.agentNumber=<已发布的考研规划智能体编码>
-cc001.agent.platform.study.postgraduate.taskFlowCode=<已发布的考研规划任务流编码>
 ```
 
-同时配置 `agentNumber` 与 `taskFlowCode` 时，后端路线生成接口优先直接运行任务流；智能体编码仍可用于平台对话测试，但不会参与机器可持久化 JSON 的二次改写。
+保研规划预留接口与考研使用相同的请求、解析、持久化和今日行动链路，只需配置独立智能体编码：
 
-升学中心上传的规划资料使用现有 Cosmic 文件服务保存文件，并在 `cc_study_center_material` 中保存当前用户的文件引用、解析状态和受限正文。执行更新后的 `datamodel/postgresql-study-center-planning.sql` 后，服务重启仍可读取资料；只有考研方向且正文解析状态为 `OK` 的当前用户资料会进入考研智能体请求。
+```properties
+cc001.agent.platform.study.recommendation.enabled=true
+cc001.agent.platform.study.recommendation.agentNumber=<已发布的保研规划智能体编码>
+```
+
+保研方向固定调用 `agentNumber` 对应的智能体，不读取 `cc001.agent.platform.study.recommendation.taskFlowCode`。智能体最终回复仍须满足后端共享规划 JSON 契约，校验通过后才会持久化。
+
+升学中心上传的规划资料使用现有 Cosmic 文件服务保存文件，并在 `cc_study_center_material` 中保存当前用户的文件引用、解析状态和受限正文。执行更新后的 `datamodel/postgresql-study-center-planning.sql` 后，服务重启仍可读取资料；考研与保研资料按“用户 + 升学方向”隔离，只有正文解析状态为 `OK` 的当前方向资料会进入对应智能体请求。规划和今日行动同样按“用户 + 升学方向”持久化，切换方向不会覆盖另一方向的数据。
 
 本地 8080 运行时保持 `cc001.storage.backend=postgresql`。不要启用 `cc001.storage.backend=cosmic`、`cc001.storage.cosmic.modules` 或 `cc001.storage.cosmic.clientClass`，也不进行 PostgreSQL 与金蝶业务对象双写。已有的 Cosmic storage adapter 仅作为后续迁移准备保留，不参与当前功能验收。
 

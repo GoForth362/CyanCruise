@@ -82,7 +82,7 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
         try {
             validate(plan, safeDirection);
         } catch (IllegalStateException firstFailure) {
-            if (!CareerRouteContext.POSTGRADUATE.equals(safeDirection)) throw firstFailure;
+            if (!requiresFullYearRoadmap(safeDirection)) throw firstFailure;
             request.putInput("question", question(safeDirection, targetSchool, profile, snapshot,
                     existingPlan, materials, true));
             response = client.execute(request);
@@ -134,11 +134,15 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
             payload.put("outputContract", "只输出一个 camelCase JSON 对象，必须包含 targetRole、"
                     + "startStateSummary、horizonYears、phases、weeklyPlan、dailySuggestions、weeklyFocus；"
                     + "startStateSummary 必须使用中文分号分隔 4 至 6 条事实，依次覆盖当前阶段、已有基础、"
-                    + "准备差距、考研目标和待确认信息，不能写成一整段；"
+                    + "准备差距、升学目标和待确认信息，不能写成一整段；"
                     + "不得输出 Markdown、解释文字或向用户提问。");
             payload.put("userQuestion", CareerRouteContext.POSTGRADUATE.equals(direction)
                     ? "请结合目标院校、用户画像和上传资料，生成从当前日期起未来一年的考研路线图、"
                     + "每周计划和每日行动。缺失项作为待核验任务，不得因此拒绝生成路线。"
+                    : CareerRouteContext.RECOMMENDATION.equals(direction)
+                    ? "请结合目标院校、用户画像和上传资料，生成从当前日期起未来一年的保研路线图、"
+                    + "每周计划和每日行动。围绕资格与排名、科研竞赛、材料准备、夏令营、预推免和志愿确认安排，"
+                    + "未核验的院校要求必须标记待确认，不得虚构录取结果或兜底路线。"
                     : "请按所选升学方向生成未来一年的可执行路线图、每周计划和每日行动。");
             return mapper.writeValueAsString(payload);
         } catch (Exception ex) {
@@ -274,7 +278,7 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
                 throw new IllegalStateException("升学规划结果格式不完整，请稍后重试。");
             }
         }
-        if (CareerRouteContext.POSTGRADUATE.equals(direction)
+        if (requiresFullYearRoadmap(direction)
                 && (plan.getPhases().size() < POSTGRADUATE_MIN_PHASES
                 || !coversFullYear(plan.getPhases()))) {
             throw new IllegalStateException(
@@ -284,6 +288,11 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
 
     private boolean coversFullYear(List<CareerPlanPhaseDto> phases) {
         return PostgraduateRouteCoverage.coversTwelveContinuousMonths(phases);
+    }
+
+    private boolean requiresFullYearRoadmap(String direction) {
+        return CareerRouteContext.POSTGRADUATE.equals(direction)
+                || CareerRouteContext.RECOMMENDATION.equals(direction);
     }
 
     private Map<String, Object> progress(CareerPlanRecordDto plan) {

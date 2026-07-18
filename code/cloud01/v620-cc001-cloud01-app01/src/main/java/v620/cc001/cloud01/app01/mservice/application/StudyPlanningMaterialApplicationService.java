@@ -38,15 +38,16 @@ public class StudyPlanningMaterialApplicationService {
     public StudyPlanningMaterialDto upload(String userId, StudyPlanningMaterialUploadRequest request) {
         String safeUserId = requireText(userId, "用户身份");
         if (request == null || request.getFile() == null) {
-            throw new IllegalArgumentException("请选择要上传的考研资料。");
+            throw new IllegalArgumentException("请选择要上传的升学规划资料。");
         }
         String direction = requireDirection(request.getDirection());
-        if (!CareerRouteContext.POSTGRADUATE.equals(direction)) {
-            throw new IllegalArgumentException("当前仅支持上传考研规划资料。");
+        if (!CareerRouteContext.POSTGRADUATE.equals(direction)
+                && !CareerRouteContext.RECOMMENDATION.equals(direction)) {
+            throw new IllegalArgumentException("当前仅支持上传考研或保研规划资料。");
         }
         FileUploadRequest file = request.getFile();
         validateFile(file);
-        file.setFolder("study-planning/" + safeUserId + "/postgraduate");
+        file.setFolder("study-planning/" + safeUserId + "/" + direction.toLowerCase(Locale.ROOT));
 
         FileUploadResult uploaded = fileService.upload(file);
         if (uploaded == null || !FileConstants.STATUS_OK.equals(uploaded.getStatus())
@@ -69,10 +70,11 @@ public class StudyPlanningMaterialApplicationService {
         return storage.listMaterials(requireText(userId, "用户身份"), requireDirection(direction));
     }
 
-    public StudyPlanningMaterialDeleteResult delete(String userId, String materialId) {
+    public StudyPlanningMaterialDeleteResult delete(String userId, String direction, String materialId) {
         String safeUserId = requireText(userId, "用户身份");
+        String safeDirection = requireDirection(direction);
         String safeMaterialId = requireText(materialId, "资料标识");
-        StudyPlanningMaterialDto material = storage.findMaterial(safeUserId, safeMaterialId);
+        StudyPlanningMaterialDto material = storage.findMaterial(safeUserId, safeDirection, safeMaterialId);
         if (material == null) {
             throw new IllegalArgumentException("没有找到当前用户的这份资料。");
         }
@@ -82,7 +84,7 @@ public class StudyPlanningMaterialApplicationService {
                 && !FileConstants.STATUS_SKIPPED.equals(fileResult.getStatus())) {
             throw new IllegalStateException("资料文件暂时无法删除，请稍后重试。");
         }
-        boolean deleted = storage.deleteMaterial(safeUserId, safeMaterialId);
+        boolean deleted = storage.deleteMaterial(safeUserId, safeDirection, safeMaterialId);
         StudyPlanningMaterialDeleteResult result = new StudyPlanningMaterialDeleteResult();
         result.setMaterialId(safeMaterialId);
         result.setDeleted(Boolean.valueOf(deleted));

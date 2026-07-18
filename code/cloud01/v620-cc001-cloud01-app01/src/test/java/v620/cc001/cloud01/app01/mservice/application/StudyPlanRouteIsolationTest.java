@@ -83,6 +83,29 @@ class StudyPlanRouteIsolationTest {
     }
 
     @Test
+    void recommendationGenerationPreservesConfiguredTaskFlowCode() {
+        final AtomicReference<AgentTaskFlowRequestDto> captured =
+                new AtomicReference<AgentTaskFlowRequestDto>();
+        AgentPlatformTaskFlowClient client = request -> {
+            captured.set(request);
+            return successfulAgentResponse();
+        };
+        Map<String, AgentPlatformTaskFlowClient> clients =
+                new LinkedHashMap<String, AgentPlatformTaskFlowClient>();
+        clients.put(CareerRouteContext.RECOMMENDATION, client);
+        Map<String, AgentPlatformTaskFlowConfig> configs =
+                new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
+        configs.put(CareerRouteContext.RECOMMENDATION, config("recommendation-flow"));
+
+        new AgentPlatformStudyPlanGenerator(clients, configs).generate(
+                "u1", CareerRouteContext.RECOMMENDATION, "电子科技大学", null);
+
+        assertNotNull(captured.get());
+        assertEquals("recommendation-flow", captured.get().getTaskFlowCode());
+        assertTrue(captured.get().getInputs().get("question").contains("\"direction\":\"RECOMMENDATION\""));
+    }
+
+    @Test
     void sendsCurrentUsersExtractedMaterialsToPostgraduateAgent() {
         final AtomicReference<AgentTaskFlowRequestDto> captured = new AtomicReference<AgentTaskFlowRequestDto>();
         AgentPlatformTaskFlowClient client = request -> {
@@ -151,7 +174,7 @@ class StudyPlanRouteIsolationTest {
         assertTrue(question.contains("不得拒绝生成"));
         assertTrue(question.contains("只输出一个 camelCase JSON 对象"));
         assertTrue(question.contains("中文分号分隔 4 至 6 条事实"));
-        assertTrue(question.contains("当前阶段、已有基础、准备差距、考研目标和待确认信息"));
+        assertTrue(question.contains("当前阶段、已有基础、准备差距、升学目标和待确认信息"));
     }
 
     @Test
@@ -326,6 +349,11 @@ class StudyPlanRouteIsolationTest {
         storage.saveSelection(selection);
         CareerPlanRecordDto old = plan(userId, "原保研规划", "study-old");
         old.setStudyDirection(CareerRouteContext.RECOMMENDATION);
+        old.setPhases(Arrays.asList(old.getPhases().get(0),
+                phase("study-old-2", "NOT_STARTED"), phase("study-old-3", "NOT_STARTED")));
+        applyFullYearHorizons(old);
+        old.setPlanningMode("AGENT");
+        old.setAgentStatus("AGENT_GENERATED");
         storage.savePlan(userId, old);
 
         assertThrows(IllegalStateException.class, () -> service.generateAgentPlan(userId));
@@ -524,6 +552,34 @@ class StudyPlanRouteIsolationTest {
         assertEquals(CareerRouteContext.STUDY, studyToday.getRouteType());
         assertFalse(employment.getToday(userId).getItems().get(0).isCompleted());
         assertTrue(study.getToday(userId).getCompletedCount().intValue() > 0);
+    }
+
+    @Test
+    void keepsPostgraduateAndRecommendationPlansAndTasksInDifferentSlots() {
+        String userId = "study-direction-isolation-user";
+        InMemoryStudyCenterStorage storage = new InMemoryStudyCenterStorage();
+        CareerPlanRecordDto postgraduate = plan(userId, "考研规划", "postgraduate-phase");
+        postgraduate.setStudyDirection(CareerRouteContext.POSTGRADUATE);
+        CareerPlanRecordDto recommendation = plan(userId, "保研规划", "recommendation-phase");
+        recommendation.setStudyDirection(CareerRouteContext.RECOMMENDATION);
+        storage.savePlan(userId, CareerRouteContext.POSTGRADUATE, postgraduate);
+        storage.savePlan(userId, CareerRouteContext.RECOMMENDATION, recommendation);
+
+        CareerDailyTaskDto postgraduateTask = new CareerDailyTaskDto();
+        postgraduateTask.setTaskId("shared-task-id");
+        postgraduateTask.setText("完成考研任务");
+        CareerDailyTaskDto recommendationTask = new CareerDailyTaskDto();
+        recommendationTask.setTaskId("shared-task-id");
+        recommendationTask.setText("完成保研任务");
+        storage.saveDailyTask(userId, CareerRouteContext.POSTGRADUATE, postgraduateTask);
+        storage.saveDailyTask(userId, CareerRouteContext.RECOMMENDATION, recommendationTask);
+
+        assertEquals("考研规划", storage.loadPlan(userId, CareerRouteContext.POSTGRADUATE).getTargetRole());
+        assertEquals("保研规划", storage.loadPlan(userId, CareerRouteContext.RECOMMENDATION).getTargetRole());
+        assertEquals("完成考研任务", storage.findDailyTask(userId, CareerRouteContext.POSTGRADUATE,
+                "shared-task-id").getText());
+        assertEquals("完成保研任务", storage.findDailyTask(userId, CareerRouteContext.RECOMMENDATION,
+                "shared-task-id").getText());
     }
 
     private CareerProfileApplicationService profileService() {

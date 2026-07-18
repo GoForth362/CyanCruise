@@ -38,21 +38,22 @@ public class InMemoryStudyCenterStorage implements StudyCenterStorage {
         selections.put(saved.getUserId(), saved);
         return copy(saved);
     }
-    public CareerPlanRecordDto loadPlan(String userId) { return plans.get(userId); }
-    public void savePlan(String userId, CareerPlanRecordDto plan) { if (plan == null) plans.remove(userId); else plans.put(userId, plan); }
-    public void deletePlan(String userId) { plans.remove(userId); }
-    public void deleteDailyTasks(String userId) { dailyTasks.remove(userId); }
-    public List<CareerDailyTaskDto> listDailyTasks(String userId) {
-        Map<String, CareerDailyTaskDto> values = dailyTasks.get(userId);
+    public CareerPlanRecordDto loadPlan(String userId, String direction) { return plans.get(routeKey(userId, direction)); }
+    public void savePlan(String userId, String direction, CareerPlanRecordDto plan) { String key = routeKey(userId, direction); if (plan == null) plans.remove(key); else plans.put(key, plan); }
+    public void deletePlan(String userId, String direction) { plans.remove(routeKey(userId, direction)); }
+    public void deleteDailyTasks(String userId, String direction) { dailyTasks.remove(routeKey(userId, direction)); }
+    public List<CareerDailyTaskDto> listDailyTasks(String userId, String direction) {
+        Map<String, CareerDailyTaskDto> values = dailyTasks.get(routeKey(userId, direction));
         return values == null ? new ArrayList<CareerDailyTaskDto>() : new ArrayList<CareerDailyTaskDto>(values.values());
     }
-    public CareerDailyTaskDto findDailyTask(String userId, String taskId) {
-        Map<String, CareerDailyTaskDto> values = dailyTasks.get(userId);
+    public CareerDailyTaskDto findDailyTask(String userId, String direction, String taskId) {
+        Map<String, CareerDailyTaskDto> values = dailyTasks.get(routeKey(userId, direction));
         return values == null ? null : values.get(taskId);
     }
-    public void saveDailyTask(String userId, CareerDailyTaskDto task) {
-        Map<String, CareerDailyTaskDto> values = dailyTasks.get(userId);
-        if (values == null) { values = new ConcurrentHashMap<String, CareerDailyTaskDto>(); dailyTasks.put(userId, values); }
+    public void saveDailyTask(String userId, String direction, CareerDailyTaskDto task) {
+        String key = routeKey(userId, direction);
+        Map<String, CareerDailyTaskDto> values = dailyTasks.get(key);
+        if (values == null) { values = new ConcurrentHashMap<String, CareerDailyTaskDto>(); dailyTasks.put(key, values); }
         values.put(task.getTaskId(), task);
     }
     public StudyPlanningMaterialDto saveMaterial(String userId, StudyPlanningMaterialDto material) {
@@ -61,9 +62,9 @@ public class InMemoryStudyCenterStorage implements StudyCenterStorage {
         materials.put(saved.getMaterialId(), saved);
         return copy(saved);
     }
-    public StudyPlanningMaterialDto findMaterial(String userId, String materialId) {
+    public StudyPlanningMaterialDto findMaterial(String userId, String direction, String materialId) {
         StudyPlanningMaterialDto material = materials.get(materialId);
-        return material == null || !userId.equals(material.getUserId()) ? null : copy(material);
+        return material == null || !userId.equals(material.getUserId()) || !direction.equals(material.getDirection()) ? null : copy(material);
     }
     public List<StudyPlanningMaterialDto> listMaterials(String userId, String direction) {
         List<StudyPlanningMaterialDto> out = new ArrayList<StudyPlanningMaterialDto>();
@@ -75,15 +76,16 @@ public class InMemoryStudyCenterStorage implements StudyCenterStorage {
         }
         return out;
     }
-    public boolean deleteMaterial(String userId, String materialId) {
+    public boolean deleteMaterial(String userId, String direction, String materialId) {
         StudyPlanningMaterialDto material = materials.get(materialId);
-        return material != null && userId.equals(material.getUserId())
+        return material != null && userId.equals(material.getUserId()) && direction.equals(material.getDirection())
                 && materials.remove(materialId, material);
     }
     public List<AdminContentItemDto> listResources() { List<AdminContentItemDto> out = new ArrayList<AdminContentItemDto>(); for (AdminContentItemDto item : resources.values()) out.add(copy(item)); return out; }
     public AdminContentItemDto findResource(String resourceId) { return copy(resources.get(resourceId)); }
     public AdminContentItemDto saveResource(AdminContentItemDto resource) { AdminContentItemDto saved = copy(resource); resources.put(saved.getContentId(), saved); return copy(saved); }
     public boolean deleteResource(String resourceId) { return resources.remove(resourceId) != null; }
+    private String routeKey(String userId, String direction) { return userId + "\u0000" + direction; }
     private StudyCenterSelectionDto copy(StudyCenterSelectionDto value) {
         if (value == null) return null;
         StudyCenterSelectionDto copy = new StudyCenterSelectionDto();
