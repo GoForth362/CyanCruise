@@ -12,11 +12,9 @@ import java.util.Collections;
 public class AiGatewayResumeDiagnosisAnalyzer implements ResumeDiagnosisAnalyzer {
 
     private final AiGateway gateway;
-    private final ResumeDiagnosisAnalyzer fallback;
 
-    public AiGatewayResumeDiagnosisAnalyzer(AiGateway gateway, ResumeDiagnosisAnalyzer fallback) {
+    public AiGatewayResumeDiagnosisAnalyzer(AiGateway gateway, ResumeDiagnosisAnalyzer ignoredFallback) {
         this.gateway = gateway;
-        this.fallback = fallback == null ? new DefaultResumeDiagnosisAnalyzer() : fallback;
     }
 
     public String analyze(ResumeDiagnosisRequest request, String resumeText) {
@@ -24,7 +22,7 @@ public class AiGatewayResumeDiagnosisAnalyzer implements ResumeDiagnosisAnalyzer
         aiRequest.setMessages(Collections.singletonList(new AiMessageDto("user", prompt(request, resumeText))));
         AiChatResponseDto response = gateway.chat(aiRequest);
         if (response == null || response.getErrorCode() != null || response.getContent() == null) {
-            return fallback.analyze(request, resumeText);
+            throw new IllegalStateException("AI 简历诊断暂时不可用，请稍后重试。");
         }
         return response.getContent();
     }

@@ -25,6 +25,7 @@ public class CareerResourceCardDto implements Serializable {
     private Long viewCount;
     private String careerPathId;
     private LocalDateTime publishedAt;
+    private Boolean pinned;
 
     public String getId() {
         return id;
@@ -144,5 +145,13 @@ public class CareerResourceCardDto implements Serializable {
 
     public void setPublishedAt(LocalDateTime publishedAt) {
         this.publishedAt = publishedAt;
+    }
+
+    public Boolean getPinned() {
+        return pinned;
+    }
+
+    public void setPinned(Boolean pinned) {
+        this.pinned = pinned;
     }
 }

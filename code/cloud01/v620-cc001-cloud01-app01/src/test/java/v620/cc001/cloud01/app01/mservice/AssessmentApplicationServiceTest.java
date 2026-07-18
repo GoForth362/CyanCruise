@@ -105,22 +105,12 @@ class AssessmentApplicationServiceTest {
                 new InMemoryAssessmentResultStorage(),
                 profileService(storage));
 
-        AssessmentSubmitRequest request = answers(answer(100101L, 100101L), answer(100102L, 100201L),
-                answer(100103L, 100301L), answer(100104L, 100401L),
-                answer(100105L, 100502L), answer(100106L, 100602L),
-                answer(100107L, 100702L), answer(100108L, 100802L),
-                answer(100109L, 100901L), answer(100110L, 101001L),
-                answer(100111L, 101101L), answer(100112L, 101201L),
-                answer(100113L, 101302L), answer(100114L, 101402L),
-                answer(100115L, 101502L), answer(100116L, 101602L));
-        request.setScaleId(Long.valueOf(1001L));
+        AssessmentScaleDto firstAttempt = assessmentService.startAttempt("user-catalog", Long.valueOf(1001L));
+        AssessmentScoreResult first = assessmentService.submit("user-catalog", answersForAttempt(firstAttempt));
+        AssessmentScaleDto secondAttempt = assessmentService.startAttempt("user-catalog", Long.valueOf(1001L));
+        AssessmentScoreResult second = assessmentService.submit("user-catalog", answersForAttempt(secondAttempt));
 
-        AssessmentScoreResult first = assessmentService.submit("user-catalog", request);
-        AssessmentScoreResult second = assessmentService.submit("user-catalog", request);
-
-        assertEquals("ENTP", first.getResultSummary());
         assertEquals(Long.valueOf(1001L), first.getScaleId());
-        assertEquals(Integer.valueOf(4), first.getDimensionCounts().get("N"));
         assertEquals(16, first.getAnswers().size());
         assertEquals(Long.valueOf(2L), assessmentService.listResults("user-catalog").get(0).getRecordId());
         assertEquals(second.getRecordId(), storage.loadSnapshot("user-catalog").getAssessment().getLastRecordId());
@@ -141,9 +131,29 @@ class AssessmentApplicationServiceTest {
         AssessmentQuestionDto saved = assessmentService.saveQuestion(Long.valueOf(1001L), question);
 
         assertNotNull(saved.getQuestionId());
-        assertEquals(Integer.valueOf(17), assessmentService.getScale(Long.valueOf(1001L)).getQuestionCount());
-        assertTrue(assessmentService.deleteQuestion(Long.valueOf(1001L), saved.getQuestionId()));
+        assertEquals(Integer.valueOf(17), assessmentService.getScale(Long.valueOf(1001L)).getPoolQuestionCount());
         assertEquals(Integer.valueOf(16), assessmentService.getScale(Long.valueOf(1001L)).getQuestionCount());
+        assertTrue(assessmentService.deleteQuestion(Long.valueOf(1001L), saved.getQuestionId()));
+        assertEquals(Integer.valueOf(16), assessmentService.getScale(Long.valueOf(1001L)).getPoolQuestionCount());
+    }
+
+    @Test
+    void unpublishedAssessmentQuestionIsNotSelectedForUserAttempt() {
+        AssessmentApplicationService assessmentService = new AssessmentApplicationService(
+                new AssessmentScoringService(),
+                new InMemoryAssessmentCatalog(),
+                new InMemoryAssessmentResultStorage(),
+                profileService(new FileCareerProfileStorage(tempDir)));
+        AssessmentScaleDto scale = assessmentService.getScale(Long.valueOf(1001L));
+        AssessmentQuestionDto unpublished = scale.getQuestions().get(0);
+        unpublished.setPublished(false);
+        assessmentService.saveQuestion(scale.getScaleId(), unpublished);
+
+        AssessmentScaleDto attempt = assessmentService.startAttempt("user-unpublished", scale.getScaleId());
+
+        for (AssessmentQuestionDto question : attempt.getQuestions()) {
+            assertFalse(unpublished.getQuestionId().equals(question.getQuestionId()));
+        }
     }
 
     @Test
@@ -219,6 +229,18 @@ class AssessmentApplicationServiceTest {
         Map<Long, Long> answers = new LinkedHashMap<Long, Long>();
         for (long[] entry : entries) {
             answers.put(Long.valueOf(entry[0]), Long.valueOf(entry[1]));
+        }
+        request.setAnswers(answers);
+        return request;
+    }
+
+    private AssessmentSubmitRequest answersForAttempt(AssessmentScaleDto attempt) {
+        AssessmentSubmitRequest request = new AssessmentSubmitRequest();
+        request.setScaleId(attempt.getScaleId());
+        request.setAttemptId(attempt.getAttemptId());
+        Map<Long, Long> answers = new LinkedHashMap<Long, Long>();
+        for (AssessmentQuestionDto question : attempt.getQuestions()) {
+            answers.put(question.getQuestionId(), question.getOptions().get(0).getOptionId());
         }
         request.setAnswers(answers);
         return request;

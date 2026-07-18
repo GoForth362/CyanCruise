@@ -44,7 +44,7 @@ public class AiGatewayCareerPlanGenerator implements CareerPlanAiGenerator {
         plan.setStartStateSummary(json);
         plan.setPlanningMode("AGENT");
         plan.setAgentStatus("AGENT_GENERATED");
-        plan.setHorizonYears(Integer.valueOf(3));
+        plan.setHorizonYears(Integer.valueOf(1));
         plan.setModelUsed(response.getModelName());
         plan.setTokensConsumed(response.getUsage() == null ? Integer.valueOf(0) : response.getUsage().getTotalTokens());
         plan.setGeneratedAt(LocalDateTime.now());
@@ -55,10 +55,35 @@ public class AiGatewayCareerPlanGenerator implements CareerPlanAiGenerator {
 
     private String prompt(String targetRole, CareerUserProfileDto profile) {
         return "请生成职业路线规划 JSON，必须包含 target_role,start_state,phases,weekly_plan,daily_suggestions。"
-                + "phases 需要覆盖 1 年和 3 年目标，每个阶段包含 goal,actions,kpis,sub_stages；"
+                + "phases 只覆盖未来 1 年目标，每个阶段包含 goal,actions,kpis,sub_stages；"
                 + "weekly_plan 给出本周目标、行动和交付物；daily_suggestions 给出每天建议。目标岗位："
                 + (targetRole == null ? "" : targetRole)
                 + "；画像完整度："
-                + (profile == null ? "" : profile.getCompletenessScore());
+                + (profile == null ? "" : profile.getCompletenessScore())
+                + selectedResumeContext(profile);
+    }
+
+    private String selectedResumeContext(CareerUserProfileDto profile) {
+        if (profile == null || profile.getEvidence() == null) {
+            return "";
+        }
+        String title = profile.getEvidence().get("selected_resume_title");
+        String target = profile.getEvidence().get("selected_resume_target");
+        String content = profile.getEvidence().get("selected_resume_content");
+        if (!hasText(title) && !hasText(target) && !hasText(content)) {
+            return "";
+        }
+        return "；用户选定的规划参考简历：标题=" + safe(title)
+                + "，目标方向=" + safe(target)
+                + "，简历正文=" + safe(content)
+                + "。规划必须结合这份简历中的真实经历、技能与教育背景，不得编造。";
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && value.trim().length() > 0;
     }
 }

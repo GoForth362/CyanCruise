@@ -11,6 +11,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,12 +39,53 @@ public class FileResumeDiagnosisStorage implements ResumeDiagnosisStorage {
             Map<Long, ResumeDiagnosisResultDto> map = loadDiagnoses();
             map.put(result.getResumeId(), result);
             write("diagnoses.ser", (Serializable) new LinkedHashMap<Long, ResumeDiagnosisResultDto>(map));
+            Map<Long, ResumeDiagnosisResultDto> history = loadHistory();
+            long diagnosisId = result.getDiagnosisId() == null ? nextHistoryId(history) : result.getDiagnosisId().longValue();
+            result.setDiagnosisId(Long.valueOf(diagnosisId));
+            history.put(Long.valueOf(diagnosisId), result);
+            write("history.ser", (Serializable) new LinkedHashMap<Long, ResumeDiagnosisResultDto>(history));
         }
         return result;
     }
 
     public synchronized ResumeDiagnosisResultDto loadDiagnosis(Long resumeId) {
         return resumeId == null ? null : loadDiagnoses().get(resumeId);
+    }
+
+    public synchronized List<ResumeDiagnosisResultDto> listDiagnoses(final String userId, final Long resumeId) {
+        List<ResumeDiagnosisResultDto> result = new ArrayList<ResumeDiagnosisResultDto>();
+        for (ResumeDiagnosisResultDto item : loadHistory().values()) {
+            if (same(userId, item.getUserId()) && same(resumeId, item.getResumeId())) {
+                result.add(item);
+            }
+        }
+        Collections.sort(result, new Comparator<ResumeDiagnosisResultDto>() {
+            public int compare(ResumeDiagnosisResultDto left, ResumeDiagnosisResultDto right) {
+                if (left.getDiagnosedAt() == null) return right.getDiagnosedAt() == null ? 0 : 1;
+                if (right.getDiagnosedAt() == null) return -1;
+                return right.getDiagnosedAt().compareTo(left.getDiagnosedAt());
+            }
+        });
+        return result;
+    }
+
+    public synchronized boolean deleteDiagnosis(String userId, Long diagnosisId) {
+        Map<Long, ResumeDiagnosisResultDto> history = loadHistory();
+        ResumeDiagnosisResultDto item = history.get(diagnosisId);
+        if (item == null || !same(userId, item.getUserId())) {
+            return false;
+        }
+        history.remove(diagnosisId);
+        write("history.ser", (Serializable) new LinkedHashMap<Long, ResumeDiagnosisResultDto>(history));
+        Map<Long, ResumeDiagnosisResultDto> latest = loadDiagnoses();
+        ResumeDiagnosisResultDto latestItem = latest.get(item.getResumeId());
+        if (latestItem != null && same(diagnosisId, latestItem.getDiagnosisId())) {
+            List<ResumeDiagnosisResultDto> remaining = listDiagnoses(userId, item.getResumeId());
+            if (remaining.isEmpty()) latest.remove(item.getResumeId());
+            else latest.put(item.getResumeId(), remaining.get(0));
+            write("diagnoses.ser", (Serializable) new LinkedHashMap<Long, ResumeDiagnosisResultDto>(latest));
+        }
+        return true;
     }
 
     public synchronized ResumeKeywordStatusDto saveKeywordStatus(ResumeKeywordStatusDto status) {
@@ -70,6 +115,26 @@ public class FileResumeDiagnosisStorage implements ResumeDiagnosisStorage {
         return value instanceof Map
                 ? new LinkedHashMap<Long, ResumeKeywordStatusDto>((Map<Long, ResumeKeywordStatusDto>) value)
                 : new LinkedHashMap<Long, ResumeKeywordStatusDto>();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<Long, ResumeDiagnosisResultDto> loadHistory() {
+        Object value = read("history.ser");
+        return value instanceof Map
+                ? new LinkedHashMap<Long, ResumeDiagnosisResultDto>((Map<Long, ResumeDiagnosisResultDto>) value)
+                : new LinkedHashMap<Long, ResumeDiagnosisResultDto>();
+    }
+
+    private long nextHistoryId(Map<Long, ResumeDiagnosisResultDto> history) {
+        long next = 1L;
+        for (Long id : history.keySet()) {
+            if (id != null && id.longValue() >= next) next = id.longValue() + 1L;
+        }
+        return next;
+    }
+
+    private boolean same(Object left, Object right) {
+        return left == null ? right == null : left.equals(right);
     }
 
     private Object read(String name) {

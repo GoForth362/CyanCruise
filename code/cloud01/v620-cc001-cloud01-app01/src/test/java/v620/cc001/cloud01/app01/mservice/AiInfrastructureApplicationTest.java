@@ -76,15 +76,13 @@ class AiInfrastructureApplicationTest {
     }
 
     @Test
-    void resumeAnalyzerFallsBackWhenGatewayUnavailable() {
+    void resumeAnalyzerFailsWhenGatewayUnavailable() {
         AiGatewayResumeDiagnosisAnalyzer analyzer = new AiGatewayResumeDiagnosisAnalyzer(
                 new DefaultAiGateway(new UnavailableAiProviderAdapter()), new DefaultResumeDiagnosisAnalyzer());
         ResumeDiagnosisRequest request = new ResumeDiagnosisRequest();
         request.setJobDescription("Java Spring");
 
-        String raw = analyzer.analyze(request, "Java Spring project");
-
-        assertTrue(raw.contains("overallScore"));
+        assertThrows(IllegalStateException.class, () -> analyzer.analyze(request, "Java Spring project"));
     }
 
     @Test

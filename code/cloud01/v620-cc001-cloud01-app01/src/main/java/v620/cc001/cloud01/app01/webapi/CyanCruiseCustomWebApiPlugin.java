@@ -1,5 +1,8 @@
 package v620.cc001.cloud01.app01.webapi;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import v620.cc001.cloud01.app01.webapi.admin.AdminConsoleGovernanceWebApi;
 import v620.cc001.cloud01.app01.webapi.assessment.AssessmentWebApi;
 import v620.cc001.cloud01.app01.webapi.assistant.AssistantChatWebApi;
@@ -39,6 +42,7 @@ import v620.cc001.base.common.dto.career.AssessmentSubmitRequest;
 import v620.cc001.base.common.dto.career.AssistantChatRequest;
 import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
+import v620.cc001.base.common.dto.career.CareerDailyTaskUpdateRequest;
 import v620.cc001.base.common.dto.career.CosmicIdentityContextDto;
 import v620.cc001.base.common.dto.career.FileUploadRequest;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyMaterialSaveRequest;
@@ -60,6 +64,7 @@ import v620.cc001.base.common.dto.furtherstudy.StudyAbroadProfileRequest;
 import v620.cc001.base.common.dto.furtherstudy.StudyAbroadSchoolPositionRequest;
 import v620.cc001.base.common.dto.furtherstudy.StudyAbroadStatementRequest;
 import v620.cc001.base.common.dto.furtherstudy.StudyAbroadVisaChecklistRequest;
+import v620.cc001.base.common.dto.furtherstudy.StudyPlanningMaterialUploadRequest;
 import v620.cc001.base.common.dto.career.SubscriptionGrantRequest;
 import v620.cc001.base.common.dto.career.SubscriptionSendRequest;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
@@ -73,6 +78,7 @@ import v620.cc001.cloud01.app01.mservice.furtherstudy.PostgraduateApplicationSer
 import v620.cc001.cloud01.app01.mservice.furtherstudy.RecommendationApplicationService;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.StudyAbroadApplicationService;
 import v620.cc001.cloud01.app01.webapi.furtherstudy.FurtherStudyWebApi;
+import v620.cc001.cloud01.app01.webapi.furtherstudy.StudyCenterWebApi;
 import v620.cc001.cloud01.app01.webapi.furtherstudy.PostgraduateWebApi;
 import v620.cc001.cloud01.app01.webapi.furtherstudy.RecommendationWebApi;
 import v620.cc001.cloud01.app01.webapi.furtherstudy.StudyAbroadWebApi;
@@ -93,6 +99,9 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
     public static final String PARAM_PATH = "path";
     public static final String PARAM_BODY = "body";
     public static final String PARAM_PLATFORM_IDENTITY = "platformIdentity";
+    private static final ObjectMapper RPC_RESPONSE_MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     private final CyanCruiseIdentityWebApi identityWebApi;
     private final CareerProfileWebApi profileWebApi;
@@ -111,6 +120,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
     private final RecommendationWebApi recommendationWebApi;
     private final StudyAbroadWebApi studyAbroadWebApi;
     private final FurtherStudyWebApi furtherStudyWebApi;
+    private final StudyCenterWebApi studyCenterWebApi;
 
     public CyanCruiseCustomWebApiPlugin() {
         this(new CyanCruiseIdentityWebApi(), new CareerProfileWebApi(), new CareerAgentWebApi(),
@@ -119,7 +129,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
                 new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi(),
                 new PostgraduateWebApi(), new RecommendationWebApi(), new StudyAbroadWebApi(),
-                new FurtherStudyWebApi());
+                new FurtherStudyWebApi(), new StudyCenterWebApi());
     }
 
     CyanCruiseCustomWebApiPlugin(CyanCruiseIdentityWebApi identityWebApi,
@@ -131,7 +141,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 new NotificationsSubscriptionsWebApi(), new AdminConsoleGovernanceWebApi(),
                 new FileUploadPreviewWebApi(), new ResumeDiagnosisWebApi(), new AssessmentWebApi(),
                 new PostgraduateWebApi(), new RecommendationWebApi(), new StudyAbroadWebApi(),
-                new FurtherStudyWebApi());
+                new FurtherStudyWebApi(), testStudyCenterWebApi());
     }
 
     CyanCruiseCustomWebApiPlugin(CyanCruiseIdentityWebApi identityWebApi,
@@ -150,7 +160,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         this(identityWebApi, profileWebApi, agentWebApi, resumeWebApi, planWebApi, interviewWebApi,
                 assistantWebApi, employmentWebApi, notificationsWebApi, adminWebApi, fileWebApi,
                 resumeDiagnosisWebApi, assessmentWebApi, testPostgraduateWebApi(), testRecommendationWebApi(),
-                testStudyAbroadWebApi(), testFurtherStudyWebApi());
+                testStudyAbroadWebApi(), testFurtherStudyWebApi(), testStudyCenterWebApi());
     }
 
     CyanCruiseCustomWebApiPlugin(CyanCruiseIdentityWebApi identityWebApi,
@@ -170,6 +180,30 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                                  RecommendationWebApi recommendationWebApi,
                                  StudyAbroadWebApi studyAbroadWebApi,
                                  FurtherStudyWebApi furtherStudyWebApi) {
+        this(identityWebApi, profileWebApi, agentWebApi, resumeWebApi, planWebApi, interviewWebApi,
+                assistantWebApi, employmentWebApi, notificationsWebApi, adminWebApi, fileWebApi,
+                resumeDiagnosisWebApi, assessmentWebApi, postgraduateWebApi, recommendationWebApi,
+                studyAbroadWebApi, furtherStudyWebApi, testStudyCenterWebApi());
+    }
+
+    CyanCruiseCustomWebApiPlugin(CyanCruiseIdentityWebApi identityWebApi,
+                                 CareerProfileWebApi profileWebApi,
+                                 CareerAgentWebApi agentWebApi,
+                                 ResumeWebApi resumeWebApi,
+                                 CareerPlanWebApi planWebApi,
+                                 InterviewWebApi interviewWebApi,
+                                 AssistantChatWebApi assistantWebApi,
+                                 EmploymentInsightsResourcesWebApi employmentWebApi,
+                                 NotificationsSubscriptionsWebApi notificationsWebApi,
+                                 AdminConsoleGovernanceWebApi adminWebApi,
+                                 FileUploadPreviewWebApi fileWebApi,
+                                 ResumeDiagnosisWebApi resumeDiagnosisWebApi,
+                                 AssessmentWebApi assessmentWebApi,
+                                 PostgraduateWebApi postgraduateWebApi,
+                                 RecommendationWebApi recommendationWebApi,
+                                 StudyAbroadWebApi studyAbroadWebApi,
+                                 FurtherStudyWebApi furtherStudyWebApi,
+                                 StudyCenterWebApi studyCenterWebApi) {
         this.identityWebApi = identityWebApi;
         this.profileWebApi = profileWebApi;
         this.agentWebApi = agentWebApi;
@@ -187,6 +221,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         this.recommendationWebApi = recommendationWebApi;
         this.studyAbroadWebApi = studyAbroadWebApi;
         this.furtherStudyWebApi = furtherStudyWebApi;
+        this.studyCenterWebApi = studyCenterWebApi;
     }
 
     private static PostgraduateWebApi testPostgraduateWebApi() {
@@ -209,6 +244,10 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 testIdentityBoundary());
     }
 
+    private static StudyCenterWebApi testStudyCenterWebApi() {
+        return new StudyCenterWebApi(null, null, null, testIdentityBoundary());
+    }
+
     private static IdentityAwareCyanCruiseWebApiBoundary testIdentityBoundary() {
         return new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver("api-user"));
     }
@@ -218,9 +257,25 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             @ApiRequestBody(value = "CyanCruise custom WebAPI params", required = true) Map<String, Object> params) {
         ApiResult result = doCustomService(params);
         if (result.getSuccess()) {
-            return CustomApiResult.success(result.getData());
+            try {
+                return CustomApiResult.success(toRpcSafeData(result.getData()));
+            } catch (RuntimeException ex) {
+                return CustomApiResult.fail("RPC_RESPONSE_CONVERSION_FAILED", "响应数据暂时无法处理，请稍后重试。");
+            }
         }
         return CustomApiResult.fail(result.getErrorCode(), result.getMessage());
+    }
+
+    static Object toRpcSafeData(Object data) {
+        if (data == null || data instanceof String || data instanceof Number || data instanceof Boolean) {
+            return data;
+        }
+        try {
+            byte[] json = RPC_RESPONSE_MAPPER.writeValueAsBytes(data);
+            return RPC_RESPONSE_MAPPER.readValue(json, Object.class);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Unable to convert Custom WebAPI response to RPC-safe data", ex);
+        }
     }
 
     @Override
@@ -240,6 +295,19 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/career-profile/snapshot/get".equals(path)) {
                 return ApiResult.success(profileWebApi.snapshot(extractUserId(body)));
+            }
+            if ("/cc001/career-profile/deep-profile/generate".equals(path)) {
+                return ApiResult.success(profileWebApi.generateDeepProfile(extractUserId(body)));
+            }
+            if ("/cc001/career-profile/deep-profile/latest".equals(path)) {
+                return ApiResult.success(profileWebApi.latestDeepProfile(extractUserId(body)));
+            }
+            if ("/cc001/career-profile/deep-profile/history".equals(path)) {
+                return ApiResult.success(profileWebApi.deepProfileHistory(extractUserId(body)));
+            }
+            if ("/cc001/career-profile/deep-profile/detail".equals(path)) {
+                return ApiResult.success(profileWebApi.deepProfileDetail(
+                        extractUserId(body), text(value(body, "recordId"))));
             }
             if ("/cc001/career-profile/draft/get".equals(path)) {
                 return ApiResult.success(profileWebApi.draft(extractUserId(body)));
@@ -262,17 +330,22 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(assessmentWebApi.scales());
             }
             if ("/cc001/assessment/questions".equals(path)) {
-                return ApiResult.success(assessmentWebApi.questions(longObject(value(body, "scaleId"))));
+                return ApiResult.success(assessmentWebApi.start(
+                        extractUserId(body), longObject(value(body, "scaleId"))));
             }
             if ("/cc001/assessment/submit".equals(path)) {
                 return ApiResult.success(assessmentWebApi.submit(
-                        extractUserId(body), extractAssessmentScale(body), extractAssessmentSubmitRequest(body)));
+                        extractUserId(body), null, extractAssessmentSubmitRequest(body)));
             }
             if ("/cc001/assessment/records".equals(path)) {
                 return ApiResult.success(assessmentWebApi.records(extractUserId(body)));
             }
             if ("/cc001/assessment/record/get".equals(path)) {
                 return ApiResult.success(assessmentWebApi.record(
+                        extractUserId(body), longObject(value(body, "recordId"))));
+            }
+            if ("/cc001/assessment/ai-interpretation/generate".equals(path)) {
+                return ApiResult.success(assessmentWebApi.generateAiInterpretation(
                         extractUserId(body), longObject(value(body, "recordId"))));
             }
             if ("/cc001/resume/list".equals(path)) {
@@ -289,6 +362,19 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/career-plan/ensure".equals(path)) {
                 return ApiResult.success(planWebApi.ensure(extractUserId(body)));
+            }
+            if ("/cc001/career-plan/generate".equals(path)) {
+                return ApiResult.success(planWebApi.generate(extractUserId(body)));
+            }
+            if ("/cc001/career-plan/daily/get".equals(path)) {
+                return ApiResult.success(planWebApi.daily(extractUserId(body)));
+            }
+            if ("/cc001/career-plan/daily/task/update".equals(path)) {
+                CareerDailyTaskUpdateRequest request = new CareerDailyTaskUpdateRequest();
+                Map<String, Object> values = mapValue(value(body, "request"));
+                request.setTaskId(text(values.get("taskId")));
+                request.setCompleted(booleanObject(values.get("completed")));
+                return ApiResult.success(planWebApi.updateDailyTask(extractUserId(body), request));
             }
             if ("/cc001/interview/list".equals(path)) {
                 return ApiResult.success(interviewWebApi.list(extractUserId(body)));
@@ -330,6 +416,65 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             }
             if ("/cc001/career-employment/resources/list".equals(path)) {
                 return ApiResult.success(employmentWebApi.resources(extractOptionalUserId(body)));
+            }
+            if ("/cc001/study-center/selection/get".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.selection(extractUserId(body)));
+            }
+            if ("/cc001/study-center/selection/save".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.saveSelection(extractUserId(body),
+                        textOrNull(value(body, "direction")), textOrNull(value(body, "targetSchool"))));
+            }
+            if ("/cc001/study-center/insight/get".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.insight(extractUserId(body)));
+            }
+            if ("/cc001/study-center/resources/list".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.resources());
+            }
+            if ("/cc001/study-center/plan/summary".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.planSummary(extractUserId(body)));
+            }
+            if ("/cc001/study-center/plan/ensure".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.ensurePlan(extractUserId(body)));
+            }
+            if ("/cc001/study-center/plan/generate".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.generatePlan(extractUserId(body)));
+            }
+            if ("/cc001/study-center/daily/get".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.daily(extractUserId(body)));
+            }
+            if ("/cc001/study-center/daily/task/update".equals(path)) {
+                CareerDailyTaskUpdateRequest request = new CareerDailyTaskUpdateRequest();
+                Map<String, Object> values = mapValue(value(body, "request"));
+                request.setTaskId(text(values.get("taskId")));
+                request.setCompleted(booleanObject(values.get("completed")));
+                return ApiResult.success(studyCenterWebApi.updateDaily(extractUserId(body), request));
+            }
+            if ("/cc001/study-center/materials/upload".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.uploadMaterial(
+                        extractUserId(body), extractStudyPlanningMaterialUploadRequest(body)));
+            }
+            if ("/cc001/study-center/materials/list".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.materials(
+                        extractUserId(body), textOrNull(value(body, "direction"))));
+            }
+            if ("/cc001/study-center/materials/delete".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.deleteMaterial(
+                        extractUserId(body), textOrNull(value(body, "materialId"))));
+            }
+            if ("/cc001/study-center/admin/resources/list".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.adminResources(extractAdminId(body)));
+            }
+            if ("/cc001/study-center/admin/resources/save".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.saveResource(extractAdminId(body), extractAdminContentItem(body)));
+            }
+            if ("/cc001/study-center/admin/resources/pin".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.pinResource(extractAdminId(body), textOrNull(value(body, "contentId"))));
+            }
+            if ("/cc001/study-center/admin/resources/hide".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.hideResource(extractAdminId(body), textOrNull(value(body, "contentId"))));
+            }
+            if ("/cc001/study-center/admin/resources/delete".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.deleteResource(extractAdminId(body), textOrNull(value(body, "contentId"))));
             }
             if ("/cc001/notifications/list".equals(path)) {
                 return ApiResult.success(notificationsWebApi.list(extractUserId(body)));
@@ -475,6 +620,26 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             if ("/cc001/resume-diagnosis/analyze".equals(path)) {
                 return ApiResult.success(resumeDiagnosisWebApi.analyze(
                         extractUserId(body), extractResumeDiagnosisRequest(body)));
+            }
+            if ("/cc001/admin/assessment/catalog".equals(path)) {
+                ApiResult admin = requireAdmin(body);
+                if (!admin.getSuccess()) return admin;
+                return ApiResult.success(assessmentWebApi.questions(longObject(value(body, "scaleId"))));
+            }
+            if ("/cc001/admin/assessment/scales/save".equals(path)) {
+                ApiResult admin = requireAdmin(body);
+                if (!admin.getSuccess()) return admin;
+                return ApiResult.success(assessmentWebApi.saveAnswerQuestionCount(
+                        longObject(value(body, "scaleId")), integerObject(value(body, "answerQuestionCount"))));
+            }
+            if ("/cc001/resume-diagnosis/history/list".equals(path)) {
+                return ApiResult.success(resumeDiagnosisWebApi.listHistory(
+                        extractUserId(body), longObject(value(body, "resumeId"))));
+            }
+            if ("/cc001/resume-diagnosis/history/delete".equals(path)) {
+                return ApiResult.success(resumeDiagnosisWebApi.deleteHistory(
+                        extractUserId(body), longObject(value(body, "resumeId")),
+                        longObject(value(body, "diagnosisId"))));
             }
             if ("/cc001/resume-diagnosis/keywords/status".equals(path)) {
                 return ApiResult.success(resumeDiagnosisWebApi.keywordStatus(
@@ -693,7 +858,9 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         onboarding.setPainPoint(textOrNull(firstPresent(values, "painPoint", "preference")));
         onboarding.setHasResume(textOrNull(firstPresent(values, "hasResume")));
         onboarding.setResumeStatus(textOrNull(values.get("resumeStatus")));
+        onboarding.setSelectedResumeId(longObject(firstPresent(values, "selectedResumeId")));
         onboarding.setExperience(textOrNull(firstPresent(values, "experience", "strengths")));
+        onboarding.setSelfProfileSupplement(textOrNull(values.get("selfProfileSupplement")));
         onboarding.setTimeline(textOrNull(values.get("timeline")));
         UserProfileSnapshot.EducationBlock education = extractEducation(values);
         if (education != null) {
@@ -704,6 +871,8 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         onboarding.setRecommendedEntry(textOrNull(values.get("recommendedEntry")));
         onboarding.setOnboardingCompletedAt(textOrNull(values.get("onboardingCompletedAt")));
         onboarding.setTargetRole(textOrNull(values.get("targetRole")));
+        onboarding.setTargetSchool(textOrNull(values.get("targetSchool")));
+        onboarding.setRouteGoal(textOrNull(values.get("routeGoal")));
         if (onboarding.getHasResume() == null) {
             onboarding.setHasResume(hasResumeFromStatus(onboarding.getResumeStatus()));
         }
@@ -1168,6 +1337,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         Map<?, ?> values = requestMap(body);
         if (values != null) {
             out.setScaleId(longObject(values.get("scaleId")));
+            out.setAttemptId(textOrNull(values.get("attemptId")));
             Object answers = values.get("answers");
             if (answers instanceof Map) {
                 Map<Long, Long> mapped = new LinkedHashMap<Long, Long>();
@@ -1180,8 +1350,61 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 }
                 out.setAnswers(mapped);
             }
+            Object answerOptionIds = values.get("answerOptionIds");
+            if (answerOptionIds instanceof Map) {
+                Map<Long, List<Long>> mapped = new LinkedHashMap<Long, List<Long>>();
+                for (Map.Entry<?, ?> entry : ((Map<?, ?>) answerOptionIds).entrySet()) {
+                    Long key = longObject(entry.getKey());
+                    List<Long> selected = longList(entry.getValue());
+                    if (key != null && !selected.isEmpty()) {
+                        mapped.put(key, selected);
+                    }
+                }
+                out.setAnswerOptionIds(mapped);
+            }
         }
         return out;
+    }
+
+    private StudyPlanningMaterialUploadRequest extractStudyPlanningMaterialUploadRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof StudyPlanningMaterialUploadRequest) {
+            return (StudyPlanningMaterialUploadRequest) request;
+        }
+        StudyPlanningMaterialUploadRequest out = new StudyPlanningMaterialUploadRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values == null) return out;
+        out.setDirection(textOrNull(values.get("direction")));
+        out.setMaterialType(textOrNull(values.get("materialType")));
+        out.setTitle(textOrNull(values.get("title")));
+        out.setMediaType(textOrNull(values.get("mediaType")));
+        Object fileValue = values.get("file");
+        Map<?, ?> fileValues = fileValue instanceof Map ? (Map<?, ?>) fileValue : values;
+        FileUploadRequest file = new FileUploadRequest();
+        file.setFolder(textOrNull(fileValues.get("folder")));
+        file.setOriginalFilename(textOrNull(firstPresent(fileValues,
+                "originalFilename", "filename", "name")));
+        file.setBytes(byteArray(firstPresent(fileValues, "bytes", "base64", "contentBase64")));
+        out.setFile(file);
+        return out;
+    }
+
+    private List<Long> longList(Object value) {
+        List<Long> result = new ArrayList<Long>();
+        if (value instanceof Iterable) {
+            for (Object item : (Iterable<?>) value) {
+                Long parsed = longObject(item);
+                if (parsed != null && !result.contains(parsed)) {
+                    result.add(parsed);
+                }
+            }
+            return result;
+        }
+        Long single = longObject(value);
+        if (single != null) {
+            result.add(single);
+        }
+        return result;
     }
 
     private SubscriptionGrantRequest extractSubscriptionGrantRequest(Object body) {
@@ -1227,7 +1450,6 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             out.setUserIds(stringList(values.get("userIds")));
             out.setTitle(textOrNull(values.get("title")));
             out.setContent(textOrNull(values.get("content")));
-            out.setLink(textOrNull(values.get("link")));
         }
         return out;
     }
@@ -1244,7 +1466,6 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             out.setType(textOrNull(values.get("type")));
             out.setTitle(textOrNull(values.get("title")));
             out.setSummary(textOrNull(values.get("summary")));
-            out.setImageUrl(textOrNull(values.get("imageUrl")));
             out.setSourceUrl(textOrNull(values.get("sourceUrl")));
             out.setCategory(textOrNull(values.get("category")));
             out.setPinned(booleanObject(values.get("pinned")));
@@ -1291,6 +1512,10 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
             out.setQuestionType(textOrNull(values.get("questionType")));
             out.setDimensionCode(textOrNull(values.get("dimensionCode")));
             out.setSortOrder(integerObject(values.get("sortOrder")));
+            Boolean published = booleanObject(values.get("published"));
+            if (published != null) {
+                out.setPublished(published.booleanValue());
+            }
             out.setOptions(extractAssessmentOptions(values.get("options")));
         }
         return out;

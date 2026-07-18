@@ -10,7 +10,9 @@ public class CareerProfileOnboardingRequest {
     private String painPoint;
     private String hasResume;
     private String resumeStatus;
+    private Long selectedResumeId;
     private String experience;
+    private String selfProfileSupplement;
     private String timeline;
     private UserProfileSnapshot.EducationBlock education;
     private String weeklyAvailability;
@@ -18,6 +20,8 @@ public class CareerProfileOnboardingRequest {
     private String recommendedEntry;
     private String onboardingCompletedAt;
     private String targetRole;
+    private String targetSchool;
+    private String routeGoal;
 
     public String getIdentityType() {
         return identityType;
@@ -59,12 +63,28 @@ public class CareerProfileOnboardingRequest {
         this.resumeStatus = resumeStatus;
     }
 
+    public Long getSelectedResumeId() {
+        return selectedResumeId;
+    }
+
+    public void setSelectedResumeId(Long selectedResumeId) {
+        this.selectedResumeId = selectedResumeId;
+    }
+
     public String getExperience() {
         return experience;
     }
 
     public void setExperience(String experience) {
         this.experience = experience;
+    }
+
+    public String getSelfProfileSupplement() {
+        return selfProfileSupplement;
+    }
+
+    public void setSelfProfileSupplement(String selfProfileSupplement) {
+        this.selfProfileSupplement = selfProfileSupplement;
     }
 
     public String getTimeline() {
@@ -122,4 +142,15 @@ public class CareerProfileOnboardingRequest {
     public void setTargetRole(String targetRole) {
         this.targetRole = targetRole;
     }
+
+    public String getTargetSchool() {
+        return targetSchool;
+    }
+
+    public void setTargetSchool(String targetSchool) {
+        this.targetSchool = targetSchool;
+    }
+
+    public String getRouteGoal() { return routeGoal; }
+    public void setRouteGoal(String routeGoal) { this.routeGoal = routeGoal; }
 }

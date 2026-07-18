@@ -64,6 +64,9 @@ class CareerPlanApplicationServiceTest {
         assertEquals("RULE_FALLBACK", summary.getPlanningMode());
         assertTrue(summary.getPhases().size() >= 3);
         assertTrue(summary.getDailySuggestions().size() >= 3);
+        assertEquals("ASSESSMENT_BASELINE", summary.getCurrentStage());
+        assertTrue(summary.getProfileCompletenessScore().intValue() < 100);
+        assertTrue(!summary.getMissingSignals().isEmpty());
     }
 
     @Test

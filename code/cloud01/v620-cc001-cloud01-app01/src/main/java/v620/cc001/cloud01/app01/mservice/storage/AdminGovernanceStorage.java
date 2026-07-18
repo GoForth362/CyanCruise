@@ -65,5 +65,7 @@ public interface AdminGovernanceStorage {
 
     boolean saveAudit(AdminAuditLogDto auditLog);
 
+    int deleteAuditLogsBefore(java.time.LocalDateTime cutoff);
+
     Map<String, List<AdminInterviewSummaryDto>> listInterviewsByUsers(List<AdminUserDto> users);
 }

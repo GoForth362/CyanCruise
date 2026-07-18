@@ -41,6 +41,10 @@ public class AssessmentWebApi {
         return applicationService.getScale(scaleId);
     }
 
+    public AssessmentScaleDto start(String userId, Long scaleId) {
+        return applicationService.startAttempt(userId, scaleId);
+    }
+
     public AssessmentQuestionDto saveQuestion(Long scaleId, AssessmentQuestionDto question) {
         return applicationService.saveQuestion(scaleId, question);
     }
@@ -49,15 +53,16 @@ public class AssessmentWebApi {
         return Boolean.valueOf(applicationService.deleteQuestion(scaleId, questionId));
     }
 
+    public AssessmentScaleDto saveAnswerQuestionCount(Long scaleId, Integer answerQuestionCount) {
+        return applicationService.saveAnswerQuestionCount(scaleId, answerQuestionCount);
+    }
+
     @ApiPostMapping(value = "/submit", desc = "提交职业测评答案", methodParamNames = {"userId", "scale", "request"})
     public @ApiResponseBody(value = "职业测评评分结果") AssessmentScoreResult submit(
             @ApiRequestBody(value = "用户ID", required = true) String userId,
-            @ApiRequestBody(value = "测评量表", required = true) AssessmentScaleDto scale,
+            @ApiRequestBody(value = "测评量表", required = false) AssessmentScaleDto scale,
             @ApiRequestBody(value = "测评答案", required = true) AssessmentSubmitRequest request) {
-        if (scale == null || scale.getScaleId() == null || scale.getQuestions() == null || scale.getQuestions().isEmpty()) {
-            return applicationService.submit(userId, request);
-        }
-        return applicationService.submitAndSaveProfile(userId, scale, request);
+        return applicationService.submit(userId, request);
     }
 
     @ApiPostMapping(value = "/records", desc = "列出职业测评记录", methodParamNames = {"userId"})
@@ -71,5 +76,11 @@ public class AssessmentWebApi {
             @ApiRequestBody(value = "用户ID", required = true) String userId,
             @ApiRequestBody(value = "记录ID", required = true) Long recordId) {
         return applicationService.loadResult(userId, recordId);
+    }
+    @ApiPostMapping(value = "/ai-interpretation/generate", desc = "生成测评AI解读", methodParamNames = {"userId", "recordId"})
+    public @ApiResponseBody(value = "测评AI解读结果") AssessmentScoreResult generateAiInterpretation(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "测评记录ID", required = true) Long recordId) {
+        return applicationService.generateAiInterpretation(userId, recordId);
     }
 }

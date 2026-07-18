@@ -1,15 +1,22 @@
 package v620.cc001.cloud01.app01.mservice.application;
 
 import v620.cc001.cloud01.app01.mservice.ai.CareerPlanAiGenerator;
+import v620.cc001.cloud01.app01.mservice.ai.AgentPlatformTaskFlowConfig;
+import v620.cc001.cloud01.app01.mservice.ai.impl.AgentPlatformCareerPlanGenerator;
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultAgentPlatformTaskFlowClient;
+import v620.cc001.cloud01.app01.mservice.ai.impl.KingdeeAgentSdkTaskFlowClient;
 import v620.cc001.cloud01.app01.mservice.storage.CareerPlanStorage;
 import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.base.helper.career.CareerPlanSummaryService;
 import v620.cc001.base.common.dto.career.CareerPlanRecordDto;
+import v620.cc001.base.common.dto.career.CareerPlanPhaseDto;
 import v620.cc001.base.common.dto.career.CareerPlanSaveRequest;
 import v620.cc001.base.common.dto.career.CareerPlanSummaryDto;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Application boundary for current career plan summary and default generation.
@@ -22,7 +29,8 @@ public class CareerPlanApplicationService {
     private final CareerPlanAiGenerator aiGenerator;
 
     public CareerPlanApplicationService() {
-        this(CyanCruiseStorageFactory.careerPlanStorage(), new CareerProfileApplicationService(), new CareerPlanSummaryService());
+        this(CyanCruiseStorageFactory.careerPlanStorage(), new CareerProfileApplicationService(),
+                new CareerPlanSummaryService(), defaultAiGenerator());
     }
 
     public CareerPlanApplicationService(CareerPlanStorage storage,
@@ -43,13 +51,13 @@ public class CareerPlanApplicationService {
 
     public CareerPlanSummaryDto getSummary(String userId) {
         String safeUserId = requireUserId(userId);
+        CareerUserProfileDto profile = resolveProfile(safeUserId);
         CareerPlanRecordDto existing = storage.load(safeUserId);
         if (existing == null) {
-            return summaryService.summarize(null, LocalDateTime.now());
+            return summarizeWithProfile(null, profile, LocalDateTime.now());
         }
-        CareerUserProfileDto profile = resolveProfile(safeUserId);
         CareerPlanRecordDto current = refreshPlanWhenTargetChanged(safeUserId, existing, profile, LocalDateTime.now());
-        return summaryService.summarize(current, LocalDateTime.now());
+        return summarizeWithProfile(current, profile, LocalDateTime.now());
     }
 
     public CareerPlanSummaryDto ensurePlan(String userId) {
@@ -59,19 +67,19 @@ public class CareerPlanApplicationService {
         if (existing != null) {
             CareerPlanRecordDto current = refreshPlanWhenTargetChanged(safeUserId, existing, profile, LocalDateTime.now());
             if (current != existing) {
-                return summaryService.summarize(current, LocalDateTime.now());
+                return summarizeWithProfile(current, profile, LocalDateTime.now());
             }
             if (existing.getPhases() == null || existing.getPhases().isEmpty()) {
                 CareerPlanRecordDto enriched = summaryService.enrichStructuredPlan(existing, profile, LocalDateTime.now());
                 storage.save(safeUserId, enriched);
-                return summaryService.summarize(enriched, LocalDateTime.now());
+                return summarizeWithProfile(enriched, profile, LocalDateTime.now());
             }
-            return summaryService.summarize(existing, LocalDateTime.now());
+            return summarizeWithProfile(existing, profile, LocalDateTime.now());
         }
         String targetRole = resolveTargetRole(profile);
         CareerPlanRecordDto created = createPlanWithGenerator(safeUserId, targetRole, profile, LocalDateTime.now());
         storage.save(safeUserId, created);
-        return summaryService.summarize(created, LocalDateTime.now());
+        return summarizeWithProfile(created, profile, LocalDateTime.now());
     }
 
     public CareerPlanSummaryDto savePlan(String userId, CareerPlanSaveRequest request) {
@@ -100,7 +108,7 @@ public class CareerPlanApplicationService {
                 : existing.getVersion().intValue() + 1));
         summaryService.enrichStructuredPlan(plan, profile, now);
         storage.save(safeUserId, plan);
-        return summaryService.summarize(plan, now);
+        return summarizeWithProfile(plan, profile, now);
     }
 
     public boolean hasPlan(String userId) {
@@ -115,6 +123,7 @@ public class CareerPlanApplicationService {
                 if (generated != null) {
                     generated.setUserId(userId);
                     generated.setTargetRole(firstText(generated.getTargetRole(), targetRole));
+                    generated.setAgentTraceId(resumeReferenceTrace(profile));
                     generated.setGeneratedAt(generated.getGeneratedAt() == null ? now : generated.getGeneratedAt());
                     generated.setLastUpdatedAt(generated.getLastUpdatedAt() == null ? now : generated.getLastUpdatedAt());
                     return summaryService.enrichStructuredPlan(generated, profile, now);
@@ -123,13 +132,17 @@ public class CareerPlanApplicationService {
                 // Fall back to deterministic rules until the external agent is stable.
             }
         }
-        return summaryService.defaultPlan(userId, targetRole, profile, now);
+        CareerPlanRecordDto fallback = summaryService.defaultPlan(userId, targetRole, profile, now);
+        fallback.setAgentTraceId(resumeReferenceTrace(profile));
+        return fallback;
     }
 
     private CareerPlanRecordDto refreshPlanWhenTargetChanged(String userId, CareerPlanRecordDto existing,
                                                              CareerUserProfileDto profile, LocalDateTime now) {
         String profileTargetRole = resolveTargetRole(profile);
-        if (!hasText(profileTargetRole) || sameText(existing.getTargetRole(), profileTargetRole)) {
+        boolean targetUnchanged = !hasText(profileTargetRole) || sameText(existing.getTargetRole(), profileTargetRole);
+        boolean resumeUnchanged = sameNullableText(existing.getAgentTraceId(), resumeReferenceTrace(profile));
+        if (targetUnchanged && resumeUnchanged) {
             return existing;
         }
         CareerPlanRecordDto refreshed = createPlanWithGenerator(userId, profileTargetRole, profile, now);
@@ -168,5 +181,162 @@ public class CareerPlanApplicationService {
             return false;
         }
         return first.trim().equals(second.trim());
+    }
+
+    private CareerPlanSummaryDto summarizeWithProfile(CareerPlanRecordDto plan, CareerUserProfileDto profile,
+                                                       LocalDateTime now) {
+        CareerPlanSummaryDto summary = summaryService.summarize(plan, now);
+        if (profile == null) {
+            summary.setMissingSignals(new ArrayList<CareerUserProfileDto.MissingSignal>());
+            return summary;
+        }
+        summary.setProfileCompletenessScore(profile.getCompletenessScore());
+        summary.setCurrentStage(profile.getCurrentStage());
+        summary.setMissingSignals(profile.getMissingSignals() == null
+                ? new ArrayList<CareerUserProfileDto.MissingSignal>()
+                : profile.getMissingSignals());
+        return summary;
+    }
+
+    /**
+     * Explicit user-triggered Agent generation. Existing plans remain untouched on any failure.
+     */
+    public CareerPlanSummaryDto generateAgentPlan(String userId) {
+        String safeUserId = requireUserId(userId);
+        if (aiGenerator == null) {
+            throw new IllegalStateException("就业规划智能服务尚未配置，请稍后重试。");
+        }
+        CareerPlanRecordDto existing = storage.load(safeUserId);
+        if (hasPhases(existing) && !hasRefreshablePhase(existing)) {
+            throw new IllegalStateException("当前路线图的所有阶段都已开始或完成，不能重新生成。请继续完成现有计划。");
+        }
+        CareerUserProfileDto profile = resolveProfile(safeUserId);
+        LocalDateTime now = LocalDateTime.now();
+        CareerPlanRecordDto generated;
+        try {
+            generated = aiGenerator.generate(safeUserId, resolveTargetRole(profile), profile);
+        } catch (RuntimeException ex) {
+            throw new IllegalStateException("就业规划智能服务暂不可用，原有路线图已保留，请稍后重试。");
+        }
+        if (generated == null) {
+            throw new IllegalStateException("就业规划智能服务暂不可用，原有路线图已保留，请稍后重试。");
+        }
+        generated.setUserId(safeUserId);
+        generated.setTargetRole(firstText(generated.getTargetRole(), resolveTargetRole(profile)));
+        generated.setAgentTraceId(resumeReferenceTrace(profile));
+        generated.setLastUpdatedAt(now);
+        summaryService.enrichStructuredPlan(generated, profile, now);
+        if (hasProtectedPhase(existing)) {
+            mergeProtectedPhases(existing, generated);
+            generated.setGeneratedAt(existing.getGeneratedAt() == null ? now : existing.getGeneratedAt());
+            generated.setVersion(existing.getVersion() == null ? Integer.valueOf(1) : existing.getVersion());
+        } else {
+            generated.setGeneratedAt(now);
+            generated.setVersion(Integer.valueOf(existing == null || existing.getVersion() == null
+                    ? 1 : existing.getVersion().intValue() + 1));
+        }
+        storage.save(safeUserId, generated);
+        return summarizeWithProfile(generated, profile, now);
+    }
+
+    private void mergeProtectedPhases(CareerPlanRecordDto existing, CareerPlanRecordDto generated) {
+        List<CareerPlanPhaseDto> current = existing.getPhases();
+        List<CareerPlanPhaseDto> incoming = generated.getPhases();
+        List<CareerPlanPhaseDto> merged = new ArrayList<CareerPlanPhaseDto>();
+        int size = Math.max(current == null ? 0 : current.size(), incoming == null ? 0 : incoming.size());
+        for (int index = 0; index < size; index++) {
+            CareerPlanPhaseDto currentPhase = current != null && index < current.size() ? current.get(index) : null;
+            CareerPlanPhaseDto incomingPhase = incoming != null && index < incoming.size() ? incoming.get(index) : null;
+            if (isProtectedPhase(currentPhase)) {
+                merged.add(currentPhase);
+            } else if (incomingPhase != null) {
+                merged.add(incomingPhase);
+            }
+        }
+        generated.setPhases(merged);
+        if (hasInProgressPhase(existing)) {
+            generated.setWeeklyPlan(existing.getWeeklyPlan());
+            generated.setDailySuggestions(existing.getDailySuggestions());
+            generated.setWeeklyFocus(existing.getWeeklyFocus());
+        }
+    }
+
+    private boolean hasPhases(CareerPlanRecordDto plan) {
+        return plan != null && plan.getPhases() != null && !plan.getPhases().isEmpty();
+    }
+
+    private boolean hasProtectedPhase(CareerPlanRecordDto plan) {
+        if (!hasPhases(plan)) return false;
+        for (CareerPlanPhaseDto phase : plan.getPhases()) {
+            if (isProtectedPhase(phase)) return true;
+        }
+        return false;
+    }
+
+    private boolean hasRefreshablePhase(CareerPlanRecordDto plan) {
+        if (!hasPhases(plan)) return true;
+        for (CareerPlanPhaseDto phase : plan.getPhases()) {
+            if (!isProtectedPhase(phase)) return true;
+        }
+        return false;
+    }
+
+    private boolean hasInProgressPhase(CareerPlanRecordDto plan) {
+        if (!hasPhases(plan)) return false;
+        for (CareerPlanPhaseDto phase : plan.getPhases()) {
+            if (isInProgressStatus(phase == null ? null : phase.getStatus())) return true;
+        }
+        return false;
+    }
+
+    private boolean isProtectedPhase(CareerPlanPhaseDto phase) {
+        String status = phase == null ? null : phase.getStatus();
+        return isInProgressStatus(status) || isCompletedStatus(status);
+    }
+
+    private boolean isInProgressStatus(String status) {
+        if (!hasText(status)) return false;
+        String normalized = normalizeStatus(status);
+        return "IN_PROGRESS".equals(normalized) || "STARTED".equals(normalized)
+                || "执行中".equals(status.trim()) || "进行中".equals(status.trim())
+                || "已开始".equals(status.trim());
+    }
+
+    private boolean isCompletedStatus(String status) {
+        if (!hasText(status)) return false;
+        String normalized = normalizeStatus(status);
+        return "COMPLETED".equals(normalized) || "DONE".equals(normalized)
+                || "FINISHED".equals(normalized) || "已完成".equals(status.trim());
+    }
+
+    private String normalizeStatus(String status) {
+        return status.trim().toUpperCase().replace('-', '_').replace(' ', '_');
+    }
+
+    private boolean sameNullableText(String first, String second) {
+        if (!hasText(first) && !hasText(second)) {
+            return true;
+        }
+        return sameText(first, second);
+    }
+
+    private String resumeReferenceTrace(CareerUserProfileDto profile) {
+        if (profile == null || profile.getEvidence() == null) {
+            return null;
+        }
+        String resumeId = profile.getEvidence().get("selected_resume_id");
+        return hasText(resumeId) ? "selected-resume:" + resumeId.trim() : null;
+    }
+
+    private static CareerPlanAiGenerator defaultAiGenerator() {
+        AgentPlatformTaskFlowConfig config = AgentPlatformTaskFlowConfig.fromSystemProperties(
+                AgentPlatformCareerPlanGenerator.CONFIG_PREFIX);
+        if (config.isAgentSdkAvailable()) {
+            return new AgentPlatformCareerPlanGenerator(new KingdeeAgentSdkTaskFlowClient(config), config);
+        }
+        if (config.isAvailable()) {
+            return new AgentPlatformCareerPlanGenerator(new DefaultAgentPlatformTaskFlowClient(config), config);
+        }
+        return null;
     }
 }

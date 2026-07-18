@@ -10,6 +10,7 @@
       "workbench",
       "employment-home",
       "further-study-home",
+      "study-resources",
       "postgraduate",
       "postgraduate-school",
       "postgraduate-plan",
@@ -33,7 +34,6 @@
       "file-upload-preview",
       "resume-diagnosis",
       "career-plan",
-      "interview-home",
       "interview",
       "interview-history",
       "interview-panorama-history",
@@ -54,10 +54,7 @@
       "resume",
       "resume-diagnosis",
       "career-plan",
-      "interview-home",
       "interview",
-      "interview-history",
-      "interview-panorama-history",
       "interview-panorama",
       "assistant",
       "messages",
@@ -382,7 +379,7 @@
     },
     {
       "key": "employment-home",
-      "title": "就业",
+      "title": "就业中心",
       "ipdPaths": [
         "pages/home/index",
         "pages/resume/index",
@@ -440,7 +437,7 @@
     },
     {
       "key": "further-study-home",
-      "title": "深造",
+      "title": "升学中心",
       "ipdPaths": [
         "pages/home/index"
       ],
@@ -448,15 +445,78 @@
       "status": "available",
       "webApis": [
         {
-          "name": "career plan summary",
+          "name": "study plan summary",
           "method": "POST",
-          "path": "/cc001/career-plan/summary",
+          "path": "/cc001/study-center/plan/summary",
           "body": [
             "userId"
           ],
           "userIdRequired": true,
           "dto": "CareerPlanSummaryDto",
-          "fallback": "Show further-study route cards and planned Agent entry state."
+          "fallback": "保留已保存的升学路线图，并提示用户先选择升学方向。"
+        },
+        {
+          "name": "ensure study plan",
+          "method": "POST",
+          "path": "/cc001/study-center/plan/ensure",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "保留原升学路线图。"
+        },
+        {
+          "name": "generate study plan with selected direction Agent",
+          "method": "POST",
+          "path": "/cc001/study-center/plan/generate",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "智能体失败时不覆盖原升学路线图。"
+        },
+        {
+          "name": "study daily plan",
+          "method": "POST",
+          "path": "/cc001/study-center/daily/get",
+          "body": ["userId"],
+          "userIdRequired": true,
+          "dto": "CareerDailyPlanDto",
+          "fallback": "不读取就业任务，提示升学今日行动暂不可用。"
+        },
+        {
+          "name": "update study daily task",
+          "method": "POST",
+          "path": "/cc001/study-center/daily/task/update",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "CareerDailyPlanDto",
+          "fallback": "恢复勾选状态且不影响就业任务。"
+        },
+        {
+          "name": "upload postgraduate planning material",
+          "method": "POST",
+          "path": "/cc001/study-center/materials/upload",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "StudyPlanningMaterialDto",
+          "fallback": "保留现有资料列表并提示上传失败。"
+        },
+        {
+          "name": "list study planning materials",
+          "method": "POST",
+          "path": "/cc001/study-center/materials/list",
+          "body": ["userId", "direction"],
+          "userIdRequired": true,
+          "dto": "List<StudyPlanningMaterialDto>",
+          "fallback": "显示资料暂时无法读取，不影响已有路线。"
+        },
+        {
+          "name": "delete study planning material",
+          "method": "POST",
+          "path": "/cc001/study-center/materials/delete",
+          "body": ["userId", "materialId"],
+          "userIdRequired": true,
+          "dto": "StudyPlanningMaterialDeleteResult",
+          "fallback": "保留资料记录并提示删除失败。"
         },
         {
           "name": "further study record list",
@@ -543,6 +603,32 @@
           "userIdRequired": true,
           "dto": "List<FurtherStudyEventDto>",
           "fallback": "Show the record without history details."
+        }
+      ]
+    },
+    {
+      "key": "study-resources",
+      "title": "全部升学资源",
+      "ipdPaths": [
+        "pages/home/index"
+      ],
+      "target": "index.html?ccRoute=study-resources",
+      "status": "available",
+      "parentRoute": "further-study-home",
+      "visibility": {
+        "defaultNav": false,
+        "debugNav": false,
+        "hashDirect": true
+      },
+      "webApis": [
+        {
+          "name": "study resource feed",
+          "method": "POST",
+          "path": "/cc001/study-center/resources/list",
+          "body": [],
+          "userIdRequired": false,
+          "dto": "CareerResourceFeedDto",
+          "fallback": "显示升学资源空状态或加载失败提示，并保留返回升学中心的操作。"
         }
       ]
     },
@@ -1108,7 +1194,7 @@
     },
     {
       "key": "assessment",
-      "title": "职业测评",
+      "title": "画像补全",
       "ipdPaths": [
         "pages/assessment/index",
         "pages/assessment/quiz",
@@ -1131,9 +1217,10 @@
           "method": "POST",
           "path": "/cc001/assessment/questions",
           "body": [
+            "userId",
             "scaleId"
           ],
-          "userIdRequired": false,
+          "userIdRequired": true,
           "dto": "AssessmentScaleDto",
           "fallback": "Show assessment question unavailable state."
         },
@@ -1144,6 +1231,7 @@
           "body": [
             "userId",
             "scaleId",
+            "attemptId",
             "answers"
           ],
           "userIdRequired": true,
@@ -1172,6 +1260,73 @@
           "userIdRequired": true,
           "dto": "AssessmentScoreResult",
           "fallback": "Show record unavailable state."
+        },
+        {
+          "name": "generate deep profile",
+          "method": "POST",
+          "path": "/cc001/career-profile/deep-profile/generate",
+          "body": [
+            "userId"
+          ],
+          "userIdRequired": true,
+          "dto": "AiDeepProfileBlock",
+          "fallback": "Show a retryable generation failure state without replacing the latest saved profile."
+        },
+        {
+          "name": "get latest deep profile",
+          "method": "POST",
+          "path": "/cc001/career-profile/deep-profile/latest",
+          "body": [
+            "userId"
+          ],
+          "userIdRequired": true,
+          "dto": "AiDeepProfileBlock",
+          "fallback": "Show no deep profile state."
+        }
+      ]
+    },
+    {
+      "key": "deep-profile-detail",
+      "title": "深度画像详情",
+      "ipdPaths": [
+        "pages/assessment/result"
+      ],
+      "target": "index.html?ccRoute=deep-profile-detail",
+      "status": "available",
+      "webApis": [
+        {
+          "name": "list deep profile history",
+          "method": "POST",
+          "path": "/cc001/career-profile/deep-profile/history",
+          "body": [
+            "userId"
+          ],
+          "userIdRequired": true,
+          "dto": "List<AiDeepProfileBlock>",
+          "fallback": "Keep the latest profile visible and show a retryable history loading state."
+        },
+        {
+          "name": "get deep profile detail",
+          "method": "POST",
+          "path": "/cc001/career-profile/deep-profile/detail",
+          "body": [
+            "userId",
+            "recordId"
+          ],
+          "userIdRequired": true,
+          "dto": "AiDeepProfileBlock",
+          "fallback": "Keep the current profile visible and show a retryable detail loading state."
+        },
+        {
+          "name": "get latest deep profile",
+          "method": "POST",
+          "path": "/cc001/career-profile/deep-profile/latest",
+          "body": [
+            "userId"
+          ],
+          "userIdRequired": true,
+          "dto": "AiDeepProfileBlock",
+          "fallback": "Show no deep profile state."
         }
       ]
     },
@@ -1366,6 +1521,24 @@
           "fallback": "Show keyword status pending."
         },
         {
+          "name": "resume diagnosis history",
+          "method": "POST",
+          "path": "/cc001/resume-diagnosis/history/list",
+          "body": ["userId", "resumeId"],
+          "userIdRequired": true,
+          "dto": "List<ResumeDiagnosisResultDto>",
+          "fallback": "Show an empty diagnosis history list."
+        },
+        {
+          "name": "delete resume diagnosis history",
+          "method": "POST",
+          "path": "/cc001/resume-diagnosis/history/delete",
+          "body": ["userId", "resumeId", "diagnosisId"],
+          "userIdRequired": true,
+          "dto": "Boolean",
+          "fallback": "Keep the record and show a retry message."
+        },
+        {
           "name": "career profile snapshot for revision context",
           "method": "POST",
           "path": "/cc001/career-profile/snapshot/get",
@@ -1420,6 +1593,40 @@
           "userIdRequired": true,
           "dto": "CareerPlanSummaryDto",
           "fallback": "Show planning Agent pending state."
+        },
+        {
+          "name": "generate employment plan with Agent",
+          "method": "POST",
+          "path": "/cc001/career-plan/generate",
+          "body": [
+            "userId"
+          ],
+          "userIdRequired": true,
+          "dto": "CareerPlanSummaryDto",
+          "fallback": "保留原有路线图并提示用户稍后重试。"
+        },
+        {
+          "name": "daily plan from current route phase",
+          "method": "POST",
+          "path": "/cc001/career-plan/daily/get",
+          "body": [
+            "userId"
+          ],
+          "userIdRequired": true,
+          "dto": "CareerDailyPlanDto",
+          "fallback": "保留页面上的路线图，并提示每日计划暂时无法加载。"
+        },
+        {
+          "name": "update daily task status",
+          "method": "POST",
+          "path": "/cc001/career-plan/daily/task/update",
+          "body": [
+            "userId",
+            "request"
+          ],
+          "userIdRequired": true,
+          "dto": "CareerDailyPlanDto",
+          "fallback": "恢复任务勾选状态，并提示完成状态尚未保存。"
         }
       ]
     },
@@ -1785,6 +1992,31 @@
           "fallback": "Keep previous question list and show delete failed."
         },
         {
+          "name": "load assessment catalog",
+          "method": "POST",
+          "path": "/cc001/admin/assessment/catalog",
+          "body": [
+            "adminId",
+            "scaleId"
+          ],
+          "adminIdRequired": true,
+          "dto": "AssessmentScaleDto",
+          "fallback": "Keep previous assessment catalog and show load failed."
+        },
+        {
+          "name": "save assessment settings",
+          "method": "POST",
+          "path": "/cc001/admin/assessment/scales/save",
+          "body": [
+            "adminId",
+            "scaleId",
+            "answerQuestionCount"
+          ],
+          "adminIdRequired": true,
+          "dto": "AssessmentScaleDto",
+          "fallback": "Keep previous assessment settings and show save failed."
+        },
+        {
           "name": "save assessment question",
           "method": "POST",
           "path": "/cc001/admin/assessment/questions/save",
@@ -1905,29 +2137,6 @@
           "adminIdRequired": true,
           "dto": "AdminPageResult<AdminAuditLogDto>",
           "fallback": "Show audit log unavailable."
-        }
-      ]
-    },
-    {
-      "key": "interview-home",
-      "title": "面试中心",
-      "ipdPaths": [
-        "pages/interview/index",
-        "pages/interview/history"
-      ],
-      "target": "index.html?ccRoute=interview-home",
-      "status": "available",
-      "webApis": [
-        {
-          "name": "interview list",
-          "method": "POST",
-          "path": "/cc001/interview/list",
-          "body": [
-            "userId"
-          ],
-          "userIdRequired": true,
-          "dto": "List<InterviewSessionDto>",
-          "fallback": "显示两种面试入口和全景面试空记录状态，AI 记录由独立分页页承载。"
         }
       ]
     },
@@ -2246,7 +2455,7 @@
     {
       "mountKey": "cyancruise-employment-home",
       "routeKey": "employment-home",
-      "title": "就业",
+      "title": "就业中心",
       "target": "index.html?ccRoute=employment-home",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
@@ -2258,14 +2467,26 @@
     {
       "mountKey": "cyancruise-further-study-home",
       "routeKey": "further-study-home",
-      "title": "深造",
+      "title": "升学中心",
       "target": "index.html?ccRoute=further-study-home",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
       "publishability": "user-facing",
       "identityMode": "production-cosmic-context",
-      "fallback": "Show planned study route cards and keep homepage reachable.",
-      "deploymentNotes": "Mount as the platform sidebar parent page for postgraduate, recommendation, and study-abroad planning."
+      "fallback": "Show the local four-stage study route map, direction selector, insight, and study resources without duplicate companion cards.",
+      "deploymentNotes": "Mount as the platform sidebar study route map and parent page for postgraduate, recommendation, and study-abroad planning."
+    },
+    {
+      "mountKey": "cyancruise-study-resources",
+      "routeKey": "study-resources",
+      "title": "全部升学资源",
+      "target": "index.html?ccRoute=study-resources",
+      "audience": "cyancruise-user",
+      "requiredRole": "COSMIC_AUTHENTICATED_USER",
+      "publishability": "entry-only",
+      "identityMode": "production-cosmic-context",
+      "fallback": "显示升学资源空状态或加载失败提示，并允许返回升学中心。",
+      "deploymentNotes": "作为升学中心内部的全部资源落地页，不配置为默认平台侧边栏菜单。"
     },
     {
       "mountKey": "cyancruise-postgraduate",
@@ -2306,7 +2527,7 @@
     {
       "mountKey": "cyancruise-onboarding",
       "routeKey": "onboarding",
-      "title": "CyanCruise 个人情况",
+      "title": "青途启航个人情况",
       "target": "index.html?ccRoute=onboarding",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
@@ -2318,7 +2539,7 @@
     {
       "mountKey": "cyancruise-today-action",
       "routeKey": "today-action",
-      "title": "CyanCruise 今日行动",
+      "title": "青途启航今日行动",
       "target": "index.html?ccRoute=today-action",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
@@ -2330,7 +2551,7 @@
     {
       "mountKey": "cyancruise-assessment",
       "routeKey": "assessment",
-      "title": "职业测评",
+      "title": "画像补全",
       "target": "index.html?ccRoute=assessment",
       "audience": "cyancruise-user",
       "requiredRole": "COSMIC_AUTHENTICATED_USER",
@@ -2388,18 +2609,6 @@
       "deploymentNotes": "复用简历、目标岗位、用户画像和 AI 网关；语音、数字人和身体语言不在本挂载范围。"
     },
     {
-      "mountKey": "cyancruise-interview-history",
-      "routeKey": "interview-history",
-      "title": "AI 模拟面试记录",
-      "target": "index.html?ccRoute=interview-history",
-      "audience": "cyancruise-user",
-      "requiredRole": "COSMIC_AUTHENTICATED_USER",
-      "publishability": "user-facing",
-      "identityMode": "production-cosmic-context",
-      "fallback": "显示分页记录读取失败状态。",
-      "deploymentNotes": "复用既有面试数据库记录，后端固定每页返回 10 条文字面试记录。"
-    },
-    {
       "mountKey": "cyancruise-interview-panorama",
       "routeKey": "interview-panorama",
       "title": "全景仿真面试",
@@ -2410,18 +2619,6 @@
       "identityMode": "production-cosmic-context",
       "fallback": "摄像头不可用时允许无摄像头继续；语音转文字不可用时允许手工输入。",
       "deploymentNotes": "需要 HTTPS、浏览器摄像头和麦克风权限；媒体流仅本地预览，不上传、不保存、不进行身体语言分析。"
-    },
-    {
-      "mountKey": "cyancruise-interview-panorama-history",
-      "routeKey": "interview-panorama-history",
-      "title": "全景仿真面试记录",
-      "target": "index.html?ccRoute=interview-panorama-history",
-      "audience": "cyancruise-user",
-      "requiredRole": "COSMIC_AUTHENTICATED_USER",
-      "publishability": "user-facing",
-      "identityMode": "production-cosmic-context",
-      "fallback": "显示全景分页记录读取失败状态。",
-      "deploymentNotes": "复用既有面试数据库记录，后端固定每页返回 10 条 VOICE/PANORAMA 面试记录。"
     },
     {
       "mountKey": "cyancruise-career-plan",
@@ -2486,7 +2683,7 @@
     {
       "mountKey": "cyancruise-admin-console",
       "routeKey": "admin-console",
-      "title": "CyanCruise 管理后台",
+      "title": "青途启航管理后台",
       "target": "index.html?ccRoute=admin-console",
       "audience": "cyancruise-admin",
       "requiredRole": "ADMIN",

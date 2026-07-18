@@ -142,6 +142,20 @@ class InterviewApplicationServiceTest {
     }
 
     @Test
+    void guidedInterviewCanFinishWithoutAnAnswer() {
+        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
+                profileService(new InMemoryCareerProfileStorage()));
+        InterviewSessionDto session = service.startGuided("early-finish-user", startRequest("前端开发工程师")).getSession();
+
+        InterviewReportDto report = service.finishAndReport("early-finish-user", session.getInterviewId());
+
+        assertEquals(Integer.valueOf(0), report.getOverallScore());
+        assertEquals(Integer.valueOf(0), report.getTotalQuestions());
+        assertEquals(InterviewConstants.STATUS_COMPLETED,
+                service.get("early-finish-user", session.getInterviewId()).getStatus());
+    }
+
+    @Test
     void guidedInterviewStopsAfterSevenAnswers() {
         CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
         InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,

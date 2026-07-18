@@ -19,19 +19,16 @@
 - **THEN** 系统拒绝诊断并返回明确错误
 
 ### Requirement: 解析诊断结果
-系统 SHALL 将诊断分析解析为结构化结果。结果 SHALL 包含 resumeId、overallScore、strengths、weaknesses、suggestions 和 rawAnalysis。overallScore SHALL 保持在 0 到 100 之间。
+系统 SHALL 仅将通过校验的智能体结构化 JSON 解析为诊断结果。结果 SHALL 包含 resumeId、overallScore、strengths、weaknesses、suggestions 和 rawAnalysis。overallScore SHALL 保持在 0 到 100 之间；无效响应 SHALL 返回可重试失败且不得保存。
 
 #### Scenario: 解析结构化 JSON
 - **WHEN** 分析响应包含 JSON 对象且包含 overallScore、strengths、weaknesses 或 suggestions
 - **THEN** 系统提取这些字段并返回结构化诊断结果
 
-#### Scenario: 解析非结构化文本
-- **WHEN** 分析响应不是可解析 JSON 但包含 0 到 100 的数字
-- **THEN** 系统将第一个合法数字作为 overallScore，并将原文作为建议或原始分析
-
-#### Scenario: 使用兜底分数
-- **WHEN** 分析响应为空或无法提取合法分数
-- **THEN** 系统返回明确兜底分数和空列表，且不抛出解析异常
+#### Scenario: 拒绝非结构化或不完整响应
+- **WHEN** 智能体响应不是合法 JSON、缺少必要字段或包含无效分数
+- **THEN** 系统返回可供用户重试的失败信息
+- **AND THEN** 系统不保存诊断记录，也不更新简历诊断分数
 
 ### Requirement: 回写诊断分数
 系统 SHALL 在诊断成功后将 overallScore 写回对应简历记录的 diagnosisScore，并通过简历基础能力同步职业画像 resume block。若诊断请求没有 resumeId，系统 SHALL 返回诊断结果但不更新任何简历记录。
@@ -105,11 +102,11 @@
 - **THEN** WebAPI 触发关键词重算并返回最新状态
 
 ### Requirement: 保持可替换的诊断与关键词边界
-系统 SHALL 通过可替换边界完成诊断分析、文本来源解析和关键词持久化。默认实现 SHALL 可在没有 AI SDK、PDF 解析库、OSS SDK 或 Cosmic datamodel 的情况下通过测试；未来 AI、文件和 datamodel 适配 SHALL 能替换这些边界，而无需修改 DTO、helper 或 WebAPI 契约。
+系统 SHALL 通过可替换边界完成诊断分析、文本来源解析和关键词持久化。测试 SHALL 可通过注入模拟智能体、文件和存储适配器运行；正式诊断 SHALL 只接受智能体返回的合法结构化结果，不得以确定性规则结果替代智能体诊断。未来 AI、文件和 datamodel 适配 SHALL 能替换这些边界，而无需修改 DTO、helper 或 WebAPI 契约。
 
-#### Scenario: 默认实现可测试
+#### Scenario: 通过模拟适配器测试
 - **WHEN** 本地测试运行且没有外部 AI、PDF 或 OSS 能力
-- **THEN** 系统仍可通过确定性规则完成诊断解析、关键词抽取和状态读写
+- **THEN** 系统通过注入模拟智能体和存储适配器验证诊断解析、关键词抽取和状态读写
 
 #### Scenario: 替换为 AI 诊断适配器
 - **WHEN** 后续 AI 诊断适配器实现完成
@@ -134,8 +131,6 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 - **WHEN** 用户尝试读取、触发或回写不属于自己的 resumeId
 - **THEN** 系统 SHALL 拒绝该操作，并且 PostgreSQL 中其他用户数据保持不变
 
-
-
 ### Requirement: 输出简历诊断建议
 简历诊断结果 SHALL 在保留 `overallScore`、`strengths`、`weaknesses`、`suggestions` 和 `rawAnalysis` 的基础上，支持返回结构化简历诊断建议和优化计划摘要。旧调用方未消费新字段时，既有字段语义 SHALL 保持兼容。
 
@@ -144,8 +139,8 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 - **THEN** 系统解析为结构化建议列表，并同步保留普通 suggestions 以兼容旧页面
 
 #### Scenario: AI 只返回普通文本
-- **WHEN** AI 或 fallback analyzer 只返回普通建议文本
-- **THEN** 系统从普通文本生成至少一条可展示的诊断建议，或返回空建议列表和明确的 fallback 状态
+- **WHEN** 智能体只返回普通文本而不是符合契约的结构化诊断 JSON
+- **THEN** 系统返回可供用户重试的失败信息，且不生成或保存规则版建议
 
 #### Scenario: 旧诊断记录可读取
 - **WHEN** PostgreSQL 中已有旧版诊断 payload 没有结构化建议字段
@@ -163,7 +158,7 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 - **THEN** 系统将最新诊断分数和关键建议摘要用于刷新用户画像中的简历状态
 
 ### Requirement: 强化诊断上下文组装
-简历诊断 SHALL 在可用时组装目标岗位、目标岗位要求、用户画像摘要、测评结果、简历关键词和文件文本提取结果作为上下文。上下文缺失 SHALL 降级为明确提示或 fallback 规则，不得伪造不存在的画像、文件或 AI 能力。
+简历诊断 SHALL 在可用时组装目标岗位、目标岗位要求、用户画像摘要、测评结果、简历关键词和文件文本提取结果作为上下文。上下文缺失 SHALL 明确标记缺失信息，不得伪造不存在的画像、文件或 AI 能力，也不得改用基础规则生成诊断。
 
 #### Scenario: 画像和岗位要求同时可用
 - **WHEN** 用户画像存在目标岗位且请求包含目标岗位要求
@@ -171,7 +166,7 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 
 #### Scenario: AI provider 不可用
 - **WHEN** 真实 AI provider 未启用或返回 unavailable
-- **THEN** 系统使用确定性 fallback analyzer 生成基础诊断和诊断建议，并返回明确 fallback 状态
+- **THEN** 系统返回可供用户重试的失败信息，且不保存诊断记录或更新简历诊断分数
 
 ### Requirement: 诊断前补齐 PDF 正文
 按 `resumeId` 发起诊断时，系统 SHALL 在所有权校验后优先读取已有 `parsedContent`；仅当正文为空且存在 `fileKey` 时，系统 SHALL 尝试通过文件文本提取边界读取 PDF 正文，成功后回写简历记录并继续既有诊断流程。
@@ -189,10 +184,10 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 - **THEN** 系统直接使用已有正文诊断，不重新下载或解析 PDF
 
 ### Requirement: 返回可解释评分明细
-简历诊断 SHALL 返回总分及分项评分。基础规则诊断 SHALL 使用内容完整度、目标岗位匹配、经历证据和表达清晰度四项标准，各项 SHALL 包含得分、满分和本次评分依据，满分合计 SHALL 为 100。
+简历诊断 SHALL 返回总分及分项评分。智能体诊断 SHALL 使用内容完整度、目标岗位匹配、经历证据和表达清晰度四项标准，各项 SHALL 包含得分、满分和本次评分依据，满分合计 SHALL 为 100。
 
-#### Scenario: 基础规则诊断完成
-- **WHEN** 系统基于简历正文和岗位上下文完成规则诊断
+#### Scenario: 智能体诊断完成
+- **WHEN** 系统基于简历正文和岗位上下文获得合法的智能体诊断结果
 - **THEN** 结果返回四项评分明细，且各项得分之和等于总分
 
 #### Scenario: 旧结果没有评分明细
@@ -200,7 +195,7 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 - **THEN** 旧结果仍可读取，页面显示总分并说明暂无分项依据
 
 ### Requirement: 建议对应真实缺失信号
-基础规则诊断 SHALL 根据简历中是否识别到岗位相关词、项目或工作经历、量化成果、动作和结果表达生成对应建议。系统 SHALL NOT 在未检查相关信号时输出固定建议。
+智能体诊断 SHALL 根据简历中是否识别到岗位相关词、项目或工作经历、量化成果、动作和结果表达生成对应建议。系统 SHALL NOT 在未检查相关信号时输出固定建议。
 
 #### Scenario: 缺少量化成果
 - **WHEN** 简历正文未识别到数字、百分比或数量结果
@@ -211,7 +206,7 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 - **THEN** 系统提示对照岗位要求补充真实经历证据，不使用行业缩写
 
 ### Requirement: 目标岗位影响诊断结果
-按已有简历发起诊断时，系统 SHALL 使用该简历记录保存的目标岗位。基础规则 SHALL 根据前端、后端、数据、产品等岗位方向识别对应能力词，使不同目标岗位可以影响岗位匹配得分和建议。
+按已有简历发起诊断时，系统 SHALL 使用该简历记录保存的目标岗位。智能体 SHALL 根据前端、后端、数据、产品等岗位方向识别对应能力词，使不同目标岗位可以影响岗位匹配得分和建议。
 
 #### Scenario: 前端岗位简历包含前端能力
 - **WHEN** 所选简历目标岗位为前端方向且正文包含前端相关技术和经历
@@ -220,3 +215,56 @@ CyanCruise 简历诊断结果和关键词状态 SHALL 在运行时通过 Postgre
 #### Scenario: 岗位方向与简历内容不匹配
 - **WHEN** 所选简历目标岗位为后端方向但正文只包含前端相关能力
 - **THEN** 系统降低目标岗位匹配得分并提示补充后端岗位的真实能力证据
+
+### Requirement: 简历诊断使用平台任务流
+当 Agent 平台简历诊断任务流已配置且调用成功时，简历诊断服务 SHALL 使用任务流返回的诊断 JSON 生成既有 `ResumeDiagnosisResultDto`。页面返回字段、诊断保存和用户所有权校验 SHALL 保持兼容。
+
+#### Scenario: 页面展示平台诊断结果
+- **WHEN** 用户点击“生成诊断建议”且平台任务流返回有效 JSON
+- **THEN** 系统 SHALL 返回总分、四项评分、优点、问题、普通建议和结构化修改建议，并 SHALL 标记结果来源为 `AGENT_AI`
+
+#### Scenario: 用户诊断自己的已保存简历
+- **WHEN** 用户通过 resumeId 发起诊断
+- **THEN** 系统 SHALL 在既有所有权校验、简历正文读取和 PDF 文本提取完成后再调用平台任务流
+
+### Requirement: 岗位要求和用户画像必须参与诊断上下文
+简历诊断服务 SHALL 将页面提交的岗位要求与已保存的用户画像共同传给平台智能体。页面 SHALL 在参考信息中明确展示“岗位要求”和“用户画像”；当目标岗位、岗位要求或用户画像出现冲突时，诊断结论 SHALL 说明该冲突。
+
+#### Scenario: 用户填写岗位要求
+- **WHEN** 用户提交包含岗位要求的诊断请求
+- **THEN** 平台诊断 SHALL 在目标岗位匹配评分依据中说明已匹配、未匹配或证据不足的岗位能力点
+
+### Requirement: 相同输入复用已校验的诊断结果
+简历诊断服务 SHALL 在短时内复用同一用户、同一简历正文、目标岗位、岗位要求和用户画像的已校验结果；任一输入变化时 SHALL 重新调用平台智能体。
+
+#### Scenario: 用户重复诊断且未改动输入
+- **WHEN** 用户在有效期内重复提交完全相同的诊断输入
+- **THEN** 系统 SHALL 返回相同的诊断结果，避免大模型随机性导致分数波动
+
+#### Scenario: 用户更新岗位要求
+- **WHEN** 用户修改岗位要求后再次诊断
+- **THEN** 系统 SHALL 视为新的诊断输入并重新调用平台智能体
+
+### Requirement: 平台不可用时不生成伪诊断
+当 Agent 平台任务流不可用、超时或返回无效响应时，简历诊断服务 SHALL 对可恢复问题执行有限重试。重试仍失败时，服务 SHALL 返回可供用户重试的失败信息，并 SHALL NOT 使用基础规则生成或保存诊断结果。
+
+#### Scenario: 平台超时
+- **WHEN** 平台任务流在配置超时内未返回有效结果
+- **THEN** 系统 SHALL 返回普通中文重试提示，且 SHALL NOT 保存诊断记录或更新简历诊断分数
+
+#### Scenario: 平台返回非 JSON 内容
+- **WHEN** 平台任务流 `answer` 不是可解析的诊断 JSON
+- **THEN** 系统 SHALL 在有限重试后返回可供用户重试的失败信息
+- **AND THEN** 系统 SHALL NOT 保存无效响应或生成规则版诊断
+
+### Requirement: 诊断上下文引用 AI 深度画像
+简历诊断 SHALL 在存在最新 AI 深度画像时将其摘要、标签和资料不足项加入分析上下文，并明确其来源为基于测评的 AI 分析。
+
+#### Scenario: 有深度画像时发起诊断
+- **WHEN** 用户发起简历诊断且职业画像快照包含最新 AI 深度画像
+- **THEN** 诊断请求上下文 SHALL 包含该画像摘要和标签，且不得覆盖用户明确填写的岗位或简历事实
+
+#### Scenario: 自画像包含补充事实
+- **WHEN** 用户发起简历诊断且已填写自画像补充
+- **THEN** 诊断请求上下文 SHALL 将该内容标记为用户事实，并用于减少与已知情况冲突或重复的建议
+

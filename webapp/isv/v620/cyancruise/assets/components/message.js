@@ -15,7 +15,9 @@
         window.clearTimeout(state.messageTimer);
         state.messageTimer = null;
       }
-      panel.className = "message-panel " + type;
+      var success = type === "success" || (type === "info" && isSuccessTitle(title));
+      var resolvedType = success ? "success" : type;
+      panel.className = "message-panel " + resolvedType;
       panel.innerHTML =
         '<div class="message-copy"><strong>' + escapeHtml(title) + "</strong><span>" + escapeHtml(text) + "</span></div>" +
         '<button type="button" class="message-close" aria-label="关闭提示">&times;</button>';
@@ -23,7 +25,9 @@
       if (close) {
         close.addEventListener("click", hide);
       }
-      if (type === "info") {
+      if (success) {
+        state.messageTimer = window.setTimeout(hide, 3000);
+      } else if (type === "info") {
         state.messageTimer = window.setTimeout(hide, 5000);
       }
     },
@@ -38,4 +42,8 @@
       panel.innerHTML = "";
     }
   };
+
+  function isSuccessTitle(title) {
+    return /已保存|保存成功|已生成|生成成功|已创建|创建成功|已删除|删除成功|已完成|更新成功|已更新|已准备|已取消/.test(String(title || ""));
+  }
 }(window));

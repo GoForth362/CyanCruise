@@ -38,10 +38,11 @@
       return Promise.all([
         safe(post, endpoints.adminDashboard, { adminId: id, orgId: orgId }, {}),
         safe(post, endpoints.adminAnalytics, id, {}),
-        safe(post, endpoints.adminUsers, { adminId: id, page: 0, size: pageSize, keyword: "" }, emptyPage(pageSize)),
+        required(post, endpoints.adminUsers, { adminId: id, page: 0, size: pageSize, keyword: "" }),
         safe(post, endpoints.adminQuestions, { adminId: id, source: "", reviewStatus: "" }, []),
         loadAssessmentBanks(context),
         safe(post, endpoints.adminContent, { adminId: id, type: "" }, []),
+        safe(post, endpoints.studyCenterAdminResources, { adminId: id }, []),
         safe(post, endpoints.adminAuditLog, { adminId: id, page: 0, size: auditPageSize }, emptyPage(auditPageSize))
       ]).then(function (results) {
         return {
@@ -55,7 +56,8 @@
           assessmentScales: normalizeArray(results[4] && results[4].scales),
           assessmentQuestionBanks: normalizeArray(results[4] && results[4].banks),
           content: normalizeArray(results[5]),
-          auditLogs: normalizePage(results[6], auditPageSize),
+          studyContent: normalizeArray(results[6]),
+          auditLogs: normalizePage(results[7], auditPageSize),
           message: ""
         };
       });
@@ -68,7 +70,10 @@
     return safe(post, endpoints.assessmentScales, {}, []).then(function (scales) {
       scales = normalizeArray(scales);
       return Promise.all(scales.map(function (scale) {
-        return safe(post, endpoints.assessmentQuestions, { scaleId: scale.scaleId }, scale);
+        return safe(post, endpoints.adminAssessmentCatalog, {
+          adminId: adminId(context.identity),
+          scaleId: scale.scaleId
+        }, scale);
       })).then(function (banks) {
         return {
           scales: scales,
@@ -80,11 +85,7 @@
 
   function whoami(context) {
     var endpoints = context.endpoints || {};
-    return safe(context.post, endpoints.adminWhoami, adminId(context.identity), {
-      status: "IDENTITY_REQUIRED",
-      admin: false,
-      message: "未识别到当前登录身份。"
-    });
+    return required(context.post, endpoints.adminWhoami, adminId(context.identity));
   }
 
   function banUser(context, userId, reason) {
@@ -228,6 +229,26 @@
     });
   }
 
+  function saveStudyContent(context, content) { return action(context, context.endpoints.studyCenterAdminResourceSave, { adminId: adminId(context.identity), content: content || {} }); }
+  function toggleStudyContentPin(context, contentId) { return action(context, context.endpoints.studyCenterAdminResourcePin, { adminId: adminId(context.identity), contentId: contentId }); }
+  function toggleStudyContentHidden(context, contentId) { return action(context, context.endpoints.studyCenterAdminResourceHide, { adminId: adminId(context.identity), contentId: contentId }); }
+  function deleteStudyContent(context, contentId) { return action(context, context.endpoints.studyCenterAdminResourceDelete, { adminId: adminId(context.identity), contentId: contentId }); }
+
+  function saveAssessmentScale(context, scaleId, answerQuestionCount) {
+    return action(context, context.endpoints.adminAssessmentScaleSave, {
+      adminId: adminId(context.identity),
+      scaleId: scaleId,
+      answerQuestionCount: answerQuestionCount
+    });
+  }
+
+  function required(post, endpoint, body) {
+    if (!endpoint || typeof post !== "function") {
+      return Promise.reject(new Error("管理服务暂不可用，请刷新页面后重试。"));
+    }
+    return post(endpoint, body);
+  }
+
   function normalizePage(page, size) {
     page = page || {};
     return {
@@ -268,10 +289,15 @@
     deleteQuestion: deleteQuestion,
     saveAssessmentQuestion: saveAssessmentQuestion,
     deleteAssessmentQuestion: deleteAssessmentQuestion,
+    saveAssessmentScale: saveAssessmentScale,
     saveContent: saveContent,
     toggleContentPin: toggleContentPin,
     toggleContentHidden: toggleContentHidden,
     deleteContent: deleteContent,
+    saveStudyContent: saveStudyContent,
+    toggleStudyContentPin: toggleStudyContentPin,
+    toggleStudyContentHidden: toggleStudyContentHidden,
+    deleteStudyContent: deleteStudyContent,
     broadcast: broadcast,
     listUsers: listUsers,
     auditLogs: auditLogs

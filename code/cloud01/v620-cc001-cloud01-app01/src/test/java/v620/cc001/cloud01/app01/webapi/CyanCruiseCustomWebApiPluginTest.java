@@ -38,6 +38,7 @@ import v620.cc001.base.common.dto.career.CareerProfileDraftDto;
 import v620.cc001.base.common.dto.career.AdminConstants;
 import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AssessmentQuestionDto;
+import v620.cc001.base.common.dto.career.AssessmentScaleDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
@@ -65,6 +66,7 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceSto
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -102,8 +104,21 @@ class CyanCruiseCustomWebApiPluginTest {
         CustomApiResult<Object> result = plugin.route(params("/cc001/identity/current", new HashMap<String, Object>()));
 
         assertTrue(result.isStatus());
-        CosmicIdentityContextDto identity = (CosmicIdentityContextDto) result.getData();
-        assertEquals("api-user", identity.getUserId());
+        Map<?, ?> identity = (Map<?, ?>) result.getData();
+        assertEquals("api-user", identity.get("userId"));
+    }
+
+    @Test
+    void routeConvertsAdminJavaTimeFieldsToRpcSafeStrings() {
+        AdminUserDto user = new AdminUserDto();
+        user.setUserId("api-user");
+        user.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        user.setCreatedAt(LocalDateTime.of(2026, 7, 12, 14, 4, 2));
+
+        Map<?, ?> safe = (Map<?, ?>) CyanCruiseCustomWebApiPlugin.toRpcSafeData(user);
+
+        assertEquals("api-user", safe.get("userId"));
+        assertEquals("2026-07-12T14:04:02", safe.get("createdAt"));
     }
 
     @Test
@@ -117,6 +132,7 @@ class CyanCruiseCustomWebApiPluginTest {
         request.put("schoolMajor", "软件工程");
         request.put("experience", "自学数据结构与算法");
         request.put("targetRole", "Java Backend Engineer");
+        request.put("targetSchool", "电子科技大学");
         request.put("resumeStatus", "ready");
         request.put("preference", "backend");
         Map<String, Object> body = new HashMap<String, Object>();
@@ -134,7 +150,14 @@ class CyanCruiseCustomWebApiPluginTest {
         assertEquals("ready", snapshot.getOnboarding().getResumeStatus());
         assertEquals("yes", snapshot.getOnboarding().getHasResume());
         assertEquals("backend", snapshot.getOnboarding().getPainPoint());
+        assertEquals("电子科技大学", snapshot.getOnboarding().getTargetSchool());
         assertEquals("Java Backend Engineer", snapshot.getPreferences().getTargetRole());
+
+        ApiResult reloaded = plugin.doCustomService(params("/cc001/career-profile/snapshot/get", body));
+        assertTrue(reloaded.getSuccess());
+        UserProfileSnapshot persisted = (UserProfileSnapshot) reloaded.getData();
+        assertEquals("电子科技大学", persisted.getOnboarding().getTargetSchool());
+        assertEquals("Java Backend Engineer", persisted.getPreferences().getTargetRole());
     }
 
     @Test
@@ -196,35 +219,26 @@ class CyanCruiseCustomWebApiPluginTest {
 
         ApiResult scales = plugin.doCustomService(params("/cc001/assessment/scales", new HashMap<String, Object>()));
         Map<String, Object> questionsBody = new HashMap<String, Object>();
+        questionsBody.put("userId", "api-user");
         questionsBody.put("scaleId", Long.valueOf(1001L));
         ApiResult questions = plugin.doCustomService(params("/cc001/assessment/questions", questionsBody));
+        AssessmentScaleDto attempt = (AssessmentScaleDto) questions.getData();
         Map<String, Object> answers = new HashMap<String, Object>();
-        answers.put("100101", "100101");
-        answers.put("100102", "100201");
-        answers.put("100103", "100301");
-        answers.put("100104", "100401");
-        answers.put("100105", "100502");
-        answers.put("100106", "100602");
-        answers.put("100107", "100702");
-        answers.put("100108", "100802");
-        answers.put("100109", "100901");
-        answers.put("100110", "101001");
-        answers.put("100111", "101101");
-        answers.put("100112", "101201");
-        answers.put("100113", "101302");
-        answers.put("100114", "101402");
-        answers.put("100115", "101502");
-        answers.put("100116", "101602");
+        for (AssessmentQuestionDto question : attempt.getQuestions()) {
+            answers.put(String.valueOf(question.getQuestionId()),
+                    String.valueOf(question.getOptions().get(0).getOptionId()));
+        }
         Map<String, Object> submitBody = new HashMap<String, Object>();
         submitBody.put("userId", "api-user");
         submitBody.put("scaleId", Long.valueOf(1001L));
+        submitBody.put("attemptId", attempt.getAttemptId());
         submitBody.put("answers", answers);
         ApiResult submit = plugin.doCustomService(params("/cc001/assessment/submit", submitBody));
         ApiResult records = plugin.doCustomService(params("/cc001/assessment/records", submitBody));
 
         assertTrue(scales.getSuccess());
         assertTrue(questions.getSuccess());
-        assertTrue(submit.getSuccess());
+        assertTrue(submit.getSuccess(), submit.getMessage());
         assertTrue(records.getSuccess());
     }
 
@@ -494,7 +508,7 @@ class CyanCruiseCustomWebApiPluginTest {
                 new CareerProfileWebApi(boundary, profileService),
                 new CareerAgentWebApi(agentService(tempDir), boundary),
                 new ResumeWebApi(resumeService, boundary),
-                new CareerPlanWebApi(planService),
+                new CareerPlanWebApi(planService, boundary),
                 new InterviewWebApi(interviewService),
                 new AssistantChatWebApi(assistantService),
                 new EmploymentInsightsResourcesWebApi(),

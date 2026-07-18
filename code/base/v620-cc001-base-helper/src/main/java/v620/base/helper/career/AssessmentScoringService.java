@@ -23,35 +23,41 @@ public class AssessmentScoringService {
     public AssessmentScoreResult score(AssessmentScaleDto scale, AssessmentSubmitRequest request) {
         AssessmentScaleDto safeScale = scale == null ? new AssessmentScaleDto() : scale;
         AssessmentSubmitRequest safeRequest = request == null ? new AssessmentSubmitRequest() : request;
-        Map<Long, Long> submitted = safeRequest.getAnswers() == null
-                ? new LinkedHashMap<Long, Long>()
-                : safeRequest.getAnswers();
+        Map<Long, List<Long>> submitted = safeRequest.effectiveAnswerOptionIds();
         Map<Long, AssessmentQuestionDto> questions = questionsById(safeScale);
 
         Map<String, Integer> counts = new LinkedHashMap<String, Integer>();
         List<AssessmentAnswerSnapshot> answerSnapshots = new ArrayList<AssessmentAnswerSnapshot>();
 
-        for (Map.Entry<Long, Long> entry : submitted.entrySet()) {
+        for (Map.Entry<Long, List<Long>> entry : submitted.entrySet()) {
             Long questionId = entry.getKey();
-            Long optionId = entry.getValue();
-            AssessmentOptionDto option = findOption(questions.get(questionId), optionId);
-
-            AssessmentAnswerSnapshot snapshot = new AssessmentAnswerSnapshot();
-            snapshot.setQuestionId(questionId);
-            snapshot.setOptionId(optionId);
-
-            if (option != null) {
-                snapshot.setValidOption(true);
-                snapshot.setDimensionCode(option.getDimensionCode());
-                snapshot.setScoreSnapshot(option.getScoreValue() == null ? BigDecimal.ZERO : option.getScoreValue());
-                if (hasText(option.getDimensionCode())) {
-                    increment(counts, option.getDimensionCode().trim());
-                }
-            } else {
-                snapshot.setValidOption(false);
-                snapshot.setScoreSnapshot(BigDecimal.ZERO);
+            List<Long> optionIds = entry.getValue();
+            if (optionIds == null) {
+                continue;
             }
-            answerSnapshots.add(snapshot);
+            for (Long optionId : optionIds) {
+                AssessmentOptionDto option = findOption(questions.get(questionId), optionId);
+
+                AssessmentAnswerSnapshot snapshot = new AssessmentAnswerSnapshot();
+                snapshot.setQuestionId(questionId);
+                snapshot.setOptionId(optionId);
+                AssessmentQuestionDto question = questions.get(questionId);
+                snapshot.setQuestionText(question == null ? null : question.getQuestionText());
+
+                if (option != null) {
+                    snapshot.setValidOption(true);
+                    snapshot.setDimensionCode(option.getDimensionCode());
+                    snapshot.setOptionText(option.getOptionText());
+                    snapshot.setScoreSnapshot(option.getScoreValue() == null ? BigDecimal.ZERO : option.getScoreValue());
+                    if (hasText(option.getDimensionCode())) {
+                        increment(counts, option.getDimensionCode().trim());
+                    }
+                } else {
+                    snapshot.setValidOption(false);
+                    snapshot.setScoreSnapshot(BigDecimal.ZERO);
+                }
+                answerSnapshots.add(snapshot);
+            }
         }
 
         AssessmentScoreResult result = new AssessmentScoreResult();

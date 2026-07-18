@@ -388,6 +388,24 @@ public class PostgresqlAdminGovernanceStorage extends PostgresqlStorageSupport i
         }
     }
 
+    public int deleteAuditLogsBefore(LocalDateTime cutoff) {
+        if (cutoff == null) return 0;
+        String sql = "DELETE FROM " + table("cc_admin_audit_log") + " WHERE created_at < ?";
+        Connection connection = null;
+        PreparedStatement statement = null;
+        try {
+            connection = connection();
+            statement = connection.prepareStatement(sql);
+            statement.setTimestamp(1, timestamp(cutoff));
+            return statement.executeUpdate();
+        } catch (SQLException e) {
+            throw storageException("delete expired admin audit logs", e);
+        } finally {
+            close(statement);
+            close(connection);
+        }
+    }
+
     public Map<String, List<AdminInterviewSummaryDto>> listInterviewsByUsers(List<AdminUserDto> users) {
         Map<String, List<AdminInterviewSummaryDto>> out = new LinkedHashMap<String, List<AdminInterviewSummaryDto>>();
         if (users == null) return out;

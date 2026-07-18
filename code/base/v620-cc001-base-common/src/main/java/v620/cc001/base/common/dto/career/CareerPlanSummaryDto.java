@@ -13,6 +13,9 @@ public class CareerPlanSummaryDto implements Serializable {
 
     private Boolean hasPlan;
     private String targetRole;
+    private String routeType;
+    private String studyDirection;
+    private String targetSchool;
     private String startStateSummary;
     private String planningMode;
     private Integer horizonYears;
@@ -22,6 +25,9 @@ public class CareerPlanSummaryDto implements Serializable {
     private String adjustmentReason;
     private String nextMilestoneHorizon;
     private String nextMilestoneTitle;
+    private Integer profileCompletenessScore;
+    private String currentStage;
+    private List<CareerUserProfileDto.MissingSignal> missingSignals = new ArrayList<CareerUserProfileDto.MissingSignal>();
     private List<CareerPlanPhaseDto> phases = new ArrayList<CareerPlanPhaseDto>();
     private CareerPlanWeeklyPlanDto weeklyPlan;
     private List<String> dailySuggestions = new ArrayList<String>();
@@ -45,6 +51,13 @@ public class CareerPlanSummaryDto implements Serializable {
     public void setTargetRole(String targetRole) {
         this.targetRole = targetRole;
     }
+
+    public String getRouteType() { return routeType; }
+    public void setRouteType(String routeType) { this.routeType = routeType; }
+    public String getStudyDirection() { return studyDirection; }
+    public void setStudyDirection(String studyDirection) { this.studyDirection = studyDirection; }
+    public String getTargetSchool() { return targetSchool; }
+    public void setTargetSchool(String targetSchool) { this.targetSchool = targetSchool; }
 
     public String getStartStateSummary() {
         return startStateSummary;
@@ -116,6 +129,30 @@ public class CareerPlanSummaryDto implements Serializable {
 
     public void setNextMilestoneTitle(String nextMilestoneTitle) {
         this.nextMilestoneTitle = nextMilestoneTitle;
+    }
+
+    public Integer getProfileCompletenessScore() {
+        return profileCompletenessScore;
+    }
+
+    public void setProfileCompletenessScore(Integer profileCompletenessScore) {
+        this.profileCompletenessScore = profileCompletenessScore;
+    }
+
+    public String getCurrentStage() {
+        return currentStage;
+    }
+
+    public void setCurrentStage(String currentStage) {
+        this.currentStage = currentStage;
+    }
+
+    public List<CareerUserProfileDto.MissingSignal> getMissingSignals() {
+        return missingSignals;
+    }
+
+    public void setMissingSignals(List<CareerUserProfileDto.MissingSignal> missingSignals) {
+        this.missingSignals = missingSignals;
     }
 
     public List<CareerPlanPhaseDto> getPhases() {

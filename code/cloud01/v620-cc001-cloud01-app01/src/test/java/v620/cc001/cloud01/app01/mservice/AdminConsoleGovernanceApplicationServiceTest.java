@@ -22,13 +22,13 @@ import v620.cc001.base.common.dto.career.AdminPageResult;
 import v620.cc001.base.common.dto.career.AdminQuestionContributionRequest;
 import v620.cc001.base.common.dto.career.AdminQuestionDto;
 import v620.cc001.base.common.dto.career.AdminUserDto;
-import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -102,7 +102,7 @@ class AdminConsoleGovernanceApplicationServiceTest {
     }
 
     @Test
-    void banningCurrentAdminOnlyRestrictsUserFacingAccess() {
+    void currentAdminCannotBanOwnUserFacingAccess() {
         InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
         AdminConsoleGovernanceApplicationService service = service(storage);
         AdminUserDto adminUser = new AdminUserDto();
@@ -110,13 +110,37 @@ class AdminConsoleGovernanceApplicationServiceTest {
         adminUser.setStatus(AdminConstants.USER_STATUS_ACTIVE);
         storage.saveUser(adminUser);
 
-        AdminOperationResult result = service.banUser("admin", "admin", "test");
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
+            public void execute() {
+                service.banUser("admin", "admin", "test");
+            }
+        });
 
-        assertEquals(AdminConstants.STATUS_OK, result.getStatus());
-        assertTrue(result.getMessage().contains("管理后台权限不会受影响"));
-        assertFalse(service.isUserAllowed("admin"));
+        assertTrue(error.getMessage().contains("不能禁用自己"));
+        assertTrue(service.isUserAllowed("admin"));
         assertEquals(AdminConstants.STATUS_OK, service.whoami("admin").getStatus());
         assertTrue(service.listOrganizations("admin").isEmpty());
+    }
+
+    @Test
+    void administratorsCannotBanEachOther() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("admin-a");
+        storage.addAdmin("admin-b");
+        AdminUserDto target = new AdminUserDto();
+        target.setUserId("admin-b");
+        target.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        storage.saveUser(target);
+        AdminConsoleGovernanceApplicationService service = service(storage);
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class, new org.junit.jupiter.api.function.Executable() {
+            public void execute() {
+                service.banUser("admin-a", "admin-b", "test");
+            }
+        });
+
+        assertTrue(error.getMessage().contains("管理员之间不能相互禁用"));
+        assertTrue(service.isUserAllowed("admin-b"));
     }
 
     @Test
@@ -153,6 +177,47 @@ class AdminConsoleGovernanceApplicationServiceTest {
     }
 
     @Test
+    void differentAdministratorsSeeTheSameGovernanceUsers() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("admin-a");
+        storage.addAdmin("admin-b");
+        AdminConsoleGovernanceApplicationService service = service(storage);
+        service.registerActiveUserIfAbsent("shared-user", "Shared User", "100000");
+
+        AdminPageResult<AdminUserDto> first = service.listUsers("admin-a", 0, 20, null);
+        AdminPageResult<AdminUserDto> second = service.listUsers("admin-b", 0, 20, null);
+
+        assertEquals(first.getTotal(), second.getTotal());
+        assertEquals(first.getItems().get(0).getUserId(), second.getItems().get(0).getUserId());
+    }
+
+    @Test
+    void userListSearchesOnlyAccountFieldsAndMarksAccountType() {
+        InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
+        storage.addAdmin("platform-admin");
+        AdminUserDto administrator = new AdminUserDto();
+        administrator.setUserId("platform-admin");
+        administrator.setNickname("管理员甲");
+        administrator.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        storage.saveUser(administrator);
+        AdminUserDto regular = new AdminUserDto();
+        regular.setUserId("user-1001");
+        regular.setNickname("普通用户乙");
+        regular.setSchool("成都理工大学");
+        regular.setMajor("软件工程");
+        regular.setStatus(AdminConstants.USER_STATUS_ACTIVE);
+        storage.saveUser(regular);
+        AdminConsoleGovernanceApplicationService service = service(storage);
+
+        assertEquals("user-1001", service.listUsers("admin", 0, 20, "普通用户").getItems().get(0).getUserId());
+        assertEquals("user-1001", service.listUsers("admin", 0, 20, "1001").getItems().get(0).getUserId());
+        assertEquals(Integer.valueOf(0), service.listUsers("admin", 0, 20, "成都理工").getTotal());
+        assertEquals(Integer.valueOf(0), service.listUsers("admin", 0, 20, "软件工程").getTotal());
+        assertEquals(Boolean.TRUE, service.listUsers("admin", 0, 20, "管理员甲").getItems().get(0).getAdministrator());
+        assertEquals(Boolean.FALSE, service.listUsers("admin", 0, 20, "普通用户乙").getItems().get(0).getAdministrator());
+    }
+
+    @Test
     void broadcastCanTargetMultipleActiveUsers() {
         InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
         AdminConsoleGovernanceApplicationService service = service(storage);
@@ -179,29 +244,33 @@ class AdminConsoleGovernanceApplicationServiceTest {
     }
 
     @Test
-    void userListSkipsDevelopmentUserAndEnrichesProfileFields() {
+    void userManagementHidesPersonalAndOrganizationDataWithoutChangingStoredAssociation() {
         InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
-        InMemoryCareerProfileStorage profiles = new InMemoryCareerProfileStorage();
-        AdminConsoleGovernanceApplicationService service = service(storage, profiles);
-        UserProfileSnapshot snapshot = new UserProfileSnapshot();
-        UserProfileSnapshot.OnboardingBlock onboarding = new UserProfileSnapshot.OnboardingBlock();
-        UserProfileSnapshot.EducationBlock education = new UserProfileSnapshot.EducationBlock();
-        education.setSchool("成都理工大学");
-        education.setMajor("软件工程");
-        onboarding.setEducation(education);
-        snapshot.setOnboarding(onboarding);
-        profiles.saveSnapshot("real-user", snapshot);
-
+        AdminConsoleGovernanceApplicationService service = service(storage);
         service.registerActiveUserIfAbsent("api-user", "测试账号", null);
         service.registerActiveUserIfAbsent("real-user", "冯如", "100000");
+        AdminUserDto stored = storage.findUser("real-user");
+        stored.setSchool("成都理工大学");
+        stored.setMajor("软件工程");
+        storage.saveUser(stored);
 
         AdminPageResult<AdminUserDto> users = service.listUsers("admin", 0, 20, null);
+        AdminUserDto listed = users.getItems().get(0);
+        AdminUserDto detailed = service.userDetail("admin", "real-user");
 
         assertEquals(Integer.valueOf(1), users.getTotal());
-        assertEquals("冯如", users.getItems().get(0).getNickname());
-        assertEquals("成都理工大学", users.getItems().get(0).getSchool());
-        assertEquals("软件工程", users.getItems().get(0).getMajor());
-        assertEquals("100000", users.getItems().get(0).getOrgId());
+        assertEquals("冯如", listed.getNickname());
+        assertNull(listed.getSchool());
+        assertNull(listed.getMajor());
+        assertNull(listed.getOrgId());
+        assertNull(detailed.getSchool());
+        assertNull(detailed.getMajor());
+        assertNull(detailed.getOrgId());
+
+        service.banUser("admin", "real-user", "test");
+        assertEquals("100000", storage.findUser("real-user").getOrgId());
+        assertEquals("成都理工大学", storage.findUser("real-user").getSchool());
+        assertEquals("软件工程", storage.findUser("real-user").getMajor());
     }
 
     @Test
@@ -237,7 +306,7 @@ class AdminConsoleGovernanceApplicationServiceTest {
     }
 
     @Test
-    void adminCanSaveAndDeleteInterviewQuestion() {
+    void adminSavedInterviewQuestionDefaultsToPendingReview() {
         InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
         AdminConsoleGovernanceApplicationService service = service(storage);
         AdminQuestionDto question = new AdminQuestionDto();
@@ -248,7 +317,7 @@ class AdminConsoleGovernanceApplicationServiceTest {
         AdminQuestionDto saved = service.saveQuestion("admin", question);
 
         assertEquals("ADMIN", saved.getSource());
-        assertEquals(AdminConstants.QUESTION_REVIEW_PUBLISHED, saved.getReviewStatus());
+        assertEquals(AdminConstants.QUESTION_REVIEW_PENDING, saved.getReviewStatus());
         assertEquals(AdminConstants.QUESTION_STATUS_APPROVED, saved.getStatus());
         assertEquals(Integer.valueOf(1), service.listQuestions("admin", null, null).size());
         assertTrue(service.deleteQuestion("admin", saved.getQuestionId()));

@@ -3,7 +3,6 @@
 ## Purpose
 
 定义 CyanCruise 在苍穹 webapp 资源侧如何承载 CyanCruise 首个可用入口，包括工作台、onboarding gate、主循环导航、页面到 Cosmic WebAPI 的契约映射、状态降级、迁移边界和验证要求。
-
 ## Requirements
 ### Requirement: CyanCruise webapp workbench entry
 
@@ -182,24 +181,29 @@ CyanCruise webapp 入口 SHALL 支持显式调试模式，用于展示 route met
 - **THEN** 页面 SHALL 隐藏调试导航项和工程状态信息
 
 ### Requirement: 默认入口采用平台菜单外部链接落地页
-CyanCruise webapp 默认入口 SHALL 采用面向金蝶平台菜单的外部链接落地页，而不是工程验收型 route 工作台。页面 SHALL 由 hash 决定当前内容页，并在右侧内容区使用功能卡片矩阵承载主要入口。
+CyanCruise webapp 默认入口 SHALL 采用面向金蝶平台菜单的外部链接落地页，而不是工程验收型 route 工作台。页面 SHALL 由 hash 决定当前内容页，并在右侧内容区承载路线图和主要功能入口。
 
 #### Scenario: 默认打开工作台
 - **WHEN** 普通用户打开 `/ierp/isv/v620/cyancruise/index.htm?ccRoute=workbench`
-- **THEN** 页面 SHALL 在首屏展示基础信息表单、就业/深造路线选择和推荐功能入口
+- **THEN** 页面 SHALL 在首屏展示基础信息表单、就业/深造路线选择和路线入口
 - **AND** 页面 SHALL NOT 以大面积 hero、接口路线、route chip、横向滚动 route 清单或工程状态面板作为首屏主要内容
 
 #### Scenario: 平台侧边栏打开就业页
 - **WHEN** 用户从金蝶平台侧边栏点击“就业”
 - **THEN** 平台菜单 SHALL 打开 `/ierp/isv/v620/cyancruise/index.htm?ccRoute=employment-home`
-- **AND** 页面 SHALL 展示 AI简历制作、AI简历修改、全景仿真面试、AI模拟面试四个核心入口
-- **AND** 就业页 SHALL NOT 与首页共用 `ccRoute=workbench` 地址
+- **AND** 页面 SHALL 先展示就业路线图，并在后续区域提供简历制作和简历诊断入口
+- **AND** AI 模拟面试与全景仿真面试 SHALL 作为独立平台菜单能力，不从就业页提供跳转入口
 
-#### Scenario: 平台侧边栏打开深造页
-- **WHEN** 用户从金蝶平台侧边栏点击“深造”
+#### Scenario: 首页进入升学路线图
+- **WHEN** 用户在首页选择“深造”并点击路线入口
+- **THEN** 页面 SHALL 打开 `/ierp/isv/v620/cyancruise/index.htm?ccRoute=further-study-home`
+- **AND** 页面 SHALL 展示升学路线图、方向选择、升学洞察和升学资讯
+- **AND** 页面 SHALL NOT 在底部重复展示三个陪伴入口卡片
+
+#### Scenario: 平台侧边栏打开升学路线图
+- **WHEN** 用户从金蝶平台侧边栏点击“升学路线图”
 - **THEN** 平台菜单 SHALL 打开 `/ierp/isv/v620/cyancruise/index.htm?ccRoute=further-study-home`
-- **AND** 页面 SHALL 展示考研、保研、留学三个规划入口
-- **AND** 当前阶段 SHALL 只展示规划入口，不宣称真实 Agent 能力已完成
+- **AND** 页面 SHALL NOT 再展示旧的“深造护航”工具总览首屏
 
 #### Scenario: 平台侧边栏打开功能页
 - **WHEN** 用户从金蝶平台侧边栏点击“简历”“面试”等外部链接菜单
@@ -252,4 +256,24 @@ CyanCruise webapp SHALL support `apiMode=server` for production self-built app m
 - **WHEN** a user opens the webapp with `apiMode=server`
 - **THEN** the webapp SHALL clear cached KAPI token and route parameters while preserving server-managed API mode
 
+### Requirement: 首页按当前路线展示规划摘要
+首页 SHALL 根据持久化当前路线优先展示对应的目标、今日行动和路径规划摘要。另一条路线的数据 SHALL 保留但不作为当前摘要展示。
+
+#### Scenario: 首页当前路线为升学
+- **WHEN** 用户保存升学为当前路线并返回首页
+- **THEN** 首页目标区域 SHALL 展示目标院校或具体升学方向
+- **AND** 今日行动与路径规划入口 SHALL 使用升学规划数据
+
+#### Scenario: 首页切回就业
+- **WHEN** 用户把当前路线切回就业
+- **THEN** 首页 SHALL 恢复就业目标、就业今日行动和就业路径规划摘要
+- **AND** 升学规划 SHALL 保持可在再次切换后恢复
+
+### Requirement: 路线切换不触发隐式覆盖
+用户在首页切换当前路线时，webapp SHALL 只保存当前路线选择并重新加载对应摘要，不得自动覆盖另一条路线规划。
+
+#### Scenario: 保存路线切换
+- **WHEN** 用户从就业切换为升学并保存自画像
+- **THEN** webapp SHALL 保存 `study` 当前路线
+- **AND** SHALL NOT 调用就业规划保存或清空接口
 

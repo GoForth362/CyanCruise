@@ -1,6 +1,7 @@
 package v620.base.helper.career;
 
 import v620.cc001.base.common.dto.career.CareerProfileOnboardingRequest;
+import v620.cc001.base.common.dto.career.CareerRouteContext;
 import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
@@ -51,7 +52,11 @@ public class CareerProfileSnapshotMergeService {
         if (request.getPainPoint() != null) onboarding.setPainPoint(trimToNull(request.getPainPoint()));
         if (request.getHasResume() != null) onboarding.setHasResume(trimToNull(request.getHasResume()));
         if (request.getResumeStatus() != null) onboarding.setResumeStatus(trimToNull(request.getResumeStatus()));
+        if (request.getSelectedResumeId() != null) onboarding.setSelectedResumeId(request.getSelectedResumeId());
         if (request.getExperience() != null) onboarding.setExperience(trimToNull(request.getExperience()));
+        if (request.getSelfProfileSupplement() != null) {
+            onboarding.setSelfProfileSupplement(trimToNull(request.getSelfProfileSupplement()));
+        }
         if (request.getTimeline() != null) onboarding.setTimeline(trimToNull(request.getTimeline()));
         if (request.getEducation() != null) onboarding.setEducation(mergeEducation(onboarding.getEducation(), request.getEducation()));
         if (request.getWeeklyAvailability() != null) onboarding.setWeeklyAvailability(trimToNull(request.getWeeklyAvailability()));
@@ -59,6 +64,12 @@ public class CareerProfileSnapshotMergeService {
         if (request.getRecommendedEntry() != null) onboarding.setRecommendedEntry(trimToNull(request.getRecommendedEntry()));
         if (request.getOnboardingCompletedAt() != null) {
             onboarding.setOnboardingCompletedAt(trimToNull(request.getOnboardingCompletedAt()));
+        }
+        if (request.getTargetSchool() != null) {
+            onboarding.setTargetSchool(trimToNull(request.getTargetSchool()));
+        }
+        if (request.getRouteGoal() != null) {
+            onboarding.setRouteGoal(CareerRouteContext.normalizeGoal(request.getRouteGoal()));
         }
 
         snapshot.setOnboarding(onboarding);
@@ -107,6 +118,15 @@ public class CareerProfileSnapshotMergeService {
         if (block.getDiagnosisScore() != null) resume.setDiagnosisScore(block.getDiagnosisScore());
         if (block.getUpdatedAt() != null) resume.setUpdatedAt(block.getUpdatedAt());
         snapshot.setResume(resume);
+        return touch(snapshot);
+    }
+
+    public UserProfileSnapshot mergeAiDeepProfile(UserProfileSnapshot current,
+                                                   UserProfileSnapshot.AiDeepProfileBlock block) {
+        UserProfileSnapshot snapshot = ensureSnapshot(current);
+        if (block != null) {
+            snapshot.setAiDeepProfile(block);
+        }
         return touch(snapshot);
     }
 

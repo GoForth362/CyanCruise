@@ -10,6 +10,8 @@ import v620.cc001.base.common.dto.career.ResumeDiagnosisResultDto;
 import v620.cc001.base.common.dto.career.ResumeKeywordStatusDto;
 import v620.cc001.cloud01.app01.mservice.application.ResumeDiagnosisApplicationService;
 
+import java.util.List;
+
 /**
  * WebAPI boundary for migrated resume diagnosis.
  */
@@ -32,6 +34,21 @@ public class ResumeDiagnosisWebApi {
             @ApiRequestBody(value = "用户ID", required = true) String userId,
             @ApiRequestBody(value = "诊断请求", required = true) ResumeDiagnosisRequest request) {
         return applicationService.diagnose(userId, request);
+    }
+
+    @ApiPostMapping(value = "/history/list", desc = "resume diagnosis history", methodParamNames = {"userId", "resumeId"})
+    public @ApiResponseBody(value = "resume diagnosis history") List<ResumeDiagnosisResultDto> listHistory(
+            @ApiRequestBody(value = "user id", required = true) String userId,
+            @ApiRequestBody(value = "resume id", required = true) Long resumeId) {
+        return applicationService.listDiagnosisHistory(userId, resumeId);
+    }
+
+    @ApiPostMapping(value = "/history/delete", desc = "delete resume diagnosis history", methodParamNames = {"userId", "resumeId", "diagnosisId"})
+    public @ApiResponseBody(value = "delete result") Boolean deleteHistory(
+            @ApiRequestBody(value = "user id", required = true) String userId,
+            @ApiRequestBody(value = "resume id", required = true) Long resumeId,
+            @ApiRequestBody(value = "diagnosis id", required = true) Long diagnosisId) {
+        return Boolean.valueOf(applicationService.deleteDiagnosisHistory(userId, resumeId, diagnosisId));
     }
 
     @ApiPostMapping(value = "/keywords/status", desc = "读取关键词状态", methodParamNames = {"userId", "resumeId"})

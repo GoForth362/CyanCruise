@@ -1,6 +1,7 @@
 package v620.cc001.base.common.dto.career;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +13,10 @@ public class ResumeDiagnosisResultDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long resumeId;
+    private Long diagnosisId;
+    private String userId;
+    private String targetJob;
+    private LocalDateTime diagnosedAt;
     private Integer overallScore;
     private List<String> strengths = new ArrayList<String>();
     private List<String> weaknesses = new ArrayList<String>();
@@ -29,6 +34,38 @@ public class ResumeDiagnosisResultDto implements Serializable {
 
     public void setResumeId(Long resumeId) {
         this.resumeId = resumeId;
+    }
+
+    public Long getDiagnosisId() {
+        return diagnosisId;
+    }
+
+    public void setDiagnosisId(Long diagnosisId) {
+        this.diagnosisId = diagnosisId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getTargetJob() {
+        return targetJob;
+    }
+
+    public void setTargetJob(String targetJob) {
+        this.targetJob = targetJob;
+    }
+
+    public LocalDateTime getDiagnosedAt() {
+        return diagnosedAt;
+    }
+
+    public void setDiagnosedAt(LocalDateTime diagnosedAt) {
+        this.diagnosedAt = diagnosedAt;
     }
 
     public Integer getOverallScore() {

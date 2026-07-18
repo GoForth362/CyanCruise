@@ -42,6 +42,20 @@ public class InMemoryAssessmentResultStorage implements AssessmentResultStorage 
         return null;
     }
 
+    public synchronized void updateResult(String userId, AssessmentScoreResult result) {
+        if (result == null || result.getRecordId() == null) {
+            throw new IllegalArgumentException("assessment result recordId is required");
+        }
+        for (int index = 0; index < records.size(); index++) {
+            AssessmentScoreResult current = records.get(index);
+            if (same(userId, current.getUserId()) && same(result.getRecordId(), current.getRecordId())) {
+                records.set(index, AssessmentResultCopies.copy(result));
+                return;
+            }
+        }
+        throw new IllegalArgumentException("assessment result does not exist or is not owned by user");
+    }
+
     public synchronized List<AssessmentScoreResult> listResults(String userId) {
         List<AssessmentScoreResult> out = new ArrayList<AssessmentScoreResult>();
         for (AssessmentScoreResult record : records) {

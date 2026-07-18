@@ -1,6 +1,5 @@
 package v620.cc001.cloud01.app01.mservice;
 
-import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
 import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlCareerProfileStorage;
@@ -20,6 +19,8 @@ import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -116,6 +117,47 @@ class PostgresqlCareerProfileStorageLiveTest {
         assertEquals("owner", service.getSnapshot(userId).getOnboarding().getIdentityType());
         assertEquals("Other Role", service.getDraft(otherUserId).getTargetRole());
         assertNotEquals("Other Role", service.getDraft(userId).getTargetRole());
+    }
+
+    @Test
+    void reloadsDeepProfileHistoryAndBackfillsLegacyLatestProfile() {
+        PostgresqlCareerProfileStorage firstStorage = new PostgresqlCareerProfileStorage(config);
+        CareerProfileApplicationService first = service(firstStorage);
+        first.saveAiDeepProfile(userId, deepProfile("record-1", "第一版画像"));
+        first.saveAiDeepProfile(userId, deepProfile("record-2", "第二版画像"));
+
+        CareerProfileApplicationService reloaded = service(new PostgresqlCareerProfileStorage(config));
+        List<UserProfileSnapshot.AiDeepProfileBlock> history = reloaded.getAiDeepProfileHistory(userId);
+
+        assertEquals(2, history.size());
+        assertEquals("record-2", history.get(0).getRecordId());
+        assertEquals("record-1", history.get(1).getRecordId());
+        assertEquals("第二版画像", reloaded.getSnapshot(userId).getAiDeepProfile().getProfileSummary());
+
+        UserProfileSnapshot legacySnapshot = new UserProfileSnapshot();
+        UserProfileSnapshot.AiDeepProfileBlock legacy = new UserProfileSnapshot.AiDeepProfileBlock();
+        legacy.setProfileSummary("旧版现存画像");
+        legacy.setSource("AI_ASSESSMENT");
+        legacySnapshot.setAiDeepProfile(legacy);
+        legacySnapshot.setUpdatedAt(LocalDateTime.of(2026, 7, 15, 9, 30));
+        firstStorage.saveSnapshot(otherUserId, legacySnapshot);
+
+        List<UserProfileSnapshot.AiDeepProfileBlock> migrated = reloaded.getAiDeepProfileHistory(otherUserId);
+        assertEquals(1, migrated.size());
+        assertEquals("旧版现存画像", migrated.get(0).getProfileSummary());
+        assertNotNull(migrated.get(0).getRecordId());
+        assertEquals(LocalDateTime.of(2026, 7, 15, 9, 30), migrated.get(0).getGeneratedAt());
+        assertEquals(1, new PostgresqlCareerProfileStorage(config)
+                .loadSnapshot(otherUserId).getAiDeepProfileHistory().size());
+    }
+
+    private UserProfileSnapshot.AiDeepProfileBlock deepProfile(String recordId, String summary) {
+        UserProfileSnapshot.AiDeepProfileBlock profile = new UserProfileSnapshot.AiDeepProfileBlock();
+        profile.setRecordId(recordId);
+        profile.setProfileSummary(summary);
+        profile.setGeneratedAt(LocalDateTime.now());
+        profile.setSource("AI_ASSESSMENT");
+        return profile;
     }
 
     private CareerProfileApplicationService service(CareerProfileStorage storage) {

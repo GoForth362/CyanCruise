@@ -1,11 +1,10 @@
 package v620.cc001.cloud01.app01.mservice.application;
 
-import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayResumeDiagnosisAnalyzer;
-import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultAiGateway;
-import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultResumeDiagnosisAnalyzer;
-import v620.cc001.cloud01.app01.mservice.ai.impl.AiGatewayResumeDiagnosisAnalyzer;
-import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.impl.AgentPlatformResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultAgentPlatformTaskFlowClient;
+import v620.cc001.cloud01.app01.mservice.ai.impl.KingdeeAgentSdkTaskFlowClient;
 import v620.cc001.cloud01.app01.mservice.ai.ResumeDiagnosisAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.AgentPlatformTaskFlowConfig;
 import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.ResumeDiagnosisStorage;
 import v620.base.helper.career.ResumeDiagnosisService;
@@ -18,16 +17,21 @@ import v620.cc001.base.common.dto.career.ResumeUpdateRequest;
 import v620.cc001.base.common.dto.career.FileConstants;
 import v620.cc001.base.common.dto.career.FileTextExtractionResult;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
-import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
-import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultAiGateway;
 
 import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Application boundary for migrated resume diagnosis.
  */
 public class ResumeDiagnosisApplicationService {
+
+    private static final long DIAGNOSIS_CACHE_TTL_MILLIS = 30L * 60L * 1000L;
 
     private final ResumeApplicationService resumeApplicationService;
     private final ResumeDiagnosisStorage storage;
@@ -35,14 +39,28 @@ public class ResumeDiagnosisApplicationService {
     private final ResumeDiagnosisService helper;
     private final CareerProfileApplicationService profileApplicationService;
     private final FileUploadPreviewApplicationService fileApplicationService;
+    private final Map<String, CachedDiagnosis> diagnosisCache = new ConcurrentHashMap<String, CachedDiagnosis>();
 
     public ResumeDiagnosisApplicationService() {
         this(new ResumeApplicationService(),
                 CyanCruiseStorageFactory.resumeDiagnosisStorage(),
-                new AiGatewayResumeDiagnosisAnalyzer(
-                        new DefaultAiGateway(AiProviderAdapterFactory.fromSystemProperties()),
-                        new DefaultResumeDiagnosisAnalyzer()),
+                defaultAnalyzer(),
                 new ResumeDiagnosisService());
+    }
+
+    private static ResumeDiagnosisAnalyzer defaultAnalyzer() {
+        AgentPlatformTaskFlowConfig platformConfig = AgentPlatformTaskFlowConfig.fromSystemProperties();
+        if (platformConfig.isAgentSdkAvailable()) {
+            return new AgentPlatformResumeDiagnosisAnalyzer(
+                    new KingdeeAgentSdkTaskFlowClient(platformConfig),
+                    platformConfig);
+        }
+        if (platformConfig.isEnabled()) {
+            return new AgentPlatformResumeDiagnosisAnalyzer(
+                    new DefaultAgentPlatformTaskFlowClient(platformConfig),
+                    platformConfig);
+        }
+        return new AgentPlatformResumeDiagnosisAnalyzer(null, platformConfig);
     }
 
     public ResumeDiagnosisApplicationService(ResumeApplicationService resumeApplicationService,
@@ -93,17 +111,41 @@ public class ResumeDiagnosisApplicationService {
         if (text == null) {
             throw new IllegalArgumentException("resume content is empty or could not be parsed");
         }
-        String rawAnalysis = analyzer.analyze(safeRequest, limitText(text));
+        String cacheKey = diagnosisCacheKey(safeUserId, safeRequest, text);
+        CachedDiagnosis cached = diagnosisCache.get(cacheKey);
+        boolean reused = cached != null && cached.isFresh();
+        String rawAnalysis;
+        String source;
+        if (reused) {
+            rawAnalysis = cached.rawAnalysis;
+            source = cached.source;
+        } else {
+            rawAnalysis = analyzer.analyze(safeRequest, limitText(text));
+            source = diagnosisSource();
+        }
         ResumeDiagnosisResultDto result = helper.parseAnalysis(rawAnalysis);
+        result.setFallbackStatus(source);
         result.setResumeId(safeRequest.getResumeId());
+        result.setUserId(safeUserId);
+        result.setTargetJob(safeRequest.getTargetJob());
+        result.setDiagnosedAt(LocalDateTime.now());
         result.setRawAnalysis(rawAnalysis);
         result.setContextSources(contextSources);
         result.setRevisionPlan(helper.buildRevisionPlan(result.getRevisionSuggestions(), contextSources));
         if (result.getResumeId() != null) {
-            storage.saveDiagnosis(result);
+            if (reused && cached.diagnosisId != null) {
+                result.setDiagnosisId(cached.diagnosisId);
+                result.setDiagnosedAt(cached.diagnosedAt);
+            } else {
+                storage.saveDiagnosis(result);
+                diagnosisCache.put(cacheKey, new CachedDiagnosis(rawAnalysis, source,
+                        result.getDiagnosisId(), result.getDiagnosedAt()));
+            }
             ResumeUpdateRequest update = new ResumeUpdateRequest();
             update.setDiagnosisScore(result.getOverallScore());
             resumeApplicationService.update(safeUserId, result.getResumeId(), update);
+        } else if (!reused) {
+            diagnosisCache.put(cacheKey, new CachedDiagnosis(rawAnalysis, source, null, result.getDiagnosedAt()));
         }
         return result;
     }
@@ -166,6 +208,19 @@ public class ResumeDiagnosisApplicationService {
         return storage.loadDiagnosis(resumeId);
     }
 
+    public List<ResumeDiagnosisResultDto> listDiagnosisHistory(String userId, Long resumeId) {
+        requireOwned(userId, resumeId);
+        return storage.listDiagnoses(requireUserId(userId), resumeId);
+    }
+
+    public boolean deleteDiagnosisHistory(String userId, Long resumeId, Long diagnosisId) {
+        requireOwned(userId, resumeId);
+        if (diagnosisId == null) {
+            throw new IllegalArgumentException("diagnosisId is required");
+        }
+        return storage.deleteDiagnosis(requireUserId(userId), diagnosisId);
+    }
+
     private List<String> applyProfileContext(String userId, ResumeDiagnosisRequest request, ResumeRecordDto resume) {
         List<String> sources = new ArrayList<String>();
         if (resume != null) {
@@ -184,6 +239,7 @@ public class ResumeDiagnosisApplicationService {
             UserProfileSnapshot.PreferencesBlock preferences = snapshot.getPreferences();
             UserProfileSnapshot.ResumeBlock resumeBlock = snapshot.getResume();
             UserProfileSnapshot.AssessmentBlock assessment = snapshot.getAssessment();
+            UserProfileSnapshot.AiDeepProfileBlock aiDeepProfile = snapshot.getAiDeepProfile();
             if (!hasText(request.getTargetJob()) && preferences != null && hasText(preferences.getTargetRole())) {
                 request.setTargetJob(preferences.getTargetRole());
                 sources.add("profile.preferences.targetRole");
@@ -192,14 +248,20 @@ public class ResumeDiagnosisApplicationService {
                 request.setTargetJob(resumeBlock.getTargetJob());
                 sources.add("profile.resume.targetJob");
             }
-            if (!hasText(request.getProfileContext())) {
-                request.setProfileContext(profileContext(snapshot));
-                if (hasText(request.getProfileContext())) {
-                    sources.add("profile.snapshot");
-                }
+            String snapshotContext = profileContext(snapshot);
+            if (hasText(snapshotContext)) {
+                request.setProfileContext(mergeProfileContext(request.getProfileContext(), snapshotContext));
+                sources.add("profile.snapshot");
             }
             if (assessment != null && hasText(assessment.getSummary())) {
                 sources.add("profile.assessment");
+            }
+            if (aiDeepProfile != null && hasText(aiDeepProfile.getProfileSummary())) {
+                sources.add("profile.aiDeepProfile");
+            }
+            if (snapshot.getOnboarding() != null
+                    && hasText(snapshot.getOnboarding().getSelfProfileSupplement())) {
+                sources.add("profile.onboarding.selfProfileSupplement");
             }
         }
         if (hasText(request.getJobDescription())) {
@@ -216,16 +278,79 @@ public class ResumeDiagnosisApplicationService {
         UserProfileSnapshot.PreferencesBlock preferences = snapshot.getPreferences();
         UserProfileSnapshot.AssessmentBlock assessment = snapshot.getAssessment();
         UserProfileSnapshot.OnboardingBlock onboarding = snapshot.getOnboarding();
+        UserProfileSnapshot.AiDeepProfileBlock aiDeepProfile = snapshot.getAiDeepProfile();
         if (preferences != null && hasText(preferences.getTargetRole())) {
             append(builder, "targetRole=" + preferences.getTargetRole());
         }
         if (assessment != null && hasText(assessment.getSummary())) {
             append(builder, "assessment=" + assessment.getSummary());
         }
+        if (aiDeepProfile != null && hasText(aiDeepProfile.getProfileSummary())) {
+            append(builder, "aiDeepProfileSummary=" + aiDeepProfile.getProfileSummary());
+            append(builder, "aiDeepProfileTags=" + join(aiDeepProfile.getProfileTags()));
+            append(builder, "aiDeepProfileSource=assessment-ai-analysis");
+        }
         if (onboarding != null && hasText(onboarding.getStage())) {
             append(builder, "stage=" + onboarding.getStage());
         }
+        if (onboarding != null && hasText(onboarding.getIdentityType())) {
+            append(builder, "identityType=" + onboarding.getIdentityType());
+        }
+        if (onboarding != null && hasText(onboarding.getExperience())) {
+            append(builder, "experience=" + onboarding.getExperience());
+        }
+        if (onboarding != null && hasText(onboarding.getSelfProfileSupplement())) {
+            append(builder, "selfProfileSupplement(user-provided-fact)="
+                    + onboarding.getSelfProfileSupplement());
+        }
+        if (onboarding != null && hasText(onboarding.getWeeklyAvailability())) {
+            append(builder, "weeklyAvailability=" + onboarding.getWeeklyAvailability());
+        }
+        if (onboarding != null && onboarding.getEducation() != null) {
+            UserProfileSnapshot.EducationBlock education = onboarding.getEducation();
+            if (hasText(education.getSchool())) append(builder, "school=" + education.getSchool());
+            if (hasText(education.getMajor())) append(builder, "major=" + education.getMajor());
+            if (hasText(education.getDegree())) append(builder, "degree=" + education.getDegree());
+            if (hasText(education.getGraduationYear())) append(builder, "graduationYear=" + education.getGraduationYear());
+        }
         return builder.length() == 0 ? null : builder.toString();
+    }
+
+    private String join(List<String> values) {
+        if (values == null || values.isEmpty()) return "";
+        StringBuilder builder = new StringBuilder();
+        for (String value : values) {
+            if (!hasText(value)) continue;
+            if (builder.length() > 0) builder.append("、");
+            builder.append(value.trim());
+        }
+        return builder.toString();
+    }
+
+    private String mergeProfileContext(String requestContext, String snapshotContext) {
+        if (!hasText(requestContext)) return snapshotContext;
+        if (!hasText(snapshotContext) || requestContext.contains(snapshotContext)) return requestContext;
+        return requestContext + "; " + snapshotContext;
+    }
+
+    private String diagnosisCacheKey(String userId, ResumeDiagnosisRequest request, String resumeText) {
+        String source = value(userId) + "\n" + value(resumeText) + "\n" + value(request.getTargetJob())
+                + "\n" + value(request.getJobDescription()) + "\n" + value(request.getProfileContext());
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256")
+                    .digest(source.getBytes(StandardCharsets.UTF_8));
+            StringBuilder key = new StringBuilder();
+            for (byte item : digest) {
+                key.append(String.format("%02x", item & 0xff));
+            }
+            return key.toString();
+        } catch (Exception ignored) {
+            return String.valueOf(source.hashCode());
+        }
+    }
+
+    private String value(String text) {
+        return text == null ? "" : text;
     }
 
     private void append(StringBuilder builder, String text) {
@@ -275,5 +400,32 @@ public class ResumeDiagnosisApplicationService {
     private String trim(String value, int max) {
         if (value == null) return null;
         return value.length() <= max ? value : value.substring(0, max);
+    }
+
+    private String diagnosisSource() {
+        if (analyzer instanceof AgentPlatformResumeDiagnosisAnalyzer) {
+            return ((AgentPlatformResumeDiagnosisAnalyzer) analyzer).getLastResultSource();
+        }
+        return AgentPlatformResumeDiagnosisAnalyzer.SOURCE_AGENT_AI;
+    }
+
+    private static class CachedDiagnosis {
+        private final String rawAnalysis;
+        private final String source;
+        private final Long diagnosisId;
+        private final LocalDateTime diagnosedAt;
+        private final long createdAt;
+
+        private CachedDiagnosis(String rawAnalysis, String source, Long diagnosisId, LocalDateTime diagnosedAt) {
+            this.rawAnalysis = rawAnalysis;
+            this.source = source;
+            this.diagnosisId = diagnosisId;
+            this.diagnosedAt = diagnosedAt;
+            this.createdAt = System.currentTimeMillis();
+        }
+
+        private boolean isFresh() {
+            return System.currentTimeMillis() - createdAt < DIAGNOSIS_CACHE_TTL_MILLIS;
+        }
     }
 }

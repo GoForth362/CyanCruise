@@ -180,6 +180,34 @@ psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-admin-governa
 
 当前 CyanCruise 处于功能完善阶段，PostgreSQL 是全部用户端和管理端业务数据的唯一主存储。首页、用户画像、简历、测评、面试、路径规划、消息和管理治理功能都应优先完成 PostgreSQL 的保存、读取、权限和页面闭环。
 
+每日路线任务复用“今日任务”业务对象。PostgreSQL 验收环境首次启用前执行：
+
+```powershell
+psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-career-daily-task.sql
+```
+
+该表保存任务日期、来源路线动作和完成状态，使同一天重复打开时保持稳定，并在次日优先顺延未完成事项。
+
+就业与升学规划使用独立数据表。生产或验收环境还需执行：
+
+```powershell
+psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-study-center-planning.sql
+```
+
+升学规划按方向配置三套独立规划服务，属性前缀分别为 `cc001.agent.platform.study.postgraduate`、`cc001.agent.platform.study.recommendation` 和 `cc001.agent.platform.study.abroad`。机器生成路线时优先配置已发布的 `taskFlowCode`，避免对话智能体在任务流执行后把结构化 JSON 改写成说明文字；`agentNumber` 可保留给对话入口使用。切换当前路线只改变首页读取哪套规划，不会删除另一套规划和每日任务。
+
+考研规划示例：
+
+```properties
+cc001.agent.platform.study.postgraduate.enabled=true
+cc001.agent.platform.study.postgraduate.agentNumber=<已发布的考研规划智能体编码>
+cc001.agent.platform.study.postgraduate.taskFlowCode=<已发布的考研规划任务流编码>
+```
+
+同时配置 `agentNumber` 与 `taskFlowCode` 时，后端路线生成接口优先直接运行任务流；智能体编码仍可用于平台对话测试，但不会参与机器可持久化 JSON 的二次改写。
+
+升学中心上传的规划资料使用现有 Cosmic 文件服务保存文件，并在 `cc_study_center_material` 中保存当前用户的文件引用、解析状态和受限正文。执行更新后的 `datamodel/postgresql-study-center-planning.sql` 后，服务重启仍可读取资料；只有考研方向且正文解析状态为 `OK` 的当前用户资料会进入考研智能体请求。
+
 本地 8080 运行时保持 `cc001.storage.backend=postgresql`。不要启用 `cc001.storage.backend=cosmic`、`cc001.storage.cosmic.modules` 或 `cc001.storage.cosmic.clientClass`，也不进行 PostgreSQL 与金蝶业务对象双写。已有的 Cosmic storage adapter 仅作为后续迁移准备保留，不参与当前功能验收。
 
 ## 延后：Cosmic Business Object Storage

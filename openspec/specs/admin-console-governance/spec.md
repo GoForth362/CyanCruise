@@ -81,7 +81,7 @@ CyanCruise SHALL provide administrator contracts for career path and career node
 
 ### Requirement: Question bank moderation
 
-CyanCruise SHALL expose administrator “题库管理” contracts that include “面试题库”和“职业测评题库”, and retain moderation coverage for hidden, AI-generated, user-contributed, and pending-review questions.
+CyanCruise SHALL expose administrator “题库管理” contracts that include “面试题库”和“职业测评题库”, retain moderation coverage for hidden, AI-generated, user-contributed, and pending-review questions, and manage the persistent career assessment catalog including questions, options, dimensions, pool question count, and the configured answer question count for each scale.
 
 #### Scenario: Admin manages interview questions
 
@@ -114,9 +114,19 @@ CyanCruise SHALL expose administrator “题库管理” contracts that include 
 
 - **GIVEN** 当前用户具备管理后台权限
 - **WHEN** 管理员进入“题库管理”的“职业测评题库”
-- **THEN** 页面 SHALL 展示现有职业测评量表、题目数量、题目文本、维度和选项
+- **THEN** 页面 SHALL 展示现有职业测评量表、题库总数、实际作答题数、题目文本、维度和选项
 - **AND** 管理员 SHALL be able to 新增、编辑和删除职业测评题目
-- **AND** 页面 SHALL 说明职业测评题库当前保存在应用运行期题库中
+- **AND** 修改 SHALL 持久化并在服务重启后继续生效
+
+#### Scenario: 管理员配置作答题数
+
+- **WHEN** 管理员将量表作答题数设置为 1 到当前题库总数之间的整数
+- **THEN** 系统 SHALL 保存配置并用于后续新建的测评批次
+
+#### Scenario: 非法作答题数
+
+- **WHEN** 管理员设置的作答题数小于 1 或大于当前题库总数
+- **THEN** 系统 SHALL 拒绝保存并显示普通中文提示
 
 #### Scenario: Admin question bank errors hide implementation details
 
@@ -352,3 +362,91 @@ CyanCruise SHALL show management console labels, buttons, empty states, errors, 
 
 - **WHEN** the admin console renders labels, buttons, or status messages
 - **THEN** the visible text SHALL use understandable Chinese such as “管理后台”, “用户管理”, “题库审核”, and “无管理员权限”, and SHALL NOT show garbled text or unexplained abbreviations
+
+### Requirement: 管理后台依赖的服务响应可跨 RPC 边界传输
+
+管理后台加载所依赖的 CyanCruise 业务响应对象 SHALL 满足当前 Cosmic Hessian/Dubbo 调用链的序列化要求。服务端 SHALL NOT 因 DTO 缺少序列化契约而返回递归包装的 RPC 异常。
+
+#### Scenario: 今日建议响应跨服务边界返回
+
+- **WHEN** 管理后台加载关联的用户概览或今日建议数据
+- **THEN** `CareerAgentTodayDto` 及其动作项 SHALL 可被序列化
+- **AND** 页面 SHALL 接收到正常响应或明确的业务错误，而不是 `StackOverflowError`
+
+### Requirement: 管理员共享治理视图
+
+在共享服务模式中，所有已授权管理员 SHALL 从同一 PostgreSQL 治理状态读取用户、内容、题库和审计数据。管理员身份仅决定是否可执行管理操作，SHALL NOT 将管理数据按管理员账号分片。
+
+#### Scenario: 两位管理员查看用户管理
+
+- **WHEN** 两位具备管理员等价角色的用户从不同电脑或浏览器访问同一共享服务
+- **THEN** 用户管理列表 SHALL 返回同一份非删除用户数据，允许存在分页或关键字条件造成的预期差异
+
+#### Scenario: 管理员操作对其他管理员可见
+
+- **WHEN** 任一管理员完成禁用或恢复用户、保存内容、审核题目或其他持久化治理操作
+- **THEN** 另一位管理员重新读取对应管理数据时 SHALL 看到操作后的持久化结果
+
+### Requirement: 用户管理支持搜索与身份类型展示
+
+用户管理页面 SHALL 支持按用户名称、用户 ID、学校和专业搜索已登记用户，并 SHALL 为每位用户显示“管理员”或“普通用户”身份类型。身份类型 SHALL 来自当前金蝶平台权限判断，不得由浏览器缓存或硬编码账号决定。
+
+#### Scenario: 管理员搜索用户
+
+- **WHEN** 管理员在用户管理搜索框输入名称、用户 ID、学校或专业关键字
+- **THEN** 页面 SHALL 重新请求匹配关键字的用户列表
+- **AND** 清空关键字后 SHALL 恢复完整用户列表
+
+#### Scenario: 用户列表展示身份类型
+
+- **WHEN** 用户管理列表成功返回用户记录
+- **THEN** 每条记录 SHALL 显示“管理员”或“普通用户”
+- **AND** 管理员判断 SHALL 与金蝶平台当前管理员权限保持一致
+
+### Requirement: 管理端明确展示读取失败
+
+管理后台 SHALL 区分服务端成功返回的空数据与管理数据读取失败。页面 SHALL 使用普通中文展示可恢复故障状态，且不得将读取失败呈现为“暂无用户数据”。
+
+#### Scenario: 用户列表请求失败
+
+- **WHEN** 管理后台读取用户列表的请求因路由、身份、存储或网络错误失败
+- **THEN** 页面 SHALL 显示管理数据暂时无法加载的中文提示和重试入口
+- **AND** 页面 SHALL NOT 将该失败渲染为成功的空用户列表
+
+#### Scenario: 用户列表成功为空
+
+- **WHEN** 服务端成功返回空分页用户列表
+- **THEN** 页面 SHALL 显示“暂无用户数据”空状态
+
+### Requirement: 无管理员权限提示保持简洁居中
+
+无管理员权限用户进入管理后台路由时，页面 SHALL 仅显示“管理后台”和“管理员治理入口，仅对 ADMIN 或平台管理员开放。”，并将提示置于可用页面内容区域中央。页面 SHALL NOT 显示接口路径、调试身份说明或额外权限警告卡片。
+
+#### Scenario: 普通用户进入管理后台
+
+- **WHEN** 当前登录用户不具备管理员等价角色并进入管理后台路由
+- **THEN** 页面 SHALL 在内容区域水平和垂直居中显示规定的标题与说明
+- **AND** 页面 SHALL NOT 显示“无管理员权限”、`/cc001/admin/*`、返回按钮或其他管理内容
+
+### Requirement: 用户管理个人数据最小化
+
+用户管理页面和对应 WebAPI SHALL 仅提供账号治理所需信息。系统 SHALL NOT 在用户管理列表或详情中展示、返回或搜索用户的学校和专业；系统 SHALL NOT 在用户管理页面展示原始平台组织 ID。平台组织 ID SHALL 仅用于服务端组织归属、权限范围和数据隔离。
+
+#### Scenario: 管理员查看用户列表
+
+- **WHEN** 管理员打开用户管理页面
+- **THEN** 页面 SHALL 展示用户标识、身份类型、账号状态和可执行操作
+- **AND** 页面 SHALL NOT 展示学校、专业或平台组织 ID
+
+#### Scenario: 管理员搜索用户
+
+- **WHEN** 管理员输入姓名或用户 ID 搜索用户
+- **THEN** 系统 SHALL 按姓名或用户 ID 返回匹配结果
+- **AND** 系统 SHALL NOT 使用学校或专业作为搜索条件
+
+#### Scenario: 用户管理接口返回数据
+
+- **WHEN** 管理员请求用户列表或用户详情
+- **THEN** 返回数据 SHALL NOT 包含学校、专业或平台组织 ID 的值
+- **AND** 服务端 SHALL 继续使用平台组织 ID 执行组织归属和数据隔离
+

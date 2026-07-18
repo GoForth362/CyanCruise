@@ -7,6 +7,7 @@ import v620.cc001.base.common.dto.career.CareerPlanRecordDto;
 import v620.cc001.base.common.dto.career.CareerPlanSubStageDto;
 import v620.cc001.base.common.dto.career.CareerPlanSummaryDto;
 import v620.cc001.base.common.dto.career.CareerPlanWeeklyPlanDto;
+import v620.cc001.base.common.dto.career.CareerRouteContext;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
 
 import java.time.LocalDateTime;
@@ -44,6 +45,9 @@ public class CareerPlanSummaryService {
         CareerPlanSummaryDto summary = new CareerPlanSummaryDto();
         summary.setHasPlan(Boolean.TRUE);
         summary.setTargetRole(plan.getTargetRole());
+        summary.setRouteType(plan.getRouteType() == null ? CareerRouteContext.EMPLOYMENT : plan.getRouteType());
+        summary.setStudyDirection(plan.getStudyDirection());
+        summary.setTargetSchool(plan.getTargetSchool());
         summary.setStartStateSummary(plan.getStartStateSummary());
         summary.setPlanningMode(plan.getPlanningMode());
         summary.setHorizonYears(plan.getHorizonYears());

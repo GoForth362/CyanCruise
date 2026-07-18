@@ -110,6 +110,25 @@ class AssessmentScoringServiceTest {
         assertEquals(new BigDecimal("2.50"), snapshot.getScoreSnapshot());
     }
 
+    @Test
+    void scoresMultiChoiceAnswers() {
+        AssessmentQuestionDto question = question(1L, option(11L, "R"), option(12L, "I"), option(13L, "A"));
+        question.setQuestionType("MULTI");
+        AssessmentScaleDto scale = scale("Holland", question);
+
+        AssessmentSubmitRequest request = new AssessmentSubmitRequest();
+        Map<Long, java.util.List<Long>> answers = new LinkedHashMap<Long, java.util.List<Long>>();
+        answers.put(Long.valueOf(1L), Arrays.asList(Long.valueOf(11L), Long.valueOf(12L)));
+        request.setAnswerOptionIds(answers);
+
+        AssessmentScoreResult result = service.score(scale, request);
+
+        assertEquals("IR", result.getResultSummary());
+        assertEquals(2, result.getAnswers().size());
+        assertEquals(Integer.valueOf(1), result.getDimensionCounts().get("R"));
+        assertEquals(Integer.valueOf(1), result.getDimensionCounts().get("I"));
+    }
+
     private AssessmentScaleDto scale(String title, AssessmentQuestionDto... questions) {
         AssessmentScaleDto scale = new AssessmentScaleDto();
         scale.setScaleId(Long.valueOf(100L));

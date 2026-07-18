@@ -12,6 +12,9 @@ import kd.cosmic.debug.tools.CosmicLauncher;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.Properties;
 
 /**
@@ -20,6 +23,7 @@ import java.util.Properties;
 public class DebugApplication {
 
     private static final String LOCAL_CONFIG_FILE = "debug-local.properties";
+    private static final String SHARED_RUNTIME_PROPERTY = "cc001.shared.runtime.enabled";
     private static final Properties LOCAL_CONFIG = loadLocalConfig();
 
     public static void main(String[] args) {
@@ -48,11 +52,119 @@ public class DebugApplication {
         setDefault("cc001.identity.login.provider.enabled", "true");
         setDefault("cc001.identity.login.provider.name", "RequestContext");
         setDefault("cc001.file.adapter.enabled", "true");
+        configureStorage();
+        configureAgentPlatform();
+        configureSharedRuntime();
+        cosmic.set("server.bind.ip", config("cosmic.web.bind.ip", "COSMIC_WEB_BIND_IP", "0.0.0.0"));
         
         // 自定义本地苍穹调试服务的端口
-        cosmic.setCosmicWebPort(intConfig("cosmic.web.port", "COSMIC_WEB_PORT", 8881));
+        int webPort = intConfig("cosmic.web.port", "COSMIC_WEB_PORT", 8881);
+        cosmic.setCosmicWebPort(webPort);
+        cosmic.set("domain.contextUrl", config("cosmic.web.public.url", "COSMIC_WEB_PUBLIC_URL",
+                "http://" + serverHost + ":" + webPort + "/ierp"));
 
         cosmic.start();
+    }
+
+    private static void configureStorage() {
+        setConfiguredProperty("cc001.profile.storage.adapter", "CC001_PROFILE_STORAGE_ADAPTER");
+        setConfiguredProperty("cc001.profile.postgresql.url", "CC001_PROFILE_POSTGRESQL_URL");
+        setConfiguredProperty("cc001.profile.postgresql.username", "CC001_PROFILE_POSTGRESQL_USERNAME");
+        setConfiguredProperty("cc001.profile.postgresql.password", "CC001_PROFILE_POSTGRESQL_PASSWORD");
+        setConfiguredProperty("cc001.profile.postgresql.schema", "CC001_PROFILE_POSTGRESQL_SCHEMA");
+        setConfiguredProperty("cc001.profile.postgresql.initialize", "CC001_PROFILE_POSTGRESQL_INITIALIZE");
+        setConfiguredProperty("cc001.storage.backend", "CC001_STORAGE_BACKEND");
+        setConfiguredProperty("cc001.storage.postgresql.url", "CC001_STORAGE_POSTGRESQL_URL");
+        setConfiguredProperty("cc001.storage.postgresql.username", "CC001_STORAGE_POSTGRESQL_USERNAME");
+        setConfiguredProperty("cc001.storage.postgresql.password", "CC001_STORAGE_POSTGRESQL_PASSWORD");
+        setConfiguredProperty("cc001.storage.postgresql.schema", "CC001_STORAGE_POSTGRESQL_SCHEMA");
+        setConfiguredProperty("cc001.storage.postgresql.initialize", "CC001_STORAGE_POSTGRESQL_INITIALIZE");
+        copyIfMissing("cc001.storage.backend", "cc001.profile.storage.adapter");
+        copyIfMissing("cc001.storage.postgresql.url", "cc001.profile.postgresql.url");
+        copyIfMissing("cc001.storage.postgresql.username", "cc001.profile.postgresql.username");
+        copyIfMissing("cc001.storage.postgresql.password", "cc001.profile.postgresql.password");
+        copyIfMissing("cc001.storage.postgresql.schema", "cc001.profile.postgresql.schema");
+        copyIfMissing("cc001.storage.postgresql.initialize", "cc001.profile.postgresql.initialize");
+    }
+
+    static void configureAgentPlatform() {
+        setConfiguredProperty("cc001.agent.platform.profile.enabled",
+                "CC001_AGENT_PLATFORM_PROFILE_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.profile.agentNumber",
+                "CC001_AGENT_PLATFORM_PROFILE_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.profile.taskFlowCode",
+                "CC001_AGENT_PLATFORM_PROFILE_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.resume.enabled",
+                "CC001_AGENT_PLATFORM_RESUME_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.resume.agentNumber",
+                "CC001_AGENT_PLATFORM_RESUME_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.resume.taskFlowCode",
+                "CC001_AGENT_PLATFORM_RESUME_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.employment.enabled",
+                "CC001_AGENT_PLATFORM_EMPLOYMENT_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.employment.agentNumber",
+                "CC001_AGENT_PLATFORM_EMPLOYMENT_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.employment.taskFlowCode",
+                "CC001_AGENT_PLATFORM_EMPLOYMENT_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.study.postgraduate.enabled",
+                "CC001_AGENT_PLATFORM_STUDY_POSTGRADUATE_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.study.postgraduate.agentNumber",
+                "CC001_AGENT_PLATFORM_STUDY_POSTGRADUATE_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.postgraduate.taskFlowCode",
+                "CC001_AGENT_PLATFORM_STUDY_POSTGRADUATE_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.study.recommendation.enabled",
+                "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.study.recommendation.agentNumber",
+                "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.recommendation.taskFlowCode",
+                "CC001_AGENT_PLATFORM_STUDY_RECOMMENDATION_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.study.abroad.enabled",
+                "CC001_AGENT_PLATFORM_STUDY_ABROAD_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.study.abroad.agentNumber",
+                "CC001_AGENT_PLATFORM_STUDY_ABROAD_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.abroad.taskFlowCode",
+                "CC001_AGENT_PLATFORM_STUDY_ABROAD_TASKFLOWCODE");
+    }
+
+    private static void configureSharedRuntime() {
+        boolean sharedRuntime = Boolean.parseBoolean(config("cosmic.shared.runtime.enabled",
+                "COSMIC_SHARED_RUNTIME_ENABLED", "true"));
+        System.setProperty(SHARED_RUNTIME_PROPERTY, String.valueOf(sharedRuntime));
+        if (sharedRuntime) {
+            validateSharedPostgresql();
+        }
+    }
+
+    private static void validateSharedPostgresql() {
+        validateSharedStorageConfiguration();
+        String url = System.getProperty("cc001.storage.postgresql.url");
+        String username = System.getProperty("cc001.storage.postgresql.username");
+        String password = System.getProperty("cc001.storage.postgresql.password");
+        try {
+            Class.forName("org.postgresql.Driver");
+            Connection connection = DriverManager.getConnection(url, username, password);
+            try {
+                connection.close();
+            } catch (SQLException ignored) {
+                // The successful connection already proves the configured endpoint is reachable.
+            }
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Shared runtime requires the PostgreSQL JDBC driver.", e);
+        } catch (SQLException e) {
+            throw new IllegalStateException("Shared runtime cannot connect to the configured PostgreSQL storage.", e);
+        }
+    }
+
+    static void validateSharedStorageConfiguration() {
+        String backend = System.getProperty("cc001.storage.backend");
+        String url = System.getProperty("cc001.storage.postgresql.url");
+        String username = System.getProperty("cc001.storage.postgresql.username");
+        String password = System.getProperty("cc001.storage.postgresql.password");
+        String schema = System.getProperty("cc001.storage.postgresql.schema");
+        if (!"postgresql".equalsIgnoreCase(trim(backend)) || isBlank(url) || isBlank(username)
+                || isBlank(password) || isBlank(schema)) {
+            throw new IllegalStateException("Shared runtime requires complete PostgreSQL storage configuration.");
+        }
     }
 
     private static String buildConfigUrl(String host, int port, String user, String password) {
@@ -92,6 +204,23 @@ public class DebugApplication {
         if (isBlank(System.getProperty(key))) {
             System.setProperty(key, value);
         }
+    }
+
+    private static void setConfiguredProperty(String propertyKey, String envKey) {
+        String value = config(propertyKey, envKey, "");
+        if (!isBlank(value)) {
+            System.setProperty(propertyKey, value);
+        }
+    }
+
+    private static void copyIfMissing(String targetKey, String sourceKey) {
+        if (isBlank(System.getProperty(targetKey)) && !isBlank(System.getProperty(sourceKey))) {
+            System.setProperty(targetKey, System.getProperty(sourceKey));
+        }
+    }
+
+    private static String trim(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private static Properties loadLocalConfig() {

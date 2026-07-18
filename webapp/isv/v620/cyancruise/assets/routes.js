@@ -3,9 +3,10 @@
 
   window.CYANCRUISE_ROUTE_CONFIG = {
     pages: [
-      page("workbench", "CyanCruise 首页", "available", "user", "填写用户画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
-      page("employment-home", "就业指导", "available", "user", "进入简历和面试核心功能。", ["resumes", "resumeCreate", "resumeDiagnosis", "interviews", "startInterview"]),
-      page("further-study-home", "深造护航", "available", "user", "考研、保研和留学方向规划入口。", ["snapshot", "plan"]),
+      page("workbench", "CyanCruise 首页", "available", "user", "填写自画像草稿，选择就业或深造路线。", ["snapshot", "onboarding"]),
+      page("employment-home", "就业中心", "available", "user", "查看就业洞察、简历准备、面试练习与就业资讯。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+      page("further-study-home", "升学中心", "available", "user", "选择升学方向，管理规划资料并生成个性化升学路线。", ["snapshot", "studyPlan", "studyEnsurePlan", "studyGeneratePlan", "studyDailyPlan", "studyMaterialUpload", "studyMaterialList", "studyMaterialDelete", "studyCenterResources"]),
+      page("study-resources", "全部升学资源", "available", "public", "查看升学官方服务、精选文章和相关视频。", ["studyCenterResources"], { defaultNav: false, debugNav: false }),
       page("postgraduate", "考研陪伴", "available", "user", "围绕择校、复习计划、错题解析和复试准备完成考研全周期规划。", ["postgraduateSchoolRecommend", "postgraduatePlanGenerate", "postgraduateMistakeAnalyze", "postgraduateReexamPrepare"]),
       page("postgraduate-school", "择校择专业", "available", "user", "输入本科学校、成绩、英语水平和期望地区，生成稳、冲、保三档择校建议。", ["postgraduateSchoolRecommend"], { defaultNav: false }),
       page("postgraduate-plan", "复习计划", "available", "user", "按目标院校、考试日期、科目和每周时间生成基础、提高、冲刺三轮计划。", ["postgraduatePlanGenerate"], { defaultNav: false }),
@@ -24,19 +25,19 @@
       page("study-abroad-visa", "签证网申", "available", "user", "根据目标国家、申请季、录取状态和材料状态生成签证与网申清单。", ["studyAbroadVisaChecklist"], { defaultNav: false }),
       page("onboarding", "个人情况", "available", "user", "收集身份、目标岗位、简历状态和偏好信号。", ["onboarding"]),
       page("today-action", "今日行动", "entry-only", "user", "根据路径规划拆解每天应该推进的事项。", ["today"]),
-      page("assessment", "职业测评", "entry-only", "user", "通过答题分析人格、性格和偏好，进一步明确用户画像。", ["assessmentSubmit"]),
-      page("resume-home", "简历", "available", "user", "简历制作和简历诊断入口。", ["resumes", "resumeCreate", "resumeDiagnosis"]),
+      page("assessment", "画像补全", "entry-only", "user", "先补充人格、性格和偏好信息，让后续路径规划和行动建议更准确。", ["assessmentSubmit"]),
+      page("deep-profile-detail", "深度画像详情", "entry-only", "user", "查看最新深度画像的完整分析和过往生成记录。", ["deepProfileLatest", "deepProfileHistory", "deepProfileDetail"], { defaultNav: false }),
       page("resume", "简历制作", "available", "user", "查看简历记录，创建元数据，并关联文件能力。", ["resumes", "resumeCreate", "resumeDelete"]),
       page("file-upload-preview", "文件上传预览", "entry-only", "user", "展示上传、预览、下载、删除和文本抽取契约。", ["fileUpload", "filePreview", "fileDownload", "fileDelete", "fileExtractText"], { defaultNav: false, debugNav: true }),
       page("resume-diagnosis", "简历诊断", "available", "user", "围绕目标岗位分析匹配度、关键词和建议。", ["resumes", "snapshot", "filePreview", "resumeDiagnosis", "keywordStatus"]),
-      page("career-plan", "路径规划", "entry-only", "user", "根据用户方向和画像生成实现路径规划，后续接入规划智能体。", ["plan", "ensurePlan"]),
-      page("interview-home", "面试中心", "available", "user", "选择 AI 模拟面试或全景仿真面试，并进入独立记录页。", ["interviews"]),
+      page("career-plan", "路径规划", "entry-only", "user", "根据用户方向、画像和简历生成可执行的智能就业路线图。", ["plan", "ensurePlan", "generatePlan"]),
       page("interview", "AI 模拟面试", "available", "user", "围绕目标岗位完成文字问答练习和复盘。", ["guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
-      page("interview-history", "AI 模拟面试记录", "available", "user", "分页查看已保存的 AI 模拟面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"]),
+      page("interview-history", "AI 模拟面试记录", "available", "user", "分页查看已保存的 AI 模拟面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"], { defaultNav: false }),
       page("interview-panorama", "全景仿真面试", "available", "user", "在沉浸式面试环境中使用摄像头与 AI 面试官面对面练习。", ["interviews", "guidedInterviewStart", "guidedInterviewAnswer", "guidedInterviewFinish"]),
-      page("interview-panorama-history", "全景仿真面试记录", "available", "user", "分页查看已保存的全景仿真面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"]),
+      page("interview-panorama-history", "全景仿真面试记录", "available", "user", "分页查看已保存的全景仿真面试记录。", ["interviewPage", "guidedInterviewFinish", "interviewMessages", "interviewDelete"], { defaultNav: false }),
       page("assistant", "求职助手", "available", "user", "发送助手问题并查看会话历史入口。", ["assistantSend", "assistantSessions"]),
       page("messages", "消息中心", "available", "user", "查看站内通知、未读数、订阅配额和周报入口。", ["notifications", "notificationUnread", "notificationRead", "notificationReadAll", "notificationDelete", "subscriptionQuota", "weeklyReport"]),
+      page("message-detail", "消息详情", "entry-only", "user", "查看站内消息的完整正文。", ["notifications", "notificationRead"], { defaultNav: false }),
       page("employment-insight", "就业洞察", "available", "user", "按学校、专业和目标岗位查看就业洞察。", ["employmentInsight"]),
       page("career-resources", "职业资源", "available", "public", "查看文章、视频、咨询和职业路径资源。", ["careerResources"], { defaultNav: false, debugNav: true }),
       page("admin-console", "管理后台", "entry-only", "admin", "管理员治理入口，仅对 ADMIN 或平台管理员开放。", ["adminWhoami", "adminDashboard", "adminUsersBan", "adminQuestions", "adminContent", "adminBroadcast", "adminAuditLog"], { defaultNav: false, debugNav: true })
@@ -45,16 +46,7 @@
     featureGroups: {
       "employment-home": [
         feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
-        feature("简历诊断", "诊", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入"),
-        feature("面试中心", "面", "选择全景仿真面试或 AI 模拟面试", "interview-home", "已接入")
-      ],
-      "resume-home": [
-        feature("简历制作", "简", "上传或创建简历，关联 PDF 并维护简历记录", "resume", "已接入"),
-        feature("简历诊断", "诊", "围绕目标岗位给出简历优化建议", "resume-diagnosis", "已接入")
-      ],
-      "interview-home": [
-        feature("全景仿真面试", "仿", "开启摄像头进入沉浸式面试房间", "interview-panorama", "已接入"),
-        feature("AI 模拟面试", "面", "进入 AI 文字问答练习并查看该类型记录", "interview", "已接入")
+        feature("简历诊断", "诊", "围绕目标岗位诊断简历匹配度和优化建议", "resume-diagnosis", "已接入")
       ],
       "further-study-home": [
         feature("考研陪伴", "考", "完成择校建议、复习计划、错题解析和复试准备", "postgraduate", "已接入"),

@@ -6,6 +6,8 @@ import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.storage.CareerProfileStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStorage;
+import v620.cc001.cloud01.app01.mservice.auth.CosmicAdminAuthorityResolver;
+import v620.cc001.cloud01.app01.mservice.auth.impl.ReflectiveCosmicAdminAuthorityResolver;
 import v620.base.helper.career.AdminConsoleGovernanceService;
 import v620.cc001.base.common.dto.career.AdminAnalyticsSummaryDto;
 import v620.cc001.base.common.dto.career.AdminAuditLogDto;
@@ -28,7 +30,6 @@ import v620.cc001.base.common.dto.career.CareerResourceCardDto;
 import v620.cc001.base.common.dto.career.NotificationConstants;
 import v620.cc001.base.common.dto.career.NotificationOperationResult;
 import v620.cc001.base.common.dto.career.NotificationPushRequest;
-import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,10 +50,13 @@ public class AdminConsoleGovernanceApplicationService {
     private final NotificationsSubscriptionsApplicationService notifications;
     private final AdminConsoleGovernanceService helper;
     private final boolean trustResolvedAdminIdentity;
+    private final CosmicAdminAuthorityResolver adminAuthorityResolver;
 
     public AdminConsoleGovernanceApplicationService() {
         this(CyanCruiseStorageFactory.adminGovernanceStorage(), profileStorageOrNull(), new NotificationsSubscriptionsApplicationService(),
-                new AdminConsoleGovernanceService(), true, new InMemoryCareerResourceStorage());
+                new AdminConsoleGovernanceService(), true, new InMemoryCareerResourceStorage(),
+                new ReflectiveCosmicAdminAuthorityResolver());
+        AdminAuditLogRetentionScheduler.ensureStarted(storage);
     }
 
     public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
@@ -89,12 +93,24 @@ public class AdminConsoleGovernanceApplicationService {
                                                      AdminConsoleGovernanceService helper,
                                                      boolean trustResolvedAdminIdentity,
                                                      CareerResourceStorage defaultResourceStorage) {
+        this(storage, profileStorage, notifications, helper, trustResolvedAdminIdentity, defaultResourceStorage,
+                new ReflectiveCosmicAdminAuthorityResolver());
+    }
+
+    public AdminConsoleGovernanceApplicationService(AdminGovernanceStorage storage,
+                                              CareerProfileStorage profileStorage,
+                                              NotificationsSubscriptionsApplicationService notifications,
+                                              AdminConsoleGovernanceService helper,
+                                              boolean trustResolvedAdminIdentity,
+                                              CareerResourceStorage defaultResourceStorage,
+                                              CosmicAdminAuthorityResolver adminAuthorityResolver) {
         this.storage = storage;
         this.profileStorage = profileStorage;
         this.defaultResourceStorage = defaultResourceStorage;
         this.notifications = notifications;
         this.helper = helper;
         this.trustResolvedAdminIdentity = trustResolvedAdminIdentity;
+        this.adminAuthorityResolver = adminAuthorityResolver;
     }
 
     public AdminIdentityDto whoami(String adminId) {
@@ -126,7 +142,7 @@ public class AdminConsoleGovernanceApplicationService {
         }
         AdminUserDto existing = storage.findUser(safeUserId);
         if (existing != null) {
-            boolean changed = applyProfile(existing);
+            boolean changed = false;
             if (hasText(displayName) && (isBlank(existing.getNickname()) || sameText(existing.getNickname(), existing.getUserId()))) {
                 existing.setNickname(displayName.trim());
                 changed = true;
@@ -146,7 +162,6 @@ public class AdminConsoleGovernanceApplicationService {
         user.setOrgId(trim(orgId));
         user.setStatus(AdminConstants.USER_STATUS_ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
-        applyProfile(user);
         storage.saveUser(user);
     }
 
@@ -184,47 +199,93 @@ public class AdminConsoleGovernanceApplicationService {
         for (AdminUserDto user : storage.listUsers()) {
             if (user.getDeletedAt() != null) continue;
             if (isDevelopmentUserId(user.getUserId())) continue;
-            if (applyProfile(user)) {
-                storage.saveUser(user);
-            }
-            if (hasText(keyword) && (user.getNickname() == null
-                    || !user.getNickname().toLowerCase().contains(keyword.trim().toLowerCase()))) {
+            markAdministrator(user);
+            if (!matchesUserKeyword(user, keyword)) {
                 continue;
             }
-            all.add(user);
+            all.add(governanceView(user));
         }
         return page(all, page, size);
     }
 
     public AdminUserDto userDetail(String adminId, String userId) {
         requireAdmin(adminId);
+        AdminUserDto user = requireStoredUser(userId);
+        markAdministrator(user);
+        return governanceView(user);
+    }
+
+    private boolean matchesUserKeyword(AdminUserDto user, String keyword) {
+        if (!hasText(keyword)) {
+            return true;
+        }
+        String normalized = keyword.trim().toLowerCase(java.util.Locale.ENGLISH);
+        return containsIgnoreCase(user.getNickname(), normalized)
+                || containsIgnoreCase(user.getUserId(), normalized);
+    }
+
+    private AdminUserDto governanceView(AdminUserDto user) {
+        AdminUserDto view = new AdminUserDto();
+        view.setUserId(user.getUserId());
+        view.setNickname(user.getNickname());
+        view.setStatus(user.getStatus());
+        view.setBannedReason(user.getBannedReason());
+        view.setAdministrator(user.getAdministrator());
+        view.setCreatedAt(user.getCreatedAt());
+        view.setDeletedAt(user.getDeletedAt());
+        return view;
+    }
+
+    private AdminUserDto requireStoredUser(String userId) {
         AdminUserDto user = storage.findUser(userId);
         if (user == null) throw new IllegalArgumentException("user not found");
         return user;
+    }
+
+    private boolean containsIgnoreCase(String value, String normalizedKeyword) {
+        return value != null && value.toLowerCase(java.util.Locale.ENGLISH).contains(normalizedKeyword);
+    }
+
+    private void markAdministrator(AdminUserDto user) {
+        user.setAdministrator(Boolean.valueOf(isAdministratorAccount(user.getUserId())));
+    }
+
+    private boolean isAdministratorAccount(String userId) {
+        boolean administrator = storage.isAdmin(trim(userId));
+        if (!administrator && adminAuthorityResolver != null) {
+            try {
+                administrator = adminAuthorityResolver.isAdmin(userId, userId);
+            } catch (RuntimeException ignored) {
+                // Platform permission lookup is best-effort for list decoration and fails closed.
+            }
+        }
+        return administrator;
     }
 
     public AdminOperationResult banUser(String adminId, String userId, String reason) {
         requireAdmin(adminId);
         String safeAdminId = trim(adminId);
         String safeUserId = trim(userId);
-        AdminUserDto user = userDetail(adminId, userId);
+        AdminUserDto user = requireStoredUser(userId);
+        if (sameText(safeAdminId, safeUserId)) {
+            throw new IllegalArgumentException("不能禁用自己的用户端");
+        }
+        if (isAdministratorAccount(safeUserId)) {
+            throw new IllegalArgumentException("管理员之间不能相互禁用用户端");
+        }
         String before = helper.auditSnapshot(simple("status", user.getStatus(), "bannedReason", user.getBannedReason()));
         helper.applyBan(user, reason);
         storage.saveUser(user);
-        boolean adminAccount = sameText(safeAdminId, safeUserId) || storage.isAdmin(safeUserId);
         NotificationOperationResult notification = pushUserNotice(userId, "用户端访问已受限",
                 "你的 CyanCruise 用户端访问已被管理员限制。管理后台权限不在这里调整。", null);
         boolean audited = audit(adminId, AdminConstants.ACTION_BAN_USER, "USER", userId, before,
                 helper.auditSnapshot(simple("status", user.getStatus(), "bannedReason", user.getBannedReason())));
-        String message = adminAccount
-                ? "已禁用该账号的用户端功能，管理后台权限不会受影响。如需移除管理权限，请在金蝶安全管理中调整。"
-                : "已禁用该账号的用户端功能。";
-        return op(AdminConstants.STATUS_OK, message, userId, 1, audited);
+        return op(AdminConstants.STATUS_OK, "已禁用该账号的用户端功能。", userId, 1, audited);
     }
 
     public AdminOperationResult unbanUser(String adminId, String userId) {
         requireAdmin(adminId);
-        AdminUserDto user = userDetail(adminId, userId);
+        AdminUserDto user = requireStoredUser(userId);
         String before = helper.auditSnapshot(simple("status", user.getStatus(), "bannedReason", user.getBannedReason()));
         helper.applyUnban(user);
         storage.saveUser(user);
@@ -306,7 +367,7 @@ public class AdminConsoleGovernanceApplicationService {
         if (!hasText(question.getSource())) question.setSource("ADMIN");
         if (!hasText(question.getPosition())) question.setPosition("通用岗位");
         if (!hasText(question.getDifficulty())) question.setDifficulty("NORMAL");
-        if (!hasText(question.getReviewStatus())) question.setReviewStatus(AdminConstants.QUESTION_REVIEW_PUBLISHED);
+        if (!hasText(question.getReviewStatus())) question.setReviewStatus(AdminConstants.QUESTION_REVIEW_PENDING);
         if (!hasText(question.getStatus())) {
             question.setStatus(AdminConstants.QUESTION_REVIEW_REJECTED.equals(question.getReviewStatus())
                     ? AdminConstants.QUESTION_STATUS_HIDDEN : AdminConstants.QUESTION_STATUS_APPROVED);
@@ -372,6 +433,7 @@ public class AdminConsoleGovernanceApplicationService {
         requireAdmin(adminId);
         if (content == null || !hasText(content.getTitle())) throw new IllegalArgumentException("content title is required");
         normalizeContentGroup(content);
+        content.setImageUrl(null);
         AdminContentItemDto saved = storage.saveContent(content);
         audit(adminId, AdminConstants.ACTION_SAVE_CONTENT, firstText(saved.getType(), "CONTENT"), saved.getContentId(), null,
                 helper.auditSnapshot(simple("title", saved.getTitle(), "hidden", String.valueOf(saved.getHidden()))));
@@ -415,7 +477,7 @@ public class AdminConsoleGovernanceApplicationService {
         int failed = 0;
         int skipped = 0;
         for (AdminUserDto user : targets) {
-            NotificationOperationResult result = pushUserNotice(user.getUserId(), request.getTitle(), request.getContent(), request.getLink());
+            NotificationOperationResult result = pushUserNotice(user.getUserId(), request.getTitle(), request.getContent(), null);
             if (NotificationConstants.RESULT_OK.equals(result.getStatus())) success++;
             else if (NotificationConstants.RESULT_SKIPPED.equals(result.getStatus())) skipped++;
             else failed++;
@@ -524,32 +586,6 @@ public class AdminConsoleGovernanceApplicationService {
         }
     }
 
-    private boolean applyProfile(AdminUserDto user) {
-        if (user == null || !hasText(user.getUserId()) || profileStorage == null) {
-            return false;
-        }
-        try {
-            UserProfileSnapshot snapshot = profileStorage.loadSnapshot(user.getUserId().trim());
-            if (snapshot == null || snapshot.getOnboarding() == null
-                    || snapshot.getOnboarding().getEducation() == null) {
-                return false;
-            }
-            UserProfileSnapshot.EducationBlock education = snapshot.getOnboarding().getEducation();
-            boolean changed = false;
-            if (hasText(education.getSchool()) && isBlank(user.getSchool())) {
-                user.setSchool(education.getSchool().trim());
-                changed = true;
-            }
-            if (hasText(education.getMajor()) && isBlank(user.getMajor())) {
-                user.setMajor(education.getMajor().trim());
-                changed = true;
-            }
-            return changed;
-        } catch (RuntimeException ex) {
-            return false;
-        }
-    }
-
     private void requireAdmin(String adminId) {
         if (trustResolvedAdminIdentity && hasText(adminId)) {
             return;
@@ -558,6 +594,11 @@ public class AdminConsoleGovernanceApplicationService {
         if (!AdminConstants.STATUS_OK.equals(identity.getStatus())) {
             throw new IllegalArgumentException(identity.getStatus());
         }
+    }
+
+    /** Allows isolated administration modules to reuse the same administrator boundary. */
+    public void requireAdministrator(String adminId) {
+        requireAdmin(adminId);
     }
 
     private AdminQuestionDto requireQuestion(String questionId) {

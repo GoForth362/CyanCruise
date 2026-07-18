@@ -4,9 +4,43 @@ cosmic.zk.user=zookeeper
 cosmic.zk.password=
 cosmic.mc.port=8090
 cosmic.web.port=8881
+cosmic.web.bind.ip=0.0.0.0
+cosmic.web.public.url=http://10.0.0.8:8881/ierp
+cosmic.shared.runtime.enabled=true
+cc001.profile.storage.adapter=postgresql
+cc001.profile.postgresql.url=jdbc:postgresql://10.0.0.8:5432/cyancruise
+cc001.profile.postgresql.username=cyancruise_app
+cc001.profile.postgresql.password=
+cc001.profile.postgresql.schema=public
+cc001.profile.postgresql.initialize=false
 cosmic.cluster.number=cosmic
 cosmic.tenant.number=ierp
 cosmic.monitor.es.url=http://10.0.0.8:9200/
+
+# Employment planning Agent SDK integration.
+cc001.agent.platform.employment.enabled=false
+cc001.agent.platform.employment.agentNumber=
+# cc001.agent.platform.employment.taskFlowCode=
+
+# Study planning uses one independent Agent for each selected direction.
+cc001.agent.platform.study.postgraduate.enabled=false
+cc001.agent.platform.study.postgraduate.agentNumber=
+# cc001.agent.platform.study.postgraduate.taskFlowCode=
+cc001.agent.platform.study.recommendation.enabled=false
+cc001.agent.platform.study.recommendation.agentNumber=
+cc001.agent.platform.study.abroad.enabled=false
+cc001.agent.platform.study.abroad.agentNumber=
+
+# Profile enrichment Agent SDK integration. This agent handles both one
+# assessment interpretation and the combined deep profile request modes.
+cc001.agent.platform.profile.enabled=false
+cc001.agent.platform.profile.agentNumber=
+# cc001.agent.platform.profile.taskFlowCode=
+
+# Resume diagnosis Agent SDK integration.
+cc001.agent.platform.resume.enabled=false
+cc001.agent.platform.resume.agentNumber=
+# cc001.agent.platform.resume.taskFlowCode=
 
 #本地向量数据
 #vector.es.url=http://127.0.0.1:9200/

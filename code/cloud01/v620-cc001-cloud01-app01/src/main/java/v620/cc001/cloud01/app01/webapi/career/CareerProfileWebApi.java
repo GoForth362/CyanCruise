@@ -1,6 +1,5 @@
 package v620.cc001.cloud01.app01.webapi.career;
 
-import v620.cc001.cloud01.app01.mservice.auth.impl.IdentityAwareCyanCruiseWebApiBoundary;
 import kd.bos.openapi.common.custom.annotation.ApiController;
 import kd.bos.openapi.common.custom.annotation.ApiMapping;
 import kd.bos.openapi.common.custom.annotation.ApiPostMapping;
@@ -13,6 +12,7 @@ import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
 import v620.cc001.base.common.dto.career.CareerUserProfileDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.AiDeepProfileApplicationService;
 import v620.cc001.cloud01.app01.mservice.auth.impl.IdentityAwareCyanCruiseWebApiBoundary;
 
 /**
@@ -23,6 +23,7 @@ import v620.cc001.cloud01.app01.mservice.auth.impl.IdentityAwareCyanCruiseWebApi
 public class CareerProfileWebApi {
 
     private final CareerProfileApplicationService applicationService;
+    private final AiDeepProfileApplicationService deepProfileApplicationService;
     private final IdentityAwareCyanCruiseWebApiBoundary identityBoundary;
 
     public CareerProfileWebApi() {
@@ -37,12 +38,38 @@ public class CareerProfileWebApi {
                         CareerProfileApplicationService applicationService) {
         this.identityBoundary = identityBoundary;
         this.applicationService = applicationService;
+        this.deepProfileApplicationService = new AiDeepProfileApplicationService();
     }
 
     @ApiPostMapping(value = "/snapshot/get", desc = "获取职业画像快照", methodParamNames = {"userId"})
     public @ApiResponseBody(value = "职业画像快照") UserProfileSnapshot snapshot(
             @ApiRequestBody(value = "用户ID", required = true) String userId) {
         return applicationService.getSnapshot(identityBoundary.requireUser(userId));
+    }
+
+    @ApiPostMapping(value = "/deep-profile/generate", desc = "生成深度画像", methodParamNames = {"userId"})
+    public @ApiResponseBody(value = "AI 深度画像") Object generateDeepProfile(
+            @ApiRequestBody(value = "用户ID", required = true) String userId) {
+        return deepProfileApplicationService.generate(identityBoundary.requireUser(userId));
+    }
+
+    @ApiPostMapping(value = "/deep-profile/latest", desc = "读取最新深度画像", methodParamNames = {"userId"})
+    public @ApiResponseBody(value = "AI 深度画像") Object latestDeepProfile(
+            @ApiRequestBody(value = "用户ID", required = true) String userId) {
+        return deepProfileApplicationService.latest(identityBoundary.requireUser(userId));
+    }
+
+    @ApiPostMapping(value = "/deep-profile/history", desc = "读取深度画像历史", methodParamNames = {"userId"})
+    public @ApiResponseBody(value = "深度画像历史") Object deepProfileHistory(
+            @ApiRequestBody(value = "用户ID", required = true) String userId) {
+        return deepProfileApplicationService.history(identityBoundary.requireUser(userId));
+    }
+
+    @ApiPostMapping(value = "/deep-profile/detail", desc = "读取深度画像详情", methodParamNames = {"userId", "recordId"})
+    public @ApiResponseBody(value = "深度画像详情") Object deepProfileDetail(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "记录ID", required = true) String recordId) {
+        return deepProfileApplicationService.detail(identityBoundary.requireUser(userId), recordId);
     }
 
     @ApiPostMapping(value = "/draft/get", desc = "get career profile draft", methodParamNames = {"userId"})

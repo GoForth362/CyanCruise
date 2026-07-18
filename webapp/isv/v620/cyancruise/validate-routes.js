@@ -11,6 +11,13 @@ const routeMap = JSON.parse(fs.readFileSync(routePath, "utf8"));
 const app = fs.readFileSync(appPath, "utf8");
 const appSources = readJsSources(assetsPath);
 const styles = fs.readFileSync(stylesPath, "utf8");
+const adminServiceSource = fs.readFileSync(path.join(assetsPath, "services", "admin-service.js"), "utf8");
+const adminConsoleSource = fs.readFileSync(path.join(assetsPath, "pages", "admin-console.js"), "utf8");
+const pageShellSource = fs.readFileSync(path.join(assetsPath, "components", "page-shell.js"), "utf8");
+const messageComponentSource = fs.readFileSync(path.join(assetsPath, "components", "message.js"), "utf8");
+const routesSource = fs.readFileSync(path.join(assetsPath, "routes.js"), "utf8");
+const navigationSource = fs.readFileSync(path.join(assetsPath, "navigation.js"), "utf8");
+const postgraduatePageSource = fs.readFileSync(path.join(assetsPath, "pages", "postgraduate.js"), "utf8");
 
 const requiredSplitFiles = [
   "app.js",
@@ -23,10 +30,8 @@ const requiredSplitFiles = [
   "navigation.js",
   "pages/workbench.js",
   "pages/employment-home.js",
-  "pages/resume-home.js",
   "pages/resume.js",
   "pages/resume-diagnosis.js",
-  "pages/interview-home.js",
   "pages/interview.js",
   "pages/interview-panorama.js",
   "pages/postgraduate.js",
@@ -56,10 +61,8 @@ const requiredSplitFiles = [
 const requiredPageRendererRoutes = [
   "workbench",
   "employment-home",
-  "resume-home",
   "resume",
   "resume-diagnosis",
-  "interview-home",
   "interview",
   "interview-panorama",
   "postgraduate",
@@ -94,8 +97,130 @@ if (!fs.existsSync(panoramaInterviewerImagePath)) {
 for (const marker of ["panoramaDeadlineAt", "Date.now()", "ai-interviewer-human-v1.png"]) {
   if (!app.includes(marker)) throw new Error(`Missing persistent panoramic timer or interviewer marker: ${marker}`);
 }
+for (const marker of ["function renderFurtherStudyHome", "function furtherStudyRoadmapPanel", "明确升学方向", "评估基础与差距", "制定备考或申请计划", "推进材料与关键节点", "studyCenterDirection"]) {
+  if (!app.includes(marker)) {
+    throw new Error(`Missing study route map marker: ${marker}`);
+  }
+}
+for (const marker of ["studyGeneratePlan", "studyDailyTaskUpdate", "data-ensure-study-plan", "currentRouteGoal", "syncCurrentRoutePlanningState"]) {
+  if (!app.includes(marker)) throw new Error(`missing independent study planning marker: ${marker}`);
+}
+for (const marker of ["function hasVerifiedStudyPlan", "function studyPlanRefreshState", 'plan.hasPlan !== true', 'phases.length >= 3', '"生成考研规划"']) {
+  if (!app.includes(marker)) throw new Error(`Study planning controls must require a verified real plan: ${marker}`);
+}
+for (const marker of ["function filterPlanPhasesByYears", "if (isStudyRoute()) return list;"]) {
+  if (!app.includes(marker)) throw new Error(`Verified study phases must bypass employment horizon filtering: ${marker}`);
+}
+if (app.includes("hasTwelveMonthStudyCoverage")) {
+  throw new Error("The browser must trust the server-verified study plan instead of parsing horizon text again");
+}
+for (const marker of ["setStudyCenterSaveButtonBusy(true)", "保存中...", 'aria-busy="true"']) {
+  if (!app.includes(marker)) throw new Error(`Study-center save button must expose immediate busy feedback: ${marker}`);
+}
+for (const marker of ["isSuccessTitle", "\"success\"", "setTimeout(hide, 3000)"]) {
+  if (!messageComponentSource.includes(marker)) throw new Error(`Success message theme or auto-dismiss contract is missing: ${marker}`);
+}
+if (!styles.includes(".message-panel.success") || !styles.includes("var(--blue-bg)")) {
+  throw new Error("Success messages must use the application light-blue theme");
+}
+for (const forbidden of ["返回升学中心", "返回考研陪伴", "返回保研陪伴", "返回留学陪伴"]) {
+  if (app.includes(forbidden)) throw new Error(`Study companion pages must not render in-page return actions: ${forbidden}`);
+}
+for (const route of ["postgraduate", "postgraduate-school", "postgraduate-plan", "postgraduate-mistake", "postgraduate-reexam", "postgraduate-recommendation", "recommendation-ranking", "recommendation-background", "recommendation-material", "recommendation-tutor", "study-abroad", "study-abroad-profile", "study-abroad-language", "study-abroad-school", "study-abroad-statement", "study-abroad-visa"]) {
+  const pattern = new RegExp(`["']?${route}["']?\\s*:\\s*["']{2}`);
+  if (!pattern.test(navigationSource)) throw new Error(`Study companion route must not have a page-level back route: ${route}`);
+}
+for (const removedMarker of ["further-study-tools", "<h3>选择具体升学方向</h3>", "路线明确后，可继续使用对应方向的择校、备考、材料和申请工具。"] ) {
+  if (app.includes(removedMarker)) {
+    throw new Error(`Study center must not restore duplicate companion cards: ${removedMarker}`);
+  }
+}
+for (const marker of ["function homeTargetField", "function syncHomeTargetField", "目标院校", "data-school-value", "targetSchool: intent.targetSchool"]) {
+  if (!app.includes(marker)) {
+    throw new Error(`Missing route-aware self-profile target marker: ${marker}`);
+  }
+}
+if (!postgraduatePageSource.includes("context.renderers.renderFurtherStudyHome(item)")) {
+  throw new Error("Further-study page module must render the dedicated study route map");
+}
+if (postgraduatePageSource.includes("item.title + '工具'")) {
+  throw new Error("Further-study page module must not restore the old overview tool heading");
+}
+for (const marker of ["function required", "required(post, endpoints.adminUsers", "required(context.post, endpoints.adminWhoami"]) {
+  if (!adminServiceSource.includes(marker)) {
+    throw new Error(`Admin service must preserve management data request failures: ${marker}`);
+  }
+}
+for (const marker of ["管理数据暂时无法加载", "admin-retry-load", "重新加载"]) {
+  if (!adminConsoleSource.includes(marker)) {
+    throw new Error(`Admin console must show a recoverable load failure state: ${marker}`);
+  }
+}
+for (const marker of ["adminUserSearch", "bindUserSearch", "service.listUsers(adminContext(context), keyword, 20)", "管理员", "普通用户"]) {
+  if (!adminConsoleSource.includes(marker)) {
+    throw new Error(`Admin user search and account type rendering must remain connected: ${marker}`);
+  }
+}
+for (const marker of ["QUESTION_PAGE_SIZE = 10", "renderInterviewQuestionList", "renderAssessmentQuestionList", "assessmentQuestionPageByScale", "bindQuestionPager", "每页 ' + QUESTION_PAGE_SIZE + ' 道"]) {
+  if (!adminConsoleSource.includes(marker)) {
+    throw new Error(`Admin question banks must paginate every 10 questions: ${marker}`);
+  }
+}
+for (const marker of [".admin-question-pager", ".admin-question-page"]) {
+  if (!styles.includes(marker)) {
+    throw new Error(`Missing admin question pager style: ${marker}`);
+  }
+}
+for (const marker of ["function renderUnauthorized", "admin-access-denied", "管理员治理入口，仅对 ADMIN 或平台管理员开放。"]) {
+  if (!adminConsoleSource.includes(marker)) {
+    throw new Error(`Admin console must render the centered unauthorized state: ${marker}`);
+  }
+}
+for (const marker of [".admin-access-denied", "place-items: center", "text-align: center"]) {
+  if (!styles.includes(marker)) {
+    throw new Error(`Missing centered admin access-denied style: ${marker}`);
+  }
+}
+if (adminConsoleSource.includes('renderStandaloneState(context, "无管理员权限"')) {
+  throw new Error("Unauthorized administrators must not receive the technical standalone warning panel");
+}
+for (const marker of [
+  "post(endpoints.identityCurrent, {})",
+  "prepareUserScopedStorage(previousUserId, userId)",
+  "productionIdentityRequired(\"cc001-identity-current-failed\")",
+  "return baseKey + \".user.\" + encodeURIComponent(userId)",
+  "parseUserStorageJson(\"cyancruise.homeIntent\")"
+]) {
+  if (!app.includes(marker)) {
+    throw new Error(`Account switching must refresh server identity and isolate browser state: ${marker}`);
+  }
+}
+if (app.includes('state.identity.mode !== "production" || state.identity.userId')) {
+  throw new Error("Production identity refresh must not be skipped because a cached userId exists");
+}
+for (const legacyAccess of [
+  'localStorage.getItem("cyancruise.homeIntent',
+  'localStorage.setItem("cyancruise.homeIntent',
+  'localStorage.removeItem("cyancruise.homeIntent',
+  'localStorage.getItem("cyancruise.previewProfile',
+  'localStorage.setItem("cyancruise.previewProfile',
+  'localStorage.removeItem("cyancruise.previewProfile'
+]) {
+  if (app.includes(legacyAccess)) {
+    throw new Error(`User browser state must not use an unscoped storage key: ${legacyAccess}`);
+  }
+}
 for (const marker of ["speechSynthesis", "SpeechSynthesisUtterance", "speakPanoramaQuestion", "panoramaLastSpokenQuestion", "播放题目"]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic interviewer speech marker: ${marker}`);
+}
+for (const marker of ["panoramaSpeechToken", "panoramaRecognitionToken", "startPanoramaAnswer(true)", "题目已读完，正在自动开启语音输入", "系统只会把语音转成文字，不保存音频"]) {
+  if (!app.includes(marker)) throw new Error(`Missing panorama automatic answer marker: ${marker}`);
+}
+for (const marker of ["panoramaMatureMaleVoice", "warmPanoramaVoices", "utterance.pitch = 0.82", "utterance.rate = 0.9", "yunxi|yunyang"]) {
+  if (!app.includes(marker)) throw new Error(`Missing panorama mature male voice marker: ${marker}`);
+}
+if (app.includes("题目出现后已自动计时")) {
+  throw new Error("Panorama answer timer must start after the AI finishes reading the question");
 }
 for (const marker of [".panorama-ai-caption", "min-height: 430px", "gap: 2px", "max-height: 92px", "min-height: 600px"]) {
   if (!styles.includes(marker)) throw new Error(`Missing panoramic room proportion marker: ${marker}`);
@@ -130,29 +255,100 @@ for (const marker of ["interviewAnswerCount", "提交并生成复盘", "score-di
 for (const marker of ["interviewDelete", "删除面试记录", "删除记录"]) {
   if (!app.includes(marker)) throw new Error(`Missing interview deletion marker: ${marker}`);
 }
-for (const marker of ["interviewPage", "interview-history", "interviewHistoryPageNumber", "每页查看 10 条记录", "interview-history-pager full", "formatInterviewDateTime", "结束时间：尚未结束"]) {
+for (const marker of ["interviewPage", "interview-history", "interviewHistoryPageNumber", "size: 10", "interview-history-pager full", "formatInterviewDateTime", "结束时间：尚未结束"]) {
   if (!app.includes(marker)) throw new Error(`Missing paged interview history marker: ${marker}`);
 }
 for (const marker of ["interviewViewMode", "查看问答", "interviewQuestionAnswerPairs", "面试官问题", "我的回答"]) {
   if (!app.includes(marker)) throw new Error(`Missing interview transcript marker: ${marker}`);
 }
-for (const marker of ['data-interview-action="leave"', "resetActiveInterviewView", "返回 AI 面试中心"]) {
-  if (!app.includes(marker)) throw new Error(`Missing AI interview center return marker: ${marker}`);
+for (const marker of ['backRouteFor(item.key)', 'var label = "返回"', 'data-back-route="']) {
+  if (!app.includes(marker) && !pageShellSource.includes(marker)) {
+    throw new Error(`Missing parent-level page header navigation marker: ${marker}`);
+  }
+}
+for (const marker of ["diagnosisResumePicker", "diagnosisResumeTrigger", "data-diagnosis-resume-id", "chooseDiagnosisResume"]) {
+  if (!app.includes(marker)) throw new Error(`Missing themed diagnosis selector marker: ${marker}`);
+}
+for (const marker of ["assessmentDetailPageItem", "data-assessment-back", "assessmentSelectedScaleId"]) {
+  if (!app.includes(marker)) throw new Error(`Missing assessment detail navigation marker: ${marker}`);
+}
+for (const marker of ["查看上次结果", "data-assessment-retake", "startNewAssessmentScale", "assessmentAnswerReviewPanel", "latestAssessmentRecord"]) {
+  if (!app.includes(marker)) throw new Error(`Missing reusable completed assessment marker: ${marker}`);
+}
+if (app.includes('(done ? "重新补全" : "开始")')) {
+  throw new Error("Completed assessments must open their latest result instead of immediately starting over");
+}
+if (!pageShellSource.includes('item.key === "assessment"') || !pageShellSource.includes('data-assessment-back')) {
+  throw new Error("Assessment detail header must return to the assessment list");
+}
+for (const marker of [".diagnosis-select-trigger", ".diagnosis-select-menu", ".diagnosis-select-option.active"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing themed diagnosis selector style: ${marker}`);
+}
+for (const marker of ["enhanceAppSelects", "data-app-select-trigger", "data-app-select-option", "MutationObserver"]) {
+  if (!app.includes(marker)) throw new Error(`Missing global themed selector behavior: ${marker}`);
+}
+for (const marker of [".app-select-trigger", ".app-select-menu", ".app-select-option.active", ".app-select.drop-up"]) {
+  if (!styles.includes(marker)) throw new Error(`Missing global themed selector style: ${marker}`);
+}
+for (const marker of [".app-select-trigger:focus", "chooseAppSelectOption(appSelectOption, event.detail === 0)", "optionButton.blur()"]) {
+  if (!app.includes(marker) && !styles.includes(marker)) throw new Error(`Missing themed selector focus recovery marker: ${marker}`);
+}
+for (const marker of ["profile-derived-field", "来自升学自画像", "保存升学方向"]) {
+  if (!app.includes(marker) && !styles.includes(marker)) throw new Error(`Missing study profile-derived school marker: ${marker}`);
+}
+if (app.includes('id="studyCenterTargetSchool"')) {
+  throw new Error("Study center target school must be read from the study self-profile instead of edited locally");
+}
+if (app.includes('["explore",') || app.includes('goal === "explore"') || app.includes('normalized === "explore"')) {
+  throw new Error("The unavailable explore route must not be exposed or selected by the home page");
+}
+for (const marker of [
+  'field("homeGoal", "当前路线", "select", selectedGoal, [["employment", "就业"], ["study", "深造"]])',
+  'if (normalized === "employment" || normalized === "study")'
+]) {
+  if (!app.includes(marker)) throw new Error(`Missing explicit home route restriction: ${marker}`);
+}
+for (const marker of ["assessmentPlainLanguageSummary", "mbtiPlainLanguageSummary", "assessmentDimensionDistribution", "本次选择更偏向"]) {
+  if (!app.includes(marker)) throw new Error(`Missing plain-language assessment result marker: ${marker}`);
+}
+if (app.includes("维度计数：")) {
+  throw new Error("Assessment dimension codes must not be shown directly to users");
+}
+for (const marker of ['data-link="workbench">首页', 'data-interview-action="leave"']) {
+  if (app.includes(marker) || pageShellSource.includes(marker)) {
+    throw new Error(`Unexpected unconditional page header navigation marker: ${marker}`);
+  }
 }
 for (const marker of [".voice-answer-button:focus", ".voice-answer-button:focus-visible", ".voice-answer-button:active span", "background: #43bca7", "background: transparent"]) {
   if (!styles.includes(marker)) throw new Error(`Missing voice answer interaction style: ${marker}`);
 }
-for (const marker of ['feature("面试中心", "面", "选择全景仿真面试或 AI 模拟面试并查看记录", "interview-home"']) {
-  if (!app.includes(marker)) throw new Error(`Missing home interview center recommendation marker: ${marker}`);
+for (const removedMarker of [
+  'feature("AI 模拟面试", "面", "通过文字问答练习岗位表达，完成后查看评分和历史记录", "interview"',
+  'feature("全景仿真面试", "仿", "开启摄像头进入沉浸式面试房间，完成后查看评分和历史记录", "interview-panorama"'
+]) {
+  if (app.includes(removedMarker) || routesSource.includes(removedMarker)) {
+    throw new Error(`Interview entry must not remain under employment: ${removedMarker}`);
+  }
 }
 for (const marker of ["interviewSetupDifficulty", "syncInterviewSetupDraftFromPage", "normalizeInterviewDifficulty", 'option value="Easy"']) {
   if (!app.includes(marker)) throw new Error(`Missing AI interview setup state marker: ${marker}`);
 }
-for (const marker of [".interview-type-grid .feature-card > p", ".interview-type-grid .feature-card > button", "grid-column: 1 / -1"]) {
-  if (!styles.includes(marker)) throw new Error(`Missing interview center card layout marker: ${marker}`);
+for (const marker of [
+  'interview-entry-actions',
+  'data-link="interview-history">查看面试记录',
+  'data-link="interview-panorama-history">查看面试记录',
+  'data-link="interview-history">查看 AI 模拟面试记录',
+  'data-link="interview-panorama-history">查看全景仿真面试记录'
+]) {
+  if (!app.includes(marker)) throw new Error(`Missing interview page record entry marker: ${marker}`);
 }
-for (const marker of ["interview-record-entry-grid", "查看 AI 模拟面试记录", "查看全景仿真面试记录"]) {
-  if (!app.includes(marker) && !styles.includes(marker)) throw new Error(`Missing interview record entry marker: ${marker}`);
+for (const removedMarker of ['data-link="employment-home">返回就业', '"interview": "employment-home"', '"interview-panorama": "employment-home"']) {
+  if (app.includes(removedMarker) || navigationSource.includes(removedMarker)) {
+    throw new Error(`Standalone interview page still has a parent navigation path: ${removedMarker}`);
+  }
+}
+for (const removedMarker of ['function renderInterviewHub(', 'registerPage("interview-home"', '返回面试中心']) {
+  if (appSources.includes(removedMarker)) throw new Error(`Obsolete interview center marker remains: ${removedMarker}`);
 }
 for (const marker of ["interview-panorama-history", "panoramaHistoryPageNumber", "loadPanoramaHistoryPage", 'mode: "VOICE"', "renderPanoramaTranscript", "删除记录"]) {
   if (!app.includes(marker)) throw new Error(`Missing panoramic interview history marker: ${marker}`);
@@ -165,6 +361,7 @@ const requiredRoutes = [
   "workbench",
   "employment-home",
   "further-study-home",
+  "study-resources",
   "postgraduate-recommendation",
   "study-abroad",
   "onboarding",
@@ -172,7 +369,6 @@ const requiredRoutes = [
   "assessment",
   "resume",
   "resume-diagnosis",
-  "interview-home",
   "interview",
   "interview-history",
   "interview-panorama-history",
@@ -189,6 +385,7 @@ const requiredRoutes = [
 const requiredApis = [
   "/cc001/career-employment/insight/get",
   "/cc001/career-employment/resources/list",
+  "/cc001/study-center/resources/list",
   "/cc001/notifications/list",
   "/cc001/notifications/unread-count",
   "/cc001/notifications/read",
@@ -237,6 +434,8 @@ const requiredApis = [
   "/cc001/resume-diagnosis/keywords/status",
   "/cc001/career-plan/summary",
   "/cc001/career-plan/ensure",
+  "/cc001/career-plan/daily/get",
+  "/cc001/career-plan/daily/task/update",
   "/cc001/interview/list",
   "/cc001/interview/page",
   "/cc001/interview/start",
@@ -253,6 +452,7 @@ const requiredPageShellRoutes = [
   "workbench",
   "employment-home",
   "further-study-home",
+  "study-resources",
   "postgraduate-recommendation",
   "study-abroad",
   "onboarding",
@@ -262,7 +462,6 @@ const requiredPageShellRoutes = [
   "file-upload-preview",
   "resume-diagnosis",
   "career-plan",
-  "interview-home",
   "interview",
   "interview-history",
   "interview-panorama-history",
@@ -283,10 +482,7 @@ const requiredDefaultUserRoutes = [
   "resume",
   "resume-diagnosis",
   "career-plan",
-  "interview-home",
   "interview",
-  "interview-history",
-  "interview-panorama-history",
   "interview-panorama",
   "assistant",
   "messages",
@@ -339,6 +535,15 @@ for (const key of requiredRoutes) {
 const serialized = JSON.stringify(routeMap);
 const routeKeys = new Set(routeMap.routes.map((route) => route.key));
 const mountKeys = new Set();
+const studyRoute = routeMap.routes.find((route) => route.key === "further-study-home");
+const studyMount = routeMap.platformMounts.find((mount) => mount.routeKey === "further-study-home");
+
+if (!studyRoute || studyRoute.title !== "升学中心") {
+  fail("Further-study route metadata must use the study route map title");
+}
+if (!studyMount || studyMount.title !== "升学中心") {
+  fail("Further-study platform mount must use the study route map title");
+}
 
 if (!routeMap.identity || !routeMap.identity.production || !routeMap.identity.development) {
   fail("Route map missing production/development identity metadata");
@@ -454,6 +659,27 @@ for (const mount of routeMap.platformMounts) {
   }
   if (mount.publishability !== "admin-only" && mount.requiredRole === "ADMIN") {
     fail(`User platform mount cannot require ADMIN: ${mount.mountKey}`);
+  }
+}
+const studyResourcesRoute = routeMap.routes.find((item) => item.key === "study-resources");
+const studyResourcesMount = routeMap.platformMounts.find((item) => item.routeKey === "study-resources");
+if (!studyResourcesRoute || studyResourcesRoute.parentRoute !== "further-study-home"
+    || !studyResourcesRoute.visibility || studyResourcesRoute.visibility.defaultNav !== false
+    || studyResourcesRoute.visibility.debugNav !== false || studyResourcesRoute.visibility.hashDirect !== true) {
+  fail("Study resource library route must be hash-direct and return to further-study-home");
+}
+if (!studyResourcesMount || studyResourcesMount.publishability !== "entry-only") {
+  fail("Study resource library mount metadata must keep the page as an internal entry");
+}
+for (const marker of ['data-link="study-resources">全部资源', "function renderStudyResourcesPage(", '"study-resources": "further-study-home"']) {
+  if (!appSources.includes(marker)) {
+    fail(`Missing study resource library marker: ${marker}`);
+  }
+}
+
+for (const key of ["interview-history", "interview-panorama-history"]) {
+  if (routeMap.platformMounts.some((mount) => mount.routeKey === key)) {
+    fail(`Interview history must only be entered from its interview page: ${key}`);
   }
 }
 

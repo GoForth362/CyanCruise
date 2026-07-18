@@ -12,6 +12,8 @@ public class AssessmentAnswerSnapshot implements Serializable {
 
     private Long questionId;
     private Long optionId;
+    private String questionText;
+    private String optionText;
     private String dimensionCode;
     private BigDecimal scoreSnapshot = BigDecimal.ZERO;
     private boolean validOption;
@@ -31,6 +33,11 @@ public class AssessmentAnswerSnapshot implements Serializable {
     public void setOptionId(Long optionId) {
         this.optionId = optionId;
     }
+
+    public String getQuestionText() { return questionText; }
+    public void setQuestionText(String questionText) { this.questionText = questionText; }
+    public String getOptionText() { return optionText; }
+    public void setOptionText(String optionText) { this.optionText = optionText; }
 
     public String getDimensionCode() {
         return dimensionCode;

@@ -14,6 +14,9 @@ public class CareerPlanRecordDto implements Serializable {
 
     private String userId;
     private String targetRole;
+    private String routeType;
+    private String studyDirection;
+    private String targetSchool;
     private String startStateSummary;
     private String planningMode;
     private Integer horizonYears;
@@ -45,6 +48,13 @@ public class CareerPlanRecordDto implements Serializable {
     public void setTargetRole(String targetRole) {
         this.targetRole = targetRole;
     }
+
+    public String getRouteType() { return routeType; }
+    public void setRouteType(String routeType) { this.routeType = routeType; }
+    public String getStudyDirection() { return studyDirection; }
+    public void setStudyDirection(String studyDirection) { this.studyDirection = studyDirection; }
+    public String getTargetSchool() { return targetSchool; }
+    public void setTargetSchool(String targetSchool) { this.targetSchool = targetSchool; }
 
     public String getStartStateSummary() {
         return startStateSummary;

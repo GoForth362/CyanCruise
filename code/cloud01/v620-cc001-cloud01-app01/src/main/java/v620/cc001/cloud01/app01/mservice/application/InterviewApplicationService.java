@@ -6,10 +6,12 @@ import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.InterviewStorage;
 import v620.base.helper.career.InterviewCoreService;
 import v620.cc001.base.common.dto.career.InterviewConstants;
+import v620.cc001.base.common.dto.career.InterviewAdviceItemDto;
 import v620.cc001.base.common.dto.career.InterviewMessageDto;
 import v620.cc001.base.common.dto.career.InterviewMessageRequest;
 import v620.cc001.base.common.dto.career.InterviewPageResultDto;
 import v620.cc001.base.common.dto.career.InterviewReportDto;
+import v620.cc001.base.common.dto.career.InterviewRadarScoreDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.InterviewStartResultDto;
 import v620.cc001.base.common.dto.career.InterviewStartRequest;
@@ -107,9 +109,10 @@ public class InterviewApplicationService {
         }
         List<InterviewMessageDto> messages = getMessages(userId, interviewId);
         int answers = answerCount(messages);
-        if (answers == 0) throw new IllegalArgumentException("请至少完成一道回答后再查看复盘");
         if (InterviewConstants.STATUS_ONGOING.equals(session.getStatus())) session = end(userId, interviewId, null);
-        InterviewReportDto report = aiService.report(session, transcript(messages), answers);
+        InterviewReportDto report = answers == 0
+                ? skippedInterviewReport(session)
+                : aiService.report(session, transcript(messages), answers);
         return saveReport(userId, interviewId, report);
     }
 
@@ -242,6 +245,25 @@ public class InterviewApplicationService {
         InterviewMessageDto message = new InterviewMessageDto(); message.setInterviewId(session.getInterviewId());
         message.setRole(InterviewConstants.ROLE_AI); message.setContent(content); message.setCreatedAt(LocalDateTime.now());
         return storage.saveMessage(message);
+    }
+
+    private InterviewReportDto skippedInterviewReport(InterviewSessionDto session) {
+        InterviewReportDto report = new InterviewReportDto();
+        report.setOverallScore(Integer.valueOf(0));
+        report.setTotalQuestions(Integer.valueOf(0));
+        report.setTextSummary("本次面试在未提交回答时结束，暂无法根据作答进行评分。可以随时重新开始练习。");
+        InterviewRadarScoreDto radar = new InterviewRadarScoreDto();
+        radar.setExpression(Integer.valueOf(0));
+        radar.setLogic(Integer.valueOf(0));
+        radar.setTechnical(Integer.valueOf(0));
+        radar.setPressureResistance(Integer.valueOf(0));
+        radar.setCommunication(Integer.valueOf(0));
+        report.setRadarScore(radar);
+        InterviewAdviceItemDto improvement = new InterviewAdviceItemDto();
+        improvement.setTitle("先完成一道题目");
+        improvement.setDetail("提交一次真实回答后，系统才能从表达、思路和岗位能力等方面为你提供针对性复盘。");
+        report.getImprovements().add(improvement);
+        return report;
     }
 
     private int answerCount(List<InterviewMessageDto> messages) {
