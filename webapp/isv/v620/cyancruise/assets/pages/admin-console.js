@@ -19,12 +19,12 @@
   var currentAssessmentBanks = [];
 
   var NAV_ITEMS = [
-    ["overview", "数智大屏"],
-    ["users", "用户管理"],
-    ["content", "内容管理"],
-    ["questions", "题库管理"],
-    ["broadcast", "通知公告"],
-    ["audit", "审计日志"]
+    ["overview", "管理总览", "01"],
+    ["users", "用户管理", "02"],
+    ["content", "内容管理", "03"],
+    ["questions", "题库管理", "04"],
+    ["broadcast", "通知公告", "05"],
+    ["audit", "审计日志", "06"]
   ];
 
   var CONTENT_GROUPS = [
@@ -139,7 +139,8 @@
       '<nav class="admin-side-nav" role="tablist">' +
       NAV_ITEMS.map(function (item, index) {
         return '<button type="button" class="admin-nav-item' + (index === 0 ? " active" : "") +
-          '" data-tab="' + item[0] + '"><span class="admin-nav-mark"></span>' + esc(context, item[1]) + '</button>';
+          '" data-tab="' + item[0] + '"><span class="admin-nav-mark" aria-hidden="true">' +
+          esc(context, item[2]) + '</span><span>' + esc(context, item[1]) + '</span></button>';
       }).join("") +
       '</nav></aside>';
   }
@@ -147,27 +148,10 @@
   function renderTopbar(context, data) {
     var name = first(data.whoami && data.whoami.userName, data.whoami && data.whoami.displayName, data.adminId, "admin");
     return '<header class="admin-topbar">' +
-      '<div><h2 id="adminSectionTitle">数智大屏</h2><p id="adminSectionSub">查看平台关键指标和数据覆盖情况</p></div>' +
-      '<div class="admin-account"><span>' + esc(context, name) + '</span></div>' +
+      '<div><h2 id="adminSectionTitle">管理总览</h2><p id="adminSectionSub">掌握平台状态并处理需要关注的事项</p></div>' +
+      '<div class="admin-account"><span class="admin-account-avatar" aria-hidden="true">管</span>' +
+      '<span class="admin-account-copy"><strong>平台管理员</strong><small>' + esc(context, name) + '</small></span></div>' +
       '</header>';
-  }
-
-  function renderOverviewLegacy(data, context) {
-    var dashboard = data.dashboard || {};
-    var analytics = data.analytics || {};
-    var events = analytics.eventBreakdown30d || {};
-    return '<div class="admin-kpi-grid">' +
-      kpi(context, "用户数量", analytics.totalUsers, "青途启航已纳入管理的用户") +
-      kpi(context, "面试次数", first(analytics.totalInterviews, dashboard.interviewCount), "模拟面试累计") +
-      kpi(context, "测评次数", analytics.totalAssessments, "能力测评累计") +
-      kpi(context, "内容数量", events.CONTENT, "后台内容条目") +
-      '</div>' +
-      '<section class="admin-panel"><div class="admin-panel-head"><div><h3>数据覆盖</h3><p>报告、事件和后台采集状态</p></div></div>' +
-      '<div class="admin-summary-row">' +
-      '<span>报告数量 <strong>' + esc(context, first(dashboard.reportCount, 0)) + '</strong></span>' +
-      '<span>跳过报告 <strong>' + esc(context, first(dashboard.skippedReportCount, 0)) + '</strong></span>' +
-      '<span>近 30 天事件会按后端返回原样展示</span>' +
-      '</div></section>';
   }
 
   function renderOverview(data, context) {
@@ -192,39 +176,60 @@
       return total + Number(first(bank.poolQuestionCount, bank.questions && bank.questions.length, 0));
     }, 0);
     var alerts = overviewAlerts(content, questions, banks);
-    return '<div class="admin-kpi-grid">' +
-      kpi(context, "用户数量", analytics.totalUsers, bannedUsers ? bannedUsers + " 个用户端已禁用" : "全部用户端正常") +
-      kpi(context, "面试次数", first(analytics.totalInterviews, dashboard.interviewCount), "模拟面试累计") +
-      kpi(context, "测评次数", analytics.totalAssessments, "能力测评累计") +
-      kpi(context, "内容数量", content.length, visibleContent + " 条展示中，" + hiddenContent + " 条隐藏") +
+    var totalUsers = first(analytics.totalUsers, users.length, 0);
+    var totalInterviews = first(analytics.totalInterviews, dashboard.interviewCount, 0);
+    var summaryTitle = alerts.length ? "有 " + alerts.length + " 项内容需要关注" : "平台治理状态平稳";
+    var summaryText = "当前管理 " + totalUsers + " 位用户、" + content.length + " 条内容，累计完成 " +
+      totalInterviews + " 次模拟面试。";
+    return '<section class="admin-dashboard-hero">' +
+      '<div class="admin-dashboard-hero-copy"><span class="admin-dashboard-eyebrow">平台治理概览</span>' +
+      '<h3>' + esc(context, summaryTitle) + '</h3><p>' + esc(context, summaryText) + '</p>' +
+      '<div class="admin-dashboard-signal ' + (alerts.length ? "warn" : "ok") + '"><i></i><span>' +
+      (alerts.length ? "建议优先检查右侧待关注事项" : "当前没有从已加载数据中发现明显异常") +
+      '</span></div></div>' +
+      '<div class="admin-dashboard-quick"><span>常用管理</span><div>' +
+      quickEntry(context, "users", "用户", "账号状态") +
+      quickEntry(context, "content", "内容", "展示与置顶") +
+      quickEntry(context, "questions", "题库", "发布与维护") +
+      quickEntry(context, "broadcast", "公告", "站内通知") +
+      '</div></div></section>' +
+      '<div class="admin-dashboard-metrics">' +
+      dashboardMetric(context, "01", "用户数量", totalUsers, bannedUsers ? bannedUsers + " 个用户端已禁用" : "全部用户端正常", bannedUsers ? "warn" : "ok") +
+      dashboardMetric(context, "02", "面试次数", totalInterviews, "模拟面试累计", "") +
+      dashboardMetric(context, "03", "测评次数", first(analytics.totalAssessments, 0), "能力测评累计", "") +
+      dashboardMetric(context, "04", "内容数量", content.length, visibleContent + " 条展示中，" + hiddenContent + " 条隐藏", hiddenContent ? "warn" : "ok") +
       '</div>' +
-      '<div class="admin-overview-grid">' +
-      '<section class="admin-panel admin-overview-card"><div class="admin-panel-head"><div><h3>运营状态</h3><p>用户端、报告和后台采集情况</p></div></div>' +
-      '<div class="admin-health-list">' +
-      healthItem(context, "用户端正常", users.length - bannedUsers, first(analytics.totalUsers, users.length), "ok") +
-      healthItem(context, "报告数量", first(dashboard.reportCount, 0), first(analytics.totalInterviews, dashboard.interviewCount, 0), "ok") +
-      healthItem(context, "跳过报告", first(dashboard.skippedReportCount, 0), first(analytics.totalInterviews, dashboard.interviewCount, 0), Number(first(dashboard.skippedReportCount, 0)) > 0 ? "warn" : "ok") +
+      '<div class="admin-dashboard-body">' +
+      '<section class="admin-panel admin-dashboard-health-panel"><div class="admin-panel-head"><div><span class="admin-panel-kicker">运行概况</span>' +
+      '<h3>平台健康度</h3><p>按用户、内容和题库查看当前覆盖情况</p></div></div>' +
+      '<div class="admin-dashboard-health-groups">' +
+      healthGroup(context, "用户与报告", "用户端及面试报告采集", [
+        healthItem(context, "用户端正常", users.length - bannedUsers, totalUsers, bannedUsers ? "warn" : "ok"),
+        healthItem(context, "报告数量", first(dashboard.reportCount, 0), totalInterviews, "ok"),
+        healthItem(context, "跳过报告", first(dashboard.skippedReportCount, 0), totalInterviews, Number(first(dashboard.skippedReportCount, 0)) > 0 ? "warn" : "ok")
+      ]) +
+      healthGroup(context, "内容供给", "用户端资源展示状态", [
+        healthItem(context, "展示中", visibleContent, content.length, visibleContent > 0 ? "ok" : "warn"),
+        healthItem(context, "置顶内容", pinnedContent, content.length, pinnedContent > 0 ? "ok" : "warn"),
+        healthItem(context, "隐藏内容", hiddenContent, content.length, hiddenContent > 0 ? "warn" : "ok")
+      ]) +
+      healthGroup(context, "题库覆盖", "面试与职业测评题目", [
+        healthItem(context, "已发布面试题", publishedQuestions, questions.length, publishedQuestions > 0 ? "ok" : "warn"),
+        healthItem(context, "隐藏面试题", hiddenQuestions, questions.length, hiddenQuestions > 0 ? "warn" : "ok"),
+        healthItem(context, "测评题目", assessmentQuestionCount, banks.length, assessmentQuestionCount > 0 ? "ok" : "warn")
+      ]) +
       '</div></section>' +
-      '<section class="admin-panel admin-overview-card"><div class="admin-panel-head"><div><h3>内容状态</h3><p>资源页内容是否足够、是否可见</p></div></div>' +
-      '<div class="admin-health-list">' +
-      healthItem(context, "展示中", visibleContent, content.length, visibleContent > 0 ? "ok" : "warn") +
-      healthItem(context, "置顶内容", pinnedContent, content.length, pinnedContent > 0 ? "ok" : "warn") +
-      healthItem(context, "隐藏内容", hiddenContent, content.length, hiddenContent > 0 ? "warn" : "ok") +
-      '</div></section>' +
-      '<section class="admin-panel admin-overview-card"><div class="admin-panel-head"><div><h3>题库覆盖</h3><p>面试题和职业测评题库维护情况</p></div></div>' +
-      '<div class="admin-health-list">' +
-      healthItem(context, "已发布面试题", publishedQuestions, questions.length, publishedQuestions > 0 ? "ok" : "warn") +
-      healthItem(context, "隐藏面试题", hiddenQuestions, questions.length, hiddenQuestions > 0 ? "warn" : "ok") +
-      healthItem(context, "测评题目", assessmentQuestionCount, banks.length, assessmentQuestionCount > 0 ? "ok" : "warn") +
-      '</div></section>' +
-      '<section class="admin-panel admin-overview-card"><div class="admin-panel-head"><div><h3>待关注事项</h3><p>需要管理员尽快检查的地方</p></div></div>' +
-      '<div class="admin-alert-list">' + (alerts.length ? alerts.map(function (alert) {
-        return '<div class="admin-alert-item ' + escAttr(context, alert.type) + '"><strong>' + esc(context, alert.title) +
-          '</strong><span>' + esc(context, alert.text) + '</span></div>';
-      }).join("") : '<div class="admin-alert-item ok"><strong>暂无明显异常</strong><span>当前用户、内容和题库数据可以支撑基础使用。</span></div>') +
-      '</div></section>' +
-      '</div>' +
-      '<section class="admin-panel"><div class="admin-panel-head"><div><h3>最近操作</h3><p>管理员最近的关键动作</p></div></div>' +
+      '<section class="admin-panel admin-dashboard-attention"><div class="admin-panel-head"><div><span class="admin-panel-kicker">优先处理</span>' +
+      '<h3>待关注事项</h3><p>根据当前已加载数据生成</p></div><span class="admin-attention-count">' + esc(context, alerts.length) + '</span></div>' +
+      '<div class="admin-alert-list">' + (alerts.length ? alerts.map(function (alert, index) {
+        return '<div class="admin-alert-item ' + escAttr(context, alert.type) + '"><span class="admin-alert-index">' +
+          esc(context, index + 1) + '</span><div><strong>' + esc(context, alert.title) +
+          '</strong><span>' + esc(context, alert.text) + '</span></div></div>';
+      }).join("") : '<div class="admin-alert-item ok"><span class="admin-alert-index">✓</span><div><strong>暂无明显异常</strong>' +
+        '<span>当前用户、内容和题库数据可以支撑基础使用。</span></div></div>') +
+      '</div></section></div>' +
+      '<section class="admin-panel admin-dashboard-recent"><div class="admin-panel-head"><div><span class="admin-panel-kicker">治理留痕</span>' +
+      '<h3>最近操作</h3><p>管理员最近的关键动作</p></div><button type="button" class="admin-text-link" data-admin-jump="audit">查看全部记录</button></div>' +
       (logs.length ? table(["操作", "对象", "管理员", "时间"], logs.slice(0, 5).map(function (log) {
         return [
           esc(context, actionText(log.action)),
@@ -234,6 +239,25 @@
         ];
       })) : empty("暂无操作记录", "管理员进行用户、内容、题库或公告操作后，会在这里形成记录。", context)) +
       '</section>';
+  }
+
+  function dashboardMetric(context, index, label, value, hint, status) {
+    return '<article class="admin-dashboard-metric ' + escAttr(context, status || "") + '">' +
+      '<span class="admin-dashboard-metric-index">' + esc(context, index) + '</span>' +
+      '<div><span>' + esc(context, label) + '</span><strong>' + esc(context, first(value, 0)) +
+      '</strong><small>' + esc(context, hint) + '</small></div></article>';
+  }
+
+  function quickEntry(context, key, title, detail) {
+    return '<button type="button" class="admin-dashboard-quick-entry" data-admin-jump="' +
+      escAttr(context, key) + '"><strong>' + esc(context, title) + '</strong><span>' +
+      esc(context, detail) + '</span><i aria-hidden="true">→</i></button>';
+  }
+
+  function healthGroup(context, title, subtitle, items) {
+    return '<section class="admin-dashboard-health-group"><div class="admin-dashboard-health-title"><strong>' +
+      esc(context, title) + '</strong><span>' + esc(context, subtitle) + '</span></div>' +
+      '<div class="admin-health-list">' + items.join("") + '</div></section>';
   }
 
   function renderUsers(data, context) {
@@ -615,6 +639,15 @@
     Array.prototype.forEach.call(root.querySelectorAll(".admin-nav-item"), function (button) {
       button.addEventListener("click", function () {
         activateTab(root, this.getAttribute("data-tab"));
+      });
+    });
+    Array.prototype.forEach.call(root.querySelectorAll("[data-admin-jump]"), function (button) {
+      button.addEventListener("click", function () {
+        activateTab(root, this.getAttribute("data-admin-jump"));
+        var main = root.querySelector(".admin-main");
+        if (main && typeof main.scrollIntoView === "function") {
+          main.scrollIntoView({ block: "start" });
+        }
       });
     });
     bindActionButtons(item, context, service, root);
@@ -1078,7 +1111,7 @@
       "未选择用户时，将发送给所有用户端正常的用户。";
   }
 
-  function runAction(item, context, service, action, id, button) {
+  function runAction(item, context, service, action, id, button, confirmed) {
     var root = context.pageHost && context.pageHost.querySelector(".admin-app");
     var activeTab = currentActiveTab(root);
     var call;
@@ -1096,13 +1129,15 @@
       activateAssessmentTab(root, button && button.getAttribute("data-scale-id"));
       return;
     }
-    if (action === "delete-content" && !window.confirm("确定删除这条内容吗？删除后用户端不会再展示。")) {
-      return;
-    }
-    if (action === "delete-question" && !window.confirm("确定删除这道面试题吗？删除后无法在题库中恢复。")) {
-      return;
-    }
-    if (action === "delete-assessment-question" && !window.confirm("确定删除这道职业测评题吗？删除后当前测评题库会立即更新。")) {
+    var confirmation = destructiveActionConfirmation(action);
+    if (confirmation && !confirmed) {
+      if (typeof context.showConfirmDialog !== "function") {
+        context.showMessage("error", "确认弹窗暂不可用", "请刷新页面后重试，系统未执行删除操作。");
+        return;
+      }
+      context.showConfirmDialog(confirmation.title, confirmation.text, confirmation.confirmText, function () {
+        runAction(item, context, service, action, id, button, true);
+      }, { danger: true });
       return;
     }
     if (action === "ban-user") call = service.banUser(adminContext(context), id, "管理员在后台限制用户端访问");
@@ -1142,6 +1177,19 @@
     });
   }
 
+  function destructiveActionConfirmation(action) {
+    if (action === "delete-content") {
+      return { title: "删除内容", text: "删除后，这条内容将从管理后台和用户端移除，且无法恢复。", confirmText: "确认删除" };
+    }
+    if (action === "delete-question") {
+      return { title: "删除面试题", text: "删除后，这道面试题将从题库中移除，且无法恢复。", confirmText: "确认删除" };
+    }
+    if (action === "delete-assessment-question") {
+      return { title: "删除职业测评题", text: "删除后，当前职业测评题库会立即更新，且无法恢复。", confirmText: "确认删除" };
+    }
+    return null;
+  }
+
   function invalidateEmploymentResources(context) {
     if (context && typeof context.invalidateEmploymentResources === "function") {
       context.invalidateEmploymentResources();
@@ -1170,7 +1218,7 @@
   function activateTab(root, key) {
     if (!root) return;
     var title = {
-      overview: ["数智大屏", "查看平台关键指标和数据覆盖情况"],
+      overview: ["管理总览", "掌握平台状态并处理需要关注的事项"],
       users: ["用户管理", "管理注册用户和账号状态"],
       content: ["内容管理", "管理首页文章、视频和资源展示"],
       questions: ["题库管理", "管理面试题库，查看职业测评题库"],

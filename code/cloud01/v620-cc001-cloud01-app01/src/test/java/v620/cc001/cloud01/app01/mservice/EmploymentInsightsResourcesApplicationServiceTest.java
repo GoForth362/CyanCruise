@@ -34,17 +34,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class EmploymentInsightsResourcesApplicationServiceTest {
 
     @Test
-    void insightUsesProfileSchoolMajorAndTargetRole() {
+    void emptyStorageDoesNotInventSchoolMetrics() {
         EmploymentInsightsResourcesApplicationService service = serviceWithProfile("employment-user-1",
                 "cdut", "Computer Science", "Software Engineer");
 
         EmploymentInsightDto insight = service.getInsight("employment-user-1");
 
-        assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, insight.getStatus());
-        assertEquals("Chengdu University of Technology", insight.getSchool());
+        assertEquals(EmploymentInsightsResourcesService.STATUS_NO_SOURCES, insight.getStatus());
         assertEquals("Computer Science", insight.getMajor());
         assertEquals("Software Engineer", insight.getTargetRole());
-        assertFalse(insight.getSources().isEmpty());
+        assertTrue(insight.getSources().isEmpty());
     }
 
     @Test
@@ -71,17 +70,19 @@ class EmploymentInsightsResourcesApplicationServiceTest {
     }
 
     @Test
-    void resourcesCanBeReadWithoutUserId() {
-        EmploymentInsightsResourcesApplicationService service = new EmploymentInsightsResourcesApplicationService();
+    void emptyResourcesCanBeReadWithoutUserId() {
+        EmploymentInsightsResourcesApplicationService service = new EmploymentInsightsResourcesApplicationService(
+                new InMemoryEmploymentInsightStorage(), new InMemoryCareerResourceStorage(),
+                new CareerProfileApplicationService(new InMemoryCareerProfileStorage(), new InMemoryCareerPlanStorage(),
+                        new CareerProfileSnapshotMergeService(), new CareerProfileBuildService()),
+                new EmploymentInsightsResourcesService());
 
         CareerResourceFeedDto feed = service.getResources(null);
 
-        assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, feed.getStatus());
-        assertFalse(feed.getArticles().isEmpty());
-        assertFalse(feed.getVideos().isEmpty());
-        assertFalse(feed.getConsultations().isEmpty());
-        assertContainsSource(feed, "https://www.ncss.cn/");
-        assertContainsSource(feed, "https://www.bilibili.com/video/BV1RN411f7LU/");
+        assertEquals(EmploymentInsightsResourcesService.STATUS_EMPTY, feed.getStatus());
+        assertTrue(feed.getArticles().isEmpty());
+        assertTrue(feed.getVideos().isEmpty());
+        assertTrue(feed.getConsultations().isEmpty());
     }
 
     @Test
@@ -121,6 +122,28 @@ class EmploymentInsightsResourcesApplicationServiceTest {
         assertTrue(Boolean.TRUE.equals(feed.getArticles().get(0).getPinned()));
         assertContainsSource(feed, "https://example.com/article");
         assertMissingSource(feed, "https://example.com/hidden-video");
+    }
+
+    @Test
+    void visibleAdminContentIsPublishedEvenWhenItUsesAHistoricalSeedId() {
+        InMemoryAdminGovernanceStorage adminStorage = new InMemoryAdminGovernanceStorage();
+        AdminContentItemDto visible = new AdminContentItemDto();
+        visible.setContentId("service-jobonline-001");
+        visible.setType("RESOURCE");
+        visible.setTitle("就业在线");
+        visible.setSourceUrl("https://www.jobonline.cn/");
+        visible.setHidden(Boolean.FALSE);
+        adminStorage.saveContent(visible);
+
+        EmploymentInsightsResourcesApplicationService service = new EmploymentInsightsResourcesApplicationService(
+                new InMemoryEmploymentInsightStorage(),
+                new AdminContentCareerResourceStorage(adminStorage, null),
+                new CareerProfileApplicationService(), new EmploymentInsightsResourcesService());
+
+        CareerResourceFeedDto feed = service.getResources(null);
+
+        assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, feed.getStatus());
+        assertContainsSource(feed, "https://www.jobonline.cn/");
     }
 
     @Test

@@ -20,18 +20,17 @@ class InterviewAiHelperTest {
     }
 
     @Test
-    void fallbackQuestionChangesWithAnswerCount() {
-        assertTrue(helper.fallbackQuestion("产品经理", 0).contains("产品经理"));
-        assertTrue(helper.fallbackQuestion("产品经理", 2).contains("重新处理"));
-    }
+    void createsTransparentTemporaryQuestionAndBasicRulesReport() {
+        String question = helper.temporaryQuestion("后端开发工程师", "Hard", 2, false);
+        InterviewSessionDto session = new InterviewSessionDto();
+        session.setPositionName("后端开发工程师");
 
-    @Test
-    void fallbackReportHasBoundedScoresAndAdvice() {
-        InterviewSessionDto session = new InterviewSessionDto(); session.setPositionName("数据分析师");
-        InterviewReportDto report = helper.fallbackReport(session, 20);
-        assertEquals(Integer.valueOf(78), report.getOverallScore());
-        assertEquals(Integer.valueOf(20), report.getTotalQuestions());
-        assertTrue(!report.getImprovements().isEmpty());
-        assertEquals(100, helper.clampScore(120));
+        InterviewReportDto report = helper.basicRulesReport(session,
+                "[候选人] 我负责接口开发并完成上线。", 1);
+
+        assertTrue(question.startsWith("【基础练习题·进阶】"));
+        assertEquals(InterviewReportDto.ANALYSIS_SOURCE_BASIC_RULES, report.getAnalysisSource());
+        assertEquals(Integer.valueOf(1), report.getTotalQuestions());
+        assertTrue(report.getTextSummary().contains("不是 AI 深度分析"));
     }
 }

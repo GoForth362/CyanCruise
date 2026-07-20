@@ -60,17 +60,20 @@
   }
 
   function renderLoading(item, context) {
-    context.renderShell(item, '<section class="feature-section full message-center">' +
-      '<div class="section-heading"><div><h3>消息中心</h3><p class="section-note">正在读取站内通知。</p></div></div>' +
-      state(context, "正在加载", "正在同步你的消息、未读数和订阅配额。", "pending") +
+    context.renderShell(item, '<section class="feature-section full message-center message-workspace-shell">' +
+      messageWorkspaceHeading("正在同步你的消息", "正在读取通知、未读数和订阅配额。", "同步中") +
+      '<div class="message-loading-layout">' +
+      state(context, "正在加载消息中心", "请稍候，系统正在同步与你有关的站内通知。", "pending") +
+      '<div class="message-loading-cards" aria-hidden="true"><i></i><i></i><i></i></div></div>' +
       '</section>');
   }
 
   function renderUnavailable(item, context, textValue) {
-    context.renderShell(item, '<section class="feature-section full message-center">' +
-      '<div class="section-heading"><div><h3>消息中心</h3><p class="section-note">站内通知暂时无法读取。</p></div>' +
-      '<button type="button" class="secondary" data-message-action="refresh">重试</button></div>' +
-      state(context, "消息暂时不可用", textValue || "请稍后再试。", "warning") +
+    context.renderShell(item, '<section class="feature-section full message-center message-workspace-shell">' +
+      messageWorkspaceHeading("消息暂时无法同步", "其他功能仍可正常使用，你可以稍后重新加载。", "需要重试") +
+      '<div class="message-unavailable-state"><span class="message-state-icon" aria-hidden="true">!</span><div><h3>消息服务暂时不可用</h3>' +
+      '<p>' + esc(context, textValue || "请稍后再试。") + '</p><small>已有消息不会因此被删除或改为已读。</small></div>' +
+      '<button type="button" class="secondary" data-message-action="refresh">重新加载</button></div>' +
       '</section>');
     bindMessages(item, context);
   }
@@ -79,23 +82,30 @@
     var notifications = data.notifications || [];
     var unread = data.unread || 0;
     var quotaText = quotaSummary(data.quotas);
+    var readCount = Math.max(0, notifications.length - unread);
     var pageInfo = pageSlice(context, notifications);
-    var body = '<section class="feature-section full message-center">' +
-      '<div class="section-heading"><div><h3>消息中心</h3>' +
-      '<p class="section-note">只展示与你有关的通知，以及管理员发布给你的公告。</p></div>' +
-      '<div class="actions-row compact">' +
-      '<button type="button" class="secondary" data-message-action="refresh">刷新</button>' +
-      '<button type="button" class="secondary" data-message-action="read-all" ' + (unread <= 0 ? "disabled" : "") + '>全部标为已读</button>' +
-      '<button type="button" data-message-action="weekly-report">生成周报通知</button>' +
-      '</div></div>' +
+    var statusTitle = unread > 0 ? "你有 " + unread + " 条消息尚未阅读" : "消息已全部查看";
+    var statusNote = unread > 0 ? "优先查看带有未读标记的通知，处理后可以单独或批量标为已读。" :
+      (notifications.length ? "当前没有需要处理的未读通知。" : "新的公告、练习结果和每周回顾会出现在这里。");
+    var body = '<section class="feature-section full message-center message-workspace-shell">' +
+      '<section class="message-overview-hero"><div class="message-overview-copy"><span class="message-eyebrow">消息中心工作台</span>' +
+      '<h3>' + esc(context, statusTitle) + '</h3><p>' + esc(context, statusNote) + '</p>' +
+      '<div class="message-privacy-note"><span aria-hidden="true">✓</span>这里只展示与你有关的通知和管理员向你发布的公告。</div></div>' +
       '<div class="message-summary-grid">' +
-      summaryCard(context, "未读消息", unread, "需要你查看的站内消息") +
-      summaryCard(context, "全部消息", notifications.length, "当前保留在消息中心的通知") +
-      summaryCard(context, "订阅配额", quotaText, "可用于外部提醒的剩余授权") +
-      '</div>';
+      summaryCard(context, "未读消息", unread, unread > 0 ? "等待查看" : "当前已清空", unread > 0 ? "attention" : "complete", "未") +
+      summaryCard(context, "消息总数", notifications.length, readCount + " 条已读", "total", "信") +
+      summaryCard(context, "外部提醒额度", quotaText, "剩余订阅授权", "quota", "铃") +
+      '</div></section>' +
+      '<section class="message-inbox-panel"><div class="message-toolbar"><div><span class="message-eyebrow">通知收件箱</span>' +
+      '<h3>' + (notifications.length ? "按时间查看全部通知" : "等待新的通知") + '</h3><p>系统按最新时间排序，完整内容可以进入详情查看。</p></div>' +
+      '<div class="actions-row compact message-toolbar-actions">' +
+      '<button type="button" class="secondary" data-message-action="refresh">刷新消息</button>' +
+      '<button type="button" class="secondary" data-message-action="read-all" ' + (unread <= 0 ? "disabled" : "") + '>全部标为已读</button>' +
+      '<button type="button" data-message-action="weekly-report">生成每周回顾</button>' +
+      '</div></div>';
 
     if (!notifications.length) {
-      body += state(context, "暂无消息", "新的公告、练习结果和周报会出现在这里。", "empty");
+      body += renderMessageEmptyState(context, quotaText, unread);
     } else {
       body += renderPager(context, pageInfo, "top");
       body += '<div class="message-list">' + pageInfo.items.map(function (notification) {
@@ -103,8 +113,20 @@
       }).join("") + '</div>';
       body += renderPager(context, pageInfo, "bottom");
     }
-    body += '</section>';
+    body += '</section></section>';
     context.renderShell(item, body);
+  }
+
+  function messageWorkspaceHeading(title, note, status) {
+    return '<div class="message-workspace-heading"><div><span class="message-eyebrow">消息中心工作台</span><h3>' +
+      title + '</h3><p>' + note + '</p></div><span class="message-workspace-status">' + status + '</span></div>';
+  }
+
+  function renderMessageEmptyState(context, quota, unread) {
+    return '<div class="message-empty-state"><div class="message-empty-visual" aria-hidden="true"><span>信</span><i></i><i></i></div>' +
+      '<div><span class="message-eyebrow">收件箱已清空</span><h3>暂时没有新的站内消息</h3>' +
+      '<p>管理员公告、面试复盘、测评结果、简历诊断和每周回顾会在生成后出现在这里。</p>' +
+      '<div class="message-empty-facts"><span><b>' + esc(context, unread) + '</b> 条待处理</span><span><b>' + esc(context, quota) + '</b> 次外部提醒额度</span></div></div></div>';
   }
 
   function renderNotification(context, notification) {
@@ -116,29 +138,50 @@
     var group = groupLabel(notification.groupKey, type);
     var classes = "message-item" + (read ? " is-read" : " is-unread") + (admin ? " is-admin" : "");
     return '<article class="' + classes + '" data-message-id="' + esc(context, id) + '">' +
-      '<div class="message-main">' +
+      '<div class="message-type-icon ' + esc(context, messageTypeTone(type, admin)) + '" aria-hidden="true">' + esc(context, messageTypeIcon(type, admin)) + '</div>' +
+      '<div class="message-main"><div class="message-title-row">' + (!read ? '<i class="message-unread-dot" aria-label="未读"></i>' : '') +
+      '<h3>' + esc(context, first(notification.title, admin ? "管理员公告" : "未命名通知")) + '</h3></div>' +
       '<div class="message-meta">' +
       '<span>' + esc(context, group) + '</span>' +
       '<span class="message-tag' + (admin ? " admin" : "") + '">' + esc(context, typeLabel) + '</span>' +
       (read ? '<span class="message-tag muted">已读</span>' : '<span class="message-tag unread">未读</span>') +
       '<span>' + esc(context, formatDate(notification.createdAt)) + '</span></div>' +
-      '<h3>' + esc(context, first(notification.title, admin ? "管理员公告" : "未命名通知")) + '</h3>' +
       '<p>' + esc(context, first(notification.content, "暂无内容")) + '</p>' +
       '</div>' +
       '<div class="message-actions">' +
       (read ? '<span class="message-read-badge">已读</span>' : '<button type="button" class="secondary" data-message-action="read" data-message-id="' + esc(context, id) + '">标为已读</button>') +
-      '<button type="button" class="secondary" data-message-action="open" data-message-id="' + esc(context, id) + '">前往查看</button>' +
+      '<button type="button" class="secondary message-open-action" data-message-action="open" data-message-id="' + esc(context, id) + '">查看详情</button>' +
       '<button type="button" class="secondary danger" data-message-action="delete" data-message-id="' + esc(context, id) + '">移出列表</button>' +
       '</div></article>';
+  }
+
+  function messageTypeIcon(type, admin) {
+    if (admin) return "告";
+    if (type === "WEEKLY_REPORT") return "报";
+    if (type === "INTERVIEW_REPORT") return "面";
+    if (type === "ASSESSMENT_RESULT") return "测";
+    if (type === "RESUME_DIAGNOSIS") return "历";
+    if (type === "AI_PROACTIVE") return "AI";
+    if (type === "STREAK_WARNING") return "练";
+    return "信";
+  }
+
+  function messageTypeTone(type, admin) {
+    if (admin) return "admin";
+    if (type === "WEEKLY_REPORT" || type === "INTERVIEW_REPORT" || type === "ASSESSMENT_RESULT" || type === "RESUME_DIAGNOSIS") return "career";
+    if (type === "AI_PROACTIVE") return "ai";
+    if (type === "STREAK_WARNING") return "warning";
+    return "system";
   }
 
   function renderMessageDetail(item, context, data) {
     var notification = selectedMessage(context, data && data.notifications);
     if (!notification) {
-      context.renderShell(item, '<section class="feature-section full message-center">' +
-        '<div class="section-heading"><div><h3>消息详情</h3><p class="section-note">查看站内消息的完整内容。</p></div></div>' +
-        state(context, "消息不存在", "这条消息可能已被移出列表，请返回消息中心查看其他消息。", "empty") +
-        '<div class="actions-row"><button type="button" class="secondary" data-message-action="back">返回消息中心</button></div>' +
+      context.renderShell(item, '<section class="feature-section full message-center message-workspace-shell">' +
+        messageWorkspaceHeading("这条消息已经不在列表中", "消息可能已被归档，返回收件箱可以继续查看其他通知。", "消息不存在") +
+        '<div class="message-unavailable-state empty"><span class="message-state-icon" aria-hidden="true">信</span><div><h3>无法打开消息详情</h3>' +
+        '<p>这条消息可能已被移出列表，请返回消息中心查看其他消息。</p></div>' +
+        '<button type="button" class="secondary" data-message-action="back">返回消息中心</button></div>' +
         '</section>');
       return;
     }
@@ -146,16 +189,18 @@
     var admin = type === "ADMIN_BROADCAST";
     var typeLabel = admin ? "管理员公告" : first(notification.label, labelForType(type));
     var group = groupLabel(notification.groupKey, type);
-    var body = '<section class="feature-section full message-center message-detail">' +
-      '<div class="section-heading"><div><h3>消息详情</h3><p class="section-note">完整展示消息正文内容。</p></div>' +
+    var body = '<section class="feature-section full message-center message-detail message-workspace-shell">' +
+      '<div class="message-detail-nav"><div><span class="message-eyebrow">消息详情</span><p>完整内容与消息来源</p></div>' +
       '<button type="button" class="secondary" data-message-action="back">返回消息中心</button></div>' +
       '<article class="message-detail-content' + (admin ? ' is-admin' : '') + '">' +
+      '<div class="message-detail-icon ' + esc(context, messageTypeTone(type, admin)) + '" aria-hidden="true">' + esc(context, messageTypeIcon(type, admin)) + '</div>' +
       '<div class="message-meta"><span>' + esc(context, group) + '</span>' +
       '<span class="message-tag' + (admin ? ' admin' : '') + '">' + esc(context, typeLabel) + '</span>' +
       '<span class="message-tag muted">已读</span>' +
       '<span>' + esc(context, formatDate(notification.createdAt)) + '</span></div>' +
       '<h2>' + esc(context, first(notification.title, admin ? "管理员公告" : "未命名通知")) + '</h2>' +
-      '<div class="message-detail-body">' + esc(context, first(notification.content, "暂无内容")) + '</div>' +
+      '<div class="message-detail-divider"><span>消息正文</span></div><div class="message-detail-body">' + esc(context, first(notification.content, "暂无内容")) + '</div>' +
+      '<div class="message-detail-foot"><span>此消息来自 ' + esc(context, group) + '</span><button type="button" class="secondary" data-message-action="back">查看其他消息</button></div>' +
       '</article></section>';
     context.renderShell(item, body);
   }
@@ -436,9 +481,9 @@
     }
   }
 
-  function summaryCard(context, title, value, note) {
-    return '<article class="message-summary-card"><span>' + esc(context, title) + '</span>' +
-      '<strong>' + esc(context, value) + '</strong><p>' + esc(context, note) + '</p></article>';
+  function summaryCard(context, title, value, note, tone, icon) {
+    return '<article class="message-summary-card ' + esc(context, tone || "total") + '"><div><span>' + esc(context, title) + '</span>' +
+      '<strong>' + esc(context, value) + '</strong><p>' + esc(context, note) + '</p></div><i aria-hidden="true">' + esc(context, icon || "信") + '</i></article>';
   }
 
   function quotaSummary(quotas) {

@@ -7,6 +7,7 @@ import v620.cc001.base.common.dto.career.CareerPlanRecordDto;
 import v620.cc001.base.common.dto.career.CareerDailyTaskDto;
 import v620.cc001.base.common.dto.career.CareerRouteContext;
 import v620.cc001.base.common.dto.furtherstudy.StudyPlanningMaterialDto;
+import v620.cc001.base.common.dto.furtherstudy.FurtherStudyAnalysisDraftDto;
 
 /** 独立于就业内容的升学中心用户选择存储。 */
 public interface StudyCenterStorage {
@@ -23,10 +24,14 @@ public interface StudyCenterStorage {
     StudyPlanningMaterialDto findMaterial(String userId, String direction, String materialId);
     List<StudyPlanningMaterialDto> listMaterials(String userId, String direction);
     boolean deleteMaterial(String userId, String direction, String materialId);
+    FurtherStudyAnalysisDraftDto loadAnalysisDraft(String userId, String taskType);
+    FurtherStudyAnalysisDraftDto saveAnalysisDraft(String userId, FurtherStudyAnalysisDraftDto draft);
     List<AdminContentItemDto> listResources();
     AdminContentItemDto findResource(String resourceId);
     AdminContentItemDto saveResource(AdminContentItemDto resource);
     boolean deleteResource(String resourceId);
+    boolean isPublishedResourceCatalogInitialized();
+    void markPublishedResourceCatalogInitialized();
 
     default String selectedDirection(String userId) {
         StudyCenterSelectionDto selection = loadSelection(userId);

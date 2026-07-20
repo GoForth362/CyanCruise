@@ -211,6 +211,29 @@ public class CareerDailyPlanApplicationService {
     }
 
     private void recomputePhaseStatus(CareerPlanRecordDto plan, Set<String> completed) {
+        if (!CareerRouteContext.STUDY.equals(routeType)) {
+            recomputeSequentialPhaseStatus(plan, completed);
+            return;
+        }
+        List<CareerPlanPhaseDto> phases = plan.getPhases();
+        for (int i = 0; i < phases.size(); i += 1) {
+            CareerPlanPhaseDto phase = phases.get(i);
+            List<SourceTask> sources = phaseSources(phase, i);
+            int completedCount = 0;
+            for (SourceTask source : sources) {
+                if (completed.contains(source.id)) completedCount += 1;
+            }
+            if (!sources.isEmpty() && completedCount == sources.size()) {
+                phase.setStatus("COMPLETED");
+            } else if (completedCount > 0) {
+                phase.setStatus("IN_PROGRESS");
+            } else {
+                phase.setStatus("NOT_STARTED");
+            }
+        }
+    }
+
+    private void recomputeSequentialPhaseStatus(CareerPlanRecordDto plan, Set<String> completed) {
         boolean previousComplete = true;
         List<CareerPlanPhaseDto> phases = plan.getPhases();
         for (int i = 0; i < phases.size(); i += 1) {

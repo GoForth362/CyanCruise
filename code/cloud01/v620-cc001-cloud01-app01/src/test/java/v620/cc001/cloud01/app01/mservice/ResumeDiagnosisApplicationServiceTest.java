@@ -180,7 +180,7 @@ class ResumeDiagnosisApplicationServiceTest {
         ResumeApplicationService resumeService = resumeService(new InMemoryResumeStorage(), new InMemoryCareerProfileStorage());
         ResumeRecordDto resume = resumeService.create("diagnosis-user-2", request());
         ResumeDiagnosisApplicationService service = diagnosisService(resumeService, new InMemoryResumeDiagnosisStorage(),
-                "匹配分 91，建议补充项目。");
+                "{\"overallScore\":91,\"strengths\":[],\"weaknesses\":[],\"suggestions\":[\"补充真实项目证据\"],\"revisionSuggestions\":[]}");
         ResumeDiagnosisRequest diagnosisRequest = new ResumeDiagnosisRequest();
         diagnosisRequest.setResumeText("Java Spring Redis");
 

@@ -6,15 +6,15 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CyanCruise 工作台</title>
-  <link rel="stylesheet" href="assets/styles.css?v=20260718-cyancruise-v246">
+  <link rel="stylesheet" href="assets/styles.css?v=20260720-cyancruise-v284">
 </head>
 <body>
   <main class="shell">
-    <header class="app-header">
+    <header class="app-header chrome-hidden">
       <div>
         <p class="eyebrow">CyanCruise</p>
-        <h1>求职主循环</h1>
-        <p class="lead">在 CyanCruise 中串联目标岗位、用户画像、简历、诊断、今日行动、模拟面试、助手和消息。</p>
+        <h1>调试信息</h1>
+        <p class="lead">用于开发环境检查当前身份、页面导航和功能状态。</p>
       </div>
       <section class="identity-panel" aria-label="当前身份">
         <div>
@@ -29,11 +29,11 @@
       </section>
     </header>
 
-    <nav class="route-nav" id="routeNav" aria-label="CyanCruise 页面导航"></nav>
+    <nav class="route-nav chrome-hidden" id="routeNav" aria-label="CyanCruise 调试页面导航"></nav>
 
     <section id="messagePanel" class="message-panel hidden" aria-live="polite"></section>
 
-    <section class="status-grid" aria-label="主循环状态">
+    <section class="status-grid chrome-hidden" aria-label="调试状态">
       <article class="status-card">
         <span class="label">目标岗位</span>
         <strong id="targetRole">待确认</strong>
@@ -63,11 +63,11 @@
       </section>
     </section>
   </main>
-  <script src="assets/api.js?v=20260717-cyancruise-v230"></script>
-  <script src="assets/routes.js?v=20260719-cyancruise-v249"></script>
+  <script src="assets/api.js?v=20260719-cyancruise-v260"></script>
+  <script src="assets/routes.js?v=20260719-cyancruise-v260"></script>
   <script src="assets/state.js?v=20260716-cyancruise-v212"></script>
   <script src="assets/identity.js?v=20260629-cyancruise-v139"></script>
-  <script src="assets/navigation.js?v=20260719-cyancruise-v252"></script>
+  <script src="assets/navigation.js?v=20260719-cyancruise-v274"></script>
   <script src="assets/components/feature-card.js?v=20260629-cyancruise-v139"></script>
   <script src="assets/components/message.js?v=20260718-cyancruise-v233"></script>
   <script src="assets/components/form.js?v=20260629-cyancruise-v139"></script>
@@ -76,7 +76,7 @@
   <script src="assets/components/status-panel.js?v=20260629-cyancruise-v139"></script>
   <script src="assets/components/pager.js?v=20260629-cyancruise-v139"></script>
   <script src="assets/services/resume-service.js?v=20260629-cyancruise-v139"></script>
-  <script src="assets/services/interview-service.js?v=20260629-cyancruise-v139"></script>
+  <script src="assets/services/interview-service.js?v=20260719-cyancruise-v255"></script>
   <script src="assets/services/profile-service.js?v=20260717-cyancruise-v230"></script>
   <script src="assets/services/further-study-service.js?v=20260629-cyancruise-v139"></script>
   <script src="assets/services/resource-service.js?v=20260629-cyancruise-v139"></script>
@@ -95,9 +95,9 @@
   <script src="assets/pages/assessment.js?v=20260715-cyancruise-v177"></script>
   <script src="assets/pages/career-plan.js?v=20260629-cyancruise-v139"></script>
   <script src="assets/pages/assistant.js?v=20260629-cyancruise-v139"></script>
-  <script src="assets/pages/messages.js?v=20260715-cyancruise-v180"></script>
-  <script src="assets/pages/admin-console.js?v=20260717-cyancruise-v225"></script>
+  <script src="assets/pages/messages.js?v=20260720-cyancruise-v279"></script>
+  <script src="assets/pages/admin-console.js?v=20260720-cyancruise-v282"></script>
   <script src="assets/app-config.js?v=20260629-cyancruise-v139"></script>
-  <script src="assets/app.js?v=20260719-cyancruise-v252"></script>
+  <script src="assets/app.js?v=20260720-cyancruise-v282"></script>
 </body>
 </html>

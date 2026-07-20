@@ -5,6 +5,8 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStora
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryInterviewStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
 import v620.cc001.cloud01.app01.mservice.ai.InterviewAiService;
+import v620.cc001.cloud01.app01.mservice.ai.InterviewReportAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.AiGateway;
 import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.InterviewApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.ResumeApplicationService;
@@ -27,9 +29,13 @@ import v620.cc001.base.common.dto.career.InterviewReportDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.InterviewStartRequest;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
+import v620.cc001.base.common.dto.ai.AiChatRequestDto;
+import v620.cc001.base.common.dto.ai.AiChatResponseDto;
+import v620.cc001.base.common.dto.ai.AiStreamEventDto;
 
 import java.io.File;
 import java.util.List;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -106,14 +112,17 @@ class InterviewApplicationServiceTest {
         InterviewApplicationService service = service(new InMemoryInterviewStorage(),
                 profileService(new InMemoryCareerProfileStorage()));
         InterviewSessionDto first = service.start("interview-user-4", startRequest("Java Engineer"));
-        InterviewSessionDto second = service.start("interview-user-4", startRequest("Data Analyst"));
         service.appendMessage("interview-user-4", first.getInterviewId(), message("USER", "old"));
+        service.end("interview-user-4", first.getInterviewId(), Integer.valueOf(70));
+        InterviewSessionDto second = service.start("interview-user-4", startRequest("Data Analyst"));
+        service.appendMessage("interview-user-4", second.getInterviewId(), message("USER", "new"));
+        service.end("interview-user-4", second.getInterviewId(), Integer.valueOf(80));
 
         List<InterviewSessionDto> history = service.listByUser("interview-user-4");
         service.delete("interview-user-4", first.getInterviewId());
 
         assertEquals(second.getInterviewId(), history.get(0).getInterviewId());
-        assertEquals(0, service.getMessages("interview-user-4", second.getInterviewId()).size());
+        assertEquals(1, service.getMessages("interview-user-4", second.getInterviewId()).size());
         assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
             public void run() {
                 service.get("interview-user-4", first.getInterviewId());
@@ -122,14 +131,66 @@ class InterviewApplicationServiceTest {
     }
 
     @Test
-    void guidedInterviewFallsBackAndCachesReportWithoutConfiguredAi() {
+    void historyOnlyReturnsCompletedInterviewsWithUserAnswers() {
+        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
+                profileService(new InMemoryCareerProfileStorage()));
+        InterviewSessionDto completed = service.start("history-filter-user", startRequest("后端开发"));
+        service.appendMessage("history-filter-user", completed.getInterviewId(), message("USER", "我完成了一道回答"));
+        service.end("history-filter-user", completed.getInterviewId(), Integer.valueOf(75));
+        InterviewSessionDto emptyCompleted = service.start("history-filter-user", startRequest("测试开发"));
+        service.end("history-filter-user", emptyCompleted.getInterviewId(), null);
+        service.start("history-filter-user", startRequest("产品经理"));
+
+        List<InterviewSessionDto> history = service.listByUser("history-filter-user");
+        InterviewPageResultDto page = service.listPage("history-filter-user", 1, InterviewConstants.MODE_TEXT);
+
+        assertEquals(1, history.size());
+        assertEquals(completed.getInterviewId(), history.get(0).getInterviewId());
+        assertEquals(Integer.valueOf(1), page.getTotal());
+    }
+
+    @Test
+    void startingNewInterviewRemovesOngoingSessionAndMessages() {
+        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
+                profileService(new InMemoryCareerProfileStorage()));
+        InterviewSessionDto abandoned = service.start("cleanup-user", startRequest("后端开发"));
+        service.appendMessage("cleanup-user", abandoned.getInterviewId(), message("USER", "尚未主动结束"));
+
+        InterviewSessionDto current = service.start("cleanup-user", startRequest("测试开发"));
+
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                service.get("cleanup-user", abandoned.getInterviewId());
+            }
+        }));
+        assertEquals(current.getInterviewId(), service.get("cleanup-user", current.getInterviewId()).getInterviewId());
+    }
+
+    @Test
+    void discardingInterviewRemovesSessionAndMessages() {
+        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
+                profileService(new InMemoryCareerProfileStorage()));
+        InterviewSessionDto session = service.start("discard-user", startRequest("后端开发"));
+
+        service.discard("discard-user", session.getInterviewId());
+
+        assertTrue(service.listByUser("discard-user").isEmpty());
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                service.get("discard-user", session.getInterviewId());
+            }
+        }));
+    }
+
+    @Test
+    void guidedInterviewUsesRealAnalyzerAndCachesItsReport() {
         CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
         ResumeApplicationService resumeService = new ResumeApplicationService(new InMemoryResumeStorage(), profileService);
         InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
-                new InterviewCoreService(), resumeService, new InterviewAiService(null));
+                new InterviewCoreService(), resumeService, new InterviewAiService(questionGateway(), evidenceAnalyzer()));
 
         v620.cc001.base.common.dto.career.InterviewStartResultDto started = service.startGuided("guided-user", startRequest("测试工程师"));
-        assertTrue(started.getOpeningMessage().getContent().contains("测试工程师"));
+        assertEquals("请结合一段真实经历说明你的处理方式。", started.getOpeningMessage().getContent());
 
         v620.cc001.base.common.dto.career.InterviewTurnResultDto turn = service.answer("guided-user", started.getSession().getInterviewId(), "我通过自动化测试减少了重复验证时间。");
         assertEquals(3, service.getMessages("guided-user", started.getSession().getInterviewId()).size());
@@ -138,20 +199,25 @@ class InterviewApplicationServiceTest {
         InterviewReportDto first = service.finishAndReport("guided-user", started.getSession().getInterviewId());
         InterviewReportDto cached = service.finishAndReport("guided-user", started.getSession().getInterviewId());
         assertEquals(first.getOverallScore(), cached.getOverallScore());
+        assertEquals(InterviewReportDto.ANALYSIS_SOURCE_AI_AGENT, first.getAnalysisSource());
         assertEquals(InterviewConstants.STATUS_COMPLETED, service.get("guided-user", started.getSession().getInterviewId()).getStatus());
     }
 
     @Test
-    void guidedInterviewCanFinishWithoutAnAnswer() {
-        InterviewApplicationService service = service(new InMemoryInterviewStorage(),
-                profileService(new InMemoryCareerProfileStorage()));
+    void guidedInterviewRejectsScoringWithoutAnAnswer() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
+        InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(),
+                profileService, new InterviewCoreService(),
+                new ResumeApplicationService(new InMemoryResumeStorage(), profileService),
+                new InterviewAiService(questionGateway(), evidenceAnalyzer()));
         InterviewSessionDto session = service.startGuided("early-finish-user", startRequest("前端开发工程师")).getSession();
 
-        InterviewReportDto report = service.finishAndReport("early-finish-user", session.getInterviewId());
-
-        assertEquals(Integer.valueOf(0), report.getOverallScore());
-        assertEquals(Integer.valueOf(0), report.getTotalQuestions());
-        assertEquals(InterviewConstants.STATUS_COMPLETED,
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                service.finishAndReport("early-finish-user", session.getInterviewId());
+            }
+        }));
+        assertEquals(InterviewConstants.STATUS_ONGOING,
                 service.get("early-finish-user", session.getInterviewId()).getStatus());
     }
 
@@ -160,7 +226,7 @@ class InterviewApplicationServiceTest {
         CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
         InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
                 new InterviewCoreService(), new ResumeApplicationService(new InMemoryResumeStorage(), profileService),
-                new InterviewAiService(null));
+                new InterviewAiService(questionGateway(), evidenceAnalyzer()));
         InterviewSessionDto session = service.startGuided("seven-answer-user", startRequest("产品经理")).getSession();
 
         v620.cc001.base.common.dto.career.InterviewTurnResultDto last = null;
@@ -192,15 +258,57 @@ class InterviewApplicationServiceTest {
     }
 
     @Test
+    void unavailableAnalyzerSavesTransparentBasicRulesReport() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
+        InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
+                new InterviewCoreService(), new ResumeApplicationService(new InMemoryResumeStorage(), profileService),
+                new InterviewAiService(null, new InterviewReportAnalyzer() {
+                    public InterviewReportDto analyze(InterviewSessionDto session, String transcript, int answerCount) {
+                        throw new IllegalStateException("AI 面试分析暂时不可用，请稍后重试。");
+                    }
+                }));
+        InterviewSessionDto session = service.start("analysis-unavailable-user", startRequest("测试工程师"));
+        service.appendMessage("analysis-unavailable-user", session.getInterviewId(), message("USER", "我完成了真实回答"));
+
+        InterviewReportDto report = service.finishAndReport("analysis-unavailable-user", session.getInterviewId());
+
+        InterviewSessionDto saved = service.get("analysis-unavailable-user", session.getInterviewId());
+        assertEquals(InterviewConstants.STATUS_COMPLETED, saved.getStatus());
+        assertEquals(InterviewReportDto.ANALYSIS_SOURCE_BASIC_RULES, report.getAnalysisSource());
+        assertEquals(report.getOverallScore(), saved.getFinalScore());
+        assertTrue(report.getTextSummary().contains("基础规则复盘"));
+    }
+
+    @Test
+    void unavailableQuestionGatewayStillStartsAndContinuesInterview() {
+        CareerProfileApplicationService profileService = profileService(new InMemoryCareerProfileStorage());
+        InterviewApplicationService service = new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
+                new InterviewCoreService(), new ResumeApplicationService(new InMemoryResumeStorage(), profileService),
+                new InterviewAiService(null, evidenceAnalyzer()));
+
+        v620.cc001.base.common.dto.career.InterviewStartResultDto started = service.startGuided(
+                "question-fallback-user", startRequest("后端开发工程师"));
+        v620.cc001.base.common.dto.career.InterviewTurnResultDto turn = service.answer(
+                "question-fallback-user", started.getSession().getInterviewId(), "我完成过接口开发和上线。" );
+
+        assertTrue(started.getOpeningMessage().getContent().startsWith("【基础练习题】"));
+        assertTrue(turn.getInterviewerMessage().getContent().startsWith("【基础练习题·"));
+    }
+
+    @Test
     void pagesPersistedTextInterviewHistoryTenAtATime() {
         InterviewApplicationService service = service(new InMemoryInterviewStorage(),
                 profileService(new InMemoryCareerProfileStorage()));
         for (int index = 1; index <= 12; index++) {
-            service.start("page-history-user", startRequest("前端开发 " + index));
+            InterviewSessionDto session = service.start("page-history-user", startRequest("前端开发 " + index));
+            service.appendMessage("page-history-user", session.getInterviewId(), message("USER", "第" + index + "次回答"));
+            service.end("page-history-user", session.getInterviewId(), Integer.valueOf(60 + index));
         }
         InterviewStartRequest voice = startRequest("全景练习");
         voice.setMode(InterviewConstants.MODE_VOICE);
-        service.start("page-history-user", voice);
+        InterviewSessionDto panoramicSession = service.start("page-history-user", voice);
+        service.appendMessage("page-history-user", panoramicSession.getInterviewId(), message("USER", "全景回答"));
+        service.end("page-history-user", panoramicSession.getInterviewId(), Integer.valueOf(80));
 
         InterviewPageResultDto first = service.listPage("page-history-user", 1, InterviewConstants.MODE_TEXT);
         InterviewPageResultDto second = service.listPage("page-history-user", 2, InterviewConstants.MODE_TEXT);
@@ -250,6 +358,30 @@ class InterviewApplicationServiceTest {
         radar.setCommunication(Integer.valueOf(55));
         report.setRadarScore(radar);
         return report;
+    }
+
+    private InterviewReportAnalyzer evidenceAnalyzer() {
+        return new InterviewReportAnalyzer() {
+            public InterviewReportDto analyze(InterviewSessionDto session, String transcript, int answerCount) {
+                InterviewReportDto report = report();
+                report.setTotalQuestions(Integer.valueOf(answerCount));
+                return report;
+            }
+        };
+    }
+
+    private AiGateway questionGateway() {
+        return new AiGateway() {
+            public AiChatResponseDto chat(AiChatRequestDto request) {
+                AiChatResponseDto response = new AiChatResponseDto();
+                response.setContent("请结合一段真实经历说明你的处理方式。");
+                return response;
+            }
+
+            public List<AiStreamEventDto> stream(AiChatRequestDto request) {
+                return Collections.emptyList();
+            }
+        };
     }
 
     private static class ThrowingRunnableAdapter implements org.junit.jupiter.api.function.Executable {

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Application boundary for current career plan summary and default generation.
+ * Application boundary for current career plan summary and explicit generation.
  */
 public class CareerPlanApplicationService {
 
@@ -53,38 +53,26 @@ public class CareerPlanApplicationService {
         String safeUserId = requireUserId(userId);
         CareerUserProfileDto profile = resolveProfile(safeUserId);
         CareerPlanRecordDto existing = storage.load(safeUserId);
-        if (existing == null) {
+        if (existing == null || isLegacyFabricatedPlan(existing)) {
             return summarizeWithProfile(null, profile, LocalDateTime.now());
         }
-        CareerPlanRecordDto current = refreshPlanWhenTargetChanged(safeUserId, existing, profile, LocalDateTime.now());
-        return summarizeWithProfile(current, profile, LocalDateTime.now());
+        return summarizeWithProfile(existing, profile, LocalDateTime.now());
     }
 
     public CareerPlanSummaryDto ensurePlan(String userId) {
         String safeUserId = requireUserId(userId);
         CareerPlanRecordDto existing = storage.load(safeUserId);
         CareerUserProfileDto profile = resolveProfile(safeUserId);
-        if (existing != null) {
-            CareerPlanRecordDto current = refreshPlanWhenTargetChanged(safeUserId, existing, profile, LocalDateTime.now());
-            if (current != existing) {
-                return summarizeWithProfile(current, profile, LocalDateTime.now());
-            }
-            if (existing.getPhases() == null || existing.getPhases().isEmpty()) {
-                CareerPlanRecordDto enriched = summaryService.enrichStructuredPlan(existing, profile, LocalDateTime.now());
-                storage.save(safeUserId, enriched);
-                return summarizeWithProfile(enriched, profile, LocalDateTime.now());
-            }
+        if (existing != null && !isLegacyFabricatedPlan(existing)) {
             return summarizeWithProfile(existing, profile, LocalDateTime.now());
         }
-        String targetRole = resolveTargetRole(profile);
-        CareerPlanRecordDto created = createPlanWithGenerator(safeUserId, targetRole, profile, LocalDateTime.now());
-        storage.save(safeUserId, created);
-        return summarizeWithProfile(created, profile, LocalDateTime.now());
+        return summarizeWithProfile(null, profile, LocalDateTime.now());
     }
 
     public CareerPlanSummaryDto savePlan(String userId, CareerPlanSaveRequest request) {
         String safeUserId = requireUserId(userId);
         CareerPlanRecordDto existing = storage.load(safeUserId);
+        if (isLegacyFabricatedPlan(existing)) existing = null;
         LocalDateTime now = LocalDateTime.now();
         CareerPlanRecordDto plan = new CareerPlanRecordDto();
         plan.setUserId(safeUserId);
@@ -106,48 +94,24 @@ public class CareerPlanApplicationService {
         plan.setVersion(Integer.valueOf(existing == null || existing.getVersion() == null
                 ? 1
                 : existing.getVersion().intValue() + 1));
-        summaryService.enrichStructuredPlan(plan, profile, now);
         storage.save(safeUserId, plan);
         return summarizeWithProfile(plan, profile, now);
     }
 
     public boolean hasPlan(String userId) {
-        return storage.exists(requireUserId(userId));
+        CareerPlanRecordDto plan = storage.load(requireUserId(userId));
+        return plan != null && !isLegacyFabricatedPlan(plan);
     }
 
-    private CareerPlanRecordDto createPlanWithGenerator(String userId, String targetRole,
-                                                        CareerUserProfileDto profile, LocalDateTime now) {
-        if (aiGenerator != null) {
-            try {
-                CareerPlanRecordDto generated = aiGenerator.generate(userId, targetRole, profile);
-                if (generated != null) {
-                    generated.setUserId(userId);
-                    generated.setTargetRole(firstText(generated.getTargetRole(), targetRole));
-                    generated.setAgentTraceId(resumeReferenceTrace(profile));
-                    generated.setGeneratedAt(generated.getGeneratedAt() == null ? now : generated.getGeneratedAt());
-                    generated.setLastUpdatedAt(generated.getLastUpdatedAt() == null ? now : generated.getLastUpdatedAt());
-                    return summaryService.enrichStructuredPlan(generated, profile, now);
-                }
-            } catch (RuntimeException ignored) {
-                // Fall back to deterministic rules until the external agent is stable.
-            }
-        }
-        CareerPlanRecordDto fallback = summaryService.defaultPlan(userId, targetRole, profile, now);
-        fallback.setAgentTraceId(resumeReferenceTrace(profile));
-        return fallback;
+    private boolean isLegacyFabricatedPlan(CareerPlanRecordDto plan) {
+        if (plan == null) return false;
+        return "RULE_FALLBACK".equalsIgnoreCase(value(plan.getPlanningMode()))
+                || "FALLBACK_READY".equalsIgnoreCase(value(plan.getAgentStatus()))
+                || "study-rule-fallback".equalsIgnoreCase(value(plan.getModelUsed()));
     }
 
-    private CareerPlanRecordDto refreshPlanWhenTargetChanged(String userId, CareerPlanRecordDto existing,
-                                                             CareerUserProfileDto profile, LocalDateTime now) {
-        String profileTargetRole = resolveTargetRole(profile);
-        boolean targetUnchanged = !hasText(profileTargetRole) || sameText(existing.getTargetRole(), profileTargetRole);
-        boolean resumeUnchanged = sameNullableText(existing.getAgentTraceId(), resumeReferenceTrace(profile));
-        if (targetUnchanged && resumeUnchanged) {
-            return existing;
-        }
-        CareerPlanRecordDto refreshed = createPlanWithGenerator(userId, profileTargetRole, profile, now);
-        storage.save(userId, refreshed);
-        return refreshed;
+    private String value(String text) {
+        return text == null ? "" : text.trim();
     }
 
     private CareerUserProfileDto resolveProfile(String userId) {
@@ -174,13 +138,6 @@ public class CareerPlanApplicationService {
 
     private boolean hasText(String value) {
         return value != null && value.trim().length() > 0;
-    }
-
-    private boolean sameText(String first, String second) {
-        if (!hasText(first) || !hasText(second)) {
-            return false;
-        }
-        return first.trim().equals(second.trim());
     }
 
     private CareerPlanSummaryDto summarizeWithProfile(CareerPlanRecordDto plan, CareerUserProfileDto profile,
@@ -221,11 +178,13 @@ public class CareerPlanApplicationService {
         if (generated == null) {
             throw new IllegalStateException("就业规划智能服务暂不可用，原有路线图已保留，请稍后重试。");
         }
+        if (!hasPhases(generated)) {
+            throw new IllegalStateException("就业规划智能服务未返回完整路线，原有路线图已保留，请稍后重试。");
+        }
         generated.setUserId(safeUserId);
         generated.setTargetRole(firstText(generated.getTargetRole(), resolveTargetRole(profile)));
         generated.setAgentTraceId(resumeReferenceTrace(profile));
         generated.setLastUpdatedAt(now);
-        summaryService.enrichStructuredPlan(generated, profile, now);
         if (hasProtectedPhase(existing)) {
             mergeProtectedPhases(existing, generated);
             generated.setGeneratedAt(existing.getGeneratedAt() == null ? now : existing.getGeneratedAt());
@@ -311,13 +270,6 @@ public class CareerPlanApplicationService {
 
     private String normalizeStatus(String status) {
         return status.trim().toUpperCase().replace('-', '_').replace(' ', '_');
-    }
-
-    private boolean sameNullableText(String first, String second) {
-        if (!hasText(first) && !hasText(second)) {
-            return true;
-        }
-        return sameText(first, second);
     }
 
     private String resumeReferenceTrace(CareerUserProfileDto profile) {

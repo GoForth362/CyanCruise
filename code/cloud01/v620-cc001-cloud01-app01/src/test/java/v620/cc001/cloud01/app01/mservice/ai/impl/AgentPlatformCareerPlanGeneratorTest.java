@@ -45,6 +45,23 @@ class AgentPlatformCareerPlanGeneratorTest {
                 () -> generator.generate("user-1", "Java 开发工程师", new CareerUserProfileDto()));
     }
 
+    @Test
+    void parsesStringEncodedResultAndIgnoresToolInputEcho() throws Exception {
+        String encoded = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(planJson());
+        String answer = "{\"Thought\":\"准备调用任务流\","
+                + "\"Action_input\":{\"question\":\"{\\\"mode\\\":\\\"EMPLOYMENT_PLANNING\\\"}\"},"
+                + "\"result\":{\"answer\":" + encoded + "}}";
+        RecordingClient client = new RecordingClient(success(answer));
+        AgentPlatformCareerPlanGenerator generator = new AgentPlatformCareerPlanGenerator(
+                client, new AgentPlatformTaskFlowConfig());
+
+        CareerPlanRecordDto plan = generator.generate(
+                "user-1", "Java 开发工程师", new CareerUserProfileDto());
+
+        assertEquals("Java 开发工程师", plan.getTargetRole());
+        assertEquals(1, plan.getPhases().size());
+    }
+
     private static AgentTaskFlowResponseDto success(String answer) {
         AgentTaskFlowResponseDto response = new AgentTaskFlowResponseDto();
         response.setSuccess(true);

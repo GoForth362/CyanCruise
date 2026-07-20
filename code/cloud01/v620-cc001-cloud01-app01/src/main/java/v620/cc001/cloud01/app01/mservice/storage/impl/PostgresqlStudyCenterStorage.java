@@ -5,6 +5,7 @@ import v620.cc001.base.common.dto.career.AdminContentItemDto;
 import v620.cc001.base.common.dto.career.CareerPlanRecordDto;
 import v620.cc001.base.common.dto.career.CareerDailyTaskDto;
 import v620.cc001.base.common.dto.furtherstudy.StudyPlanningMaterialDto;
+import v620.cc001.base.common.dto.furtherstudy.FurtherStudyAnalysisDraftDto;
 import v620.cc001.cloud01.app01.mservice.storage.PostgresqlStorageConfig;
 import v620.cc001.cloud01.app01.mservice.storage.StudyCenterStorage;
 import java.sql.Connection;
@@ -167,14 +168,67 @@ public class PostgresqlStudyCenterStorage extends PostgresqlStorageSupport imple
         Connection c = null; PreparedStatement s = null; try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(resource.getContentId(), "resourceId")); s.setString(2, requireText(resource.getType(), "resourceType")); s.setString(3, toJson(resource)); s.setBoolean(4, Boolean.TRUE.equals(resource.getPinned())); s.setBoolean(5, Boolean.TRUE.equals(resource.getHidden())); s.setTimestamp(6, timestamp(resource.getPublishedAt())); s.executeUpdate(); return resource; } catch (SQLException e) { throw storageException("save study-center resource", e); } finally { close(s); close(c); }
     }
     public boolean deleteResource(String resourceId) { String sql = "DELETE FROM " + table("cc_study_center_resource") + " WHERE resource_id = ?"; Connection c = null; PreparedStatement s = null; try { c = connection(); s = c.prepareStatement(sql); s.setString(1, requireText(resourceId, "resourceId")); return s.executeUpdate() > 0; } catch (SQLException e) { throw storageException("delete study-center resource", e); } finally { close(s); close(c); } }
+    public boolean isPublishedResourceCatalogInitialized() {
+        String sql = "SELECT metadata_value FROM " + table("cc_study_center_metadata")
+                + " WHERE metadata_key = 'published-resource-catalog-v1'";
+        Connection c = null; PreparedStatement s = null; ResultSet r = null;
+        try { c = connection(); s = c.prepareStatement(sql); r = s.executeQuery(); return r.next(); }
+        catch (SQLException e) { throw storageException("read study resource catalog marker", e); }
+        finally { close(r); close(s); close(c); }
+    }
+    public void markPublishedResourceCatalogInitialized() {
+        String sql = "INSERT INTO " + table("cc_study_center_metadata")
+                + " (metadata_key, metadata_value, updated_at) VALUES ('published-resource-catalog-v1', 'initialized', now())"
+                + " ON CONFLICT (metadata_key) DO UPDATE SET metadata_value = EXCLUDED.metadata_value, updated_at = now()";
+        Connection c = null; PreparedStatement s = null;
+        try { c = connection(); s = c.prepareStatement(sql); s.executeUpdate(); }
+        catch (SQLException e) { throw storageException("save study resource catalog marker", e); }
+        finally { close(s); close(c); }
+    }
+    public FurtherStudyAnalysisDraftDto loadAnalysisDraft(String userId, String taskType) {
+        String sql = "SELECT payload_json::text, updated_at FROM " + table("cc_study_analysis_draft")
+                + " WHERE user_id = ? AND task_type = ?";
+        Connection c = null; PreparedStatement s = null; ResultSet r = null;
+        try {
+            c = connection(); s = c.prepareStatement(sql);
+            s.setString(1, requireText(userId, "userId"));
+            s.setString(2, requireText(taskType, "taskType"));
+            r = s.executeQuery();
+            if (!r.next()) return null;
+            FurtherStudyAnalysisDraftDto draft = new FurtherStudyAnalysisDraftDto();
+            draft.setTaskType(taskType.trim());
+            draft.setPayloadJson(r.getString(1));
+            draft.setUpdatedAt(localDateTime(r.getTimestamp(2)));
+            return draft;
+        } catch (SQLException e) { throw storageException("load further-study analysis draft", e); }
+        finally { close(r); close(s); close(c); }
+    }
+    public FurtherStudyAnalysisDraftDto saveAnalysisDraft(String userId, FurtherStudyAnalysisDraftDto draft) {
+        String sql = "INSERT INTO " + table("cc_study_analysis_draft")
+                + " (user_id, task_type, payload_json, updated_at) VALUES (?, ?, CAST(? AS JSONB), ?)"
+                + " ON CONFLICT (user_id, task_type) DO UPDATE SET payload_json = EXCLUDED.payload_json, updated_at = EXCLUDED.updated_at";
+        Connection c = null; PreparedStatement s = null;
+        try {
+            c = connection(); s = c.prepareStatement(sql);
+            s.setString(1, requireText(userId, "userId"));
+            s.setString(2, requireText(draft == null ? null : draft.getTaskType(), "taskType"));
+            s.setString(3, draft == null || draft.getPayloadJson() == null ? "{}" : draft.getPayloadJson());
+            s.setTimestamp(4, timestamp(draft.getUpdatedAt()));
+            s.executeUpdate();
+            return draft;
+        } catch (SQLException e) { throw storageException("save further-study analysis draft", e); }
+        finally { close(s); close(c); }
+    }
     private void initialize() {
         Connection c = null; Statement s = null;
         try { c = connection(); s = c.createStatement();
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_selection") + " (user_id VARCHAR(128) PRIMARY KEY, direction VARCHAR(64) NOT NULL, target_school VARCHAR(255), updated_at TIMESTAMP NOT NULL)");
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_resource") + " (resource_id VARCHAR(128) PRIMARY KEY, resource_type VARCHAR(64) NOT NULL, payload_json JSONB NOT NULL, pinned BOOLEAN NOT NULL DEFAULT FALSE, hidden BOOLEAN NOT NULL DEFAULT FALSE, published_at TIMESTAMP NOT NULL DEFAULT now())");
+            s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_metadata") + " (metadata_key VARCHAR(128) PRIMARY KEY, metadata_value VARCHAR(255), updated_at TIMESTAMP NOT NULL DEFAULT now())");
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_plan") + " (user_id VARCHAR(128) NOT NULL, direction VARCHAR(64) NOT NULL, plan_json JSONB NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now(), PRIMARY KEY (user_id, direction))");
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_daily_task") + " (user_id VARCHAR(128) NOT NULL, task_id VARCHAR(255) NOT NULL, direction VARCHAR(64) NOT NULL, plan_date DATE, task_json JSONB NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now(), PRIMARY KEY (user_id, direction, task_id))");
             s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_center_material") + " (material_id VARCHAR(128) PRIMARY KEY, user_id VARCHAR(128) NOT NULL, direction VARCHAR(64) NOT NULL, material_type VARCHAR(64), object_key VARCHAR(1024) NOT NULL, original_filename VARCHAR(512), extraction_status VARCHAR(64), payload_json JSONB NOT NULL, created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL)");
+            s.execute("CREATE TABLE IF NOT EXISTS " + table("cc_study_analysis_draft") + " (user_id VARCHAR(128) NOT NULL, task_type VARCHAR(128) NOT NULL, payload_json JSONB NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT now(), PRIMARY KEY (user_id, task_type))");
             s.execute("CREATE INDEX IF NOT EXISTS idx_cc_study_material_user_direction ON "
                     + table("cc_study_center_material") + " (user_id, direction, updated_at DESC)");
             migrateDirectionKeys(s, table("cc_study_center_plan"), "idx_cc_study_plan_user_direction", "user_id, direction");

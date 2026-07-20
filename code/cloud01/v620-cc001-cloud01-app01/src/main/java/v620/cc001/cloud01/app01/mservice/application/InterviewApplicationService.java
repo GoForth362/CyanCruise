@@ -6,12 +6,10 @@ import v620.cc001.cloud01.app01.mservice.storage.CyanCruiseStorageFactory;
 import v620.cc001.cloud01.app01.mservice.storage.InterviewStorage;
 import v620.base.helper.career.InterviewCoreService;
 import v620.cc001.base.common.dto.career.InterviewConstants;
-import v620.cc001.base.common.dto.career.InterviewAdviceItemDto;
 import v620.cc001.base.common.dto.career.InterviewMessageDto;
 import v620.cc001.base.common.dto.career.InterviewMessageRequest;
 import v620.cc001.base.common.dto.career.InterviewPageResultDto;
 import v620.cc001.base.common.dto.career.InterviewReportDto;
-import v620.cc001.base.common.dto.career.InterviewRadarScoreDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.InterviewStartResultDto;
 import v620.cc001.base.common.dto.career.InterviewStartRequest;
@@ -19,7 +17,6 @@ import v620.cc001.base.common.dto.career.InterviewTurnResultDto;
 import v620.cc001.base.common.dto.career.ResumeRecordDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
 import v620.cc001.cloud01.app01.mservice.ai.AiProviderAdapterFactory;
-import v620.cc001.cloud01.app01.mservice.ai.impl.DefaultAiGateway;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -109,15 +106,17 @@ public class InterviewApplicationService {
         }
         List<InterviewMessageDto> messages = getMessages(userId, interviewId);
         int answers = answerCount(messages);
+        if (answers == 0) {
+            throw new IllegalArgumentException("请至少完成一道回答后再生成面试复盘。");
+        }
         if (InterviewConstants.STATUS_ONGOING.equals(session.getStatus())) session = end(userId, interviewId, null);
-        InterviewReportDto report = answers == 0
-                ? skippedInterviewReport(session)
-                : aiService.report(session, transcript(messages), answers);
+        InterviewReportDto report = aiService.report(session, transcript(messages), answers);
         return saveReport(userId, interviewId, report);
     }
 
     public InterviewSessionDto start(String userId, InterviewStartRequest request) {
         String safeUserId = requireUserId(userId);
+        discardOngoingInterviews(safeUserId);
         InterviewStartRequest safeRequest = request == null ? new InterviewStartRequest() : request;
         InterviewSessionDto interview = new InterviewSessionDto();
         interview.setUserId(safeUserId);
@@ -158,7 +157,9 @@ public class InterviewApplicationService {
             interview.setFinalScore(finalScore);
         }
         InterviewSessionDto saved = storage.saveInterview(interview);
-        syncProfile(userId, saved);
+        if (finalScore != null) {
+            syncProfile(userId, saved);
+        }
         return saved;
     }
 
@@ -187,13 +188,13 @@ public class InterviewApplicationService {
     }
 
     public List<InterviewSessionDto> listByUser(String userId) {
-        return storage.listByUser(requireUserId(userId));
+        return completedHistory(requireUserId(userId));
     }
 
     public InterviewPageResultDto listPage(String userId, int page, String mode) {
         int safePage = Math.max(1, page);
         List<InterviewSessionDto> filtered = new ArrayList<InterviewSessionDto>();
-        for (InterviewSessionDto session : storage.listByUser(requireUserId(userId))) {
+        for (InterviewSessionDto session : completedHistory(requireUserId(userId))) {
             if (matchesPageMode(session, mode)) filtered.add(session);
         }
         int size = InterviewConstants.INTERVIEW_HISTORY_PAGE_SIZE;
@@ -221,6 +222,33 @@ public class InterviewApplicationService {
         storage.deleteInterview(interview.getInterviewId());
     }
 
+    public void discard(String userId, Long interviewId) {
+        InterviewSessionDto interview = ownedInterview(userId, interviewId);
+        storage.deleteMessages(interview.getInterviewId());
+        storage.deleteInterview(interview.getInterviewId());
+    }
+
+    private List<InterviewSessionDto> completedHistory(String userId) {
+        List<InterviewSessionDto> history = new ArrayList<InterviewSessionDto>();
+        for (InterviewSessionDto session : storage.listByUser(userId)) {
+            if (!isCompleted(session) || answerCount(storage.listMessages(session.getInterviewId())) == 0) continue;
+            history.add(session);
+        }
+        return history;
+    }
+
+    private void discardOngoingInterviews(String userId) {
+        for (InterviewSessionDto session : storage.listByUser(userId)) {
+            if (session == null || !InterviewConstants.STATUS_ONGOING.equals(session.getStatus())) continue;
+            storage.deleteMessages(session.getInterviewId());
+            storage.deleteInterview(session.getInterviewId());
+        }
+    }
+
+    private boolean isCompleted(InterviewSessionDto session) {
+        return session != null && InterviewConstants.STATUS_COMPLETED.equals(session.getStatus());
+    }
+
     private boolean matchesPageMode(InterviewSessionDto session, String mode) {
         if (!hasText(mode)) return true;
         String requested = mode.trim().toUpperCase();
@@ -245,25 +273,6 @@ public class InterviewApplicationService {
         InterviewMessageDto message = new InterviewMessageDto(); message.setInterviewId(session.getInterviewId());
         message.setRole(InterviewConstants.ROLE_AI); message.setContent(content); message.setCreatedAt(LocalDateTime.now());
         return storage.saveMessage(message);
-    }
-
-    private InterviewReportDto skippedInterviewReport(InterviewSessionDto session) {
-        InterviewReportDto report = new InterviewReportDto();
-        report.setOverallScore(Integer.valueOf(0));
-        report.setTotalQuestions(Integer.valueOf(0));
-        report.setTextSummary("本次面试在未提交回答时结束，暂无法根据作答进行评分。可以随时重新开始练习。");
-        InterviewRadarScoreDto radar = new InterviewRadarScoreDto();
-        radar.setExpression(Integer.valueOf(0));
-        radar.setLogic(Integer.valueOf(0));
-        radar.setTechnical(Integer.valueOf(0));
-        radar.setPressureResistance(Integer.valueOf(0));
-        radar.setCommunication(Integer.valueOf(0));
-        report.setRadarScore(radar);
-        InterviewAdviceItemDto improvement = new InterviewAdviceItemDto();
-        improvement.setTitle("先完成一道题目");
-        improvement.setDetail("提交一次真实回答后，系统才能从表达、思路和岗位能力等方面为你提供针对性复盘。");
-        report.getImprovements().add(improvement);
-        return report;
     }
 
     private int answerCount(List<InterviewMessageDto> messages) {

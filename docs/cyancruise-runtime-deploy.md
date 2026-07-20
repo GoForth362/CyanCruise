@@ -194,13 +194,29 @@ psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-career-daily-
 psql -h 10.0.0.8 -U postgres -d cyancruise -f datamodel/postgresql-study-center-planning.sql
 ```
 
-升学规划按方向配置三个独立智能体，属性前缀分别为 `cc001.agent.platform.study.postgraduate`、`cc001.agent.platform.study.recommendation` 和 `cc001.agent.platform.study.abroad`。三种方向使用相同的请求、解析、持久化和今日行动链路，CyanCruise 后端只使用 `agentNumber` 调用已发布智能体，不读取升学规划 `taskFlowCode`。各智能体可以在金蝶平台内部调用自己的规划任务流。切换当前路线只改变页面读取哪套规划，不会删除或覆盖其他方向的规划和每日任务。
+### 模拟面试复盘智能体
+
+AI 模拟面试和全景仿真面试共用服务端面试复盘智能体。后端只提交当前用户已持久化的目标岗位、难度和文字问答；全景模式不会上传摄像头视频或原始音频。智能体返回的总分、五项评分及依据、做得好的地方、改进方向和总结必须通过结构校验后才会写入面试记录。
+
+部署环境使用已发布智能体编码：
+
+```properties
+cc001.agent.platform.interview.enabled=true
+cc001.agent.platform.interview.agentNumber=<已发布的模拟面试复盘智能体编码>
+```
+
+使用智能体模式时不要同时配置 `cc001.agent.platform.interview.taskFlowCode`。如果改为由后端直接运行任务流，则只配置 `taskFlowCode`，不配置 `agentNumber`。本地调试可在已被版本控制忽略的 `debug-local.properties` 中配置；生产环境应使用 JVM 系统属性或环境变量 `CC001_AGENT_PLATFORM_INTERVIEW_ENABLED`、`CC001_AGENT_PLATFORM_INTERVIEW_AGENTNUMBER`。
+
+智能体或任务流未配置、调用失败、返回无效 JSON 或回答数量不一致时，系统保留真实问答供重试，不生成或保存默认分数和固定评价。
+
+升学规划按方向配置三套独立服务，属性前缀分别为 `cc001.agent.platform.study.postgraduate`、`cc001.agent.platform.study.recommendation` 和 `cc001.agent.platform.study.abroad`。三种方向使用相同的请求、解析、持久化和今日行动链路。若配置了 `taskFlowCode`，后端会优先直接调用该方向任务流；未配置任务流时，才使用 `agentNumber` 调用已发布智能体。切换当前路线只改变页面读取哪套规划，不会删除或覆盖其他方向的规划和每日任务。
 
 考研规划示例：
 
 ```properties
 cc001.agent.platform.study.postgraduate.enabled=true
 cc001.agent.platform.study.postgraduate.agentNumber=<已发布的考研规划智能体编码>
+cc001.agent.platform.study.postgraduate.taskFlowCode=<已发布的考研规划任务流编码，可选且优先>
 ```
 
 保研规划配置示例：
@@ -208,16 +224,34 @@ cc001.agent.platform.study.postgraduate.agentNumber=<已发布的考研规划智
 ```properties
 cc001.agent.platform.study.recommendation.enabled=true
 cc001.agent.platform.study.recommendation.agentNumber=<已发布的保研规划智能体编码>
+cc001.agent.platform.study.recommendation.taskFlowCode=<已发布的保研规划任务流编码，可选且优先>
 ```
 
-留学规划直接调用已发布的独立智能体，只需配置智能体编码，不使用任务流编码：
+留学规划与考研、保研规划一致：已配置任务流编码时优先直接运行已发布任务流；未配置任务流编码时兼容调用已发布智能体：
 
 ```properties
 cc001.agent.platform.study.abroad.enabled=true
 cc001.agent.platform.study.abroad.agentNumber=<已发布的留学规划智能体编码>
+cc001.agent.platform.study.abroad.taskFlowCode=<已发布的留学规划任务流编码，可选且优先>
 ```
 
-考研、保研和留学智能体可以在平台内部调用各自的规划任务流，但 CyanCruise 后端只调用智能体。智能体最终回复必须是单一规划 JSON，并满足后端共享规划契约和未来十二个月完整性校验；校验通过后才会按当前方向持久化。未配置、调用失败或返回两个 JSON 等无效结果时不会保存默认规划，也不会覆盖原有有效规划。
+考研、保研和留学任务流或智能体最终回复必须是单一规划 JSON，并满足后端共享规划契约和未来十二个月完整性校验；校验通过后才会按当前方向持久化。未配置、调用失败或返回两个 JSON 等无效结果时不会保存默认规划，也不会覆盖原有有效规划。
+
+### 升学陪伴页面分析智能体
+
+考研陪伴的择校、复习计划、错题解析、复试准备，保研陪伴的竞争力诊断、行动计划、文书润色、导师意向信，以及留学陪伴的画像诊断、语言计划、选校定位、个人陈述主线、签证网申清单，共 13 个页面功能统一调用已发布的“升学陪伴智能体”。该智能体内部调用“升学陪伴任务流”，与上面的三套年度路线智能体配置互不替代。
+
+本地 `debug-local.properties` 或生产 JVM 属性使用：
+
+```properties
+cc001.agent.platform.study.companion.enabled=true
+cc001.agent.platform.study.companion.agentNumber=<已发布的升学陪伴智能体编码>
+cc001.agent.platform.study.companion.taskFlowCode=<智能体内已发布的升学陪伴任务流编码>
+```
+
+对应环境变量为 `CC001_AGENT_PLATFORM_STUDY_COMPANION_ENABLED` 和 `CC001_AGENT_PLATFORM_STUDY_COMPANION_AGENTNUMBER`。后端向智能体发送 `FURTHER_STUDY_ANALYSIS` 请求信封和固定的 13 个 `taskType`，并校验返回任务类型、外层状态、内层状态和现有 DTO 结构。智能体未配置、调用失败、要求补充资料或返回无效结构时，页面只显示普通中文错误或补充提示，不生成规则、模板、示例或默认结果。
+
+通过金蝶开发者工具的“环境管理”启动本地 8080 服务时，实际入口是环境目录下的 `start-cosmic.bat`，不会执行工程中的 `DebugApplication`。因此还必须把上述两个配置作为 `-D` JVM 参数加入该脚本的 `JAVA_OPTS`，并在开发者工具中重启“星瀚服务”。可在 `service-log/COSMIC_5/out.log` 打印的启动命令中确认两个参数均已生效；仅修改 `debug-local.properties` 对这种托管启动方式无效。
 
 升学中心上传的规划资料使用现有 Cosmic 文件服务保存文件，并在 `cc_study_center_material` 中保存当前用户的文件引用、解析状态和受限正文。执行更新后的 `datamodel/postgresql-study-center-planning.sql` 后，服务重启仍可读取资料；考研、保研和留学资料按“用户 + 升学方向”隔离，只有正文解析状态为 `OK` 的当前方向资料会进入对应智能服务请求。规划和今日行动同样按“用户 + 升学方向”持久化，切换方向不会覆盖其他方向的数据。
 

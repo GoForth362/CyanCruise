@@ -5,7 +5,6 @@ package v620.cc001.base.common.dto.career;
  */
 public final class ResumeDiagnosisConstants {
 
-    public static final int DEFAULT_SCORE = 75;
     public static final int MAX_TEXT_CHARS = 20000;
     public static final int MAX_KEYWORDS = 24;
 

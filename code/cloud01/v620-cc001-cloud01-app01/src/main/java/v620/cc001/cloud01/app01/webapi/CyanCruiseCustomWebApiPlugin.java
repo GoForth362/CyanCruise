@@ -397,6 +397,10 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(interviewWebApi.guidedFinish(extractUserId(body),
                         longObject(value(body, "interviewId"))));
             }
+            if ("/cc001/interview/finish".equals(path)) {
+                return ApiResult.success(interviewWebApi.finish(extractUserId(body),
+                        longObject(value(body, "interviewId"))));
+            }
             if ("/cc001/interview/messages".equals(path)) {
                 return ApiResult.success(interviewWebApi.messages(extractUserId(body),
                         longObject(value(body, "interviewId"))));
@@ -437,7 +441,12 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(studyCenterWebApi.ensurePlan(extractUserId(body)));
             }
             if ("/cc001/study-center/plan/generate".equals(path)) {
-                return ApiResult.success(studyCenterWebApi.generatePlan(extractUserId(body)));
+                return ApiResult.success(studyCenterWebApi.generatePlan(
+                        extractUserId(body), stringList(value(body, "startedPhaseIds"))));
+            }
+            if ("/cc001/study-center/analysis-draft/get".equals(path)) {
+                return ApiResult.success(studyCenterWebApi.analysisDraft(extractUserId(body),
+                        textOrNull(value(body, "taskType"))));
             }
             if ("/cc001/study-center/daily/get".equals(path)) {
                 return ApiResult.success(studyCenterWebApi.daily(extractUserId(body)));

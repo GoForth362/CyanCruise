@@ -281,6 +281,31 @@ class CyanCruiseCustomWebApiPluginTest {
     }
 
     @Test
+    void routesZeroAnswerInterviewFinishByDiscardingTheSession(@TempDir Path tempDir) {
+        CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir,
+                new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver("api-user")));
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("positionName", "后端开发");
+        request.put("difficulty", "Normal");
+        Map<String, Object> startBody = new HashMap<String, Object>();
+        startBody.put("userId", "api-user");
+        startBody.put("request", request);
+        ApiResult started = plugin.doCustomService(params("/cc001/interview/start", startBody));
+        InterviewSessionDto session = (InterviewSessionDto) started.getData();
+
+        Map<String, Object> finishBody = new HashMap<String, Object>();
+        finishBody.put("userId", "api-user");
+        finishBody.put("interviewId", session.getInterviewId());
+        finishBody.put("finalScore", Integer.valueOf(100));
+        ApiResult finished = plugin.doCustomService(params("/cc001/interview/finish", finishBody));
+        ApiResult listed = plugin.doCustomService(params("/cc001/interview/list", "api-user"));
+
+        assertTrue(finished.getSuccess(), finished.getMessage());
+        assertEquals("OK", finished.getData());
+        assertTrue(((java.util.List<?>) listed.getData()).isEmpty());
+    }
+
+    @Test
     void rejectsUnsupportedPath(@TempDir Path tempDir) {
         CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir,
                 new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver("api-user")));

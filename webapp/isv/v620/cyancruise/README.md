@@ -47,8 +47,8 @@
 | 就业 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=employment-home&apiMode=server` | 已接入 |
 | 就业 / 简历 / AI简历制作 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=resume&apiMode=server` | 已接入 |
 | 就业 / 简历 / AI简历诊断 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=resume-diagnosis&apiMode=server` | 已接入 |
-| 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-panorama&apiMode=server` | 独立侧边栏入口；沉浸式环境、摄像头预览、按难度自动计时与 AI 问答已接入 |
-| AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview&apiMode=server` | 独立侧边栏入口；七题逐题问答、语音辅助、复盘与记录删除已接入 |
+| 全景仿真面试 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-panorama&apiMode=server` | 独立侧边栏入口；沉浸式环境、摄像头预览、按难度自动计时、AI 问答与真实文字问答分析已接入 |
+| AI 模拟面试 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview&apiMode=server` | 独立侧边栏入口；七题逐题问答、语音辅助、真实 AI 复盘与记录删除已接入 |
 | AI 模拟面试记录 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-history&apiMode=server` | 仅从 AI 模拟面试页进入，后端分页且每页 10 条 |
 | 全景仿真面试记录 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=interview-panorama-history&apiMode=server` | 仅从全景仿真面试页进入，按全景类型分页且每页 10 条 |
 | 升学中心 | `/ierp/isv/v620/cyancruise/index.html?ccRoute=further-study-home&apiMode=server` | 已接入；选择升学方向后展示准备建议、升学洞察和独立资讯 |
@@ -88,7 +88,7 @@
 /ierp/isv/v620/cyancruise/index.html?ccRoute=interview&apiMode=server
 ```
 
-当前阶段“就业”页面发布简历制作、简历诊断两个入口。全景仿真面试和 AI 模拟面试作为独立侧边栏功能，不从首页或就业页跳转；各自的历史记录由面试主页内的“查看面试记录”进入。全景仿真面试以会议室背景和通透信息层营造沉浸环境，支持摄像头与麦克风本地预览、答题自动倒计时和 AI 逐轮提问；题目出现后立即计时，入门、常规、进阶每题分别为 3、5、8 分钟，超时后自动进入后续流程。视频不会上传或保存。摄像头受非安全连接或苍穹嵌入策略限制时，可选择无摄像头模式继续。普通 AI 模拟面试采用最多七题的逐题问答，最后自动给出总分、评价和改进方向。
+当前阶段“就业”页面发布简历制作、简历诊断两个入口。全景仿真面试和 AI 模拟面试作为独立侧边栏功能，不从首页或就业页跳转；各自的历史记录由面试主页内的“查看面试记录”进入。全景仿真面试以会议室背景和通透信息层营造沉浸环境，支持摄像头与麦克风本地预览、答题自动倒计时和 AI 逐轮提问；题目出现后立即计时，入门、常规、进阶每题分别为 3、5、8 分钟，超时后自动进入后续流程。视频不会上传或保存，复盘只分析保存下来的文字问答。两种面试都通过服务端面试智能体生成总分、五项评分依据、做得好的地方和改进方向；智能体不可用时明确提示重试，不生成或保存默认分数。部署时需单独配置 `cc001.agent.platform.interview.enabled` 以及面试智能体的 `agentNumber` 或 `taskFlowCode`，不得复用简历诊断智能体编号。
 
 ## 调试模式
 

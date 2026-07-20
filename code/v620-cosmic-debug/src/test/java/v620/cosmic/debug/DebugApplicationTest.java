@@ -1,11 +1,20 @@
 package v620.cosmic.debug;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DebugApplicationTest {
+
+    @TempDir
+    Path tempDir;
 
     private static final String[] STORAGE_PROPERTIES = {
             "cc001.storage.backend",
@@ -48,6 +57,18 @@ class DebugApplicationTest {
         } finally {
             state.restore();
         }
+    }
+
+    @Test
+    void localConfigCanBeFoundFromNestedLauncherDirectory() throws Exception {
+        Path config = tempDir.resolve("debug-local.properties");
+        Files.write(config, "cc001.test=true\n".getBytes("ISO-8859-1"));
+        Path launcherDirectory = tempDir.resolve("environment/runtime/bin");
+        Files.createDirectories(launcherDirectory);
+
+        File resolved = DebugApplication.findLocalConfigUpwards(launcherDirectory.toFile());
+
+        assertEquals(config.toFile().getCanonicalFile(), resolved.getCanonicalFile());
     }
 
     private static class PropertyState {

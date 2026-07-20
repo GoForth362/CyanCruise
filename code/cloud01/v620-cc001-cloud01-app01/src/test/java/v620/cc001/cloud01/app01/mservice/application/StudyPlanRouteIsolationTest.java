@@ -102,7 +102,7 @@ class StudyPlanRouteIsolationTest {
                 "u1", CareerRouteContext.RECOMMENDATION, "电子科技大学", null);
 
         assertNotNull(captured.get());
-        assertNull(captured.get().getTaskFlowCode());
+        assertEquals("recommendation-flow", captured.get().getTaskFlowCode());
         assertTrue(captured.get().getInputs().get("question").contains("\"direction\":\"RECOMMENDATION\""));
     }
 
@@ -131,7 +131,7 @@ class StudyPlanRouteIsolationTest {
                 null, Arrays.asList(material));
 
         assertNotNull(captured.get());
-        assertNull(captured.get().getTaskFlowCode());
+        assertEquals("study-abroad-flow", captured.get().getTaskFlowCode());
         String question = captured.get().getInputs().get("question");
         assertTrue(question.contains("\"direction\":\"STUDY_ABROAD\""));
         assertTrue(question.contains("目标项目申请说明"));
@@ -140,7 +140,7 @@ class StudyPlanRouteIsolationTest {
     }
 
     @Test
-    void studyAbroadRuntimeConfigIgnoresStaleTaskFlowAndRequiresAgentNumber() {
+    void studyAbroadRuntimeConfigPrefersPublishedTaskFlowCode() {
         String prefix = AgentPlatformStudyPlanGenerator.STUDY_ABROAD_PREFIX;
         String enabledKey = prefix + ".enabled";
         String agentKey = prefix + ".agentNumber";
@@ -151,21 +151,21 @@ class StudyPlanRouteIsolationTest {
         try {
             System.setProperty(enabledKey, "true");
             System.clearProperty(agentKey);
-            System.setProperty(flowKey, "stale-study-abroad-flow");
+            System.setProperty(flowKey, "published-study-abroad-flow");
 
             AgentPlatformTaskFlowConfig withoutAgent =
                     StudyPlanApplicationService.loadStudyAgentConfig(prefix);
-            assertNull(withoutAgent.getTaskFlowCode());
-            assertFalse(withoutAgent.isAgentSdkAvailable());
-            assertFalse(withoutAgent.isJsonEncodeAgentQuery());
+            assertEquals("published-study-abroad-flow", withoutAgent.getTaskFlowCode());
+            assertTrue(withoutAgent.isAgentSdkAvailable());
+            assertTrue(withoutAgent.isJsonEncodeAgentQuery());
 
             System.setProperty(agentKey, "agent-study-abroad");
             AgentPlatformTaskFlowConfig withAgent =
                     StudyPlanApplicationService.loadStudyAgentConfig(prefix);
             assertEquals("agent-study-abroad", withAgent.getAgentNumber());
-            assertNull(withAgent.getTaskFlowCode());
+            assertEquals("published-study-abroad-flow", withAgent.getTaskFlowCode());
             assertTrue(withAgent.isAgentSdkAvailable());
-            assertFalse(withAgent.isJsonEncodeAgentQuery());
+            assertTrue(withAgent.isJsonEncodeAgentQuery());
         } finally {
             restoreProperty(enabledKey, oldEnabled);
             restoreProperty(agentKey, oldAgent);
@@ -174,7 +174,7 @@ class StudyPlanRouteIsolationTest {
     }
 
     @Test
-    void rejectsTwoConcatenatedJsonObjectsFromStudyAbroadAgent() {
+    void selectsFinalPlanningObjectFromConcatenatedAgentOutput() {
         AgentPlatformTaskFlowClient client = request -> {
             AgentTaskFlowResponseDto response = new AgentTaskFlowResponseDto();
             response.setSuccess(true);
@@ -188,9 +188,10 @@ class StudyPlanRouteIsolationTest {
                 new LinkedHashMap<String, AgentPlatformTaskFlowConfig>();
         configs.put(CareerRouteContext.STUDY_ABROAD, config("unused-flow"));
 
-        assertThrows(IllegalStateException.class, () ->
-                new AgentPlatformStudyPlanGenerator(clients, configs).generate(
-                        "u1", CareerRouteContext.STUDY_ABROAD, "target school", null));
+        CareerPlanRecordDto plan = new AgentPlatformStudyPlanGenerator(clients, configs).generate(
+                "u1", CareerRouteContext.STUDY_ABROAD, "target school", null);
+        assertNotNull(plan);
+        assertEquals(3, plan.getPhases().size());
     }
 
     @Test
@@ -629,12 +630,82 @@ class StudyPlanRouteIsolationTest {
         StudyPlanApplicationService service = new StudyPlanApplicationService(storage, profileService(),
                 new StudyPlanSummaryService(), generator, Clock.systemUTC());
 
-        service.generateAgentPlan(userId);
+        service.generateAgentPlan(userId, Arrays.asList("protected"));
 
         assertEquals("protected", storage.loadPlan(userId).getPhases().get(0).getPhaseId());
         assertEquals("replacement-second", storage.loadPlan(userId).getPhases().get(1).getPhaseId());
         assertEquals("replacement-third", storage.loadPlan(userId).getPhases().get(2).getPhaseId());
         assertEquals("IN_PROGRESS", storage.loadPlan(userId).getPhases().get(0).getStatus());
+    }
+
+    @Test
+    void refreshesAgentMarkedFirstPhaseWhenUserHasNoProgressEvidence() {
+        String userId = "study-zero-progress-refresh-user";
+        InMemoryStudyCenterStorage storage = new InMemoryStudyCenterStorage();
+        StudyCenterSelectionDto selection = new StudyCenterSelectionDto();
+        selection.setUserId(userId);
+        selection.setDirection(CareerRouteContext.STUDY_ABROAD);
+        storage.saveSelection(selection);
+        CareerPlanRecordDto old = plan(userId, "原留学规划", "unstarted-first");
+        old.setStudyDirection(CareerRouteContext.STUDY_ABROAD);
+        old.getPhases().get(0).setStatus("IN_PROGRESS");
+        old.setPhases(Arrays.asList(old.getPhases().get(0),
+                phase("unstarted-second", "NOT_STARTED"),
+                phase("unstarted-third", "NOT_STARTED")));
+        applyFullYearHorizons(old);
+        old.setPlanningMode("AGENT");
+        old.setAgentStatus("AGENT_GENERATED");
+        storage.savePlan(userId, old);
+        StudyPlanAiGenerator generator = (id, direction, school, profile) -> {
+            CareerPlanRecordDto generated = plan(id, "更新后的留学规划", "replacement-first");
+            generated.setStudyDirection(direction);
+            generated.getPhases().get(0).setStatus("IN_PROGRESS");
+            generated.setPhases(Arrays.asList(generated.getPhases().get(0),
+                    phase("replacement-second", "NOT_STARTED"),
+                    phase("replacement-third", "NOT_STARTED")));
+            applyFullYearHorizons(generated);
+            return generated;
+        };
+        StudyPlanApplicationService service = new StudyPlanApplicationService(storage, profileService(),
+                new StudyPlanSummaryService(), generator, Clock.systemUTC());
+
+        service.generateAgentPlan(userId);
+
+        assertEquals("replacement-first", storage.loadPlan(userId).getPhases().get(0).getPhaseId());
+        assertEquals("NOT_STARTED", storage.loadPlan(userId).getPhases().get(0).getStatus());
+    }
+
+    @Test
+    void studyPhaseReturnsToNotStartedAfterItsOnlyCompletedTaskIsUnchecked() {
+        String userId = "study-stage-status-user";
+        Clock clock = Clock.fixed(Instant.parse("2026-07-19T08:00:00Z"), ZoneId.of("Asia/Shanghai"));
+        InMemoryStudyCenterStorage storage = new InMemoryStudyCenterStorage();
+        StudyCenterSelectionDto selection = new StudyCenterSelectionDto();
+        selection.setUserId(userId);
+        selection.setDirection(CareerRouteContext.POSTGRADUATE);
+        storage.saveSelection(selection);
+        CareerPlanRecordDto route = plan(userId, "考研规划", "study-stage-first");
+        route.setStudyDirection(CareerRouteContext.POSTGRADUATE);
+        route.setPhases(Arrays.asList(route.getPhases().get(0),
+                phase("study-stage-second", "NOT_STARTED"),
+                phase("study-stage-third", "NOT_STARTED")));
+        applyFullYearHorizons(route);
+        route.setPlanningMode("AGENT");
+        route.setAgentStatus("AGENT_GENERATED");
+        storage.savePlan(userId, route);
+        StudyPlanApplicationService service = new StudyPlanApplicationService(storage, profileService(),
+                new StudyPlanSummaryService(), null, clock);
+        CareerDailyPlanDto today = service.getToday(userId);
+        CareerDailyTaskUpdateRequest update = new CareerDailyTaskUpdateRequest();
+        update.setTaskId(today.getItems().get(0).getTaskId());
+        update.setCompleted(Boolean.TRUE);
+
+        service.updateToday(userId, update);
+        assertEquals("IN_PROGRESS", storage.loadPlan(userId).getPhases().get(0).getStatus());
+
+        update.setCompleted(Boolean.FALSE);
+        service.updateToday(userId, update);
+        assertEquals("NOT_STARTED", storage.loadPlan(userId).getPhases().get(0).getStatus());
     }
 
     @Test

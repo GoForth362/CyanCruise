@@ -120,4 +120,5 @@ public class AdminContentCareerResourceStorage implements CareerResourceStorage 
     private boolean hasText(String value) {
         return value != null && value.trim().length() > 0;
     }
+
 }

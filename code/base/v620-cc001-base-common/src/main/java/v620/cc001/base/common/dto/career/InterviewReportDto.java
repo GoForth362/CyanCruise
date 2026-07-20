@@ -2,7 +2,9 @@ package v620.cc001.base.common.dto.career;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Cached structured interview report summary.
@@ -11,6 +13,9 @@ public class InterviewReportDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String ANALYSIS_SOURCE_AI_AGENT = "AI_AGENT";
+    public static final String ANALYSIS_SOURCE_BASIC_RULES = "BASIC_RULES";
+
     private Long interviewId;
     private String positionName;
     private String difficulty;
@@ -18,7 +23,9 @@ public class InterviewReportDto implements Serializable {
     private Integer durationSeconds;
     private Integer overallScore;
     private Integer totalQuestions;
+    private String analysisSource;
     private InterviewRadarScoreDto radarScore;
+    private Map<String, String> scoreReasons = new LinkedHashMap<String, String>();
     private List<InterviewAdviceItemDto> strengths = new ArrayList<InterviewAdviceItemDto>();
     private List<InterviewAdviceItemDto> improvements = new ArrayList<InterviewAdviceItemDto>();
     private String textSummary;
@@ -79,12 +86,28 @@ public class InterviewReportDto implements Serializable {
         this.totalQuestions = totalQuestions;
     }
 
+    public String getAnalysisSource() {
+        return analysisSource;
+    }
+
+    public void setAnalysisSource(String analysisSource) {
+        this.analysisSource = analysisSource;
+    }
+
     public InterviewRadarScoreDto getRadarScore() {
         return radarScore;
     }
 
     public void setRadarScore(InterviewRadarScoreDto radarScore) {
         this.radarScore = radarScore;
+    }
+
+    public Map<String, String> getScoreReasons() {
+        return scoreReasons;
+    }
+
+    public void setScoreReasons(Map<String, String> scoreReasons) {
+        this.scoreReasons = scoreReasons;
     }
 
     public List<InterviewAdviceItemDto> getStrengths() {

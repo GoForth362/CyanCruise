@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FurtherStudyCompanionStorageTest {
 
@@ -59,7 +60,7 @@ class FurtherStudyCompanionStorageTest {
     }
 
     @Test
-    void storesMaterialsAndKeepsPostgresqlPlaceholderConstructible(@TempDir Path tempDir) throws Exception {
+    void storesMaterialsAndRejectsIncompletePostgresqlConfiguration(@TempDir Path tempDir) throws Exception {
         InMemoryFurtherStudyCompanionStorage storage = new InMemoryFurtherStudyCompanionStorage();
         FurtherStudyMaterialDto material = new FurtherStudyMaterialDto();
         material.setTrack(FurtherStudyConstants.TRACK_STUDY_ABROAD);
@@ -71,7 +72,8 @@ class FurtherStudyCompanionStorageTest {
 
         assertNotNull(saved.getMaterialId());
         assertEquals(1, storage.listMaterials("u1", FurtherStudyConstants.TRACK_STUDY_ABROAD, null).size());
-        assertNotNull(new PostgresqlFurtherStudyCompanionStorage(new PostgresqlStorageConfig()));
+        assertThrows(IllegalStateException.class,
+                () -> new PostgresqlFurtherStudyCompanionStorage(new PostgresqlStorageConfig()));
         assertFalse(Files.exists(tempDir.resolve("filestorage").resolve("further-study")));
     }
 
