@@ -55,9 +55,7 @@ public class ResumeDiagnosisService {
         ResumeDiagnosisResultDto result = new ResumeDiagnosisResultDto();
         result.setRawAnalysis(analysis);
         if (!hasText(analysis)) {
-            result.setOverallScore(Integer.valueOf(ResumeDiagnosisConstants.DEFAULT_SCORE));
-            applyRevisionFallback(result, null);
-            return result;
+            throw new IllegalStateException("智能诊断未返回有效内容，请稍后重试。");
         }
         String json = objectSlice(analysis);
         if (hasText(json)) {
@@ -69,16 +67,11 @@ public class ResumeDiagnosisService {
                 result.setSuggestions(extractJsonArray(json, "suggestions"));
                 result.setScoreBreakdown(extractScoreBreakdown(json));
                 result.setRevisionSuggestions(extractRevisionSuggestions(json));
-                applyRevisionFallback(result, analysis);
+                result.setRevisionPlan(buildRevisionPlan(result.getRevisionSuggestions(), result.getContextSources()));
                 return result;
             }
         }
-        result.setOverallScore(Integer.valueOf(extractFirstScore(analysis, ResumeDiagnosisConstants.DEFAULT_SCORE)));
-        List<String> suggestions = new ArrayList<String>();
-        suggestions.add(analysis);
-        result.setSuggestions(suggestions);
-        applyRevisionFallback(result, analysis);
-        return result;
+        throw new IllegalStateException("智能诊断返回格式无效，请稍后重试。");
     }
 
     public ResumeRevisionPlanDto buildRevisionPlan(List<ResumeRevisionSuggestionDto> suggestions, List<String> contextSources) {
@@ -100,23 +93,6 @@ public class ResumeDiagnosisService {
         plan.setContextSources(contextSources);
         plan.setContextSummary(join(contextSources, " / "));
         return plan;
-    }
-
-    public int extractFirstScore(String text, int fallback) {
-        if (!hasText(text)) {
-            return clamp(fallback, 0, 100);
-        }
-        Matcher matcher = Pattern.compile("\\d+").matcher(text);
-        while (matcher.find()) {
-            try {
-                int value = Integer.parseInt(matcher.group());
-                if (value >= 0 && value <= 100) {
-                    return value;
-                }
-            } catch (Exception ignored) {
-            }
-        }
-        return clamp(fallback, 0, 100);
     }
 
     public ResumeKeywordStatusDto extractKeywordStatus(ResumeRecordDto resume) {
@@ -219,42 +195,6 @@ public class ResumeDiagnosisService {
             return new ArrayList<String>();
         }
         return extractStringValues(matcher.group(1));
-    }
-
-    private void applyRevisionFallback(ResumeDiagnosisResultDto result, String analysis) {
-        if (result.getRevisionSuggestions().isEmpty()) {
-            List<ResumeRevisionSuggestionDto> suggestions = new ArrayList<ResumeRevisionSuggestionDto>();
-            List<String> plainSuggestions = result.getSuggestions();
-            if (plainSuggestions != null && !plainSuggestions.isEmpty()) {
-                for (int i = 0; i < plainSuggestions.size(); i += 1) {
-                    String text = plainSuggestions.get(i);
-                    if (hasText(text)) {
-                        suggestions.add(fallbackSuggestion("rev-" + (i + 1), text, i == 0 ? "HIGH" : "MEDIUM"));
-                    }
-                }
-            } else if (hasText(analysis)) {
-                suggestions.add(fallbackSuggestion("rev-1", analysis, "MEDIUM"));
-            }
-            result.setRevisionSuggestions(suggestions);
-        }
-        if (result.getRevisionPlan() == null) {
-            result.setRevisionPlan(buildRevisionPlan(result.getRevisionSuggestions(), result.getContextSources()));
-        }
-    }
-
-    private ResumeRevisionSuggestionDto fallbackSuggestion(String id, String text, String priority) {
-        ResumeRevisionSuggestionDto suggestion = new ResumeRevisionSuggestionDto();
-        suggestion.setSuggestionId(id);
-        suggestion.setIssueType("CONTENT_EVIDENCE");
-        suggestion.setPriority(priority);
-        suggestion.setResumeSection("experience");
-        suggestion.setProblem("简历内容仍需与目标岗位证据对齐");
-        suggestion.setAction(trim(text, 300));
-        suggestion.setRewriteExample("用“动作 + 技术/方法 + 指标结果 + 个人贡献”重写一条经历。");
-        suggestion.setEvidence(trim(text, 160));
-        suggestion.setStatus("TODO");
-        suggestion.setContextSource("fallback");
-        return suggestion;
     }
 
     private List<ResumeRevisionSuggestionDto> extractRevisionSuggestions(String json) {

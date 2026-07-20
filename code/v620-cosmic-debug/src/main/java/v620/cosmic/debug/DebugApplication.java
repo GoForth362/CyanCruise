@@ -12,6 +12,8 @@ import kd.cosmic.debug.tools.CosmicLauncher;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -100,6 +102,12 @@ public class DebugApplication {
                 "CC001_AGENT_PLATFORM_RESUME_AGENTNUMBER");
         setConfiguredProperty("cc001.agent.platform.resume.taskFlowCode",
                 "CC001_AGENT_PLATFORM_RESUME_TASKFLOWCODE");
+        setConfiguredProperty("cc001.agent.platform.interview.enabled",
+                "CC001_AGENT_PLATFORM_INTERVIEW_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.interview.agentNumber",
+                "CC001_AGENT_PLATFORM_INTERVIEW_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.interview.taskFlowCode",
+                "CC001_AGENT_PLATFORM_INTERVIEW_TASKFLOWCODE");
         setConfiguredProperty("cc001.agent.platform.employment.enabled",
                 "CC001_AGENT_PLATFORM_EMPLOYMENT_ENABLED");
         setConfiguredProperty("cc001.agent.platform.employment.agentNumber",
@@ -118,6 +126,12 @@ public class DebugApplication {
                 "CC001_AGENT_PLATFORM_STUDY_ABROAD_ENABLED");
         setConfiguredProperty("cc001.agent.platform.study.abroad.agentNumber",
                 "CC001_AGENT_PLATFORM_STUDY_ABROAD_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.companion.enabled",
+                "CC001_AGENT_PLATFORM_STUDY_COMPANION_ENABLED");
+        setConfiguredProperty("cc001.agent.platform.study.companion.agentNumber",
+                "CC001_AGENT_PLATFORM_STUDY_COMPANION_AGENTNUMBER");
+        setConfiguredProperty("cc001.agent.platform.study.companion.taskFlowCode",
+                "CC001_AGENT_PLATFORM_STUDY_COMPANION_TASKFLOWCODE");
     }
 
     private static void configureSharedRuntime() {
@@ -221,6 +235,8 @@ public class DebugApplication {
         Properties properties = new Properties();
         File file = findLocalConfig();
         if (file == null || !file.isFile()) {
+            System.out.println("[CyanCruise] 未找到 debug-local.properties，当前目录："
+                    + new File(System.getProperty("user.dir")).getAbsolutePath());
             return properties;
         }
 
@@ -228,6 +244,7 @@ public class DebugApplication {
         try {
             input = new FileInputStream(file);
             properties.load(input);
+            System.out.println("[CyanCruise] 已加载本地调试配置：" + file.getAbsolutePath());
         } catch (IOException e) {
             throw new IllegalStateException("Unable to load " + file.getAbsolutePath(), e);
         } finally {
@@ -243,13 +260,67 @@ public class DebugApplication {
     }
 
     private static File findLocalConfig() {
-        File dir = new File(System.getProperty("user.dir"));
+        File configured = configuredLocalConfig();
+        if (configured != null) {
+            return configured;
+        }
+
+        File projectConfig = configInDirectory(firstText(
+                System.getProperty("project_dir"),
+                System.getProperty("systemProp.project_dir"),
+                System.getenv("CC001_PROJECT_DIR")));
+        if (projectConfig != null) {
+            return projectConfig;
+        }
+
+        File currentConfig = findLocalConfigUpwards(new File(System.getProperty("user.dir")));
+        if (currentConfig != null) {
+            return currentConfig;
+        }
+
+        try {
+            URI codeLocation = DebugApplication.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+            return findLocalConfigUpwards(new File(codeLocation));
+        } catch (URISyntaxException ignored) {
+            return null;
+        }
+    }
+
+    private static File configuredLocalConfig() {
+        String path = firstText(System.getProperty("cc001.debug.local.config"),
+                System.getenv("CC001_DEBUG_LOCAL_CONFIG"));
+        if (isBlank(path)) {
+            return null;
+        }
+        File file = new File(path.trim());
+        return file.isFile() ? file : null;
+    }
+
+    private static File configInDirectory(String path) {
+        if (isBlank(path)) {
+            return null;
+        }
+        File file = new File(new File(path.trim()), LOCAL_CONFIG_FILE);
+        return file.isFile() ? file : null;
+    }
+
+    static File findLocalConfigUpwards(File start) {
+        File dir = start != null && start.isFile() ? start.getParentFile() : start;
         while (dir != null) {
             File file = new File(dir, LOCAL_CONFIG_FILE);
             if (file.isFile()) {
                 return file;
             }
             dir = dir.getParentFile();
+        }
+        return null;
+    }
+
+    private static String firstText(String... values) {
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return value.trim();
+            }
         }
         return null;
     }

@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CareerPlanSummaryServiceTest {
@@ -45,7 +44,6 @@ class CareerPlanSummaryServiceTest {
     void stalePlanNeedsRefresh() {
         CareerPlanSummaryDto summary = service.summarize(plan(now.minusDays(15), Integer.valueOf(2),
                 Arrays.asList("优化简历")), now);
-
         assertEquals(CareerPlanHealth.NEEDS_REFRESH, summary.getPlanHealth());
         assertTrue(summary.getAdjustmentReason().contains("14 天"));
     }
@@ -54,7 +52,6 @@ class CareerPlanSummaryServiceTest {
     void planWithoutWeeklyFocusNeedsRefresh() {
         CareerPlanSummaryDto summary = service.summarize(plan(now.minusDays(1), Integer.valueOf(2),
                 Arrays.asList(" ")), now);
-
         assertEquals(CareerPlanHealth.NEEDS_REFRESH, summary.getPlanHealth());
         assertTrue(summary.getAdjustmentReason().contains("本周重点缺失"));
     }
@@ -63,27 +60,12 @@ class CareerPlanSummaryServiceTest {
     void oldVersionNeedsRefresh() {
         CareerPlanSummaryDto summary = service.summarize(plan(now.minusDays(1), Integer.valueOf(1),
                 Arrays.asList("优化简历")), now);
-
         assertEquals(CareerPlanHealth.NEEDS_REFRESH, summary.getPlanHealth());
         assertTrue(summary.getAdjustmentReason().contains("版本过旧"));
     }
 
-    @Test
-    void defaultPlanUsesProfileTargetOrFallback() {
-        CareerPlanRecordDto withRole = service.defaultPlan("user-1", "Java Engineer", now);
-        CareerPlanRecordDto fallback = service.defaultPlan("user-2", " ", now);
-
-        assertEquals("Java Engineer", withRole.getTargetRole());
-        assertEquals(Integer.valueOf(2), withRole.getVersion());
-        assertFalse(withRole.getMilestones().isEmpty());
-        assertFalse(withRole.getWeeklyFocus().isEmpty());
-        assertFalse(withRole.getPhases().isEmpty());
-        assertFalse(withRole.getDailySuggestions().isEmpty());
-        assertEquals("RULE_FALLBACK", withRole.getPlanningMode());
-        assertEquals("互联网行业职位", fallback.getTargetRole());
-    }
-
-    private CareerPlanRecordDto plan(LocalDateTime lastUpdatedAt, Integer version, java.util.List<String> weeklyFocus) {
+    private CareerPlanRecordDto plan(LocalDateTime lastUpdatedAt, Integer version,
+                                     java.util.List<String> weeklyFocus) {
         CareerPlanRecordDto plan = new CareerPlanRecordDto();
         plan.setUserId("user-1");
         plan.setTargetRole("Java Engineer");

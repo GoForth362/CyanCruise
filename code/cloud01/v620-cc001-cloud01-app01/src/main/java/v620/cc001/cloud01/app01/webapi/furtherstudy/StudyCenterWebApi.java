@@ -16,6 +16,7 @@ import v620.cc001.base.common.dto.furtherstudy.StudyCenterSelectionDto;
 import v620.cc001.base.common.dto.furtherstudy.StudyPlanningMaterialDto;
 import v620.cc001.base.common.dto.furtherstudy.StudyPlanningMaterialUploadRequest;
 import v620.cc001.base.common.dto.furtherstudy.StudyPlanningMaterialDeleteResult;
+import v620.cc001.base.common.dto.furtherstudy.FurtherStudyAnalysisDraftDto;
 import v620.cc001.cloud01.app01.mservice.application.StudyCenterApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.StudyPlanApplicationService;
 import v620.cc001.cloud01.app01.mservice.application.StudyPlanningMaterialApplicationService;
@@ -57,6 +58,12 @@ public class StudyCenterWebApi {
             @ApiRequestBody(value = "targetSchool", required = false) String targetSchool) {
         return applicationService.saveSelection(identityBoundary.requireUser(userId), direction, targetSchool);
     }
+    @ApiPostMapping(value = "/analysis-draft/get", desc = "获取升学分析表单草稿", methodParamNames = {"userId", "taskType"})
+    public @ApiResponseBody(value = "升学分析表单草稿") FurtherStudyAnalysisDraftDto analysisDraft(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "任务类型", required = true) String taskType) {
+        return applicationService.getAnalysisDraft(identityBoundary.requireUser(userId), taskType);
+    }
     @ApiPostMapping(value = "/insight/get", desc = "获取升学洞察", methodParamNames = {"userId"})
     public @ApiResponseBody(value = "升学洞察") StudyCenterInsightDto insight(@ApiRequestBody(value = "userId", required = true) String userId) {
         return applicationService.getInsight(identityBoundary.requireUser(userId));
@@ -71,9 +78,11 @@ public class StudyCenterWebApi {
     public @ApiResponseBody(value = "升学规划摘要") CareerPlanSummaryDto ensurePlan(@ApiRequestBody(value = "userId", required = true) String userId) {
         return planService.ensurePlan(identityBoundary.requireUser(userId));
     }
-    @ApiPostMapping(value = "/plan/generate", desc = "按所选方向生成升学规划", methodParamNames = {"userId"})
-    public @ApiResponseBody(value = "升学规划摘要") CareerPlanSummaryDto generatePlan(@ApiRequestBody(value = "userId", required = true) String userId) {
-        return planService.generateAgentPlan(identityBoundary.requireUser(userId));
+    @ApiPostMapping(value = "/plan/generate", desc = "按所选方向生成升学规划", methodParamNames = {"userId", "startedPhaseIds"})
+    public @ApiResponseBody(value = "升学规划摘要") CareerPlanSummaryDto generatePlan(
+            @ApiRequestBody(value = "userId", required = true) String userId,
+            @ApiRequestBody(value = "已开始阶段", required = false) List<String> startedPhaseIds) {
+        return planService.generateAgentPlan(identityBoundary.requireUser(userId), startedPhaseIds);
     }
     @ApiPostMapping(value = "/daily/get", desc = "获取升学今日行动", methodParamNames = {"userId"})
     public @ApiResponseBody(value = "升学今日行动") CareerDailyPlanDto daily(@ApiRequestBody(value = "userId", required = true) String userId) {

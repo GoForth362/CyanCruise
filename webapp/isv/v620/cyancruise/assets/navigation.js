@@ -5,8 +5,8 @@
     "employment-home": "workbench",
     "further-study-home": "workbench",
     "study-resources": "further-study-home",
-    resume: "employment-home",
-    "resume-diagnosis": "employment-home",
+    resume: "",
+    "resume-diagnosis": "",
     interview: "",
     "interview-history": "interview",
     "interview-panorama": "",
@@ -55,6 +55,9 @@
       return Object.prototype.hasOwnProperty.call(parentRoutes, route) ? parentRoutes[route] : "workbench";
     },
     backRouteFor: function (route) {
+      if (route === "resume" || route === "resume-diagnosis") {
+        return "";
+      }
       return this.parentRouteFor(route);
     }
   };

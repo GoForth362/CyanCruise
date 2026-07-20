@@ -71,7 +71,7 @@ public class AgentPlatformStudyPlanGenerator implements StudyPlanAiGenerator {
             throw new IllegalStateException("当前升学方向的智能规划服务尚未配置，请稍后重试。");
         }
         AgentTaskFlowRequestDto request = new AgentTaskFlowRequestDto();
-        request.setTaskFlowCode(null);
+        request.setTaskFlowCode(config.getTaskFlowCode());
         request.putInput("question", question(safeDirection, targetSchool, profile, snapshot,
                 existingPlan, materials, false));
         AgentTaskFlowResponseDto response = client.execute(request);

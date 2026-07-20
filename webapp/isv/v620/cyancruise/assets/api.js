@@ -40,6 +40,7 @@
       guidedInterviewStart: "/cc001/interview/guided/start",
       guidedInterviewAnswer: "/cc001/interview/guided/answer",
       guidedInterviewFinish: "/cc001/interview/guided/finish",
+      interviewEnd: "/cc001/interview/finish",
       interviewMessages: "/cc001/interview/messages",
       interviewDelete: "/cc001/interview/delete",
       assistantSend: "/cc001/assistant-chat/send",

@@ -9,6 +9,7 @@ import v620.cc001.base.common.dto.furtherstudy.FurtherStudyMaterialDto;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyMaterialSaveRequest;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordDetailDto;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordQueryRequest;
+import v620.cc001.cloud01.app01.mservice.furtherstudy.FurtherStudyCompanionStorage;
 
 import java.time.LocalDate;
 
@@ -59,6 +60,24 @@ final class FurtherStudyRecordSupport {
         FurtherStudyRecordQueryRequest out = query == null ? new FurtherStudyRecordQueryRequest() : query;
         out.setTrack(track);
         return out;
+    }
+
+    static void saveAnalysis(FurtherStudyCompanionStorage storage, String userId, String track,
+                             String taskType, Object request, Object result) {
+        if (storage == null || result == null) {
+            return;
+        }
+        FurtherStudyRecordDetailDto record = record(track, taskType, taskTitle(taskType),
+                null, null, null, null, request, result);
+        storage.saveRecord(userId, record);
+    }
+
+    private static String taskTitle(String taskType) {
+        if (taskType == null) return "升学分析";
+        if (taskType.startsWith("POSTGRADUATE_")) return "考研分析：" + taskType;
+        if (taskType.startsWith("RECOMMENDATION_")) return "保研分析：" + taskType;
+        if (taskType.startsWith("STUDY_ABROAD_")) return "留学分析：" + taskType;
+        return "升学分析：" + taskType;
     }
 
     static String toJson(Object value) {

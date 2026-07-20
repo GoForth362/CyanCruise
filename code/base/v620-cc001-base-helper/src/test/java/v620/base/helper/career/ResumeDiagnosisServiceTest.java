@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ResumeDiagnosisServiceTest {
@@ -27,27 +28,19 @@ class ResumeDiagnosisServiceTest {
         assertEquals("量化不足", result.getWeaknesses().get(0));
         assertEquals("补充指标", result.getSuggestions().get(0));
         assertEquals("rev-a", result.getRevisionSuggestions().get(0).getSuggestionId());
-        assertEquals("HIGH", result.getRevisionSuggestions().get(0).getPriority());
-        assertEquals("Redis", result.getRevisionSuggestions().get(0).getTargetKeywords().get(1));
         assertEquals(Integer.valueOf(1), result.getRevisionPlan().getTotalSuggestions());
-        assertEquals(Integer.valueOf(1), result.getRevisionPlan().getHighPrioritySuggestions());
     }
 
     @Test
-    void fallsBackToFirstValidScoreFromText() {
-        ResumeDiagnosisResultDto result = service.parseAnalysis("整体匹配分 91/100，建议补充 Spring 项目。");
-
-        assertEquals(Integer.valueOf(91), result.getOverallScore());
-        assertTrue(result.getSuggestions().get(0).contains("Spring"));
-        assertEquals(1, result.getRevisionSuggestions().size());
-        assertTrue(result.getRevisionSuggestions().get(0).getAction().contains("Spring"));
+    void rejectsUnstructuredAnalysis() {
+        assertThrows(IllegalStateException.class,
+                () -> service.parseAnalysis("overall score 91/100"));
     }
 
     @Test
-    void usesDefaultScoreForEmptyOrInvalidAnalysis() {
-        assertEquals(Integer.valueOf(ResumeDiagnosisConstants.DEFAULT_SCORE), service.parseAnalysis(null).getOverallScore());
-        assertEquals(Integer.valueOf(ResumeDiagnosisConstants.DEFAULT_SCORE), service.parseAnalysis("没有分数").getOverallScore());
-        assertEquals(Integer.valueOf(0), service.parseAnalysis(null).getRevisionPlan().getTotalSuggestions());
+    void rejectsEmptyOrInvalidAnalysisInsteadOfInventingScore() {
+        assertThrows(IllegalStateException.class, () -> service.parseAnalysis(null));
+        assertThrows(IllegalStateException.class, () -> service.parseAnalysis("invalid analysis"));
     }
 
     @Test
@@ -87,9 +80,7 @@ class ResumeDiagnosisServiceTest {
     private int countLabel(List<ResumeKeywordDto> keywords, String label) {
         int count = 0;
         for (ResumeKeywordDto keyword : keywords) {
-            if (label.equals(keyword.getLabel())) {
-                count++;
-            }
+            if (label.equals(keyword.getLabel())) count++;
         }
         return count;
     }
@@ -97,9 +88,7 @@ class ResumeDiagnosisServiceTest {
     private int countCategoryLabel(List<ResumeKeywordDto> keywords, String category, String label) {
         int count = 0;
         for (ResumeKeywordDto keyword : keywords) {
-            if (category.equals(keyword.getCategory()) && label.equals(keyword.getLabel())) {
-                count++;
-            }
+            if (category.equals(keyword.getCategory()) && label.equals(keyword.getLabel())) count++;
         }
         return count;
     }

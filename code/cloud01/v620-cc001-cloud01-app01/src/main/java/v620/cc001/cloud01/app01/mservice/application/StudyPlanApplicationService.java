@@ -2,12 +2,15 @@ package v620.cc001.cloud01.app01.mservice.application;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import v620.base.helper.career.StudyPlanSummaryService;
+import v620.cc001.base.common.dto.career.CareerDailyTaskDto;
 import v620.cc001.base.common.dto.career.CareerDailyPlanDto;
 import v620.cc001.base.common.dto.career.CareerDailyTaskUpdateRequest;
 import v620.cc001.base.common.dto.career.CareerPlanPhaseDto;
@@ -85,12 +88,19 @@ public class StudyPlanApplicationService {
     }
 
     public CareerPlanSummaryDto generateAgentPlan(String userId) {
+        return generateAgentPlan(userId, null);
+    }
+
+    public CareerPlanSummaryDto generateAgentPlan(String userId, List<String> startedPhaseIds) {
         String safeUserId = requireUserId(userId);
         StudyCenterSelectionDto selection = requireSelection(safeUserId);
         if (aiGenerator == null) throw new IllegalStateException("当前升学方向的智能规划服务尚未配置，请稍后重试。");
         CareerPlanRecordDto existing = loadVerifiedPlan(safeUserId, selection);
         boolean sameDirection = existing != null && selection.getDirection().equals(existing.getStudyDirection());
-        if (sameDirection && hasCompleteRoute(existing) && !hasRefreshablePhase(existing)) {
+        Set<String> protectedPhaseIds = sameDirection
+                ? protectedPhaseIds(safeUserId, selection.getDirection(), existing, startedPhaseIds)
+                : new HashSet<String>();
+        if (sameDirection && hasCompleteRoute(existing) && !hasRefreshablePhase(existing, protectedPhaseIds)) {
             throw new IllegalStateException("当前升学路线图的所有阶段都已开始或完成，不能重新生成。");
         }
         CareerUserProfileDto profile = profileService.getProfile(safeUserId);
@@ -109,6 +119,7 @@ public class StudyPlanApplicationService {
             throw new IllegalStateException("升学规划智能服务暂不可用，原有升学路线图已保留，请稍后重试。");
         }
         if (generated == null) throw new IllegalStateException("升学规划智能服务未返回有效路线图，原有规划已保留。");
+        normalizeGeneratedPhaseStatuses(generated);
         generated.setUserId(safeUserId);
         generated.setStudyDirection(selection.getDirection());
         generated.setTargetSchool(resolveTargetSchool(safeUserId, selection));
@@ -119,8 +130,8 @@ public class StudyPlanApplicationService {
         generated.setVersion(Integer.valueOf(existing == null || existing.getVersion() == null
                 ? 1 : existing.getVersion().intValue() + 1));
         summaryService.enrich(generated, selection.getDirection(), generated.getTargetSchool(), profile, now);
-        if (sameDirection && hasProtectedPhase(existing)) {
-            mergeProtectedPhases(existing, generated);
+        if (sameDirection && hasProtectedPhase(existing, protectedPhaseIds)) {
+            mergeProtectedPhases(existing, generated, protectedPhaseIds);
             generated.setGeneratedAt(existing.getGeneratedAt() == null ? now : existing.getGeneratedAt());
             generated.setVersion(existing.getVersion() == null ? Integer.valueOf(1) : existing.getVersion());
         }
@@ -202,16 +213,17 @@ public class StudyPlanApplicationService {
         UserProfileSnapshot.OnboardingBlock onboarding = snapshot == null ? null : snapshot.getOnboarding();
         return onboarding != null && hasText(onboarding.getTargetSchool()) ? onboarding.getTargetSchool().trim() : null;
     }
-    private void mergeProtectedPhases(CareerPlanRecordDto existing, CareerPlanRecordDto generated) {
+    private void mergeProtectedPhases(CareerPlanRecordDto existing, CareerPlanRecordDto generated,
+                                      Set<String> protectedPhaseIds) {
         List<CareerPlanPhaseDto> current = existing.getPhases();
         List<CareerPlanPhaseDto> incoming = generated.getPhases();
         for (int i = 0; current != null && i < current.size(); i += 1) {
             CareerPlanPhaseDto phase = current.get(i);
-            if (isProtected(phase)) {
+            if (isProtected(phase, protectedPhaseIds)) {
                 if (i < incoming.size()) incoming.set(i, phase); else incoming.add(phase);
             }
         }
-        if (hasInProgressPhase(existing)) {
+        if (hasStartedButIncompletePhase(existing, protectedPhaseIds)) {
             generated.setWeeklyPlan(existing.getWeeklyPlan());
             generated.setWeeklyFocus(existing.getWeeklyFocus());
             generated.setDailySuggestions(existing.getDailySuggestions());
@@ -221,25 +233,70 @@ public class StudyPlanApplicationService {
     private boolean hasCompleteRoute(CareerPlanRecordDto plan) {
         return hasPhases(plan) && plan.getPhases().size() >= COMPLETE_ROUTE_PHASE_COUNT;
     }
-    private boolean hasProtectedPhase(CareerPlanRecordDto plan) {
+    private boolean hasProtectedPhase(CareerPlanRecordDto plan, Set<String> protectedPhaseIds) {
         if (!hasPhases(plan)) return false;
-        for (CareerPlanPhaseDto phase : plan.getPhases()) if (isProtected(phase)) return true;
+        for (CareerPlanPhaseDto phase : plan.getPhases()) {
+            if (isProtected(phase, protectedPhaseIds)) return true;
+        }
         return false;
     }
-    private boolean hasRefreshablePhase(CareerPlanRecordDto plan) {
+    private boolean hasRefreshablePhase(CareerPlanRecordDto plan, Set<String> protectedPhaseIds) {
         if (!hasPhases(plan)) return true;
-        for (CareerPlanPhaseDto phase : plan.getPhases()) if (!isProtected(phase)) return true;
+        for (CareerPlanPhaseDto phase : plan.getPhases()) {
+            if (!isProtected(phase, protectedPhaseIds)) return true;
+        }
         return false;
     }
-    private boolean hasInProgressPhase(CareerPlanRecordDto plan) {
+    private boolean hasStartedButIncompletePhase(CareerPlanRecordDto plan, Set<String> protectedPhaseIds) {
         if (!hasPhases(plan)) return false;
-        for (CareerPlanPhaseDto phase : plan.getPhases()) if ("IN_PROGRESS".equals(status(phase))) return true;
+        for (CareerPlanPhaseDto phase : plan.getPhases()) {
+            if (protectedPhaseIds.contains(phaseId(phase)) && !isCompletedStatus(phase)) return true;
+        }
         return false;
     }
-    private boolean isProtected(CareerPlanPhaseDto phase) {
+    private boolean isProtected(CareerPlanPhaseDto phase, Set<String> protectedPhaseIds) {
+        return isCompletedStatus(phase) || protectedPhaseIds.contains(phaseId(phase));
+    }
+    private boolean isCompletedStatus(CareerPlanPhaseDto phase) {
         String value = status(phase);
-        return "IN_PROGRESS".equals(value) || "STARTED".equals(value) || "COMPLETED".equals(value)
-                || "DONE".equals(value) || "FINISHED".equals(value);
+        return "COMPLETED".equals(value) || "DONE".equals(value) || "FINISHED".equals(value);
+    }
+    private Set<String> protectedPhaseIds(String userId, String direction, CareerPlanRecordDto plan,
+                                          List<String> requestedPhaseIds) {
+        Set<String> valid = new HashSet<String>();
+        if (hasPhases(plan)) {
+            for (CareerPlanPhaseDto phase : plan.getPhases()) valid.add(phaseId(phase));
+        }
+        Set<String> result = new HashSet<String>();
+        if (requestedPhaseIds != null) {
+            for (String phaseId : requestedPhaseIds) {
+                String normalized = text(phaseId);
+                if (valid.contains(normalized)) result.add(normalized);
+            }
+        }
+        List<CareerDailyTaskDto> tasks = storage.listDailyTasks(userId, direction);
+        if (tasks != null) {
+            for (CareerDailyTaskDto task : tasks) {
+                if (task != null && task.isCompleted() && samePlanVersion(plan, task)
+                        && valid.contains(text(task.getPhaseId()))) {
+                    result.add(text(task.getPhaseId()));
+                }
+            }
+        }
+        return result;
+    }
+    private boolean samePlanVersion(CareerPlanRecordDto plan, CareerDailyTaskDto task) {
+        return plan == null || plan.getVersion() == null || task.getPlanVersion() == null
+                || plan.getVersion().intValue() == task.getPlanVersion().intValue();
+    }
+    private void normalizeGeneratedPhaseStatuses(CareerPlanRecordDto generated) {
+        if (!hasPhases(generated)) return;
+        for (CareerPlanPhaseDto phase : generated.getPhases()) {
+            if (phase != null) phase.setStatus("NOT_STARTED");
+        }
+    }
+    private String phaseId(CareerPlanPhaseDto phase) {
+        return phase == null ? "" : text(phase.getPhaseId());
     }
     private String status(CareerPlanPhaseDto phase) {
         return phase == null || !hasText(phase.getStatus()) ? "" : phase.getStatus().trim().toUpperCase().replace('-', '_').replace(' ', '_');
@@ -277,13 +334,13 @@ public class StudyPlanApplicationService {
     }
 
     /**
-     * Study planning is published as one Agent per direction. Do not allow a stale
-     * task-flow property to take precedence inside the shared SDK client.
+     * Prefer the published task flow when a runtime taskFlowCode is present.
+     * Direct flow execution preserves its structured END_OUTPUT; agentNumber
+     * remains a compatibility fallback for tenants that only publish an Agent.
      */
     static AgentPlatformTaskFlowConfig loadStudyAgentConfig(String prefix) {
         AgentPlatformTaskFlowConfig config = AgentPlatformTaskFlowConfig.fromSystemProperties(prefix);
-        config.setTaskFlowCode(null);
-        config.setJsonEncodeAgentQuery(false);
+        config.setJsonEncodeAgentQuery(true);
         return config;
     }
 }

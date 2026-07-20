@@ -56,6 +56,14 @@ public class InterviewWebApi {
         return applicationService.finishAndReport(userId, interviewId);
     }
 
+    @ApiPostMapping(value = "/finish", desc = "丢弃没有有效回答的面试", methodParamNames = {"userId", "interviewId"})
+    public @ApiResponseBody(value = "丢弃结果") String finish(
+            @ApiRequestBody(value = "用户ID", required = true) String userId,
+            @ApiRequestBody(value = "面试ID", required = true) Long interviewId) {
+        applicationService.discard(userId, interviewId);
+        return "OK";
+    }
+
     @ApiPostMapping(value = "/start", desc = "开始模拟面试", methodParamNames = {"userId", "request"})
     public @ApiResponseBody(value = "面试会话") InterviewSessionDto start(
             @ApiRequestBody(value = "用户ID", required = true) String userId,
@@ -76,22 +84,6 @@ public class InterviewWebApi {
             @ApiRequestBody(value = "用户ID", required = true) String userId,
             @ApiRequestBody(value = "面试ID", required = true) Long interviewId) {
         return applicationService.getMessages(userId, interviewId);
-    }
-
-    @ApiPostMapping(value = "/end", desc = "结束模拟面试", methodParamNames = {"userId", "interviewId", "finalScore"})
-    public @ApiResponseBody(value = "面试会话") InterviewSessionDto end(
-            @ApiRequestBody(value = "用户ID", required = true) String userId,
-            @ApiRequestBody(value = "面试ID", required = true) Long interviewId,
-            @ApiRequestBody(value = "最终分数", required = false) Integer finalScore) {
-        return applicationService.end(userId, interviewId, finalScore);
-    }
-
-    @ApiPostMapping(value = "/report/save", desc = "保存面试报告", methodParamNames = {"userId", "interviewId", "report"})
-    public @ApiResponseBody(value = "面试报告") InterviewReportDto saveReport(
-            @ApiRequestBody(value = "用户ID", required = true) String userId,
-            @ApiRequestBody(value = "面试ID", required = true) Long interviewId,
-            @ApiRequestBody(value = "面试报告", required = true) InterviewReportDto report) {
-        return applicationService.saveReport(userId, interviewId, report);
     }
 
     @ApiPostMapping(value = "/report/get", desc = "读取面试报告", methodParamNames = {"userId", "interviewId"})

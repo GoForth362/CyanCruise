@@ -1,7 +1,5 @@
 package v620.cc001.cloud01.app01.webapi.career;
 
-import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
-import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.CareerPlanSummaryService;
 import v620.base.helper.career.CareerProfileBuildService;
@@ -10,20 +8,19 @@ import v620.cc001.base.common.dto.career.CareerPlanSaveRequest;
 import v620.cc001.base.common.dto.career.CareerPlanSummaryDto;
 import v620.cc001.base.common.dto.career.CareerProfilePreferencesRequest;
 import v620.cc001.cloud01.app01.mservice.application.CareerPlanApplicationService;
-import v620.cc001.cloud01.app01.mservice.storage.CareerPlanStorage;
 import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationService;
+import v620.cc001.cloud01.app01.mservice.storage.CareerPlanStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerPlanStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
 
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CareerPlanWebApiTest {
 
     @Test
-    void summaryEnsureAndSaveUseApplicationBoundary() {
+    void ensureDoesNotCreatePlanAndSaveUsesApplicationBoundary() {
         CareerPlanStorage planStorage = new InMemoryCareerPlanStorage();
         CareerProfileApplicationService profileService = profileService(planStorage);
         CareerProfilePreferencesRequest preferences = new CareerProfilePreferencesRequest();
@@ -36,15 +33,13 @@ class CareerPlanWebApiTest {
         CareerPlanSummaryDto ensured = webApi.ensure("api-plan-user");
         CareerPlanSaveRequest request = new CareerPlanSaveRequest();
         request.setTargetRole("Data Analyst");
-        request.setWeeklyFocus(Arrays.asList("分析一个招聘 JD"));
+        request.setWeeklyFocus(Arrays.asList("分析一个岗位要求"));
         CareerPlanSummaryDto saved = webApi.save("api-plan-user", request);
 
         assertEquals(Boolean.FALSE, missing.getHasPlan());
-        assertEquals(Boolean.TRUE, ensured.getHasPlan());
-        assertEquals("Data Analyst", ensured.getTargetRole());
-        assertEquals("RULE_FALLBACK", ensured.getPlanningMode());
-        assertTrue(ensured.getPhases().size() >= 3);
-        assertEquals("分析一个招聘 JD", saved.getWeeklyFocus().get(0));
+        assertEquals(Boolean.FALSE, ensured.getHasPlan());
+        assertEquals(Boolean.TRUE, saved.getHasPlan());
+        assertEquals("分析一个岗位要求", saved.getWeeklyFocus().get(0));
     }
 
     private CareerProfileApplicationService profileService(CareerPlanStorage planStorage) {

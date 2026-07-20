@@ -22,15 +22,25 @@ cc001.agent.platform.employment.enabled=false
 cc001.agent.platform.employment.agentNumber=
 # cc001.agent.platform.employment.taskFlowCode=
 
-# Study planning calls one independent Agent for each selected direction.
-# Task-flow codes belong inside those Agents and are not configured here.
+# Study planning uses one independent service for each selected direction.
+# A configured taskFlowCode runs directly; otherwise agentNumber is called.
 cc001.agent.platform.study.postgraduate.enabled=false
 cc001.agent.platform.study.postgraduate.agentNumber=
+# cc001.agent.platform.study.postgraduate.taskFlowCode=
 cc001.agent.platform.study.recommendation.enabled=false
 cc001.agent.platform.study.recommendation.agentNumber=
-# Overseas-study planning calls the published Agent directly. No taskFlowCode is used.
+# cc001.agent.platform.study.recommendation.taskFlowCode=
 cc001.agent.platform.study.abroad.enabled=false
 cc001.agent.platform.study.abroad.agentNumber=
+# cc001.agent.platform.study.abroad.taskFlowCode=
+
+# The thirteen postgraduate, recommendation and overseas-study page tools share
+# one published companion Agent. Its task flow remains inside the Agent.
+cc001.agent.platform.study.companion.enabled=false
+cc001.agent.platform.study.companion.agentNumber=
+# Optional reliability fallback. The Agent is called first; if it returns a mismatched
+# or malformed task result, the same published task flow receives the original JSON.
+cc001.agent.platform.study.companion.taskFlowCode=
 
 # Profile enrichment Agent SDK integration. This agent handles both one
 # assessment interpretation and the combined deep profile request modes.

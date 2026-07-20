@@ -325,7 +325,7 @@ class AdminConsoleGovernanceApplicationServiceTest {
     }
 
     @Test
-    void defaultCareerResourcesAreImportedForAdminEditing() {
+    void emptyCareerResourceStorageDoesNotImportPublishedContent() {
         InMemoryAdminGovernanceStorage storage = new InMemoryAdminGovernanceStorage();
         AdminConsoleGovernanceApplicationService service = new AdminConsoleGovernanceApplicationService(storage,
                 null,
@@ -340,9 +340,7 @@ class AdminConsoleGovernanceApplicationServiceTest {
 
         List<AdminContentItemDto> content = service.listContent("admin", null);
 
-        assertFalse(content.isEmpty());
-        assertTrue(hasContent(content, "service-ncss-001"));
-        assertTrue(hasContent(content, "video-bilibili-interview-001"));
+        assertTrue(content.isEmpty());
     }
 
     @Test

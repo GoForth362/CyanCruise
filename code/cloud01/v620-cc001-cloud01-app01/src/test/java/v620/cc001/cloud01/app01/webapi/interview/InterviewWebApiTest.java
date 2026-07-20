@@ -2,6 +2,7 @@ package v620.cc001.cloud01.app01.webapi.interview;
 
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryInterviewStorage;
+import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryResumeStorage;
 import org.junit.jupiter.api.Test;
 import v620.base.helper.career.CareerProfileBuildService;
 import v620.base.helper.career.CareerProfileSnapshotMergeService;
@@ -15,6 +16,16 @@ import v620.cc001.cloud01.app01.mservice.application.CareerProfileApplicationSer
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerProfileStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryInterviewStorage;
 import v620.cc001.cloud01.app01.mservice.application.InterviewApplicationService;
+import v620.cc001.cloud01.app01.mservice.application.ResumeApplicationService;
+import v620.cc001.cloud01.app01.mservice.ai.InterviewAiService;
+import v620.cc001.cloud01.app01.mservice.ai.InterviewReportAnalyzer;
+import v620.cc001.cloud01.app01.mservice.ai.AiGateway;
+import v620.cc001.base.common.dto.ai.AiChatRequestDto;
+import v620.cc001.base.common.dto.ai.AiChatResponseDto;
+import v620.cc001.base.common.dto.ai.AiStreamEventDto;
+
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -31,26 +42,27 @@ class InterviewWebApiTest {
 
         InterviewSessionDto interview = webApi.start("api-interview-user", startRequest());
         webApi.addMessage("api-interview-user", interview.getInterviewId(), message("USER", "我的项目是..."));
-        webApi.end("api-interview-user", interview.getInterviewId(), Integer.valueOf(75));
-        InterviewReportDto savedReport = webApi.saveReport("api-interview-user", interview.getInterviewId(), report());
 
         assertEquals("TEXT", interview.getMode());
         assertEquals(1, webApi.messages("api-interview-user", interview.getInterviewId()).size());
-        assertEquals(Integer.valueOf(88), savedReport.getOverallScore());
-        assertEquals(1, webApi.list("api-interview-user").size());
-        assertEquals(interview.getInterviewId(), webApi.get("api-interview-user", interview.getInterviewId()).getInterviewId());
+        assertEquals(null, webApi.report("api-interview-user", interview.getInterviewId()));
+        assertEquals(0, webApi.list("api-interview-user").size());
         assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
             public void run() {
-                webApi.get("intruder", interview.getInterviewId());
+                webApi.finish("another-user", interview.getInterviewId());
             }
         }));
-        assertEquals("OK", webApi.delete("api-interview-user", interview.getInterviewId()));
+        webApi.finish("api-interview-user", interview.getInterviewId());
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                webApi.get("api-interview-user", interview.getInterviewId());
+            }
+        }));
     }
 
     @Test
     void webApiExposesGuidedTextInterviewFlow() {
-        InterviewWebApi webApi = new InterviewWebApi(new InterviewApplicationService(
-                new InMemoryInterviewStorage(), profileService(), new InterviewCoreService()));
+        InterviewWebApi webApi = new InterviewWebApi(serviceWithAnalyzer());
         v620.cc001.base.common.dto.career.InterviewStartResultDto started = webApi.guidedStart("guided-api-user", startRequest());
         assertTrue(started.getOpeningMessage().getContent().length() > 0);
         v620.cc001.base.common.dto.career.InterviewTurnResultDto turn = webApi.guidedAnswer(
@@ -59,9 +71,53 @@ class InterviewWebApiTest {
         assertTrue(webApi.guidedFinish("guided-api-user", started.getSession().getInterviewId()).getOverallScore().intValue() > 0);
     }
 
+    @Test
+    void webApiDiscardsInterviewWithoutAnyAnswer() {
+        InterviewWebApi webApi = new InterviewWebApi(serviceWithAnalyzer());
+        v620.cc001.base.common.dto.career.InterviewStartResultDto started =
+                webApi.guidedStart("empty-interview-user", startRequest());
+
+        String finished = webApi.finish("empty-interview-user", started.getSession().getInterviewId());
+
+        assertEquals("OK", finished);
+        assertTrue(webApi.list("empty-interview-user").isEmpty());
+        assertThrows(IllegalArgumentException.class, new ThrowingRunnableAdapter(new Runnable() {
+            public void run() {
+                webApi.get("empty-interview-user", started.getSession().getInterviewId());
+            }
+        }));
+    }
+
     private CareerProfileApplicationService profileService() {
         return new CareerProfileApplicationService(new InMemoryCareerProfileStorage(),
                 new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
+    }
+
+    private InterviewApplicationService serviceWithAnalyzer() {
+        final CareerProfileApplicationService profileService = profileService();
+        return new InterviewApplicationService(new InMemoryInterviewStorage(), profileService,
+                new InterviewCoreService(), new ResumeApplicationService(new InMemoryResumeStorage(), profileService),
+                new InterviewAiService(questionGateway(), new InterviewReportAnalyzer() {
+                    public InterviewReportDto analyze(InterviewSessionDto session, String transcript, int answerCount) {
+                        InterviewReportDto report = InterviewWebApiTest.this.report();
+                        report.setTotalQuestions(Integer.valueOf(answerCount));
+                        return report;
+                    }
+                }));
+    }
+
+    private AiGateway questionGateway() {
+        return new AiGateway() {
+            public AiChatResponseDto chat(AiChatRequestDto request) {
+                AiChatResponseDto response = new AiChatResponseDto();
+                response.setContent("请结合真实项目说明你的具体行动和结果。");
+                return response;
+            }
+
+            public List<AiStreamEventDto> stream(AiChatRequestDto request) {
+                return Collections.emptyList();
+            }
+        };
     }
 
     private InterviewStartRequest startRequest() {

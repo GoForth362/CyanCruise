@@ -20,12 +20,12 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryCareerResourceStor
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryEmploymentInsightStorage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EmploymentInsightsResourcesWebApiTest {
 
     @Test
-    void webApiReturnsInsightAndResources() {
+    void webApiReturnsExplicitEmptyStatesWithoutSeededData() {
         CareerProfileApplicationService profileService = new CareerProfileApplicationService(
                 new InMemoryCareerProfileStorage(), new InMemoryCareerPlanStorage(),
                 new CareerProfileSnapshotMergeService(), new CareerProfileBuildService());
@@ -45,11 +45,10 @@ class EmploymentInsightsResourcesWebApiTest {
         EmploymentInsightDto insight = webApi.insight("employment-api-user");
         CareerResourceFeedDto resources = webApi.resources("employment-api-user");
 
-        assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, insight.getStatus());
-        assertEquals("Chengdu University of Technology", insight.getSchool());
-        assertEquals(EmploymentInsightsResourcesService.STATUS_AVAILABLE, resources.getStatus());
-        assertFalse(resources.getArticles().isEmpty());
-        assertFalse(resources.getConsultations().isEmpty());
-        assertFalse(resources.getVideos().isEmpty());
+        assertEquals(EmploymentInsightsResourcesService.STATUS_NO_SOURCES, insight.getStatus());
+        assertEquals(EmploymentInsightsResourcesService.STATUS_EMPTY, resources.getStatus());
+        assertTrue(resources.getArticles().isEmpty());
+        assertTrue(resources.getConsultations().isEmpty());
+        assertTrue(resources.getVideos().isEmpty());
     }
 }
