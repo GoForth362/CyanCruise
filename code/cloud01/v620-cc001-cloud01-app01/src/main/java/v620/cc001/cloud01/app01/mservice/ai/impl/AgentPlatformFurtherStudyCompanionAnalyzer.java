@@ -4,45 +4,35 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import v620.cc001.base.common.dto.ai.AgentTaskFlowRequestDto;
 import v620.cc001.base.common.dto.ai.AgentTaskFlowResponseDto;
 import v620.cc001.cloud01.app01.mservice.ai.AgentPlatformTaskFlowClient;
 import v620.cc001.cloud01.app01.mservice.ai.AgentPlatformTaskFlowConfig;
 import v620.cc001.cloud01.app01.mservice.ai.FurtherStudyCompanionAnalyzer;
-import v620.cc001.cloud01.app01.mservice.furtherstudy.FurtherStudyCompanionStorage;
+import v620.cc001.cloud01.app01.mservice.storage.FurtherStudyTaskInputStorage;
 
-/** Calls the published further-study companion Agent and validates its structured response. */
+/** Calls the published further-study companion task flow and validates its structured response. */
 public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyCompanionAnalyzer {
 
     public static final String CONFIG_PREFIX = "cc001.agent.platform.study.companion";
     private static final String MODE = "FURTHER_STUDY_ANALYSIS";
+    private static final Logger LOGGER =
+            Logger.getLogger(AgentPlatformFurtherStudyCompanionAnalyzer.class.getName());
 
     private final AgentPlatformTaskFlowClient client;
-    private final AgentPlatformTaskFlowClient taskFlowFallbackClient;
     private final AgentPlatformTaskFlowConfig config;
     private final ObjectMapper mapper;
 
     public AgentPlatformFurtherStudyCompanionAnalyzer(AgentPlatformTaskFlowClient client,
                                                        AgentPlatformTaskFlowConfig config) {
-        this(client, null, config);
-    }
-
-    AgentPlatformFurtherStudyCompanionAnalyzer(AgentPlatformTaskFlowClient client,
-                                                AgentPlatformTaskFlowClient taskFlowFallbackClient,
-                                                AgentPlatformTaskFlowConfig config) {
-        this(client, taskFlowFallbackClient, config, null);
-    }
-
-    AgentPlatformFurtherStudyCompanionAnalyzer(AgentPlatformTaskFlowClient client,
-                                                AgentPlatformTaskFlowClient taskFlowFallbackClient,
-                                                AgentPlatformTaskFlowConfig config,
-                                                FurtherStudyCompanionStorage storage) {
         this.client = client;
-        this.taskFlowFallbackClient = taskFlowFallbackClient;
         this.config = config == null ? new AgentPlatformTaskFlowConfig() : config;
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -51,30 +41,11 @@ public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyC
     }
 
     public static AgentPlatformFurtherStudyCompanionAnalyzer fromSystemProperties() {
-        return fromSystemProperties(null);
-    }
-
-    /**
-     * Retained for constructor compatibility. Analysis intentionally uses only
-     * the current page submission, never persisted records or user profiles.
-     */
-    public static AgentPlatformFurtherStudyCompanionAnalyzer fromSystemProperties(
-            FurtherStudyCompanionStorage storage) {
         AgentPlatformTaskFlowConfig config = AgentPlatformTaskFlowConfig.fromSystemProperties(CONFIG_PREFIX);
-        String taskFlowCode = config.getTaskFlowCode();
-        config.setTaskFlowCode(null);
         config.setJsonEncodeAgentQuery(false);
-        AgentPlatformTaskFlowClient client = config.isEnabled() && hasText(config.getAgentNumber())
+        AgentPlatformTaskFlowClient client = config.isEnabled() && hasText(config.getTaskFlowCode())
                 ? new KingdeeAgentSdkTaskFlowClient(config) : null;
-        AgentPlatformTaskFlowClient taskFlowFallbackClient = null;
-        if (config.isEnabled() && hasText(taskFlowCode)) {
-            AgentPlatformTaskFlowConfig fallbackConfig =
-                    AgentPlatformTaskFlowConfig.fromSystemProperties(CONFIG_PREFIX);
-            fallbackConfig.setTaskFlowCode(taskFlowCode);
-            taskFlowFallbackClient = new KingdeeAgentSdkTaskFlowClient(fallbackConfig);
-        }
-        return new AgentPlatformFurtherStudyCompanionAnalyzer(
-                client, taskFlowFallbackClient, config, storage);
+        return new AgentPlatformFurtherStudyCompanionAnalyzer(client, config);
     }
 
     @Override
@@ -86,32 +57,34 @@ public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyC
         }
         ensureAvailable();
         AgentTaskFlowRequestDto request = new AgentTaskFlowRequestDto();
-        request.setTaskFlowCode(null);
+        request.setTaskFlowCode(config.getTaskFlowCode());
         request.putInput("question", question(safeUserId, safeTaskType, payload));
         AgentTaskFlowResponseDto response = client.execute(request);
         if (response == null || !response.isSuccess() || !hasText(response.getAnswer())) {
-            return executeFallback(request, safeTaskType, resultType,
-                    "升学分析智能服务暂时不可用，请稍后重试。");
+            throw new IllegalStateException("升学分析任务流暂时不可用，请稍后重试。");
         }
         try {
             return parse(response.getAnswer(), safeTaskType, resultType);
-        } catch (IllegalStateException error) {
-            return executeFallback(request, safeTaskType, resultType, error.getMessage());
+        } catch (RuntimeException firstError) {
+            if (!isRetryablePlanTask(safeTaskType)) {
+                throw firstError;
+            }
+            LOGGER.log(Level.WARNING, "Further-study plan result was invalid; retrying the same task flow"
+                    + ", taskType=" + safeTaskType
+                    + ", answerLength=" + response.getAnswer().length(), firstError);
+            AgentTaskFlowResponseDto retry = client.execute(request);
+            if (retry == null || !retry.isSuccess() || !hasText(retry.getAnswer())) {
+                throw firstError;
+            }
+            return parse(retry.getAnswer(), safeTaskType, resultType);
         }
     }
 
-    private <T> T executeFallback(AgentTaskFlowRequestDto request,
-                                  String taskType,
-                                  Class<T> resultType,
-                                  String primaryMessage) {
-        if (taskFlowFallbackClient == null) {
-            throw new IllegalStateException(primaryMessage);
-        }
-        AgentTaskFlowResponseDto fallback = taskFlowFallbackClient.execute(request);
-        if (fallback == null || !fallback.isSuccess() || !hasText(fallback.getAnswer())) {
-            throw new IllegalStateException(primaryMessage);
-        }
-        return parse(fallback.getAnswer(), taskType, resultType);
+    private boolean isRetryablePlanTask(String taskType) {
+        return POSTGRADUATE_PLAN_GENERATE.equals(taskType)
+                || RECOMMENDATION_PLAN_GENERATE.equals(taskType)
+                || STUDY_ABROAD_STATEMENT_OUTLINE.equals(taskType)
+                || STUDY_ABROAD_VISA_CHECKLIST.equals(taskType);
     }
 
     String question(String userId, String taskType, Object payload) {
@@ -121,10 +94,8 @@ public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyC
             request.put("taskType", taskType);
             request.put("currentDate", LocalDate.now().toString());
             Map<String, Object> payloadValues = payloadValues(payload);
+            payloadValues = FurtherStudyTaskInputStorage.saveAndLoad(userId, taskType, payloadValues);
             request.put("payload", payloadValues);
-            copyPayloadToEnvelope(request, payloadValues);
-        request.put("profileContext", new LinkedHashMap<String, Object>());
-        request.put("userMaterials", new java.util.ArrayList<Object>());
             return mapper.writeValueAsString(request);
         } catch (Exception error) {
             throw new IllegalStateException("升学分析资料暂时无法整理，请稍后重试。", error);
@@ -148,23 +119,6 @@ public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyC
         }
     }
 
-    /**
-     * The current contract keeps page data under payload. Some already-published
-     * task flows still read their fields from the envelope root, so expose the
-     * same trusted values there without allowing them to replace envelope keys.
-     */
-    private void copyPayloadToEnvelope(Map<String, Object> request, Map<String, Object> payload) {
-        if (payload == null) {
-            return;
-        }
-        for (Map.Entry<String, Object> entry : payload.entrySet()) {
-            String key = entry.getKey();
-            if (hasText(key) && !request.containsKey(key)) {
-                request.put(key, entry.getValue());
-            }
-        }
-    }
-
     private <T> T parse(String answer, String expectedTaskType, Class<T> resultType) {
         try {
             JsonNode root = envelope(answer);
@@ -181,7 +135,7 @@ public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyC
             if (result.size() <= 1) {
                 throw new IllegalStateException("升学分析结果内容不完整，请补充信息后重试。");
             }
-            T mapped = mapper.treeToValue(result, resultType);
+            T mapped = mapper.treeToValue(normalizeResult(result, expectedTaskType), resultType);
             if (mapped == null) {
                 throw new IllegalStateException("升学分析结果格式不完整，请稍后重试。");
             }
@@ -197,55 +151,77 @@ public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyC
 
     private JsonNode envelope(String answer) throws Exception {
         String value = answer == null ? "" : answer.trim();
-        if (value.startsWith("```")) {
-            int firstLine = value.indexOf('\n');
-            int closing = value.lastIndexOf("```");
-            if (firstLine >= 0 && closing > firstLine) {
-                value = value.substring(firstLine + 1, closing).trim();
-            }
-        }
-        JsonNode node = readNode(value);
-        for (int depth = 0; depth < 3; depth++) {
-            if (node != null && node.isTextual()) {
-                node = readNode(node.asText());
-                continue;
-            }
-            if (node != null && node.isObject() && !node.has("taskType")) {
-                JsonNode nested = first(node, "answer", "content", "data");
-                if (nested != null) {
-                    node = nested;
-                    continue;
-                }
-            }
-            break;
-        }
+        JsonNode node = mapper.readTree(value);
         if (node == null || !node.isObject()) {
             throw new IllegalStateException("升学分析结果格式不完整，请稍后重试。");
         }
         return node;
     }
 
-    private JsonNode readNode(String value) throws Exception {
-        try {
-            return mapper.readTree(value);
-        } catch (Exception firstFailure) {
-            int start = value.indexOf('{');
-            int end = value.lastIndexOf('}');
-            if (start >= 0 && end > start) {
-                return mapper.readTree(value.substring(start, end + 1));
-            }
-            throw firstFailure;
+    private JsonNode normalizeResult(JsonNode result, String taskType) throws Exception {
+        if (!STUDY_ABROAD_STATEMENT_OUTLINE.equals(taskType) || !result.isObject()) {
+            return result;
         }
+        ObjectNode normalized = ((ObjectNode) result).deepCopy();
+        normalizeTextField(normalized, "goldenLine");
+        normalizeTextField(normalized, "outline");
+        return normalized;
     }
 
-    private JsonNode first(JsonNode node, String... names) {
-        for (String name : names) {
-            JsonNode value = node.get(name);
-            if (value != null && !value.isNull()) {
+    private void normalizeTextField(ObjectNode result, String field) throws Exception {
+        JsonNode value = result.get(field);
+        if (value == null || value.isNull() || value.isTextual()) {
+            return;
+        }
+        result.put(field, readableText(value));
+    }
+
+    private String readableText(JsonNode value) throws Exception {
+        if (value == null || value.isNull()) {
+            return "";
+        }
+        if (value.isTextual() || value.isNumber() || value.isBoolean()) {
+            return value.asText();
+        }
+        if (value.isArray()) {
+            StringBuilder out = new StringBuilder();
+            for (JsonNode item : value) {
+                appendParagraph(out, readableText(item));
+            }
+            return out.toString();
+        }
+        if (value.isObject()) {
+            String title = firstText(value, "section", "title", "name");
+            String content = firstText(value, "content", "detail", "text", "description");
+            if (hasText(title) || hasText(content)) {
+                return hasText(title) && hasText(content) ? title + "：" + content : firstNonEmpty(title, content);
+            }
+        }
+        return mapper.writeValueAsString(value);
+    }
+
+    private void appendParagraph(StringBuilder out, String text) {
+        if (!hasText(text)) {
+            return;
+        }
+        if (out.length() > 0) {
+            out.append("\n\n");
+        }
+        out.append(text.trim());
+    }
+
+    private String firstText(JsonNode node, String... fields) {
+        for (String field : fields) {
+            String value = text(node, field);
+            if (hasText(value)) {
                 return value;
             }
         }
-        return null;
+        return "";
+    }
+
+    private String firstNonEmpty(String first, String second) {
+        return hasText(first) ? first : second;
     }
 
     private void requireOk(JsonNode statusNode, JsonNode root) {
@@ -273,8 +249,8 @@ public class AgentPlatformFurtherStudyCompanionAnalyzer implements FurtherStudyC
     }
 
     private void ensureAvailable() {
-        if (!config.isEnabled() || !hasText(config.getAgentNumber()) || client == null) {
-            throw new IllegalStateException("升学陪伴智能服务尚未配置，请稍后重试。");
+        if (!config.isEnabled() || !hasText(config.getTaskFlowCode()) || client == null) {
+            throw new IllegalStateException("升学陪伴任务流尚未配置，请稍后重试。");
         }
     }
 

@@ -34,6 +34,12 @@
         '</header><div class="panel-grid">' + innerHtml + '</div>';
     },
     actions: function (item, context) {
+      var interviewHome = item.key === "interview-history" ? "interview"
+        : item.key === "interview-panorama-history" ? "interview-panorama" : "";
+      if (interviewHome) {
+        return '<div class="page-actions"><button type="button" class="secondary" data-interview-history-home="' +
+          context.escapeHtml(interviewHome) + '">返回</button></div>';
+      }
       if (item.key === "assessment" && context.state && context.state.assessmentSelectedScaleId) {
         return '<div class="page-actions"><button type="button" class="secondary" data-assessment-back>返回</button></div>';
       }

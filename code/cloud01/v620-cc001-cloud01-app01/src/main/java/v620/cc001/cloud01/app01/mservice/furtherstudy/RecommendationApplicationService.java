@@ -29,7 +29,7 @@ public class RecommendationApplicationService {
         this.helper = new RecommendationCompanionService();
         this.draftStorage = CyanCruiseStorageFactory.studyCenterStorage();
         this.recordStorage = CyanCruiseStorageFactory.furtherStudyCompanionStorage();
-        this.analyzer = AgentPlatformFurtherStudyCompanionAnalyzer.fromSystemProperties(recordStorage);
+        this.analyzer = AgentPlatformFurtherStudyCompanionAnalyzer.fromSystemProperties();
     }
 
     public RecommendationApplicationService(RecommendationCompanionService helper) {
@@ -71,6 +71,9 @@ public class RecommendationApplicationService {
     }
 
     public RecommendationTutorLetterResult generateTutorLetter(String userId, RecommendationTutorLetterRequest request) {
+        if (request == null || !hasText(request.getCurrentSchool())) {
+            throw new IllegalArgumentException("请填写本科就读院校，避免将目标院校误写为本科院校。");
+        }
         return analyze(userId, FurtherStudyCompanionAnalyzer.RECOMMENDATION_TUTOR_LETTER,
                 request, RecommendationTutorLetterResult.class);
     }
@@ -98,6 +101,10 @@ public class RecommendationApplicationService {
             throw new IllegalArgumentException("请先确认当前登录身份，再使用保研陪伴功能。");
         }
         return userId.trim();
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     private IllegalStateException unavailable() {

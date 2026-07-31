@@ -245,8 +245,7 @@ cc001.agent.platform.study.abroad.taskFlowCode=<已发布的留学规划任务�
 
 ```properties
 cc001.agent.platform.study.companion.enabled=true
-cc001.agent.platform.study.companion.agentNumber=<已发布的升学陪伴智能体编码>
-cc001.agent.platform.study.companion.taskFlowCode=<智能体内已发布的升学陪伴任务流编码>
+cc001.agent.platform.study.companion.taskFlowCode=<已发布的升学陪伴任务流编码>
 ```
 
 对应环境变量为 `CC001_AGENT_PLATFORM_STUDY_COMPANION_ENABLED` 和 `CC001_AGENT_PLATFORM_STUDY_COMPANION_AGENTNUMBER`。后端向智能体发送 `FURTHER_STUDY_ANALYSIS` 请求信封和固定的 13 个 `taskType`，并校验返回任务类型、外层状态、内层状态和现有 DTO 结构。智能体未配置、调用失败、要求补充资料或返回无效结构时，页面只显示普通中文错误或补充提示，不生成规则、模板、示例或默认结果。

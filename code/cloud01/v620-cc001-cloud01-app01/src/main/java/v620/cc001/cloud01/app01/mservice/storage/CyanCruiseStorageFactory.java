@@ -5,6 +5,8 @@ import v620.cc001.cloud01.app01.mservice.datamodel.CosmicDatamodelGateway;
 import v620.cc001.cloud01.app01.mservice.datamodel.MappedCosmicDatamodelGateway;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryFurtherStudyCompanionStorage;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.PostgresqlFurtherStudyCompanionStorage;
+import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryPostgraduateMistakeBookStorage;
+import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.PostgresqlPostgraduateMistakeBookStorage;
 import v620.cc001.cloud01.app01.mservice.notification.NotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.InMemoryNotificationStorage;
 import v620.cc001.cloud01.app01.mservice.notification.impl.PostgresqlNotificationStorage;
@@ -41,6 +43,7 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlResumeStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryStudyCenterStorage;
 import v620.cc001.cloud01.app01.mservice.storage.impl.PostgresqlStudyCenterStorage;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.FurtherStudyCompanionStorage;
+import v620.cc001.cloud01.app01.mservice.furtherstudy.PostgraduateMistakeBookStorage;
 
 /**
  * Runtime storage factory for CyanCruise business-state PostgreSQL adapters.
@@ -205,6 +208,14 @@ public final class CyanCruiseStorageFactory {
             return new PostgresqlFurtherStudyCompanionStorage(storageConfig);
         }
         return new InMemoryFurtherStudyCompanionStorage();
+    }
+
+    public static PostgraduateMistakeBookStorage postgraduateMistakeBookStorage() {
+        PostgresqlStorageConfig storageConfig = config();
+        if ("postgresql".equalsIgnoreCase(storageConfig.getBackend())) {
+            return new PostgresqlPostgraduateMistakeBookStorage(storageConfig);
+        }
+        return new InMemoryPostgraduateMistakeBookStorage();
     }
 
     public static StudyCenterStorage studyCenterStorage() {

@@ -51,6 +51,7 @@ import v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordStatusUpdateReq
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyTargetSaveRequest;
 import v620.cc001.base.common.dto.career.InterviewStartRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeAnalyzeRequest;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookQueryRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduatePlanRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateReexamPrepareRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateSchoolRecommendRequest;
@@ -667,6 +668,18 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
                 return ApiResult.success(postgraduateWebApi.analyzeMistake(
                         extractUserId(body), extractPostgraduateMistakeAnalyzeRequest(body)));
             }
+            if ("/cc001/postgraduate/mistake-book/list".equals(path)) {
+                return ApiResult.success(postgraduateWebApi.listMistakeBook(
+                        extractUserId(body), extractPostgraduateMistakeBookQueryRequest(body)));
+            }
+            if ("/cc001/postgraduate/mistake-book/detail".equals(path)) {
+                return ApiResult.success(postgraduateWebApi.loadMistakeBookEntry(
+                        extractUserId(body), textOrNull(value(body, "mistakeId"))));
+            }
+            if ("/cc001/postgraduate/mistake-book/delete".equals(path)) {
+                postgraduateWebApi.deleteMistakeBookEntry(extractUserId(body), textOrNull(value(body, "mistakeId")));
+                return ApiResult.success(Boolean.TRUE);
+            }
             if ("/cc001/postgraduate/reexam/prepare".equals(path)) {
                 return ApiResult.success(postgraduateWebApi.prepareReexam(
                         extractUserId(body), extractPostgraduateReexamPrepareRequest(body)));
@@ -1027,9 +1040,21 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         Map<?, ?> values = requestMap(body);
         if (values != null) {
             out.setSubject(textOrNull(values.get("subject")));
-            out.setQuestionText(textOrNull(firstPresent(values, "questionText", "question")));
+            out.setQuestionText(textOrNull(firstPresent(values, "questionText", "mistakeText", "question")));
             out.setWrongAnswer(textOrNull(values.get("wrongAnswer")));
             out.setTargetExam(textOrNull(values.get("targetExam")));
+        }
+        return out;
+    }
+
+    private PostgraduateMistakeBookQueryRequest extractPostgraduateMistakeBookQueryRequest(Object body) {
+        Object request = requestObject(body);
+        if (request instanceof PostgraduateMistakeBookQueryRequest) return (PostgraduateMistakeBookQueryRequest) request;
+        PostgraduateMistakeBookQueryRequest out = new PostgraduateMistakeBookQueryRequest();
+        Map<?, ?> values = requestMap(body);
+        if (values != null) {
+            out.setLimit(Integer.valueOf(intValue(values.get("limit"), 20)));
+            out.setOffset(Integer.valueOf(intValue(values.get("offset"), 0)));
         }
         return out;
     }
@@ -1042,9 +1067,9 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         PostgraduateReexamPrepareRequest out = new PostgraduateReexamPrepareRequest();
         Map<?, ?> values = requestMap(body);
         if (values != null) {
-            out.setTargetSchool(textOrNull(values.get("targetSchool")));
-            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
-            out.setPreliminaryStatus(textOrNull(firstPresent(values, "preliminaryStatus", "examStatus")));
+            out.setTargetSchool(textOrNull(firstPresent(values, "targetSchool", "targetUniversity", "school")));
+            out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject", "major")));
+            out.setPreliminaryStatus(textOrNull(firstPresent(values, "preliminaryStatus", "examStatus", "preliminaryExamStatus", "preliminaryPassed")));
             out.setMaterials(stringList(values.get("materials")));
             out.setResearchExperience(textOrNull(values.get("researchExperience")));
         }
@@ -1100,6 +1125,7 @@ public class CyanCruiseCustomWebApiPlugin implements IBillWebApiPlugin {
         Map<?, ?> values = requestMap(body);
         if (values != null) {
             out.setTutorName(textOrNull(values.get("tutorName")));
+            out.setCurrentSchool(textOrNull(values.get("currentSchool")));
             out.setTargetSchool(textOrNull(values.get("targetSchool")));
             out.setTargetMajor(textOrNull(firstPresent(values, "targetMajor", "targetSubject")));
             out.setResearchDirection(textOrNull(firstPresent(values, "researchDirection", "paperKeywords")));

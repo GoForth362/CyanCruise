@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FurtherStudyCompanionStorageTest {
 
@@ -75,6 +76,25 @@ class FurtherStudyCompanionStorageTest {
         assertThrows(IllegalStateException.class,
                 () -> new PostgresqlFurtherStudyCompanionStorage(new PostgresqlStorageConfig()));
         assertFalse(Files.exists(tempDir.resolve("filestorage").resolve("further-study")));
+    }
+
+    @Test
+    void keepsOnlyTheLatestGeneratedRecordForEachUserTrackAndFunction() {
+        InMemoryFurtherStudyCompanionStorage storage = new InMemoryFurtherStudyCompanionStorage();
+        FurtherStudyRecordSupport.saveAnalysis(storage, "u1", "POSTGRADUATE", "POSTGRADUATE_PLAN_GENERATE", "first", "first result");
+        FurtherStudyRecordSupport.saveAnalysis(storage, "u1", "POSTGRADUATE", "POSTGRADUATE_PLAN_GENERATE", "second", "second result");
+        FurtherStudyRecordSupport.saveAnalysis(storage, "u1", "POSTGRADUATE", "POSTGRADUATE_REEXAM_PREPARE", "reexam", "reexam result");
+        FurtherStudyRecordSupport.saveAnalysis(storage, "u2", "POSTGRADUATE", "POSTGRADUATE_PLAN_GENERATE", "other", "other result");
+
+        FurtherStudyRecordQueryRequest planQuery = new FurtherStudyRecordQueryRequest();
+        planQuery.setTrack("POSTGRADUATE"); planQuery.setRecordType("POSTGRADUATE_PLAN_GENERATE");
+        List<FurtherStudyRecordSummaryDto> plans = storage.listRecords("u1", planQuery);
+        assertEquals(1, plans.size());
+        FurtherStudyRecordDetailDto latest = storage.loadRecord("u1", plans.get(0).getRecordId());
+        assertTrue(latest.getRequestJson().contains("second"));
+        assertTrue(latest.getResultJson().contains("second result"));
+        assertEquals(2, storage.listRecords("u1", new FurtherStudyRecordQueryRequest()).size());
+        assertEquals(1, storage.listRecords("u2", planQuery).size());
     }
 
     private FurtherStudyRecordDetailDto record(String userId, String track, String type, String title) {

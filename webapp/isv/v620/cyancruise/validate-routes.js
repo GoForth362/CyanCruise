@@ -21,7 +21,21 @@ const messagesPageSource = fs.readFileSync(path.join(assetsPath, "pages", "messa
 const routesSource = fs.readFileSync(path.join(assetsPath, "routes.js"), "utf8");
 const navigationSource = fs.readFileSync(path.join(assetsPath, "navigation.js"), "utf8");
 const postgraduatePageSource = fs.readFileSync(path.join(assetsPath, "pages", "postgraduate.js"), "utf8");
-const repositoryRoot = path.resolve(__dirname, "..", "..", "..", "..");
+const repositoryRootCandidates = [
+  process.env.CYANCRUISE_REPOSITORY_ROOT,
+  path.resolve(__dirname, "..", "..", "..", "..")
+].filter(Boolean);
+for (let current = __dirname; path.dirname(current) !== current; current = path.dirname(current)) {
+  repositoryRootCandidates.push(path.join(current, "Project", "CyanCruise"));
+}
+const repositoryRoot = repositoryRootCandidates.find((candidate) =>
+  fs.existsSync(path.join(candidate, "code", "base", "v620-cc001-base-helper"))
+);
+if (!repositoryRoot) {
+  throw new Error(
+    `Unable to locate the CyanCruise repository. Checked: ${repositoryRootCandidates.join(", ")}`
+  );
+}
 const realDataBackendSources = [
   "code/base/v620-cc001-base-helper/src/main/java/v620/base/helper/career/CareerPlanSummaryService.java",
   "code/base/v620-cc001-base-helper/src/main/java/v620/base/helper/career/InterviewAiHelper.java",
@@ -177,8 +191,15 @@ for (const marker of ["function hasVerifiedStudyPlan", "function studyPlanRefres
   if (!app.includes(marker)) throw new Error(`Study planning controls must require a verified real plan: ${marker}`);
 }
 for (const marker of ["function furtherStudyMessageHtml(", "message.route !== state.route",
-  "data-dismiss-further-study-message", "function dismissFurtherStudyMessage(", "function setFurtherStudyMessage("]) {
+  "data-dismiss-further-study-message", "function dismissFurtherStudyMessage(", "function setFurtherStudyMessage(",
+  "state.inlineNoticeTimers", "}, 3000);"]) {
   if (!app.includes(marker)) throw new Error(`Further-study messages must remain dismissible and route-scoped: ${marker}`);
+}
+for (const marker of ["function inlineNoticeHtml(", "data-dismiss-inline-notice", "unified-notice"]) {
+  if (!app.includes(marker)) throw new Error(`Inline notices must use the shared notification contract: ${marker}`);
+}
+if (!styles.includes(".unified-notice")) {
+  throw new Error("Missing shared inline notification style");
 }
 for (const marker of [
   "function startedStudyPhaseIds",
@@ -761,7 +782,7 @@ for (const marker of [
   "ai-interview-workspace",
   "interview-preparation-hero",
   "interview-preparation-card",
-  "interview-setup-notice",
+  'inlineNoticeHtml("提示", state.interviewError',
   "interview-live-workspace",
   "interview-result-workspace",
   "interview-analysis-state"
@@ -978,7 +999,9 @@ for (const marker of [
 for (const marker of [
   "function interviewHistoryHomeRoute(key)",
   'data-interview-history-home="',
-  'data-link="\' + escapeHtml(interviewHome) + \'">返回'
+  "function returnToInterviewHistoryHome(route)",
+  "state.interviewViewMode = \"practice\";",
+  "state.panoramaViewMode = \"practice\";"
 ]) {
   if (!app.includes(marker)) throw new Error(`Missing direct interview history home navigation: ${marker}`);
 }
@@ -1324,12 +1347,12 @@ for (const marker of [
 for (const marker of [
   "--hub-accent: #239b7b",
   "--hub-accent-strong: #116a54",
-  "--hub-accent: #177d83",
-  "--hub-accent-strong: #0e575d",
+  "--hub-accent: #247a64",
+  "--hub-accent-strong: #155846",
   "--hub-accent: #2c8996",
   "--hub-accent-strong: #1a626d"
 ]) {
-  if (!styles.includes(marker)) fail(`Further-study companion themes must use the unified cyan palette: ${marker}`);
+  if (!styles.includes(marker)) fail(`Further-study companion themes must preserve their differentiated palettes: ${marker}`);
 }
 const companionThemeStyles = styles.slice(
   styles.indexOf(".companion-hub--exam"),
@@ -1638,7 +1661,7 @@ if (panoramaOverlayStart < 0 || panoramaOverlayEnd < 0
     || !styles.slice(panoramaOverlayStart, panoramaOverlayEnd).includes("background: transparent;")) {
   fail("Panorama room must not cover its background image with a theme overlay");
 }
-for (const marker of ["20260720-cyancruise-v282"]) {
+for (const marker of ["20260731-cyancruise-v305"]) {
   if (!indexHtml.includes(marker) || !appSources.includes(marker)) {
     fail(`Panorama workspace resource version is not aligned: ${marker}`);
   }
@@ -1690,7 +1713,7 @@ for (const marker of [
     fail(`Missing message center workspace style marker: ${marker}`);
   }
 }
-for (const marker of ["20260720-cyancruise-v282"]) {
+for (const marker of ["20260731-cyancruise-v305"]) {
   if (!indexHtml.includes(marker) || !appSources.includes(marker)) {
     fail(`Message center workspace resource version is not aligned: ${marker}`);
   }

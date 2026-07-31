@@ -9,6 +9,7 @@ import v620.cc001.base.common.dto.furtherstudy.FurtherStudyMaterialDto;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyMaterialSaveRequest;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordDetailDto;
 import v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordQueryRequest;
+import v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordSummaryDto;
 import v620.cc001.cloud01.app01.mservice.furtherstudy.FurtherStudyCompanionStorage;
 
 import java.time.LocalDate;
@@ -69,6 +70,16 @@ final class FurtherStudyRecordSupport {
         }
         FurtherStudyRecordDetailDto record = record(track, taskType, taskTitle(taskType),
                 null, null, null, null, request, result);
+        FurtherStudyRecordQueryRequest query = new FurtherStudyRecordQueryRequest();
+        query.setTrack(track);
+        query.setRecordType(taskType);
+        query.setLimit(Integer.valueOf(1));
+        query.setOffset(Integer.valueOf(0));
+        java.util.List<FurtherStudyRecordSummaryDto> existing = storage.listRecords(userId, query);
+        if (existing != null && !existing.isEmpty()) {
+            record.setRecordId(existing.get(0).getRecordId());
+            record.setCreatedAt(existing.get(0).getCreatedAt());
+        }
         storage.saveRecord(userId, record);
     }
 

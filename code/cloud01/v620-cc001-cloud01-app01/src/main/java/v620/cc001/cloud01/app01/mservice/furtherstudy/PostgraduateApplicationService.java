@@ -3,6 +3,9 @@ package v620.cc001.cloud01.app01.mservice.furtherstudy;
 import v620.base.helper.furtherstudy.PostgraduateCompanionService;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeAnalysisResult;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeAnalyzeRequest;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookEntryDto;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookPageDto;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookQueryRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduatePlanRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduatePlanResult;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateReexamPreparationResult;
@@ -25,34 +28,37 @@ public class PostgraduateApplicationService {
     private final FurtherStudyCompanionAnalyzer analyzer;
     private final StudyCenterStorage draftStorage;
     private final FurtherStudyCompanionStorage recordStorage;
+    private final PostgraduateMistakeBookStorage mistakeBookStorage;
 
     public PostgraduateApplicationService() {
         this.helper = new PostgraduateCompanionService();
         this.draftStorage = CyanCruiseStorageFactory.studyCenterStorage();
         this.recordStorage = CyanCruiseStorageFactory.furtherStudyCompanionStorage();
-        this.analyzer = AgentPlatformFurtherStudyCompanionAnalyzer.fromSystemProperties(recordStorage);
+        this.mistakeBookStorage = CyanCruiseStorageFactory.postgraduateMistakeBookStorage();
+        this.analyzer = AgentPlatformFurtherStudyCompanionAnalyzer.fromSystemProperties();
     }
 
     public PostgraduateApplicationService(PostgraduateCompanionService helper) {
         this(helper, AgentPlatformFurtherStudyCompanionAnalyzer.fromSystemProperties(),
-                new InMemoryStudyCenterStorage(), new v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryFurtherStudyCompanionStorage());
+                new InMemoryStudyCenterStorage(), new v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryFurtherStudyCompanionStorage(), new v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryPostgraduateMistakeBookStorage());
     }
 
     public PostgraduateApplicationService(FurtherStudyCompanionAnalyzer analyzer) {
-        this(new PostgraduateCompanionService(), analyzer, new InMemoryStudyCenterStorage(), new v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryFurtherStudyCompanionStorage());
+        this(new PostgraduateCompanionService(), analyzer, new InMemoryStudyCenterStorage(), new v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryFurtherStudyCompanionStorage(), new v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryPostgraduateMistakeBookStorage());
     }
 
     public PostgraduateApplicationService(FurtherStudyCompanionAnalyzer analyzer, StudyCenterStorage draftStorage) {
-        this(new PostgraduateCompanionService(), analyzer, draftStorage, CyanCruiseStorageFactory.furtherStudyCompanionStorage());
+        this(new PostgraduateCompanionService(), analyzer, draftStorage, CyanCruiseStorageFactory.furtherStudyCompanionStorage(), CyanCruiseStorageFactory.postgraduateMistakeBookStorage());
     }
 
-    private PostgraduateApplicationService(PostgraduateCompanionService helper,
-                                           FurtherStudyCompanionAnalyzer analyzer,
-                                           StudyCenterStorage draftStorage, FurtherStudyCompanionStorage recordStorage) {
+    PostgraduateApplicationService(PostgraduateCompanionService helper,
+                                   FurtherStudyCompanionAnalyzer analyzer,
+                                   StudyCenterStorage draftStorage, FurtherStudyCompanionStorage recordStorage, PostgraduateMistakeBookStorage mistakeBookStorage) {
         this.helper = helper;
         this.analyzer = analyzer;
         this.draftStorage = draftStorage;
         this.recordStorage = recordStorage;
+        this.mistakeBookStorage = mistakeBookStorage;
     }
 
     public PostgraduateSchoolRecommendationResult recommendSchools(String userId, PostgraduateSchoolRecommendRequest request) {
@@ -66,8 +72,32 @@ public class PostgraduateApplicationService {
     }
 
     public PostgraduateMistakeAnalysisResult analyzeMistake(String userId, PostgraduateMistakeAnalyzeRequest request) {
-        return analyze(userId, FurtherStudyCompanionAnalyzer.POSTGRADUATE_MISTAKE_ANALYZE,
+        String safeUserId = requireUserId(userId);
+        PostgraduateMistakeAnalysisResult result = analyze(safeUserId, FurtherStudyCompanionAnalyzer.POSTGRADUATE_MISTAKE_ANALYZE,
                 request, PostgraduateMistakeAnalysisResult.class);
+        PostgraduateMistakeBookEntryDto entry = new PostgraduateMistakeBookEntryDto();
+        entry.setSubject(request == null ? null : request.getSubject());
+        entry.setQuestionText(request == null ? null : request.getQuestionText());
+        entry.setWrongAnswer(request == null ? null : request.getWrongAnswer());
+        entry.setResultJson(FurtherStudyRecordSupport.toJson(result));
+        mistakeBookStorage.save(safeUserId, entry);
+        return result;
+    }
+
+    public PostgraduateMistakeBookPageDto listMistakeBook(String userId, PostgraduateMistakeBookQueryRequest request) {
+        return mistakeBookStorage.list(requireUserId(userId), request);
+    }
+
+    public PostgraduateMistakeBookEntryDto loadMistakeBookEntry(String userId, String mistakeId) {
+        PostgraduateMistakeBookEntryDto entry = mistakeBookStorage.load(requireUserId(userId), mistakeId);
+        if (entry == null) throw new IllegalArgumentException("未找到这道错题，或无权查看该记录。");
+        return entry;
+    }
+
+    public void deleteMistakeBookEntry(String userId, String mistakeId) {
+        if (!mistakeBookStorage.delete(requireUserId(userId), mistakeId)) {
+            throw new IllegalArgumentException("未找到这道错题，或无权移除该记录。");
+        }
     }
 
     public PostgraduateReexamPreparationResult prepareReexam(String userId, PostgraduateReexamPrepareRequest request) {
@@ -89,7 +119,9 @@ public class PostgraduateApplicationService {
         draft.setUpdatedAt(LocalDateTime.now());
         draftStorage.saveAnalysisDraft(safeUserId, draft);
         T result = analyzer.analyze(safeUserId, taskType, request, resultType);
-        FurtherStudyRecordSupport.saveAnalysis(recordStorage, safeUserId, "POSTGRADUATE", taskType, request, result);
+        if (!FurtherStudyCompanionAnalyzer.POSTGRADUATE_MISTAKE_ANALYZE.equals(taskType)) {
+            FurtherStudyRecordSupport.saveAnalysis(recordStorage, safeUserId, "POSTGRADUATE", taskType, request, result);
+        }
         return result;
     }
 

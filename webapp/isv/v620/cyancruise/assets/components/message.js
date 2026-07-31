@@ -27,7 +27,7 @@
       }
       if (success) {
         state.messageTimer = window.setTimeout(hide, 3000);
-      } else if (type === "info") {
+      } else if (type === "warning" || type === "info") {
         state.messageTimer = window.setTimeout(hide, 5000);
       }
     },

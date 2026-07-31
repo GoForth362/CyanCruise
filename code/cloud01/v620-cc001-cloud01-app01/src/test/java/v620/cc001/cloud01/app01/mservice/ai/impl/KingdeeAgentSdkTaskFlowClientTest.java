@@ -100,6 +100,59 @@ class KingdeeAgentSdkTaskFlowClientTest {
     }
 
     @Test
+    void prefersCompleteFurtherStudyEnvelopeAcrossTaskFlowOutputs() {
+        AgentPlatformTaskFlowConfig config = new AgentPlatformTaskFlowConfig();
+        config.setEnabled(true);
+        config.setTaskFlowCode("process-study");
+        String envelope = "{\"taskType\":\"POSTGRADUATE_PLAN_GENERATE\",\"status\":\"OK\","
+                + "\"result\":{\"status\":\"OK\",\"summary\":\"三轮复习计划\"}}";
+        Map<String, String> output = new LinkedHashMap<String, String>();
+        output.put("answer", "{\"status\":\"OK\",\"summary\":\"中间节点输出\"}");
+        output.put("business_result", envelope);
+        AgentMessage.EndOutputData data = new AgentMessage.EndOutputData();
+        data.setOutput(output);
+        RecordingFlowRunner flowRunner = new RecordingFlowRunner(Stream.of(
+                new AgentMessage(AgentMessage.MessageType.END_OUTPUT, data)));
+        KingdeeAgentSdkTaskFlowClient client = new KingdeeAgentSdkTaskFlowClient(
+                config, new RecordingRunner(Stream.empty()), flowRunner);
+        AgentTaskFlowRequestDto request = new AgentTaskFlowRequestDto();
+        request.putInput("question", "{\"taskType\":\"POSTGRADUATE_PLAN_GENERATE\"}");
+
+        AgentTaskFlowResponseDto response = client.execute(request);
+
+        assertTrue(response.isSuccess());
+        assertEquals(envelope, response.getAnswer());
+    }
+
+    @Test
+    void composesFurtherStudyEnvelopeFromSeparateEndOutputVariables() throws Exception {
+        AgentPlatformTaskFlowConfig config = new AgentPlatformTaskFlowConfig();
+        config.setEnabled(true);
+        config.setTaskFlowCode("process-study");
+        Map<String, String> output = new LinkedHashMap<String, String>();
+        output.put("taskType", "POSTGRADUATE_PLAN_GENERATE");
+        output.put("status", "OK");
+        output.put("result", "{\"status\":\"OK\",\"summary\":\"三轮复习计划\"}");
+        AgentMessage.EndOutputData data = new AgentMessage.EndOutputData();
+        data.setOutput(output);
+        RecordingFlowRunner flowRunner = new RecordingFlowRunner(Stream.of(
+                new AgentMessage(AgentMessage.MessageType.END_OUTPUT, data)));
+        KingdeeAgentSdkTaskFlowClient client = new KingdeeAgentSdkTaskFlowClient(
+                config, new RecordingRunner(Stream.empty()), flowRunner);
+        AgentTaskFlowRequestDto request = new AgentTaskFlowRequestDto();
+        request.putInput("question", "{\"taskType\":\"POSTGRADUATE_PLAN_GENERATE\"}");
+
+        AgentTaskFlowResponseDto response = client.execute(request);
+
+        assertTrue(response.isSuccess());
+        com.fasterxml.jackson.databind.JsonNode root =
+                new com.fasterxml.jackson.databind.ObjectMapper().readTree(response.getAnswer());
+        assertEquals("POSTGRADUATE_PLAN_GENERATE", root.get("taskType").asText());
+        assertEquals("OK", root.get("status").asText());
+        assertEquals("三轮复习计划", root.get("result").get("summary").asText());
+    }
+
+    @Test
     void returnsUnavailableWhenAgentReportsAnError() {
         KingdeeAgentSdkTaskFlowClient client = new KingdeeAgentSdkTaskFlowClient(sdkConfig(),
                 (agentNumber, query) -> Stream.of(AgentMessage.error("task-1", "temporary failure")));

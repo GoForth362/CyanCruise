@@ -291,8 +291,9 @@ class InterviewApplicationServiceTest {
         v620.cc001.base.common.dto.career.InterviewTurnResultDto turn = service.answer(
                 "question-fallback-user", started.getSession().getInterviewId(), "我完成过接口开发和上线。" );
 
-        assertTrue(started.getOpeningMessage().getContent().startsWith("【基础练习题】"));
-        assertTrue(turn.getInterviewerMessage().getContent().startsWith("【基础练习题·"));
+        assertTrue(started.getOpeningMessage().getContent().startsWith("请用两分钟介绍一下自己"));
+        assertTrue(!started.getOpeningMessage().getContent().contains("基础练习题"));
+        assertTrue(!turn.getInterviewerMessage().getContent().contains("基础练习题"));
     }
 
     @Test

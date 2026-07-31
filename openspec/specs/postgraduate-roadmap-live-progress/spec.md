@@ -1,0 +1,27 @@
+# postgraduate-roadmap-live-progress Specification
+
+## Purpose
+TBD - created by archiving change add-live-postgraduate-roadmap-progress. Update Purpose after archive.
+## Requirements
+### Requirement: 考研路线图实时显示阶段进度
+系统 SHALL 根据当前用户已保存的择校建议、复习计划、错题解析和复试准备结果，实时计算考研路线图的阶段状态。路线图 SHALL 明确区分“已完成”“当前进行中”和“待完成”，当前阶段 SHALL 为第一个未完成的阶段。
+
+#### Scenario: 用户完成择校建议
+- **WHEN** 用户已保存择校建议，但尚未保存复习计划
+- **THEN** 路线图 SHALL 将第 1 阶段标为已完成，并将第 2 阶段标为当前进行中
+
+#### Scenario: 用户完成全部阶段
+- **WHEN** 用户已保存四个阶段对应的结果
+- **THEN** 路线图 SHALL 将四个阶段标为已完成，并在第 4 阶段标注“已完成全部阶段”
+
+#### Scenario: 历史进度重新加载
+- **WHEN** 用户重新进入考研陪伴首页
+- **THEN** 页面 SHALL 从持久化记录刷新阶段状态，而非固定高亮第一阶段
+
+### Requirement: 路线图状态加载可理解
+系统 SHALL 在进度查询期间显示正在同步进度的说明；当查询失败时 SHALL 保留待确认状态，且不得把尚未确认的阶段显示为已完成。
+
+#### Scenario: 进度数据暂时不可用
+- **WHEN** 任一阶段进度查询失败
+- **THEN** 路线图 SHALL 显示待确认或待完成状态，并提供正常的阶段入口
+

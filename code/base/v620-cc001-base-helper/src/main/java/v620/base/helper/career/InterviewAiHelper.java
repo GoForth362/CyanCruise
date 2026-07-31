@@ -28,9 +28,8 @@ public class InterviewAiHelper {
 
     public String temporaryQuestion(String position, String difficulty, int answerCount, boolean opening) {
         String role = safe(position, "目标岗位");
-        String level = difficultyLabel(difficulty);
         if (opening || answerCount <= 0) {
-            return "【基础练习题】请用两分钟介绍一下自己，并重点说明你与" + role + "最相关的一段经历。";
+            return "请用两分钟介绍一下自己，并重点说明你与" + role + "最相关的一段经历。";
         }
         String[] questions = new String[] {
                 "请选择一个最能体现你能力的项目，说明你的具体职责、采取的行动和最终结果。",
@@ -41,7 +40,7 @@ public class InterviewAiHelper {
                 "回顾前面的回答，你认为自己胜任" + role + "的主要优势是什么，还有哪一点需要继续提升？"
         };
         int index = Math.max(0, Math.min(questions.length - 1, answerCount - 1));
-        return "【基础练习题·" + level + "】" + questions[index];
+        return questions[index];
     }
 
     public InterviewReportDto basicRulesReport(InterviewSessionDto session, String transcript, int answerCount) {
@@ -89,12 +88,6 @@ public class InterviewAiHelper {
         item.setTitle(title);
         item.setDetail(detail);
         return item;
-    }
-
-    private String difficultyLabel(String difficulty) {
-        if ("Easy".equalsIgnoreCase(safe(difficulty, ""))) return "入门";
-        if ("Hard".equalsIgnoreCase(safe(difficulty, ""))) return "进阶";
-        return "常规";
     }
 
     private int clamp(int score) { return Math.max(0, Math.min(100, score)); }

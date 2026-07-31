@@ -43,6 +43,7 @@ import v620.cc001.base.common.dto.career.AdminUserDto;
 import v620.cc001.base.common.dto.career.NotificationUnreadCountDto;
 import v620.cc001.base.common.dto.career.InterviewSessionDto;
 import v620.cc001.base.common.dto.career.UserProfileSnapshot;
+import v620.cc001.base.common.dto.furtherstudy.RecommendationTutorLetterRequest;
 import v620.base.helper.career.CareerProfileBuildService;
 import v620.base.helper.career.CareerProfileSnapshotMergeService;
 import v620.base.helper.career.InterviewCoreService;
@@ -66,6 +67,7 @@ import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryAdminGovernanceSto
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,6 +82,27 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CyanCruiseCustomWebApiPluginTest {
+
+    @Test
+    void mapsCurrentAndTargetSchoolSeparatelyForTutorLetter(@TempDir Path tempDir) throws Exception {
+        IdentityAwareCyanCruiseWebApiBoundary boundary =
+                new IdentityAwareCyanCruiseWebApiBoundary(new DevelopmentCyanCruiseIdentityResolver("api-user"));
+        CyanCruiseCustomWebApiPlugin plugin = plugin(tempDir, boundary);
+        Map<String, Object> request = new HashMap<String, Object>();
+        request.put("currentSchool", "成都理工大学");
+        request.put("targetSchool", "电子科技大学");
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("request", request);
+
+        Method extractor = CyanCruiseCustomWebApiPlugin.class.getDeclaredMethod(
+                "extractRecommendationTutorLetterRequest", Object.class);
+        extractor.setAccessible(true);
+        RecommendationTutorLetterRequest mapped =
+                (RecommendationTutorLetterRequest) extractor.invoke(plugin, body);
+
+        assertEquals("成都理工大学", mapped.getCurrentSchool());
+        assertEquals("电子科技大学", mapped.getTargetSchool());
+    }
 
     @Test
     void routesIdentityCurrentThroughCustomWebApiContract(@TempDir Path tempDir) {

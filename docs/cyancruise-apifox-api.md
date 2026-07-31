@@ -143,12 +143,12 @@ docs/cyancruise-apifox.postman_collection.json
 | --- | --- | --- |
 | 考研院校推荐 | `/cc001/postgraduate/school-recommend` | `{"userId":"{{userId}}","request":{"major":"计算机科学与技术","targetRegion":"上海","scoreRange":"360-390"}}` |
 | 生成考研计划 | `/cc001/postgraduate/plan/generate` | `{"userId":"{{userId}}","request":{"targetSchool":"复旦大学","targetMajor":"计算机技术","monthsLeft":8}}` |
-| 分析错题 | `/cc001/postgraduate/mistake/analyze` | `{"userId":"{{userId}}","request":{"subject":"数学","mistakeText":"极限计算错误"}}` |
+| 分析错题 | `/cc001/postgraduate/mistake/analyze` | `{"userId":"{{userId}}","request":{"subject":"数学","questionText":"极限计算错误"}}` |
 | 复试准备 | `/cc001/postgraduate/reexam/prepare` | `{"userId":"{{userId}}","request":{"targetSchool":"复旦大学","targetMajor":"计算机技术"}}` |
 | 保研画像诊断 | `/cc001/recommendation/diagnose` | `{"userId":"{{userId}}","request":{"gpa":"3.7/4.0","research":"一段科研经历"}}` |
 | 生成保研计划 | `/cc001/recommendation/plan/generate` | `{"userId":"{{userId}}","request":{"gpa":"3.7/4.0","targetSchools":["浙江大学"]}}` |
 | 润色申请文书 | `/cc001/recommendation/document/polish` | `{"userId":"{{userId}}","request":{"documentType":"个人陈述","content":"我希望申请..."}}` |
-| 生成导师联系信 | `/cc001/recommendation/tutor-letter/generate` | `{"userId":"{{userId}}","request":{"teacherName":"张老师","researchInterest":"自然语言处理"}}` |
+| 生成导师联系信 | `/cc001/recommendation/tutor-letter/generate` | `{"userId":"{{userId}}","request":{"tutorName":"张老师","currentSchool":"成都理工大学","targetSchool":"电子科技大学","targetMajor":"软件工程","researchDirection":"机器学习","personalBackground":"软件工程本科生，排名前 10%"}}` |
 | 留学画像诊断 | `/cc001/study-abroad/profile/diagnose` | `{"userId":"{{userId}}","request":{"gpa":"3.6/4.0","languageScore":"雅思 7.0","targetCountry":"英国"}}` |
 | 生成语言备考计划 | `/cc001/study-abroad/language/plan` | `{"userId":"{{userId}}","request":{"testType":"IELTS","currentScore":"6.0","targetScore":"7.0","weeks":12}}` |
 | 留学院校定位 | `/cc001/study-abroad/school/position` | `{"userId":"{{userId}}","request":{"targetCountry":"英国","major":"Data Science","gpa":"3.6/4.0"}}` |

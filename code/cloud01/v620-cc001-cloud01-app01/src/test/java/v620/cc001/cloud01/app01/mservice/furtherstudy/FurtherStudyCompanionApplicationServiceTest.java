@@ -8,6 +8,8 @@ import v620.base.helper.furtherstudy.PostgraduateCompanionService;
 import v620.base.helper.furtherstudy.RecommendationCompanionService;
 import v620.base.helper.furtherstudy.StudyAbroadCompanionService;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeAnalyzeRequest;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookPageDto;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookQueryRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduatePlanRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateReexamPrepareRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateSchoolRecommendRequest;
@@ -22,6 +24,8 @@ import v620.cc001.base.common.dto.furtherstudy.StudyAbroadStatementRequest;
 import v620.cc001.base.common.dto.furtherstudy.StudyAbroadVisaChecklistRequest;
 import v620.cc001.cloud01.app01.mservice.ai.FurtherStudyCompanionAnalyzer;
 import v620.cc001.cloud01.app01.mservice.storage.impl.InMemoryStudyCenterStorage;
+import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryFurtherStudyCompanionStorage;
+import v620.cc001.cloud01.app01.mservice.furtherstudy.impl.InMemoryPostgraduateMistakeBookStorage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -68,7 +72,9 @@ class FurtherStudyCompanionApplicationServiceTest {
         recommendation.diagnose("u1", new RecommendationProfileRequest());
         recommendation.generatePlan("u1", new RecommendationProfileRequest());
         recommendation.polishDocument("u1", new RecommendationDocumentPolishRequest());
-        recommendation.generateTutorLetter("u1", new RecommendationTutorLetterRequest());
+        RecommendationTutorLetterRequest tutorLetter = new RecommendationTutorLetterRequest();
+        tutorLetter.setCurrentSchool("成都理工大学");
+        recommendation.generateTutorLetter("u1", tutorLetter);
         abroad.diagnoseProfile("u1", new StudyAbroadProfileRequest());
         abroad.generateLanguagePlan("u1", new StudyAbroadLanguagePlanRequest());
         abroad.positionSchools("u1", new StudyAbroadSchoolPositionRequest());
@@ -89,6 +95,50 @@ class FurtherStudyCompanionApplicationServiceTest {
                 FurtherStudyCompanionAnalyzer.STUDY_ABROAD_SCHOOL_POSITION,
                 FurtherStudyCompanionAnalyzer.STUDY_ABROAD_STATEMENT_OUTLINE,
                 FurtherStudyCompanionAnalyzer.STUDY_ABROAD_VISA_CHECKLIST), analyzer.taskTypes);
+    }
+
+    @Test
+    void tutorLetterRequiresCurrentSchoolInsteadOfTreatingTargetSchoolAsCurrentSchool() {
+        RecommendationApplicationService service =
+                new RecommendationApplicationService(new CapturingAnalyzer());
+        RecommendationTutorLetterRequest request = new RecommendationTutorLetterRequest();
+        request.setTargetSchool("电子科技大学");
+
+        IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+                () -> service.generateTutorLetter("u1", request));
+
+        assertTrue(error.getMessage().contains("本科就读院校"));
+    }
+
+    @Test
+    void savesEverySuccessfulMistakeAnalysisToTheDedicatedMistakeBook() {
+        PostgraduateApplicationService service = new PostgraduateApplicationService(new CapturingAnalyzer());
+        PostgraduateMistakeAnalyzeRequest request = new PostgraduateMistakeAnalyzeRequest();
+        request.setSubject("408"); request.setQuestionText("一道错题"); request.setWrongAnswer("错误答案");
+        service.analyzeMistake("user-a", request);
+        PostgraduateMistakeBookQueryRequest pageRequest = new PostgraduateMistakeBookQueryRequest();
+        pageRequest.setLimit(Integer.valueOf(20)); pageRequest.setOffset(Integer.valueOf(0));
+        PostgraduateMistakeBookPageDto page = service.listMistakeBook("user-a", pageRequest);
+        assertEquals(1, page.getItems().size());
+        assertEquals("408", page.getItems().get(0).getSubject());
+        assertEquals("一道错题", page.getItems().get(0).getQuestionText());
+        assertThrows(IllegalArgumentException.class,
+                () -> service.loadMistakeBookEntry("user-b", page.getItems().get(0).getMistakeId()));
+    }
+
+    @Test
+    void mistakeAnalysisDoesNotCreateAGenericFurtherStudyRecord() {
+        InMemoryFurtherStudyCompanionStorage records = new InMemoryFurtherStudyCompanionStorage();
+        PostgraduateApplicationService service = new PostgraduateApplicationService(
+                new PostgraduateCompanionService(), new CapturingAnalyzer(), new InMemoryStudyCenterStorage(),
+                records, new InMemoryPostgraduateMistakeBookStorage());
+        PostgraduateMistakeAnalyzeRequest request = new PostgraduateMistakeAnalyzeRequest();
+        request.setSubject("408"); request.setQuestionText("错题题干"); request.setWrongAnswer("错误答案");
+        service.analyzeMistake("user-a", request);
+        assertEquals(0, records.listRecords("user-a", new v620.cc001.base.common.dto.furtherstudy.FurtherStudyRecordQueryRequest()).size());
+        PostgraduateMistakeBookQueryRequest pageRequest = new PostgraduateMistakeBookQueryRequest();
+        pageRequest.setLimit(Integer.valueOf(20)); pageRequest.setOffset(Integer.valueOf(0));
+        assertEquals(1, service.listMistakeBook("user-a", pageRequest).getItems().size());
     }
 
     @Test

@@ -94,6 +94,8 @@
     studyCenterAdminResourceHide: "/cc001/study-center/admin/resources/hide",
     studyCenterAdminResourceDelete: "/cc001/study-center/admin/resources/delete",
     furtherStudyAnalysisDraft: "/cc001/study-center/analysis-draft/get",
+    furtherStudyRecordsList: "/cc001/further-study/records/list",
+    furtherStudyRecordDetail: "/cc001/further-study/records/detail",
     adminBroadcast: "/cc001/admin/broadcast",
     adminAnalytics: "/cc001/admin/analytics/summary",
     adminAuditLog: "/cc001/admin/audit-log/list",
@@ -110,6 +112,9 @@
     postgraduateSchoolRecommend: "/cc001/postgraduate/school-recommend",
     postgraduatePlanGenerate: "/cc001/postgraduate/plan/generate",
     postgraduateMistakeAnalyze: "/cc001/postgraduate/mistake/analyze",
+    postgraduateMistakeBookList: "/cc001/postgraduate/mistake-book/list",
+    postgraduateMistakeBookDetail: "/cc001/postgraduate/mistake-book/detail",
+    postgraduateMistakeBookDelete: "/cc001/postgraduate/mistake-book/delete",
     postgraduateReexamPrepare: "/cc001/postgraduate/reexam/prepare",
     recommendationDiagnose: "/cc001/recommendation/diagnose",
     recommendationPlanGenerate: "/cc001/recommendation/plan/generate",
@@ -143,6 +148,8 @@
     page("postgraduate-school", "择校择专业", "available", "user", "输入本科学校、成绩、英语水平和期望地区，生成稳、冲、保三档择校建议。", ["postgraduateSchoolRecommend"], { defaultNav: false }),
     page("postgraduate-plan", "复习计划", "available", "user", "按目标院校、考试日期、科目和每周时间生成基础、提高、冲刺三轮计划。", ["postgraduatePlanGenerate"], { defaultNav: false }),
     page("postgraduate-mistake", "错题解析", "available", "user", "粘贴错题文本，整理答案思路、考点知识树、错因和同类题。", ["postgraduateMistakeAnalyze"], { defaultNav: false }),
+    page("postgraduate-mistake-book", "错题本", "available", "user", "查看并复盘已保存的错题与解析。", ["postgraduateMistakeBookList"], { defaultNav: false }),
+    page("postgraduate-mistake-detail", "错题详情", "available", "user", "查看错题原文、错误答案和 AI 解析。", ["postgraduateMistakeBookDetail"], { defaultNav: false }),
     page("postgraduate-reexam", "复试准备", "available", "user", "围绕目标院校、初试状态、材料和项目经历生成复试准备清单。", ["postgraduateReexamPrepare"], { defaultNav: false }),
     page("postgraduate-recommendation", "保研陪伴", "available", "user", "围绕绩点排名、背景提升、营校投递、材料精修和导师联系完成保研规划。", ["recommendationDiagnose", "recommendationPlanGenerate", "recommendationDocumentPolish", "recommendationTutorLetterGenerate"]),
     page("recommendation-ranking", "排名监控", "available", "user", "录入绩点、排名、英语和成果，诊断当前保研竞争力与资格风险。", ["recommendationDiagnose"], { defaultNav: false }),
@@ -306,8 +313,20 @@
     deepProfileGenerating: false,
     deepProfileError: null,
     postgraduateSchoolResult: null,
+    postgraduateSchoolLatestResultLoading: false,
+    postgraduateSchoolLatestResultUserId: "",
     postgraduatePlanResult: null,
+    postgraduatePlanLatestResultLoading: false,
+    postgraduatePlanLatestResultUserId: "",
+    furtherStudyLatestResultLoads: {},
     postgraduateMistakeResult: null,
+    postgraduateMistakeHistory: [],
+    postgraduateMistakeHistoryLoading: false,
+    postgraduateMistakeHistoryLoaded: false,
+    postgraduateMistakeHistoryOffset: 0,
+    postgraduateMistakeHistoryHasMore: false,
+    postgraduateMistakeBookDetail: null,
+    postgraduateRoadmapProgress: { userId: "", loading: false, loaded: false, failed: false, stages: [false, false, false, false] },
     postgraduateReexamResult: null,
     postgraduateLoading: "",
     postgraduateMessage: null,
@@ -318,6 +337,7 @@
     recommendationPlanResult: null,
     recommendationPolishResult: null,
     recommendationTutorLetterResult: null,
+    recommendationRoadmapProgress: { userId: "", loading: false, loaded: false, failed: false, stages: [false, false, false, false] },
     recommendationLoading: "",
     recommendationMessage: null,
     studyAbroadProfileResult: null,
@@ -325,6 +345,7 @@
     studyAbroadSchoolResult: null,
     studyAbroadStatementResult: null,
     studyAbroadVisaResult: null,
+    studyAbroadRoadmapProgress: { userId: "", loading: false, loaded: false, failed: false, stages: [false, false, false, false, false] },
     studyAbroadLoading: "",
     studyAbroadMessage: null,
     scrollPositions: {},
@@ -542,6 +563,7 @@
       replaceRouteInLocation("workbench");
     } else {
       if (previous && previous !== key) {
+        hideMessage();
         rememberRouteScroll(previous);
         clearReturnRoute(key);
       }
@@ -594,6 +616,10 @@
       document.body.classList.toggle("ai-interview-workspace-mode", item.key === "interview");
       document.body.classList.toggle("panorama-interview-workspace-mode", item.key === "interview-panorama");
       document.body.classList.toggle("message-center-workspace-mode", item.key === "messages" || item.key === "message-detail");
+      document.body.classList.toggle("further-study-tool-workspace-mode", /^(postgraduate-(school|plan|mistake|mistake-book|mistake-detail|reexam)|recommendation-(ranking|background|material|tutor)|study-abroad-(profile|language|school|statement|visa))$/.test(item.key));
+      document.body.classList.toggle("further-study-exam-tool-mode", /^postgraduate-(school|plan|mistake|mistake-book|mistake-detail|reexam)$/.test(item.key));
+      document.body.classList.toggle("further-study-recommendation-tool-mode", /^recommendation-(ranking|background|material|tutor)$/.test(item.key));
+      document.body.classList.toggle("further-study-abroad-tool-mode", /^study-abroad-(profile|language|school|statement|visa)$/.test(item.key));
     }
     if (item.audience === "admin" && !hasAdminRole(state.identity)) {
       renderForbidden(item);
@@ -663,6 +689,8 @@
         renderPanoramaHistoryPage: renderPanoramaHistoryPage,
         renderPanoramaInterviewPage: renderPanoramaInterviewPage,
         renderPostgraduateMistakePage: renderPostgraduateMistakePage,
+        renderPostgraduateMistakeBookPage: renderPostgraduateMistakeBookPage,
+        renderPostgraduateMistakeDetailPage: renderPostgraduateMistakeDetailPage,
         renderPostgraduatePage: renderPostgraduatePage,
         renderPostgraduatePlanPage: renderPostgraduatePlanPage,
         renderPostgraduateReexamPage: renderPostgraduateReexamPage,
@@ -2349,9 +2377,7 @@
     ensurePostgraduateSchoolDraft();
     var loading = state.postgraduateLoading;
     var schoolDraft = postgraduateSchoolDraft();
-    var message = state.postgraduateMessage
-      ? '<section class="state-card ' + escapeHtml(state.postgraduateMessage.type || "info") + '"><h3>' + escapeHtml(state.postgraduateMessage.title || "提示") + '</h3><p>' + escapeHtml(state.postgraduateMessage.text || "") + '</p></section>'
-      : "";
+    var message = furtherStudyMessageHtml("postgraduateMessage");
     renderFeatureShell(item, item.title, item.summary,
       message +
       '<section class="panel full postgraduate-hero-panel">' +
@@ -2493,7 +2519,7 @@
     rules[endpoints.recommendationDiagnose] = [["grade", "\u5f53\u524d\u5e74\u7ea7"], ["school", "\u672c\u79d1\u5b66\u6821"], ["major", "\u672c\u79d1\u4e13\u4e1a"], ["gpa", "\u7ee9\u70b9\u6216\u5e73\u5747\u5206"], ["rank", "\u4e13\u4e1a\u6392\u540d"]];
     rules[endpoints.recommendationPlanGenerate] = rules[endpoints.recommendationDiagnose];
     rules[endpoints.recommendationDocumentPolish] = [["documentType", "\u6587\u4e66\u7c7b\u578b"], ["draft", "\u6587\u4e66\u521d\u7a3f"]];
-    rules[endpoints.recommendationTutorLetterGenerate] = [["tutorName", "\u5bfc\u5e08\u59d3\u540d"], ["targetSchool", "\u76ee\u6807\u9662\u6821"], ["targetMajor", "\u76ee\u6807\u4e13\u4e1a"], ["researchDirection", "\u5bfc\u5e08\u7814\u7a76\u65b9\u5411\u6216\u8bba\u6587\u5173\u952e\u8bcd"], ["personalBackground", "\u4e2a\u4eba\u80cc\u666f"]];
+    rules[endpoints.recommendationTutorLetterGenerate] = [["tutorName", "\u5bfc\u5e08\u59d3\u540d"], ["currentSchool", "\u672c\u79d1\u5c31\u8bfb\u9662\u6821"], ["targetSchool", "\u76ee\u6807\u9662\u6821"], ["targetMajor", "\u76ee\u6807\u4e13\u4e1a"], ["researchDirection", "\u5bfc\u5e08\u7814\u7a76\u65b9\u5411\u6216\u8bba\u6587\u5173\u952e\u8bcd"], ["personalBackground", "\u4e2a\u4eba\u80cc\u666f"]];
     rules[endpoints.studyAbroadProfileDiagnose] = [["countryOrRegion", "\u56fd\u5bb6\u6216\u5730\u533a"], ["targetDegree", "\u76ee\u6807\u5b66\u4f4d"], ["targetMajor", "\u76ee\u6807\u4e13\u4e1a"], ["school", "\u5f53\u524d\u5b66\u6821"], ["major", "\u5f53\u524d\u4e13\u4e1a"], ["gpa", "\u7ee9\u70b9\u6216\u5e73\u5747\u5206"], ["budget", "\u9884\u7b97\u8303\u56f4"]];
     rules[endpoints.studyAbroadLanguagePlan] = [["examType", "\u8003\u8bd5\u7c7b\u578b"], ["targetScore", "\u76ee\u6807\u6210\u7ee9"], ["examDate", "\u8003\u8bd5\u65e5\u671f"], ["weeklyHours", "\u6bcf\u5468\u53ef\u6295\u5165\u65f6\u95f4"]];
     rules[endpoints.studyAbroadSchoolPosition] = [["countryOrRegion", "\u56fd\u5bb6\u6216\u5730\u533a"], ["targetMajor", "\u76ee\u6807\u4e13\u4e1a"], ["gpa", "\u7ee9\u70b9\u6216\u5e73\u5747\u5206"], ["languageScore", "\u8bed\u8a00\u6210\u7ee9"], ["budget", "\u9884\u7b97\u8303\u56f4"]];
@@ -2532,7 +2558,7 @@
   }
 
   function renderSchoolRecommendation(result) {
-    if (!result) return statePanel("等待择校画像", "填写本科学校、绩点、英语水平、期望地区和目标专业后生成稳、冲、保建议。", "pending");
+    if (!result) return "";
     var missing = normalizeArray(result.missingInfo);
     return '<div class="postgraduate-result">' +
       '<h4>择校建议</h4><p>' + escapeHtml(result.summary || "已生成择校建议。") + '</p>' +
@@ -2543,7 +2569,7 @@
   }
 
   function renderPostgraduatePlan(result) {
-    if (!result) return statePanel("等待计划信息", "填写目标院校、考试日期和考试科目后生成基础、提高、冲刺三轮计划。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>' + escapeHtml(result.target || "复习计划") + '</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
       '<p class="panel-note">初试日期：' + escapeHtml(result.examDate || "未填写") + '，剩余 ' + escapeHtml(result.daysRemaining == null ? "--" : String(result.daysRemaining)) + ' 天</p>' +
       '<div class="result-card-grid">' + normalizeArray(result.rounds).map(function (round) {
@@ -2554,7 +2580,7 @@
   }
 
   function renderMistakeAnalysis(result) {
-    if (!result) return statePanel("等待错题文本", "粘贴错题文字后，系统会整理答案思路、知识树、易错原因和同类题。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>' + escapeHtml(result.subject || "错题解析") + '</h4><p>' + escapeHtml(result.explanation || "") + '</p>' +
       '<p><strong>答案思路：</strong>' + escapeHtml(result.answer || "") + '</p>' +
       '<div class="result-card-grid">' + normalizeArray(result.knowledgeTree).map(function (node) {
@@ -2567,7 +2593,7 @@
   }
 
   function renderReexamPreparation(result) {
-    if (!result) return statePanel("等待复试信息", "填写目标院校、初试状态和已有材料后生成复试准备清单。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>复试准备清单</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
       '<div class="result-card-grid">' + normalizeArray(result.checklist).map(function (item) {
         return '<article class="mini-card"><span class="chip">' + escapeHtml(item.stage || "") + '</span><h4>' + escapeHtml(item.title || "") + '</h4><p>' + escapeHtml(item.detail || "") + '</p><p class="panel-note">优先级：' + escapeHtml(item.priority || "") + '</p></article>';
@@ -2598,9 +2624,7 @@
 
   function renderRecommendationPage(item) {
     var loading = state.recommendationLoading;
-    var message = state.recommendationMessage
-      ? '<section class="state-card ' + escapeHtml(state.recommendationMessage.type || "info") + '"><h3>' + escapeHtml(state.recommendationMessage.title || "提示") + '</h3><p>' + escapeHtml(state.recommendationMessage.text || "") + '</p></section>'
-      : "";
+    var message = furtherStudyMessageHtml("recommendationMessage");
     renderFeatureShell(item, item.title, item.summary,
       message +
       '<section class="panel full postgraduate-hero-panel">' +
@@ -2618,7 +2642,7 @@
       field("recEnglish", "英语水平", "text", "") +
       '<label class="full">竞赛与获奖<textarea id="recAwards" placeholder="例如：数学建模国二、蓝桥杯省一、挑战杯校级"></textarea></label>' +
       '<label class="full">科研、论文、软著<textarea id="recResearch" placeholder="例如：参与某课题组、论文在投、软件著作权、课程项目"></textarea></label>' +
-      field("recTargetSchools", "目标营校", "text", "") +
+      field("recTargetSchools", "目标院校", "text", "") +
       field("recTargetMajor", "目标专业", "text", "") +
       '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "diagnose") + '>诊断竞争力</button><button type="button" class="secondary" id="recommendationPlanButton"' + disabledAttr(loading === "plan") + '>生成行动计划</button></div>' +
       '</form>' + renderRecommendationDiagnosis(state.recommendationDiagnosisResult) + renderRecommendationPlan(state.recommendationPlanResult) + '</section>' +
@@ -2633,6 +2657,7 @@
       '<section class="panel full"><h3>导师意向信</h3>' +
       '<form class="form-grid" id="recommendationTutorForm">' +
       field("recTutorName", "导师姓名", "text", "") +
+      field("recCurrentSchool", "本科就读院校", "text", "") +
       field("recTutorSchool", "目标院校", "text", "") +
       field("recTutorMajor", "目标专业", "text", "") +
       '<label class="full">导师研究方向或论文关键词<textarea id="recResearchDirection" placeholder="请填真实方向；系统不会替你编造导师论文"></textarea></label>' +
@@ -2703,6 +2728,7 @@
       userId: state.identity.userId,
       request: {
         tutorName: valueOf("recTutorName"),
+        currentSchool: valueOf("recCurrentSchool"),
         targetSchool: valueOf("recTutorSchool"),
         targetMajor: valueOf("recTutorMajor"),
         researchDirection: valueOf("recResearchDirection"),
@@ -2734,7 +2760,7 @@
   }
 
   function renderRecommendationDiagnosis(result) {
-    if (!result) return statePanel("等待背景信息", "填写绩点、排名、竞赛科研和目标营校后，系统会诊断优势和短板。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>竞争力诊断：' + escapeHtml(result.overallScore == null ? "--" : String(result.overallScore)) + ' 分</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
       '<div class="result-card-grid">' + normalizeArray(result.scoreItems).map(function (item) {
         return '<article class="mini-card"><h4>' + escapeHtml(item.name || "维度") + '</h4><p><strong>' + escapeHtml(item.score == null ? "--" : String(item.score)) + '</strong> / ' + escapeHtml(item.maxScore == null ? "--" : String(item.maxScore)) + '</p><p class="panel-note">' + escapeHtml(item.comment || "") + '</p></article>';
@@ -2748,13 +2774,13 @@
   }
 
   function renderRecommendationPolish(result) {
-    if (!result) return statePanel("等待文书初稿", "粘贴自述信、邮件或推荐信要点后，系统会按经历讲述框架改写。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>润色稿</h4><pre class="generated-text">' + escapeHtml(result.polishedText || "") + '</pre>' +
       simpleListHtml("改写理由", result.rewriteReasons) + simpleListHtml("保留亮点", result.retainedHighlights) + simpleListHtml("建议补充", result.missingInfo) + '</div>';
   }
 
   function renderRecommendationLetter(result) {
-    if (!result) return statePanel("等待导师信息", "填写导师姓名、真实研究方向和个人背景后生成意向信。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>邮件标题</h4><p>' + escapeHtml(result.subject || "") + '</p><h4>邮件正文</h4><pre class="generated-text">' + escapeHtml(result.body || "") + '</pre>' +
       simpleListHtml("附件建议", result.attachments) + simpleListHtml("发送提醒", result.sendTips) + simpleListHtml("需要补充", result.missingInfo) + '</div>';
   }
@@ -2771,6 +2797,78 @@
     return furtherStudyMessageHtml("recommendationMessage");
   }
 
+  function recommendationRoadmapView() {
+    var progress = state.recommendationRoadmapProgress || {};
+    var completed = Array.isArray(progress.stages) ? progress.stages : [false, false, false, false];
+    var currentIndex = completed.indexOf(false);
+    if (currentIndex < 0) currentIndex = completed.length - 1;
+    var stages = completed.map(function (isDone, index) {
+      if (progress.loading) {
+        return { state: index === 0 ? "syncing" : "pending", status: index === 0 ? "正在同步进度" : "待同步" };
+      }
+      if (isDone) {
+        return { state: "done", status: index === currentIndex && currentIndex === completed.length - 1 ? "已完成全部阶段" : "已完成" };
+      }
+      if (index === currentIndex) {
+        return { state: "current", status: progress.failed ? "待确认" : "当前进行中" };
+      }
+      return { state: "pending", status: progress.failed ? "待确认" : "待完成" };
+    });
+    return { currentIndex: currentIndex, stages: stages };
+  }
+
+  function recommendationRoadmapRecordExists(recordType) {
+    if (!hasUserIdentity()) return Promise.resolve(false);
+    return post(endpoints.furtherStudyRecordsList, {
+      userId: state.identity.userId,
+      request: { track: "RECOMMENDATION", recordType: recordType, limit: 1, offset: 0 }
+    }).then(function (records) {
+      return Array.isArray(records) && records.length > 0;
+    });
+  }
+
+  function ensureRecommendationRoadmapProgress(force) {
+    var progress = state.recommendationRoadmapProgress || (state.recommendationRoadmapProgress = {});
+    var userId = hasUserIdentity() ? state.identity.userId : "";
+    if (!userId) {
+      progress.userId = ""; progress.loading = false; progress.loaded = true; progress.failed = false;
+      progress.stages = [false, false, false, false];
+      return;
+    }
+    if (progress.userId !== userId) {
+      progress.userId = userId; progress.loaded = false; progress.failed = false;
+      progress.stages = [false, false, false, false];
+    }
+    if (progress.loading || (!force && progress.loaded)) return;
+    progress.loading = true;
+    var recordTypes = [
+      "RECOMMENDATION_DIAGNOSE",
+      "RECOMMENDATION_PLAN_GENERATE",
+      "RECOMMENDATION_DOCUMENT_POLISH",
+      "RECOMMENDATION_TUTOR_LETTER"
+    ];
+    Promise.all(recordTypes.map(function (recordType) {
+      return recommendationRoadmapRecordExists(recordType).then(function (value) {
+        return { ok: true, value: !!value };
+      }).catch(function () {
+        return { ok: false, value: false };
+      });
+    })).then(function (results) {
+      progress.stages = results.map(function (result) { return result.value; });
+      progress.failed = results.some(function (result) { return !result.ok; });
+      progress.loaded = true;
+    }).then(function () {
+      progress.loading = false;
+      if (state.route === "postgraduate-recommendation") renderPage(pageByKey["postgraduate-recommendation"]);
+    });
+  }
+
+  function refreshRecommendationRoadmapProgress() {
+    var progress = state.recommendationRoadmapProgress;
+    if (progress) progress.loaded = false;
+    ensureRecommendationRoadmapProgress(true);
+  }
+
   function recommendationBackActions() {
     return '';
   }
@@ -2785,7 +2883,7 @@
       field("recEnglish", "英语水平", "text", "") +
       '<label class="full">竞赛与获奖<textarea id="recAwards" placeholder="例如：数学建模国二、蓝桥杯省一、挑战杯校级"></textarea></label>' +
       '<label class="full">科研、论文、软著<textarea id="recResearch" placeholder="例如：参与课题组、论文在投、软件著作权、课程项目"></textarea></label>' +
-      field("recTargetSchools", "目标营校", "text", "") +
+      field("recTargetSchools", "目标院校", "text", "") +
       field("recTargetMajor", "目标专业", "text", "") +
       '<div class="full actions-row"><button type="submit"' + disabledAttr(state.recommendationLoading === loadingType) + '>' + buttonText + '</button>' +
       (includePlanButton ? '<button type="button" class="secondary" id="recommendationPlanButton"' + disabledAttr(state.recommendationLoading === "plan") + '>生成行动计划</button>' : "") +
@@ -2793,10 +2891,14 @@
   }
 
   function renderRecommendationPage(item) {
+    ensureRecommendationRoadmapProgress();
+    var roadmap = recommendationRoadmapView();
     renderFeatureShell(item, item.title, item.summary,
       recommendationMessageHtml() +
       renderCompanionHub({
         theme: "recommendation",
+        currentIndex: roadmap.currentIndex,
+        progressStages: roadmap.stages,
         kicker: "保研进阶路线",
         headline: "把信息差，变成可以提前准备的行动差",
         summary: "先守住资格，再拉开背景差距；让材料准确表达你的潜力，也让导师更早看见你。",
@@ -2804,7 +2906,7 @@
         labels: ["4 个进阶阶段", "围绕真实竞争力", "材料与联系同步推进"],
         steps: [
           { task: "守住资格", title: "排名监控", description: "看清绩点、专业排名和英语水平的位置，判断当前资格边界与主要风险。", route: "recommendation-ranking" },
-          { task: "拉开差距", title: "背景提升", description: "根据年级和目标营校，把竞赛、科研与项目短板变成每周行动清单。", route: "recommendation-background" },
+          { task: "拉开差距", title: "背景提升", description: "根据年级和目标院校，把竞赛、科研与项目短板变成每周行动清单。", route: "recommendation-background" },
           { task: "讲好经历", title: "材料精修", description: "从真实素材中提炼贡献、结果和学术潜力，打磨个人陈述与推荐材料。", route: "recommendation-material" },
           { task: "提前连接", title: "导师联系", description: "围绕真实研究方向组织个人背景和申请动机，形成克制、具体的联系内容。", route: "recommendation-tutor" }
         ]
@@ -2812,6 +2914,7 @@
   }
 
   function renderRecommendationRankingPage(item) {
+    ensureFurtherStudyLatestResult("RECOMMENDATION_DIAGNOSE", "recommendationDiagnosisResult", "recommendation-ranking");
     renderFeatureShell(item, item.title, item.summary,
       recommendationMessageHtml() +
       '<section class="panel full"><h3>排名监控</h3>' +
@@ -2822,10 +2925,11 @@
   }
 
   function renderRecommendationBackgroundPage(item) {
+    ensureFurtherStudyLatestResult("RECOMMENDATION_PLAN_GENERATE", "recommendationPlanResult", "recommendation-background");
     renderFeatureShell(item, item.title, item.summary,
       recommendationMessageHtml() +
       '<section class="panel full"><h3>背景提升</h3>' +
-      '<p class="panel-note">根据当前年级、排名稳定性、竞赛科研和目标营校，生成接下来每周该推进的行动清单。</p>' +
+      '<p class="panel-note">根据当前年级、排名稳定性、竞赛科研和目标院校，生成接下来每周该推进的行动清单。</p>' +
       recommendationProfileFormHtml("生成行动计划", "plan", "recommendationProfileForm", false) +
       renderRecommendationPlan(state.recommendationPlanResult) + recommendationBackActions() + '</section>');
     var profile = $("recommendationProfileForm");
@@ -2834,6 +2938,7 @@
   }
 
   function renderRecommendationMaterialPage(item) {
+    ensureFurtherStudyLatestResult("RECOMMENDATION_DOCUMENT_POLISH", "recommendationPolishResult", "recommendation-material");
     var loading = state.recommendationLoading;
     renderFeatureShell(item, item.title, item.summary,
       recommendationMessageHtml() +
@@ -2849,12 +2954,14 @@
   }
 
   function renderRecommendationTutorPage(item) {
+    ensureFurtherStudyLatestResult("RECOMMENDATION_TUTOR_LETTER", "recommendationTutorLetterResult", "recommendation-tutor");
     var loading = state.recommendationLoading;
     renderFeatureShell(item, item.title, item.summary,
       recommendationMessageHtml() +
       '<section class="panel full"><h3>导师联系</h3>' +
       '<form class="form-grid" id="recommendationTutorForm">' +
       field("recTutorName", "导师姓名", "text", "") +
+      field("recCurrentSchool", "本科就读院校", "text", "") +
       field("recTutorSchool", "目标院校", "text", "") +
       field("recTutorMajor", "目标专业", "text", "") +
       '<label class="full">导师研究方向或论文关键词<textarea id="recResearchDirection" placeholder="请填真实方向；系统不会替你编造导师论文"></textarea></label>' +
@@ -2870,6 +2977,7 @@
     renderPage(pageByKey[state.route] || pageByKey["postgraduate-recommendation"]);
     runFurtherStudyService(endpoint, body).then(function (result) {
       applyResult(result || {});
+      refreshRecommendationRoadmapProgress();
       state.recommendationMessage = { type: "info", title: "已生成", text: "结果已更新，可继续补充信息后再次生成。" };
     }).catch(function (error) {
       state.recommendationMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
@@ -2890,6 +2998,13 @@
   function renderCompanionHub(config) {
     var steps = normalizeArray(config.steps);
     var labels = normalizeArray(config.labels);
+    var currentIndex = typeof config.currentIndex === "number" ? config.currentIndex : 0;
+    var progressStages = normalizeArray(config.progressStages);
+    progressStages.forEach(function (stage, index) {
+      if (!steps[index] || !stage) return;
+      steps[index].state = stage.state;
+      steps[index].status = stage.status;
+    });
     return '<section class="companion-hub companion-hub--' + escapeAttr(config.theme) + ' full">' +
       '<div class="companion-hub-hero"><div class="companion-hub-copy">' +
       '<span class="companion-hub-kicker">' + escapeHtml(config.kicker) + '</span>' +
@@ -2900,17 +3015,20 @@
       '<div class="companion-hub-route" aria-label="' + escapeAttr(config.routeLabel) + '">' +
       '<span class="companion-hub-route-title">你的行动路线</span><div class="companion-hub-route-line">' +
       steps.map(function (step, index) {
-        return '<i class="' + (index === 0 ? "is-current" : "") + '"><b>' + padCompanionStep(index + 1) + '</b></i>';
+        var phaseState = firstText(step.state, index === currentIndex ? "current" : "pending");
+        return '<i class="is-' + escapeAttr(phaseState) + '"><b>' + padCompanionStep(index + 1) + '</b></i>';
       }).join("") + '</div><small>从第一步开始，也可以直接进入当前最需要的阶段</small></div></div>' +
       '<div class="companion-hub-actions"><div class="companion-hub-actions-head"><div>' +
       '<span>阶段工具箱</span><h3>现在，你想先推进哪一步？</h3></div>' +
       '<p>每个入口都会带你进入一项具体任务，完成后再回到这里继续下一阶段。</p></div>' +
       '<div class="companion-action-grid companion-action-grid--' + steps.length + '">' +
       steps.map(function (step, index) {
-        return '<button type="button" class="companion-action-card' + (index === 0 ? " is-featured" : "") +
+        var phaseState = firstText(step.state, index === currentIndex ? "current" : "pending");
+        var phaseLabel = firstText(step.status, phaseState === "done" ? "已完成" : phaseState === "current" ? "当前进行中" : phaseState === "syncing" ? "正在同步" : "待完成");
+        return '<button type="button" class="companion-action-card is-' + escapeAttr(phaseState) + (phaseState === "current" ? " is-featured" : "") +
           '" data-link="' + escapeAttr(step.route) + '" aria-label="进入' + escapeAttr(step.title) + '">' +
           '<span class="companion-action-stage"><b>' + padCompanionStep(index + 1) + '</b><small>' +
-          escapeHtml(step.task) + '</small></span><strong>' + escapeHtml(step.title) + '</strong>' +
+          escapeHtml(phaseLabel) + '</small></span><strong>' + escapeHtml(step.title) + '</strong>' +
           '<p>' + escapeHtml(step.description) + '</p><span class="companion-action-enter">进入功能<i aria-hidden="true">→</i></span></button>';
       }).join("") + '</div></div></section>';
   }
@@ -2919,11 +3037,85 @@
     return value < 10 ? "0" + value : String(value);
   }
 
+  function postgraduateRoadmapView() {
+    var progress = state.postgraduateRoadmapProgress || {};
+    var completed = Array.isArray(progress.stages) ? progress.stages : [false, false, false, false];
+    var currentIndex = completed.indexOf(false);
+    if (currentIndex < 0) currentIndex = completed.length - 1;
+    var stages = completed.map(function (isDone, index) {
+      if (progress.loading) {
+        return { state: index === 0 ? "syncing" : "pending", status: index === 0 ? "正在同步进度" : "待同步" };
+      }
+      if (isDone) {
+        return { state: "done", status: index === currentIndex && currentIndex === completed.length - 1 ? "已完成全部阶段" : "已完成" };
+      }
+      if (index === currentIndex) {
+        return { state: "current", status: progress.failed ? "待确认" : "当前进行中" };
+      }
+      return { state: "pending", status: progress.failed ? "待确认" : "待完成" };
+    });
+    return { currentIndex: currentIndex, stages: stages };
+  }
+
+  function postgraduateRoadmapRecordExists(recordType) {
+    if (!hasUserIdentity()) return Promise.resolve(false);
+    return post(endpoints.furtherStudyRecordsList, {
+      userId: state.identity.userId,
+      request: { track: "POSTGRADUATE", recordType: recordType, limit: 1, offset: 0 }
+    }).then(function (records) {
+      return Array.isArray(records) && records.length > 0;
+    });
+  }
+
+  function ensurePostgraduateRoadmapProgress(force) {
+    var progress = state.postgraduateRoadmapProgress || (state.postgraduateRoadmapProgress = {});
+    var userId = hasUserIdentity() ? state.identity.userId : "";
+    if (!userId) {
+      progress.userId = ""; progress.loading = false; progress.loaded = true; progress.failed = false;
+      progress.stages = [false, false, false, false];
+      return;
+    }
+    if (progress.userId !== userId) {
+      progress.userId = userId; progress.loaded = false; progress.failed = false;
+      progress.stages = [false, false, false, false];
+    }
+    if (progress.loading || (!force && progress.loaded)) return;
+    progress.loading = true;
+    var requests = [
+      postgraduateRoadmapRecordExists("POSTGRADUATE_SCHOOL_RECOMMEND"),
+      postgraduateRoadmapRecordExists("POSTGRADUATE_PLAN_GENERATE"),
+      post(endpoints.postgraduateMistakeBookList, { userId: userId, request: { limit: 1, offset: 0 } }).then(function (page) {
+        return !!(page && Array.isArray(page.items) && page.items.length);
+      }),
+      postgraduateRoadmapRecordExists("POSTGRADUATE_REEXAM_PREPARE")
+    ];
+    Promise.all(requests.map(function (request) {
+      return request.then(function (value) { return { ok: true, value: !!value }; }).catch(function () { return { ok: false, value: false }; });
+    })).then(function (results) {
+      progress.stages = results.map(function (result) { return result.value; });
+      progress.failed = results.some(function (result) { return !result.ok; });
+      progress.loaded = true;
+    }).then(function () {
+      progress.loading = false;
+      if (state.route === "postgraduate") renderPage(pageByKey.postgraduate);
+    });
+  }
+
+  function refreshPostgraduateRoadmapProgress() {
+    var progress = state.postgraduateRoadmapProgress;
+    if (progress) progress.loaded = false;
+    ensurePostgraduateRoadmapProgress(true);
+  }
+
   function renderPostgraduatePage(item) {
+    ensurePostgraduateRoadmapProgress();
+    var roadmap = postgraduateRoadmapView();
     renderFeatureShell(item, item.title, item.summary,
       postgraduateMessageHtml() +
       renderCompanionHub({
         theme: "exam",
+        currentIndex: roadmap.currentIndex,
+        progressStages: roadmap.stages,
         kicker: "考研作战路线",
         headline: "把漫长备考，拆成四个能完成的阶段",
         summary: "先确定方向，再建立节奏；用每一次订正积累确定性，最后带着准备走进复试。",
@@ -2940,6 +3132,7 @@
 
   function renderPostgraduateSchoolPage(item) {
     ensurePostgraduateSchoolDraft();
+    ensurePostgraduateSchoolLatestResult();
     var loading = state.postgraduateLoading;
     var schoolDraft = postgraduateSchoolDraft();
     renderFeatureShell(item, item.title, item.summary,
@@ -2959,6 +3152,7 @@
   }
 
   function renderPostgraduatePlanPage(item) {
+    ensurePostgraduatePlanLatestResult();
     var loading = state.postgraduateLoading;
     renderFeatureShell(item, item.title, item.summary,
       postgraduateMessageHtml() +
@@ -2983,12 +3177,35 @@
       field("pgMistakeSubject", "科目", "text", "专业课") +
       '<label class="full">题目文本<textarea id="pgQuestionText" placeholder="粘贴题目文字；当前版本暂不识别照片"></textarea></label>' +
       '<label class="full">我的错误答案<textarea id="pgWrongAnswer" placeholder="可选，写下当时的错误思路"></textarea></label>' +
-      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "mistake") + '>解析错题</button></div>' +
+      '<div class="full actions-row"><button type="submit"' + disabledAttr(loading === "mistake") + '>解析错题</button><button type="button" class="secondary" data-mistake-book-route="postgraduate-mistake-book">错题记录</button></div>' +
       '</form>' + renderMistakeAnalysis(state.postgraduateMistakeResult) + postgraduateBackActions() + '</section>');
     bindPostgraduateForms();
   }
 
+  function renderPostgraduateMistakeBookPage(item) {
+    ensurePostgraduateMistakeHistory();
+    renderFeatureShell(item, item.title, item.summary,
+      '<section class="panel full mistake-history-panel"><div class="section-heading"><div><h3>错题记录</h3><p class="panel-note">按时间查看已保存的错题，点击任意一题可查看原题、错误答案与 AI 解析。</p></div><button type="button" class="secondary" data-mistake-book-route="postgraduate-mistake">解析新错题</button></div>' +
+      renderPostgraduateMistakeBookItems() + '</section>');
+  }
+
+  function renderPostgraduateMistakeDetailPage(item) {
+    var record = state.postgraduateMistakeBookDetail;
+    if (!record) {
+      renderFeatureShell(item, item.title, item.summary,
+        '<section class="panel full"><h3>未选择错题</h3><p class="panel-note">请先从错题本选择一条记录。</p><button type="button" class="secondary" data-mistake-book-route="postgraduate-mistake-book">返回错题本</button></section>');
+      return;
+    }
+    var result = null;
+    try { result = record.resultJson ? JSON.parse(record.resultJson) : null; } catch (ignored) { result = null; }
+    renderFeatureShell(item, item.title, item.summary,
+      '<section class="panel full"><div class="section-heading"><div><h3>' + escapeHtml(firstText(record.subject, "错题")) + '</h3><p class="panel-note">' + escapeHtml(firstText(record.updatedAt, record.createdAt, "")) + '</p></div><div class="item-actions"><button type="button" class="secondary" data-mistake-book-route="postgraduate-mistake-book">返回错题本</button><button type="button" class="secondary danger-action" data-mistake-book-delete="' + escapeAttr(record.mistakeId || "") + '">移除错题</button></div></div>' +
+      '<div class="mistake-book-detail"><h4>题目文本</h4><p>' + escapeHtml(firstText(record.questionText, "")) + '</p><h4>我的错误答案</h4><p>' + escapeHtml(firstText(record.wrongAnswer, "未填写")) + '</p></div>' +
+      renderMistakeAnalysis(result) + '</section>');
+  }
+
   function renderPostgraduateReexamPage(item) {
+    ensureFurtherStudyLatestResult("POSTGRADUATE_REEXAM_PREPARE", "postgraduateReexamResult", "postgraduate-reexam");
     var loading = state.postgraduateLoading;
     renderFeatureShell(item, item.title, item.summary,
       postgraduateMessageHtml() +
@@ -3014,6 +3231,7 @@
     renderPage(pageByKey[state.route] || pageByKey.postgraduate);
     post(endpoint, body).then(function (result) {
       applyResult(result || {});
+      refreshPostgraduateRoadmapProgress();
       state.postgraduateMessage = { type: "info", title: "已生成", text: "结果已更新，可继续补充信息后再次生成。" };
     }).catch(function (error) {
       state.postgraduateMessage = { type: "warning", title: "暂时无法生成", text: error && error.message ? error.message : "请稍后重试。" };
@@ -3025,9 +3243,7 @@
 
   function renderStudyAbroadPage(item) {
     var loading = state.studyAbroadLoading;
-    var message = state.studyAbroadMessage
-      ? '<section class="state-card ' + escapeHtml(state.studyAbroadMessage.type || "info") + '"><h3>' + escapeHtml(state.studyAbroadMessage.title || "提示") + '</h3><p>' + escapeHtml(state.studyAbroadMessage.text || "") + '</p></section>'
-      : "";
+    var message = furtherStudyMessageHtml("studyAbroadMessage");
     renderFeatureShell(item, item.title, item.summary,
       message +
       '<section class="panel full postgraduate-hero-panel">' +
@@ -3201,20 +3417,20 @@
   }
 
   function renderStudyAbroadProfile(result) {
-    if (!result) return statePanel("等待申请画像", "填写国家地区、语言成绩、预算和经历后，系统会先给出准备度、短板和下一步清单。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>准备度：' + escapeHtml(result.readinessScore == null ? "--" : String(result.readinessScore)) + ' 分</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
       simpleListHtml("优势", result.strengths) + simpleListHtml("短板", result.gaps) +
       renderStudyAbroadChecklist(result.nextActions) + simpleListHtml("提醒", result.reminders) + '</div>';
   }
 
   function renderStudyAbroadLanguage(result) {
-    if (!result) return statePanel("等待语言目标", "填写考试类型、当前成绩、目标成绩和考试日期后，系统会生成三轮备考计划。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>语言考试计划</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
       renderStudyAbroadChecklist(result.rounds) + simpleListHtml("每周节奏", result.weeklyRoutine) + simpleListHtml("训练提示", result.examinerTips) + '</div>';
   }
 
   function renderStudyAbroadSchools(result) {
-    if (!result) return statePanel("等待选校信息", "填写目标地区、专业、成绩、语言和预算后，系统会给出冲刺、匹配、稳妥三档建议。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>选校梯度</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
       '<div class="result-card-grid">' + normalizeArray(result.options).map(function (option) {
         return '<article class="mini-card"><span class="chip">' + escapeHtml(option.tier || "") + '</span><h4>' + escapeHtml(option.schoolName || "目标项目") + '</h4><p>' + escapeHtml(option.program || "") + '</p><p>' + escapeHtml(option.reason || "") + '</p>' + simpleListHtml("准备重点", option.preparation) + '</article>';
@@ -3222,13 +3438,13 @@
   }
 
   function renderStudyAbroadStatement(result) {
-    if (!result) return statePanel("等待故事素材", "填写个人故事、学术经历和目标项目方向后，系统会生成个人陈述主线和追问清单。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>个人陈述主线</h4><p>' + escapeHtml(result.goldenLine || "") + '</p><h4>提纲</h4><pre class="generated-text">' + escapeHtml(result.outline || "") + '</pre>' +
       simpleListHtml("继续追问", result.storyQuestions) + simpleListHtml("建议补充", result.missingInfo) + simpleListHtml("写作提醒", result.writingTips) + '</div>';
   }
 
   function renderStudyAbroadVisa(result) {
-    if (!result) return statePanel("等待申请阶段", "填写目标国家、申请季、录取状态和材料状态后，系统会生成网申与签证清单。", "pending");
+    if (!result) return "";
     return '<div class="postgraduate-result"><h4>签证与网申清单</h4><p>' + escapeHtml(result.summary || "") + '</p>' +
       renderStudyAbroadChecklist(result.checklist) + simpleListHtml("风险", result.risks) + simpleListHtml("提醒", result.reminders) + '</div>';
   }
@@ -3256,19 +3472,45 @@
   function furtherStudyMessageHtml(messageKey) {
     var message = state[messageKey];
     if (!message || message.route !== state.route) return "";
-    return '<section class="state-card ' + escapeHtml(message.type || "info") + ' further-study-message">' +
-      '<div class="further-study-message-head"><h3>' + escapeHtml(message.title || "提示") + '</h3>' +
-      '<button type="button" class="secondary further-study-message-close" data-dismiss-further-study-message="' + escapeAttr(messageKey) + '" aria-label="关闭提示">关闭</button></div>' +
-      '<p>' + escapeHtml(message.text || "") + '</p></section>';
+    return "";
+  }
+
+  function inlineNoticeHtml(title, text, type, stateKey) {
+    var noticeType = firstText(type, "info");
+    return '<section class="unified-notice ' + escapeAttr(noticeType) + '" role="status" data-page-operation-notice data-notice-type="' + escapeAttr(noticeType) + '" data-notice-state-key="' + escapeAttr(stateKey || "") + '">' +
+      '<div class="notice-copy"><strong>' + escapeHtml(firstText(title, "提示")) + '</strong><span>' + escapeHtml(text || "") + '</span></div>' +
+      '<button type="button" class="notice-close" data-dismiss-inline-notice="' + escapeAttr(stateKey || "") + '" aria-label="关闭提示">&times;</button></section>';
   }
 
   function setFurtherStudyMessage(messageKey, type, title, text) {
-    state[messageKey] = { type: type, title: title, text: text, route: state.route };
+    var timers = state.inlineNoticeTimers || (state.inlineNoticeTimers = {});
+    if (timers[messageKey]) {
+      window.clearTimeout(timers[messageKey]);
+      timers[messageKey] = null;
+    }
+    var message = { type: type, title: title, text: text, route: state.route };
+    state[messageKey] = message;
+    if (title !== "正在分析") {
+      showMessage(type, title, text);
+    }
+    if (type === "info" && title !== "正在分析") {
+      timers[messageKey] = window.setTimeout(function () {
+        if (state[messageKey] !== message) return;
+        state[messageKey] = null;
+        timers[messageKey] = null;
+        if (state.route === message.route) renderPage(pageByKey[state.route]);
+      }, 3000);
+    }
   }
 
   function dismissFurtherStudyMessage(messageKey) {
     if (messageKey !== "postgraduateMessage" && messageKey !== "recommendationMessage"
         && messageKey !== "studyAbroadMessage") return;
+    var timers = state.inlineNoticeTimers || {};
+    if (timers[messageKey]) {
+      window.clearTimeout(timers[messageKey]);
+      timers[messageKey] = null;
+    }
     state[messageKey] = null;
     renderPage(pageByKey[state.route]);
   }
@@ -3277,11 +3519,90 @@
     return '';
   }
 
+  function markCurrentFurtherStudySubmitPending() {
+    var button = els.pageHost.querySelector('form button[type="submit"]');
+    if (!button) return;
+    button.disabled = true;
+    button.setAttribute("aria-disabled", "true");
+    button.textContent = "正在分析…";
+  }
+
+  function studyAbroadRoadmapView() {
+    var progress = state.studyAbroadRoadmapProgress || {};
+    var completed = Array.isArray(progress.stages) ? progress.stages : [false, false, false, false, false];
+    var currentIndex = completed.indexOf(false);
+    if (currentIndex < 0) currentIndex = completed.length - 1;
+    var stages = completed.map(function (isDone, index) {
+      if (progress.loading) return { state: index === 0 ? "syncing" : "pending", status: index === 0 ? "正在同步进度" : "待同步" };
+      if (isDone) return { state: "done", status: index === currentIndex && currentIndex === completed.length - 1 ? "已完成全部阶段" : "已完成" };
+      if (index === currentIndex) return { state: "current", status: progress.failed ? "待确认" : "当前进行中" };
+      return { state: "pending", status: progress.failed ? "待确认" : "待完成" };
+    });
+    return { currentIndex: currentIndex, stages: stages };
+  }
+
+  function studyAbroadRoadmapRecordExists(recordType) {
+    if (!hasUserIdentity()) return Promise.resolve(false);
+    return post(endpoints.furtherStudyRecordsList, {
+      userId: state.identity.userId,
+      request: { track: "STUDY_ABROAD", recordType: recordType, limit: 1, offset: 0 }
+    }).then(function (records) {
+      return Array.isArray(records) && records.length > 0;
+    });
+  }
+
+  function ensureStudyAbroadRoadmapProgress(force) {
+    var progress = state.studyAbroadRoadmapProgress || (state.studyAbroadRoadmapProgress = {});
+    var userId = hasUserIdentity() ? state.identity.userId : "";
+    if (!userId) {
+      progress.userId = ""; progress.loading = false; progress.loaded = true; progress.failed = false;
+      progress.stages = [false, false, false, false, false];
+      return;
+    }
+    if (progress.userId !== userId) {
+      progress.userId = userId; progress.loaded = false; progress.failed = false;
+      progress.stages = [false, false, false, false, false];
+    }
+    if (progress.loading || (!force && progress.loaded)) return;
+    progress.loading = true;
+    var recordTypes = [
+      "STUDY_ABROAD_PROFILE_DIAGNOSE",
+      "STUDY_ABROAD_LANGUAGE_PLAN",
+      "STUDY_ABROAD_SCHOOL_POSITION",
+      "STUDY_ABROAD_STATEMENT_OUTLINE",
+      "STUDY_ABROAD_VISA_CHECKLIST"
+    ];
+    Promise.all(recordTypes.map(function (recordType) {
+      return studyAbroadRoadmapRecordExists(recordType).then(function (value) {
+        return { ok: true, value: !!value };
+      }).catch(function () {
+        return { ok: false, value: false };
+      });
+    })).then(function (results) {
+      progress.stages = results.map(function (result) { return result.value; });
+      progress.failed = results.some(function (result) { return !result.ok; });
+      progress.loaded = true;
+    }).then(function () {
+      progress.loading = false;
+      if (state.route === "study-abroad") renderPage(pageByKey["study-abroad"]);
+    });
+  }
+
+  function refreshStudyAbroadRoadmapProgress() {
+    var progress = state.studyAbroadRoadmapProgress;
+    if (progress) progress.loaded = false;
+    ensureStudyAbroadRoadmapProgress(true);
+  }
+
   function renderStudyAbroadPage(item) {
+    ensureStudyAbroadRoadmapProgress();
+    var roadmap = studyAbroadRoadmapView();
     renderFeatureShell(item, item.title, item.summary,
       studyAbroadMessageHtml() +
       renderCompanionHub({
         theme: "abroad",
+        currentIndex: roadmap.currentIndex,
+        progressStages: roadmap.stages,
         kicker: "留学申请航线",
         headline: "从选择目的地，到顺利完成入学准备",
         summary: "把国家地区、语言、选校、文书和网申放进同一条航线，知道现在在哪里，也知道下一站要准备什么。",
@@ -3333,7 +3654,101 @@
     });
   }
 
+  function ensurePostgraduateSchoolLatestResult() {
+    if (!hasUserIdentity()) return;
+    var userId = state.identity.userId;
+    if (state.postgraduateSchoolLatestResultUserId && state.postgraduateSchoolLatestResultUserId !== userId) {
+      state.postgraduateSchoolResult = null;
+      state.postgraduateSchoolLatestResultUserId = "";
+    }
+    if (state.postgraduateSchoolLatestResultLoading || state.postgraduateSchoolLatestResultUserId === userId) return;
+    state.postgraduateSchoolLatestResultLoading = true;
+    post(endpoints.furtherStudyRecordsList, {
+      userId: userId,
+      request: { track: "POSTGRADUATE", recordType: "POSTGRADUATE_SCHOOL_RECOMMEND", limit: 1, offset: 0 }
+    }).then(function (records) {
+      if (!Array.isArray(records) || !records.length || !records[0].recordId) return null;
+      return post(endpoints.furtherStudyRecordDetail, { userId: userId, recordId: records[0].recordId });
+    }).then(function (record) {
+      if (!record || !record.resultJson) return;
+      var result = JSON.parse(record.resultJson);
+      if (result && typeof result === "object") state.postgraduateSchoolResult = result;
+    }).catch(function () {
+      // 保留当前页面刚生成的结果；读取历史失败不影响再次生成。
+    }).then(function () {
+      state.postgraduateSchoolLatestResultLoading = false;
+      state.postgraduateSchoolLatestResultUserId = userId;
+      if (state.route === "postgraduate-school") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function ensurePostgraduatePlanLatestResult() {
+    if (!hasUserIdentity()) return;
+    var userId = state.identity.userId;
+    if (state.postgraduatePlanLatestResultUserId && state.postgraduatePlanLatestResultUserId !== userId) {
+      state.postgraduatePlanResult = null;
+      state.postgraduatePlanLatestResultUserId = "";
+    }
+    if (state.postgraduatePlanLatestResultLoading || state.postgraduatePlanLatestResultUserId === userId) return;
+    state.postgraduatePlanLatestResultLoading = true;
+    post(endpoints.furtherStudyRecordsList, {
+      userId: userId,
+      request: { track: "POSTGRADUATE", recordType: "POSTGRADUATE_PLAN_GENERATE", limit: 1, offset: 0 }
+    }).then(function (records) {
+      if (!Array.isArray(records) || !records.length || !records[0].recordId) return null;
+      return post(endpoints.furtherStudyRecordDetail, { userId: userId, recordId: records[0].recordId });
+    }).then(function (record) {
+      if (!record || !record.resultJson) return;
+      var result = JSON.parse(record.resultJson);
+      if (result && typeof result === "object") state.postgraduatePlanResult = result;
+    }).catch(function () {
+      // 保留当前页面刚生成的结果；读取历史失败不影响再次生成。
+    }).then(function () {
+      state.postgraduatePlanLatestResultLoading = false;
+      state.postgraduatePlanLatestResultUserId = userId;
+      if (state.route === "postgraduate-plan") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function ensureFurtherStudyLatestResult(recordType, resultKey, route) {
+    if (!recordType || !resultKey || !hasUserIdentity()) return;
+    var userId = state.identity.userId;
+    var loads = state.furtherStudyLatestResultLoads || (state.furtherStudyLatestResultLoads = {});
+    var load = loads[recordType] || (loads[recordType] = { userId: "", loading: false, loaded: false });
+    if (load.userId && load.userId !== userId) {
+      state[resultKey] = null;
+      load.userId = "";
+      load.loaded = false;
+    }
+    if (load.loading || (load.loaded && load.userId === userId)) return;
+    load.loading = true;
+    var track = recordType.indexOf("RECOMMENDATION_") === 0 ? "RECOMMENDATION" :
+      (recordType.indexOf("STUDY_ABROAD_") === 0 ? "STUDY_ABROAD" : "POSTGRADUATE");
+    post(endpoints.furtherStudyRecordsList, {
+      userId: userId,
+      request: { track: track, recordType: recordType, limit: 1, offset: 0 }
+    }).then(function (records) {
+      if (!Array.isArray(records) || !records.length || !records[0].recordId) {
+        state[resultKey] = null;
+        return null;
+      }
+      return post(endpoints.furtherStudyRecordDetail, { userId: userId, recordId: records[0].recordId });
+    }).then(function (record) {
+      if (!record || !record.resultJson) return;
+      var result = JSON.parse(record.resultJson);
+      if (result && typeof result === "object") state[resultKey] = result;
+    }).catch(function () {
+      // Keep the result that was just generated in this session if historical loading temporarily fails.
+    }).then(function () {
+      load.loading = false;
+      load.loaded = true;
+      load.userId = userId;
+      if (state.route === route) renderPage(pageByKey[route]);
+    });
+  }
+
   function renderStudyAbroadProfilePage(item) {
+    ensureFurtherStudyLatestResult("STUDY_ABROAD_PROFILE_DIAGNOSE", "studyAbroadProfileResult", "study-abroad-profile");
     var loading = state.studyAbroadLoading;
     renderFeatureShell(item, item.title, item.summary,
       studyAbroadMessageHtml() +
@@ -3355,6 +3770,7 @@
   }
 
   function renderStudyAbroadLanguagePage(item) {
+    ensureFurtherStudyLatestResult("STUDY_ABROAD_LANGUAGE_PLAN", "studyAbroadLanguageResult", "study-abroad-language");
     var loading = state.studyAbroadLoading;
     renderFeatureShell(item, item.title, item.summary,
       studyAbroadMessageHtml() +
@@ -3372,6 +3788,7 @@
   }
 
   function renderStudyAbroadSchoolPage(item) {
+    ensureFurtherStudyLatestResult("STUDY_ABROAD_SCHOOL_POSITION", "studyAbroadSchoolResult", "study-abroad-school");
     var loading = state.studyAbroadLoading;
     renderFeatureShell(item, item.title, item.summary,
       studyAbroadMessageHtml() +
@@ -3389,6 +3806,7 @@
   }
 
   function renderStudyAbroadStatementPage(item) {
+    ensureFurtherStudyLatestResult("STUDY_ABROAD_STATEMENT_OUTLINE", "studyAbroadStatementResult", "study-abroad-statement");
     var loading = state.studyAbroadLoading;
     renderFeatureShell(item, item.title, item.summary,
       studyAbroadMessageHtml() +
@@ -3405,6 +3823,7 @@
   }
 
   function renderStudyAbroadVisaPage(item) {
+    ensureFurtherStudyLatestResult("STUDY_ABROAD_VISA_CHECKLIST", "studyAbroadVisaResult", "study-abroad-visa");
     var loading = state.studyAbroadLoading;
     renderFeatureShell(item, item.title, item.summary,
       studyAbroadMessageHtml() +
@@ -3561,6 +3980,84 @@
       '</div>';
   }
 
+  function ensurePostgraduateMistakeHistory(force) {
+    if (!hasUserIdentity() || state.postgraduateMistakeHistoryLoading || (!force && state.postgraduateMistakeHistoryLoaded)) return;
+    state.postgraduateMistakeHistoryLoading = true;
+    if (force) { state.postgraduateMistakeHistory = []; state.postgraduateMistakeHistoryOffset = 0; state.postgraduateMistakeHistoryHasMore = false; }
+    post(endpoints.postgraduateMistakeBookList, {
+      userId: state.identity.userId,
+      request: { limit: 20, offset: state.postgraduateMistakeHistoryOffset || 0 }
+    }).then(function (page) {
+      var records = page && Array.isArray(page.items) ? page.items : [];
+      state.postgraduateMistakeHistory = force ? records : state.postgraduateMistakeHistory.concat(records);
+      state.postgraduateMistakeHistoryOffset = Number(page && page.nextOffset || state.postgraduateMistakeHistory.length);
+      state.postgraduateMistakeHistoryHasMore = !!(page && page.hasMore);
+      state.postgraduateMistakeHistoryLoaded = true;
+    }).catch(function () {
+      if (force) state.postgraduateMistakeHistory = [];
+    }).then(function () {
+      state.postgraduateMistakeHistoryLoading = false;
+      if (state.route === "postgraduate-mistake-book") renderPage(pageByKey[state.route]);
+    });
+  }
+
+  function renderPostgraduateMistakeHistory() {
+    var records = Array.isArray(state.postgraduateMistakeHistory) ? state.postgraduateMistakeHistory : [];
+    if (!records.length && !state.postgraduateMistakeHistoryLoading) return "";
+    return '<section class="panel full mistake-history-panel"><h3>过往错题</h3><p class="panel-note">已自动保存每次解析的题目、错误答案和解析结果。</p><div class="item-list">' + records.map(function (record, index) {
+      var title = firstText(record.subject, "错题 " + String(index + 1));
+      var time = firstText(record.updatedAt, record.createdAt, "");
+      return '<article class="item"><div><strong>' + escapeHtml(title) + '</strong><p>' + escapeHtml(firstText(record.questionText, "") + (time ? " · " + time : "")) + '</p></div><button type="button" class="secondary" data-mistake-history-record="' + escapeAttr(record.mistakeId || "") + '">查看解析</button></article>';
+    }).join("") + '</div>' + (state.postgraduateMistakeHistoryLoading ? '<p class="panel-note">正在加载错题本…</p>' : state.postgraduateMistakeHistoryHasMore ? '<button type="button" class="secondary" data-mistake-history-load-more="true">加载更多</button>' : '') + '</section>';
+  }
+
+  function renderPostgraduateMistakeBookItems() {
+    var records = Array.isArray(state.postgraduateMistakeHistory) ? state.postgraduateMistakeHistory : [];
+    if (!records.length && !state.postgraduateMistakeHistoryLoading) {
+      return '<div class="empty-state"><strong>还没有错题记录</strong><p>完成一次错题解析后，题目和 AI 分析会自动保存到这里。</p></div>';
+    }
+    return '<div class="item-list">' + records.map(function (record, index) {
+      var title = firstText(record.subject, "错题 " + String(index + 1));
+      var excerpt = firstText(record.questionText, "未保存题目文本");
+      var time = firstText(record.updatedAt, record.createdAt, "");
+      return '<article class="item"><div><strong>' + escapeHtml(title) + '</strong><p>' + escapeHtml(excerpt) + '</p><small>' + escapeHtml(time) + '</small></div><div class="item-actions"><button type="button" class="secondary" data-mistake-history-record="' + escapeAttr(record.mistakeId || "") + '">查看详情</button><button type="button" class="secondary danger-action" data-mistake-book-delete="' + escapeAttr(record.mistakeId || "") + '">移除错题</button></div></article>';
+    }).join("") + '</div>' + (state.postgraduateMistakeHistoryLoading ? '<p class="panel-note">正在加载错题本…</p>' : state.postgraduateMistakeHistoryHasMore ? '<button type="button" class="secondary" data-mistake-history-load-more="true">加载更多</button>' : '');
+  }
+
+  function openPostgraduateMistakeHistory(recordId) {
+    if (!recordId || !hasUserIdentity()) return;
+    post(endpoints.postgraduateMistakeBookDetail, { userId: state.identity.userId, mistakeId: recordId }).then(function (record) {
+      var result = record && record.resultJson ? JSON.parse(record.resultJson) : null;
+      if (!result || typeof result !== "object") throw new Error("未找到这道错题的解析结果。");
+      state.postgraduateMistakeBookDetail = record;
+      navigateToRoute("postgraduate-mistake-detail");
+    }).catch(function (error) {
+      showMessage("error", "打开历史错题失败", error && error.message ? error.message : "请稍后重试。");
+    });
+  }
+
+  function removePostgraduateMistakeBookEntry(recordId) {
+    if (!recordId || !hasUserIdentity()) return;
+    showConfirmDialog("移除错题", "移除后无法恢复。确认移除这道错题吗？", "确认移除", function () {
+      post(endpoints.postgraduateMistakeBookDelete, { userId: state.identity.userId, mistakeId: recordId }).then(function () {
+        state.postgraduateMistakeHistoryLoaded = false;
+        state.postgraduateMistakeHistory = [];
+        state.postgraduateMistakeHistoryOffset = 0;
+        state.postgraduateMistakeHistoryHasMore = false;
+        state.postgraduateMistakeBookDetail = null;
+        refreshPostgraduateRoadmapProgress();
+        if (state.route === "postgraduate-mistake-detail") {
+          navigateToRoute("postgraduate-mistake-book");
+        } else {
+          ensurePostgraduateMistakeHistory(true);
+          showMessage("info", "错题已移除", "该错题记录已从错题本中删除。");
+        }
+      }).catch(function (error) {
+        showMessage("error", "移除错题失败", error && error.message ? error.message : "请稍后重试。");
+      });
+    }, { danger: true });
+  }
+
   function renderResumePage(item) {
     var leftPanels = resumeFormPanel();
     var rightPanels = resumeListPanel();
@@ -3602,9 +4099,7 @@
 
   function resumeWorkspaceNotice() {
     if (!state.resumeMessage || !state.resumeMessage.text) return "";
-    return '<div class="resume-workspace-notice ' + escapeAttr(firstText(state.resumeMessage.type, "info")) +
-      '" role="status"><span aria-hidden="true"></span><p>' +
-      escapeHtml(state.resumeMessage.text) + '</p></div>';
+    return inlineNoticeHtml("提示", state.resumeMessage.text, firstText(state.resumeMessage.type, "info"), "resumeMessage");
   }
 
   function resumeHasLinkedFile(item) {
@@ -4089,9 +4584,7 @@
     if (!state.diagnosisMessage) {
       return "";
     }
-    return '<section class="diagnosis-workspace-notice ' + escapeAttr(state.diagnosisMessage.type || "info") +
-      '" role="status"><span aria-hidden="true"></span><p>' +
-      escapeHtml(state.diagnosisMessage.text) + '</p></section>';
+    return inlineNoticeHtml("提示", state.diagnosisMessage.text, state.diagnosisMessage.type || "info", "diagnosisMessage");
   }
 
   function diagnosisFormPanel(resumes, selected, draft) {
@@ -6564,8 +7057,8 @@
       '<section class="panorama-setting-step"><div class="panorama-step-number">02</div><div><h5>练习强度</h5>' +
       '<label>练习难度<select id="panoramaDifficulty"><option value="Easy">入门</option><option value="Normal" selected>常规</option><option value="Hard">进阶</option></select></label>' +
       '<p>入门偏基础，常规覆盖综合能力，进阶会增加追问压力。</p></div></section>' +
-      (state.panoramaError ? '<p class="panorama-error">' + escapeHtml(state.panoramaError) + '</p>' : '') +
-      (state.panoramaNotice ? '<p class="panorama-notice">' + escapeHtml(state.panoramaNotice) + '</p>' : '') +
+      (state.panoramaError ? inlineNoticeHtml("提示", state.panoramaError, "warning", "panoramaError") : '') +
+      (state.panoramaNotice ? inlineNoticeHtml("提示", state.panoramaNotice, "info", "panoramaNotice") : '') +
       renderPanoramaMediaDiagnostics() +
       '<div class="panorama-device-actions"><span>设备检查</span><div class="actions-row"><button type="button" data-panorama-action="camera" ' + (state.panoramaCameraState === "requesting" ? "disabled" : "") + '>' +
       (cameraReady ? "重新连接摄像头" : "启用摄像头和麦克风") + '</button>' +
@@ -6713,8 +7206,7 @@
       '<div class="interview-section-heading"><div><span class="interview-section-kicker">面试设置</span>' +
       '<h3>准备一次有针对性的模拟面试</h3><p>确认练习依据后，AI 面试官会围绕真实岗位和个人情况连续提问。</p></div>' +
       '<span class="interview-format-badge">' + (state.interviewBusy ? "正在准备面试" : "文字问答 · 7 题") + '</span></div>' +
-      (state.interviewError ? '<div class="interview-setup-notice" role="alert"><span aria-hidden="true">!</span><p>' +
-        escapeHtml(state.interviewError) + '</p></div>' : '') +
+      (state.interviewError ? inlineNoticeHtml("提示", state.interviewError, "warning", "interviewError") : '') +
       '<div class="interview-preparation-layout"><div class="interview-setup-fields">' +
       '<section class="interview-setup-step"><div class="interview-step-heading"><span>01</span><div><h4>确认目标岗位</h4>' +
       '<p>岗位越明确，问题越贴近真实面试场景。</p></div></div>' +
@@ -7921,9 +8413,11 @@
   }
 
   function renderFeatureShell(item, title, summary, innerHtml) {
+    innerHtml = prependPageOperationNotices(innerHtml);
     if (window.CYANCRUISE_COMPONENTS && window.CYANCRUISE_COMPONENTS.pageShell
         && typeof window.CYANCRUISE_COMPONENTS.pageShell.feature === "function") {
       window.CYANCRUISE_COMPONENTS.pageShell.feature(item, title, summary, innerHtml, pageShellContext());
+      activatePageOperationNotices();
       return;
     }
     els.pageHost.innerHTML =
@@ -7932,12 +8426,15 @@
       pageHeaderActions(item) +
       '</header>' +
       '<div class="feature-content">' + innerHtml + '</div>';
+    activatePageOperationNotices();
   }
 
   function renderShell(item, innerHtml) {
+    innerHtml = prependPageOperationNotices(innerHtml);
     if (window.CYANCRUISE_COMPONENTS && window.CYANCRUISE_COMPONENTS.pageShell
         && typeof window.CYANCRUISE_COMPONENTS.pageShell.shell === "function") {
       window.CYANCRUISE_COMPONENTS.pageShell.shell(item, innerHtml, pageShellContext());
+      activatePageOperationNotices();
       return;
     }
     var debugMeta = "";
@@ -7957,13 +8454,41 @@
       '<p class="lead">' + escapeHtml(item.summary) + '</p></div>' +
       pageHeaderActions(item) +
       '</header><div class="panel-grid">' + innerHtml + '</div>';
+    activatePageOperationNotices();
+  }
+
+  function prependPageOperationNotices(innerHtml) {
+    var notices = [];
+    var content = String(innerHtml || "").replace(/<section class="[^"]*\bunified-notice\b[^"]*"[^>]*>[\s\S]*?<\/section>/g, function (notice) {
+      notices.push(notice);
+      return "";
+    });
+    return notices.length ? '<div class="page-operation-notices">' + notices.join("") + '</div>' + content : content;
+  }
+
+  function activatePageOperationNotices() {
+    var timers = state.pageNoticeTimers || (state.pageNoticeTimers = {});
+    Object.keys(timers).forEach(function (key) { window.clearTimeout(timers[key]); });
+    state.pageNoticeTimers = {};
+    Array.prototype.forEach.call(els.pageHost.querySelectorAll("[data-page-operation-notice]"), function (notice, index) {
+      var type = notice.getAttribute("data-notice-type") || (notice.classList.contains("error") ? "error" : "warning");
+      if (type === "error") return;
+      var key = "notice-" + index;
+      notice.setAttribute("data-page-notice-timer", key);
+      state.pageNoticeTimers[key] = window.setTimeout(function () {
+        var stateKey = notice.getAttribute("data-notice-state-key");
+        if (stateKey && Object.prototype.hasOwnProperty.call(state, stateKey)) state[stateKey] = null;
+        if (notice.parentNode) notice.parentNode.removeChild(notice);
+        delete state.pageNoticeTimers[key];
+      }, type === "success" ? 3000 : 5000);
+    });
   }
 
   function pageHeaderActions(item) {
     var interviewHome = interviewHistoryHomeRoute(item.key);
     if (interviewHome) {
       return '<div class="page-actions"><button type="button" class="secondary" data-interview-history-home="' +
-        escapeHtml(interviewHome) + '" data-link="' + escapeHtml(interviewHome) + '">返回</button></div>';
+        escapeHtml(interviewHome) + '">返回</button></div>';
     }
     if (window.CYANCRUISE_COMPONENTS && window.CYANCRUISE_COMPONENTS.pageShell
         && typeof window.CYANCRUISE_COMPONENTS.pageShell.actions === "function") {
@@ -8029,6 +8554,8 @@
       "postgraduate-school": "postgraduate",
       "postgraduate-plan": "postgraduate",
       "postgraduate-mistake": "postgraduate",
+      "postgraduate-mistake-book": "postgraduate-mistake",
+      "postgraduate-mistake-detail": "postgraduate-mistake-book",
       "postgraduate-reexam": "postgraduate",
       "postgraduate-recommendation": "",
       "recommendation-ranking": "postgraduate-recommendation",
@@ -8256,6 +8783,48 @@
       return;
     }
     closeAppSelects();
+    var mistakeBookDeleteTarget = findAttributeTarget(event.target, "data-mistake-book-delete");
+    if (mistakeBookDeleteTarget) {
+      event.preventDefault();
+      removePostgraduateMistakeBookEntry(mistakeBookDeleteTarget.getAttribute("data-mistake-book-delete"));
+      return;
+    }
+    var mistakeHistoryTarget = findAttributeTarget(event.target, "data-mistake-history-record");
+    if (mistakeHistoryTarget) {
+      event.preventDefault();
+      openPostgraduateMistakeHistory(mistakeHistoryTarget.getAttribute("data-mistake-history-record"));
+      return;
+    }
+    var mistakeBookRouteTarget = findAttributeTarget(event.target, "data-mistake-book-route");
+    if (mistakeBookRouteTarget) {
+      event.preventDefault();
+      navigateToRoute(mistakeBookRouteTarget.getAttribute("data-mistake-book-route"));
+      return;
+    }
+    var mistakeHistoryLoadMoreTarget = findAttributeTarget(event.target, "data-mistake-history-load-more");
+    if (mistakeHistoryLoadMoreTarget) {
+      event.preventDefault();
+      state.postgraduateMistakeHistoryLoaded = false;
+      ensurePostgraduateMistakeHistory(false);
+      return;
+    }
+    var dismissInlineNoticeTarget = findAttributeTarget(event.target, "data-dismiss-inline-notice");
+    if (dismissInlineNoticeTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      var noticeStateKey = dismissInlineNoticeTarget.getAttribute("data-dismiss-inline-notice");
+      if (noticeStateKey && Object.prototype.hasOwnProperty.call(state, noticeStateKey)) {
+        state[noticeStateKey] = null;
+      }
+      var inlineNotice = dismissInlineNoticeTarget.closest(".unified-notice");
+      var pageNoticeTimer = inlineNotice && inlineNotice.getAttribute("data-page-notice-timer");
+      if (pageNoticeTimer && state.pageNoticeTimers && state.pageNoticeTimers[pageNoticeTimer]) {
+        window.clearTimeout(state.pageNoticeTimers[pageNoticeTimer]);
+        delete state.pageNoticeTimers[pageNoticeTimer];
+      }
+      if (inlineNotice && inlineNotice.parentNode) inlineNotice.parentNode.removeChild(inlineNotice);
+      return;
+    }
     var dismissFurtherStudyMessageTarget = findAttributeTarget(event.target, "data-dismiss-further-study-message");
     if (dismissFurtherStudyMessageTarget) {
       event.preventDefault();
@@ -8385,6 +8954,13 @@
       event.preventDefault();
       event.stopPropagation();
       openResumeDiagnosisFor(diagnosisResumeTarget.getAttribute("data-diagnose-resume"));
+      return;
+    }
+    var interviewHistoryHomeTarget = findAttributeTarget(event.target, "data-interview-history-home");
+    if (interviewHistoryHomeTarget) {
+      event.preventDefault();
+      event.stopPropagation();
+      returnToInterviewHistoryHome(interviewHistoryHomeTarget.getAttribute("data-interview-history-home"));
       return;
     }
     var target = findPageLinkTarget(event.target);
@@ -8682,6 +9258,42 @@
     window.setTimeout(function () {
       window.scrollTo(0, 0);
     }, 0);
+  }
+
+  function returnToInterviewHistoryHome(route) {
+    var key = normalizeRoute(route);
+    if (key === "interview") {
+      nextInterviewOperationToken();
+      stopAiInterviewSpeech();
+      state.activeInterview = null;
+      state.interviewMessages = [];
+      state.interviewReport = null;
+      state.interviewCurrentQuestion = null;
+      state.interviewAnswerCount = 0;
+      state.interviewDraft = "";
+      state.interviewEnded = false;
+      state.interviewViewMode = "practice";
+    } else if (key === "interview-panorama") {
+      nextPanoramaOperationToken();
+      stopPanoramaMedia();
+      state.panoramaSession = null;
+      state.panoramaQuestion = null;
+      state.panoramaTranscript = "";
+      state.panoramaLastSpokenQuestion = null;
+      state.panoramaMessages = [];
+      state.panoramaViewMode = "practice";
+      state.panoramaReport = null;
+      state.panoramaError = null;
+      state.panoramaNotice = null;
+      state.panoramaMediaDiagnostics = [];
+      state.panoramaAnswerCount = 0;
+      state.panoramaSeconds = 0;
+      state.panoramaDeadlineAt = null;
+      state.panoramaEnded = false;
+      state.panoramaDifficulty = "Normal";
+      state.panoramaCameraState = "idle";
+    }
+    navigateToRoute(key);
   }
 
   function navigateBackToRoute(route) {
@@ -9745,8 +10357,10 @@
         && typeof window.CYANCRUISE_COMPONENTS.statusPanel.render === "function") {
       return window.CYANCRUISE_COMPONENTS.statusPanel.render(title, text, type, { escapeHtml: escapeHtml });
     }
-    var cls = type === "warning" || type === "pending" ? " warning" : "";
-    return '<section class="state-card' + cls + '"><h3>' + escapeHtml(title) + '</h3><p>' + escapeHtml(text) + "</p></section>";
+    var cls = type === "warning" || type === "pending" ? " warning" : (type === "error" ? " error" : " info");
+    return '<section class="state-card unified-notice' + cls + '" role="status" data-page-operation-notice data-notice-type="' + escapeAttr(type === "info" ? "info" : type) + '" data-notice-state-key="">' +
+      '<div class="notice-copy"><strong>' + escapeHtml(title) + '</strong><span>' + escapeHtml(text) + '</span></div>' +
+      '<button type="button" class="notice-close" data-dismiss-inline-notice aria-label="关闭提示">&times;</button></section>';
   }
 
   function field(id, label, type, value, options) {
@@ -10003,7 +10617,7 @@
     }
     if (success) {
       state.messageTimer = window.setTimeout(hideMessage, 3000);
-    } else if (type === "info") {
+    } else if (type === "warning" || type === "info") {
       state.messageTimer = window.setTimeout(hideMessage, 5000);
     }
   }
@@ -10274,6 +10888,8 @@
       "postgraduate-school": all.postgraduate.school,
       "postgraduate-plan": all.postgraduate.plan,
       "postgraduate-mistake": all.postgraduate.mistake,
+      "postgraduate-mistake-book": all.postgraduate.mistake,
+      "postgraduate-mistake-detail": all.postgraduate.mistake,
       "postgraduate-reexam": all.postgraduate.reexam,
       "recommendation-ranking": all.recommendation.diagnose,
       "recommendation-background": all.recommendation.plan,
@@ -10318,7 +10934,7 @@
     } else if (taskType === all.recommendation.polish) {
       setDraftField("recDocumentType", draft.documentType); setDraftField("recPolishMajor", draft.targetMajor); setDraftField("recHighlights", draft.highlights); setDraftField("recDraft", draft.draft);
     } else if (taskType === all.recommendation.letter) {
-      setDraftField("recTutorName", draft.tutorName); setDraftField("recTutorSchool", draft.targetSchool); setDraftField("recTutorMajor", draft.targetMajor);
+      setDraftField("recTutorName", draft.tutorName); setDraftField("recCurrentSchool", draft.currentSchool); setDraftField("recTutorSchool", draft.targetSchool); setDraftField("recTutorMajor", draft.targetMajor);
       setDraftField("recResearchDirection", draft.researchDirection); setDraftField("recPersonalBackground", draft.personalBackground);
     } else if (taskType === all.studyAbroad.profile) {
       setDraftField("saCountry", draft.countryOrRegion); setDraftField("saDegree", draft.targetDegree); setDraftField("saTargetMajor", draft.targetMajor); setDraftField("saSchool", draft.school); setDraftField("saMajor", draft.major); setDraftField("saGpa", draft.gpa); setDraftField("saLanguageScore", draft.languageScore); setDraftField("saBudget", draft.budget); setDraftField("saBackground", draft.background); setDraftField("saPreference", draft.preference);
@@ -10368,10 +10984,18 @@
       return;
     }
     rememberFurtherStudyDraft(furtherStudyDraftTasks.postgraduate[type], body && body.request);
-    state.postgraduateLoading = type; state.postgraduateMessage = null;
+    state.postgraduateLoading = type;
+    setFurtherStudyMessage("postgraduateMessage", "info", "正在分析", "已收到你的提交，正在生成结果，请稍候。" );
     renderPage(pageByKey[state.route] || pageByKey.postgraduate);
+    markCurrentFurtherStudySubmitPending();
     runFurtherStudyService(endpoint, body).then(function (result) {
-      applyResult(result || {}); setFurtherStudyMessage("postgraduateMessage", "info", "已生成", "分析结果已更新。");
+      applyResult(result || {});
+      if (type === "mistake") {
+        state.postgraduateMistakeHistoryLoaded = false;
+        ensurePostgraduateMistakeHistory(true);
+      }
+      refreshPostgraduateRoadmapProgress();
+      setFurtherStudyMessage("postgraduateMessage", "info", "已生成", "分析结果已更新。");
     }).catch(function (error) {
       setFurtherStudyMessage("postgraduateMessage", "warning", "暂时无法生成", error && error.message ? error.message : "请稍后重试。");
     }).then(function () { state.postgraduateLoading = ""; renderPage(pageByKey[state.route] || pageByKey.postgraduate); });
@@ -10385,10 +11009,14 @@
       return;
     }
     rememberFurtherStudyDraft(furtherStudyDraftTasks.recommendation[type], body && body.request);
-    state.recommendationLoading = type; state.recommendationMessage = null;
+    state.recommendationLoading = type;
+    setFurtherStudyMessage("recommendationMessage", "info", "正在分析", "已收到你的提交，正在生成结果，请稍候。" );
     renderPage(pageByKey[state.route] || pageByKey["postgraduate-recommendation"]);
+    markCurrentFurtherStudySubmitPending();
     runFurtherStudyService(endpoint, body).then(function (result) {
-      applyResult(result || {}); setFurtherStudyMessage("recommendationMessage", "info", "已生成", "分析结果已更新。");
+      applyResult(result || {});
+      refreshRecommendationRoadmapProgress();
+      setFurtherStudyMessage("recommendationMessage", "info", "已生成", "分析结果已更新。");
     }).catch(function (error) {
       setFurtherStudyMessage("recommendationMessage", "warning", "暂时无法生成", error && error.message ? error.message : "请稍后重试。");
     }).then(function () { state.recommendationLoading = ""; renderPage(pageByKey[state.route] || pageByKey["postgraduate-recommendation"]); });
@@ -10402,10 +11030,14 @@
       return;
     }
     rememberFurtherStudyDraft(furtherStudyDraftTasks.studyAbroad[type], body && body.request);
-    state.studyAbroadLoading = type; state.studyAbroadMessage = null;
+    state.studyAbroadLoading = type;
+    setFurtherStudyMessage("studyAbroadMessage", "info", "正在分析", "已收到你的提交，正在生成结果，请稍候。" );
     renderPage(pageByKey[state.route] || pageByKey["study-abroad"]);
+    markCurrentFurtherStudySubmitPending();
     runFurtherStudyService(endpoint, body).then(function (result) {
-      applyResult(result || {}); setFurtherStudyMessage("studyAbroadMessage", "info", "已生成", "分析结果已更新。");
+      applyResult(result || {});
+      refreshStudyAbroadRoadmapProgress();
+      setFurtherStudyMessage("studyAbroadMessage", "info", "已生成", "分析结果已更新。");
     }).catch(function (error) {
       setFurtherStudyMessage("studyAbroadMessage", "warning", "暂时无法生成", error && error.message ? error.message : "请稍后重试。");
     }).then(function () { state.studyAbroadLoading = ""; renderPage(pageByKey[state.route] || pageByKey["study-abroad"]); });

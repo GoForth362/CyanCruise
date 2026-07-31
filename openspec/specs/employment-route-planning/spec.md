@@ -1,29 +1,22 @@
 ## Purpose
 
 定义 CyanCruise 就业路线规划能力，包括可接入智能体的路线图契约、规则版兜底生成、阶段路线图、规划周期、每日建议、本周计划、进度勾选、首页今日行动联动和刷新边界。
-
 ## Requirements
-
 ### Requirement: Agent-ready employment route plan
 
-CyanCruise SHALL provide an agent-ready employment route plan that can be generated from user profile data and displayed as structured long-term, weekly, and daily guidance.
+CyanCruise SHALL 提供可接入智能服务的就业路线规划。运行时配置了任务流编码时 SHALL 优先直连已发布任务流；否则 MAY 使用智能体编码兼容调用。智能结果 SHALL 映射为现有 `CareerPlanRecordDto` 结构。
 
-#### Scenario: Rule fallback generates route plan
+#### Scenario: 任务流返回包装后的路线
 
-- **WHEN** 用户进入 `career-plan` 页面并点击生成或刷新路线图
-- **THEN** 后端 SHALL 在没有真实规划智能体时生成规则版路线图
-- **AND** 路线图 SHALL 包含目标岗位、1 年或 3 年大阶段、小阶段、本周计划和每日建议
+- **WHEN** 就业任务流通过 `data`、`result`、`answer` 或 `output` 返回路线，或将路线编码为 JSON 字符串
+- **THEN** 后端 SHALL 提取满足路线契约的最终对象
+- **AND** 前端 SHALL NOT 因智能服务来源变化而修改接口结构
 
-#### Scenario: Agent integration can reuse contract
+#### Scenario: 智能体只返回调用过程
 
-- **WHEN** 后续接入规划智能体
-- **THEN** 智能体 SHALL 返回与规则版路线图相同的 `CareerPlanRecordDto` 结构
-- **AND** 前端 SHALL NOT 需要为了智能体来源重写页面结构
-
-#### Scenario: Agent can specialize by profile
-
-- **WHEN** 用户画像包含不同学校、专业、身份阶段、目标岗位、简历状态或优势经历
-- **THEN** 接入后的智能体 SHALL be able to generate differentiated route stages, weekly plans, daily suggestions, and checkpoints based on those profile fields
+- **WHEN** 就业智能体只返回思考、工具调用参数或用户输入回显
+- **THEN** 后端 SHALL 拒绝将其保存为就业路线
+- **AND** SHALL 保留已有路线和完成状态
 
 ### Requirement: Career plan page displays full route
 
@@ -119,3 +112,4 @@ CyanCruise SHALL keep users oriented when they enter and leave route-related pag
 - **WHEN** 用户从就业首页某个位置进入路线规划、资源、简历或面试等子页面后点击返回
 - **THEN** 页面 SHALL return to the source page where the user came from
 - **AND** 页面 SHOULD restore the previous scroll position when possible
+

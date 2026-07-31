@@ -11,6 +11,8 @@
       page("postgraduate-school", "择校择专业", "available", "user", "输入本科学校、成绩、英语水平和期望地区，生成稳、冲、保三档择校建议。", ["postgraduateSchoolRecommend"], { defaultNav: false }),
       page("postgraduate-plan", "复习计划", "available", "user", "按目标院校、考试日期、科目和每周时间生成基础、提高、冲刺三轮计划。", ["postgraduatePlanGenerate"], { defaultNav: false }),
       page("postgraduate-mistake", "错题解析", "available", "user", "粘贴错题文本，整理答案思路、考点知识树、错因和同类题。", ["postgraduateMistakeAnalyze"], { defaultNav: false }),
+      page("postgraduate-mistake-book", "错题本", "available", "user", "查看并复盘已保存的错题与解析。", ["postgraduateMistakeBookList"], { defaultNav: false }),
+      page("postgraduate-mistake-detail", "错题详情", "available", "user", "查看错题原文、错误答案和 AI 解析。", ["postgraduateMistakeBookDetail"], { defaultNav: false }),
       page("postgraduate-reexam", "复试准备", "available", "user", "围绕目标院校、初试状态、材料和项目经历生成复试准备清单。", ["postgraduateReexamPrepare"], { defaultNav: false }),
       page("postgraduate-recommendation", "保研陪伴", "available", "user", "围绕绩点排名、背景提升、营校投递、材料精修和导师联系完成保研规划。", ["recommendationDiagnose", "recommendationPlanGenerate", "recommendationDocumentPolish", "recommendationTutorLetterGenerate"]),
       page("recommendation-ranking", "排名监控", "available", "user", "录入绩点、排名、英语和成果，诊断当前保研竞争力与资格风险。", ["recommendationDiagnose"], { defaultNav: false }),

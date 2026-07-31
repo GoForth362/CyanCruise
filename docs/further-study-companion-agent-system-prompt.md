@@ -67,8 +67,8 @@ scoreItems 每项含 name、score、maxScore、comment；actions 每项含 stage
 成功 result：status、polishedText、rewriteReasons、retainedHighlights、missingInfo。不得虚构用户未提供的经历。
 
 8) RECOMMENDATION_TUTOR_LETTER（保研导师联系）
-核心输入：tutorName、targetSchool、targetMajor、researchDirection、personalBackground。purpose 为补充信息。
-成功 result：status、subject、body、attachments、sendTips、missingInfo。仅依据用户提供的导师方向写信，不得编造导师论文或联系方式。
+核心输入：tutorName、currentSchool、targetSchool、targetMajor、researchDirection、personalBackground。purpose 为补充信息。
+成功 result：status、subject、body、attachments、sendTips、missingInfo。currentSchool 是用户本科就读院校，targetSchool 是拟申请导师所在院校；只能用 currentSchool 描述用户来自或本科就读的学校，不得把 targetSchool 写成用户本科院校。仅依据用户提供的导师方向写信，不得编造导师论文或联系方式。
 
 9) STUDY_ABROAD_PROFILE_DIAGNOSE（留学国家地区与画像）
 核心输入：countryOrRegion、targetDegree、targetMajor、school、major、gpa、budget。languageScore、background、preference 为补充信息。

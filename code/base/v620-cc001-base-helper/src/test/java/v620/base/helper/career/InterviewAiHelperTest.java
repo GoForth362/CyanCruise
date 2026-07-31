@@ -28,7 +28,8 @@ class InterviewAiHelperTest {
         InterviewReportDto report = helper.basicRulesReport(session,
                 "[候选人] 我负责接口开发并完成上线。", 1);
 
-        assertTrue(question.startsWith("【基础练习题·进阶】"));
+        assertTrue(question.startsWith("请描述一次你遇到困难或计划变化的经历"));
+        assertTrue(!question.contains("基础练习题"));
         assertEquals(InterviewReportDto.ANALYSIS_SOURCE_BASIC_RULES, report.getAnalysisSource());
         assertEquals(Integer.valueOf(1), report.getTotalQuestions());
         assertTrue(report.getTextSummary().contains("不是 AI 深度分析"));

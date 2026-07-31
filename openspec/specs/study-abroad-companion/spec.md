@@ -2,15 +2,17 @@
 
 ## Purpose
 定义 CyanCruise 留学陪伴能力，覆盖画像诊断、语言规划、选校定位、个人陈述主线、签证网申清单和对应 Cosmic WebAPI 契约。
-
 ## Requirements
-
 ### Requirement: 提供留学陪伴入口
-CyanCruise SHALL 提供留学陪伴页面，支持用户围绕国家/地区选择、语言考试、软实力提升、选校定位、文书撰写、签证与网申完成留学规划。用户可见文案 SHALL 使用普通中文，并在出现 PS、CV、RL 等文书类型时解释其含义。
+CyanCruise SHALL 提供留学陪伴页面，支持用户围绕国家/地区选择、语言考试、软实力提升、选校定位、文书撰写、签证与网申完成留学规划。首页 SHALL 使用不重复的阶段行动卡片说明目的地判断、语言准备、选校梯度、文书主线和签证网申之间的顺序，并为每一阶段提供明确入口。页面 SHALL 使用深造陪伴统一青色体系中的偏冷蓝青色调。用户可见文案 SHALL 使用普通中文，并在出现 PS、CV、RL 等文书类型时解释其含义。
 
 #### Scenario: 打开留学页面
 - **WHEN** 用户打开 `study-abroad` 路由
-- **THEN** 页面显示留学画像诊断、语言考试规划、选校定位、个人陈述黄金线和签证网申入口
+- **THEN** 页面以连续阶段行动卡片显示国家地区、语言考试、选校定位、个人陈述主线和签证网申入口，且不得再用另一排同名按钮重复展示入口
+
+#### Scenario: 使用键盘进入留学功能
+- **WHEN** 用户使用键盘聚焦任一留学阶段行动卡片并触发
+- **THEN** 页面进入该卡片对应的既有留学子路由，并显示清晰的焦点反馈
 
 #### Scenario: 身份缺失时不调用受保护接口
 - **WHEN** 页面无法解析当前用户身份
@@ -59,15 +61,16 @@ CyanCruise SHALL 提供留学陪伴页面，支持用户围绕国家/地区选�
 - **THEN** WebAPI 返回该用户本次请求对应的结构化结果，且错误提示使用普通中文
 
 ### Requirement: Persist study abroad companion records
-Study abroad companion WebAPI SHALL save the request and result as the current user's further-study companion record after generating profile diagnosis, language plans, school positioning, personal statement outlines, or visa and application checklists. The saved record SHALL mark direction as study abroad and SHALL include the specific record type.
+Study abroad companion WebAPI SHALL save request and successful result for all five analysis tasks as a current-user study-abroad record before returning the result.
 
-#### Scenario: Save study abroad profile diagnosis
-- **WHEN** a user generates study abroad profile diagnosis
-- **THEN** the WebAPI SHALL persist the request and diagnosis result as a study abroad companion record
+#### Scenario: 保存留学分析结果
+- **WHEN** 用户成功完成任一留学分析
+- **THEN** 系统 SHALL 保存本次请求和结构化结果，且记录只属于该用户
 
-#### Scenario: Save school positioning result
-- **WHEN** a user generates school positioning
-- **THEN** the WebAPI SHALL persist the positioning request and school option result for that user
+#### Scenario: 再次进入留学功能页面
+- **WHEN** 当前用户此前已成功生成国家地区、语言考试、选校定位、文书主线或签证网申结果并再次进入对应页面
+- **THEN** 页面 SHALL 按当前用户、`STUDY_ABROAD` 方向及对应任务类型读取最新一条成功记录
+- **AND** 显示该记录中的结构化结果；没有历史记录时保持结果区域为空
 
 ### Requirement: Manage study abroad documents and visa checklist status
 Study abroad companion SHALL support maintaining personal statements, recommendation letters, resumes, visa materials, and online application checklist status for the current user. The system SHALL save material records, file references, and history events.
@@ -79,4 +82,38 @@ Study abroad companion SHALL support maintaining personal statements, recommenda
 #### Scenario: Save visa checklist status
 - **WHEN** a user updates visa or online application checklist status
 - **THEN** the system SHALL persist the status change and append a history event
+
+### Requirement: 留学页面分析由真实升学陪伴智能体生成
+系统 SHALL 将留学画像诊断、语言计划、选校定位、个人陈述主线和签证网申清单分别映射为 `STUDY_ABROAD_PROFILE_DIAGNOSE`、`STUDY_ABROAD_LANGUAGE_PLAN`、`STUDY_ABROAD_SCHOOL_POSITION`、`STUDY_ABROAD_STATEMENT_OUTLINE` 和 `STUDY_ABROAD_VISA_CHECKLIST`，并由统一升学陪伴智能体生成结果。
+
+#### Scenario: 生成留学页面结果
+- **WHEN** 当前用户提交任一留学页面分析请求
+- **THEN** 系统 SHALL 调用升学陪伴智能体并返回对应的现有结果 DTO
+- **AND** SHALL NOT 调用本地 Helper 生成规则结果
+
+#### Scenario: 留学智能分析失败
+- **WHEN** 智能体要求补充资料、调用失败或返回无效结构
+- **THEN** 系统 SHALL 返回普通中文提示
+- **AND** SHALL NOT 返回默认准备度、默认计划、默认院校、默认文书或默认清单
+
+### Requirement: 留学全部分析表单保留真实输入
+
+系统 SHALL 对申请画像、语言考试、选校定位、文书主线和签证网申五项表单在调用智能体前保存真实请求，并在页面重绘、分析失败、刷新和重新进入页面时恢复该用户该任务的最后一次输入。
+
+#### Scenario: 语言计划失败后保留备考信息
+
+- **WHEN** 用户提交语言考试计划且智能体未返回有效结果
+- **THEN** 页面 SHALL 保留考试类型、当前分数、目标分数、考试日期、每周时间和薄弱项
+- **AND** 用户刷新页面后仍可恢复该任务的最近输入
+
+### Requirement: 留学陪伴 SHALL 校验各任务核心资料
+留学画像、语言计划、选校定位、文书主线和签证网申 SHALL 在调用智能体前仅校验完成该任务的核心页面字段；软实力、薄弱单项和偏好等补充资料为空 SHALL 由结果中的补充建议说明，不得阻止生成。
+
+#### Scenario: 语言计划缺少目标成绩
+- **WHEN** 用户提交语言计划且目标成绩或考试日期为空
+- **THEN** 页面 SHALL 提示对应中文字段且不得调用智能体
+
+#### Scenario: 文书主线资料齐全
+- **WHEN** 用户提交目标专业、个人故事和学术或项目经历
+- **THEN** 页面 SHALL 调用智能体并展示其返回的文书主线和追问项
 

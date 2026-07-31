@@ -128,8 +128,6 @@ public class DebugApplication {
                 "CC001_AGENT_PLATFORM_STUDY_ABROAD_AGENTNUMBER");
         setConfiguredProperty("cc001.agent.platform.study.companion.enabled",
                 "CC001_AGENT_PLATFORM_STUDY_COMPANION_ENABLED");
-        setConfiguredProperty("cc001.agent.platform.study.companion.agentNumber",
-                "CC001_AGENT_PLATFORM_STUDY_COMPANION_AGENTNUMBER");
         setConfiguredProperty("cc001.agent.platform.study.companion.taskFlowCode",
                 "CC001_AGENT_PLATFORM_STUDY_COMPANION_TASKFLOWCODE");
     }

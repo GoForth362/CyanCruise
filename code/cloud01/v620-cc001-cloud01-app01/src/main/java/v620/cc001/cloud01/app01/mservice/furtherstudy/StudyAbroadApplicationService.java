@@ -32,7 +32,7 @@ public class StudyAbroadApplicationService {
         this.helper = new StudyAbroadCompanionService();
         this.draftStorage = CyanCruiseStorageFactory.studyCenterStorage();
         this.recordStorage = CyanCruiseStorageFactory.furtherStudyCompanionStorage();
-        this.analyzer = AgentPlatformFurtherStudyCompanionAnalyzer.fromSystemProperties(recordStorage);
+        this.analyzer = AgentPlatformFurtherStudyCompanionAnalyzer.fromSystemProperties();
     }
 
     public StudyAbroadApplicationService(StudyAbroadCompanionService helper) {

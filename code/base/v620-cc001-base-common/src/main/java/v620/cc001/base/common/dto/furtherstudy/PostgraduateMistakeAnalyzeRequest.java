@@ -11,6 +11,15 @@ public class PostgraduateMistakeAnalyzeRequest {
     public void setSubject(String subject) { this.subject = subject; }
     public String getQuestionText() { return questionText; }
     public void setQuestionText(String questionText) { this.questionText = questionText; }
+
+    /**
+     * Backward-compatible aliases for the published task flow.  Earlier
+     * versions called the same field "mistakeText" or "question"; exposing
+     * them keeps an already-published flow from treating a populated stem as
+     * missing while the WebAPI continues to use questionText.
+     */
+    public String getMistakeText() { return questionText; }
+    public String getQuestion() { return questionText; }
     public String getWrongAnswer() { return wrongAnswer; }
     public void setWrongAnswer(String wrongAnswer) { this.wrongAnswer = wrongAnswer; }
     public String getTargetExam() { return targetExam; }

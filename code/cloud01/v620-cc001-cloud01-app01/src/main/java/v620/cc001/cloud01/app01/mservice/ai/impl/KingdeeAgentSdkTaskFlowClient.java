@@ -233,6 +233,21 @@ public class KingdeeAgentSdkTaskFlowClient implements AgentPlatformTaskFlowClien
         if (output == null || output.isEmpty()) {
             return null;
         }
+        String businessEnvelope = null;
+        for (String value : output.values()) {
+            String normalized = normalizedAnswer(value);
+            if (isFurtherStudyEnvelope(normalized)
+                    && (businessEnvelope == null || normalized.length() > businessEnvelope.length())) {
+                businessEnvelope = normalized;
+            }
+        }
+        if (hasText(businessEnvelope)) {
+            return businessEnvelope;
+        }
+        String composedEnvelope = composedFurtherStudyEnvelope(output);
+        if (hasText(composedEnvelope)) {
+            return composedEnvelope;
+        }
         String preferred = keyedValue(output, new String[] {"answer", "promptoutput", "output"});
         if (hasText(preferred)) {
             return preferred;
@@ -256,6 +271,61 @@ public class KingdeeAgentSdkTaskFlowClient implements AgentPlatformTaskFlowClien
         }
         String secondary = keyedValue(output, new String[] {"result", "content", "message"});
         return hasText(secondary) ? secondary : longestValue;
+    }
+
+    private String composedFurtherStudyEnvelope(Map<String, String> output) {
+        String taskType = scalarOutput(output, "tasktype");
+        String status = scalarOutput(output, "status");
+        String resultValue = keyedValue(output, new String[] {"result"});
+        if (!hasText(taskType) || !hasText(status) || !hasText(resultValue)) {
+            return null;
+        }
+        try {
+            String normalizedResult = normalizedAnswer(resultValue);
+            com.fasterxml.jackson.databind.JsonNode result = MAPPER.readTree(normalizedResult);
+            if (result == null || !result.isObject()) {
+                return null;
+            }
+            com.fasterxml.jackson.databind.node.ObjectNode root = MAPPER.createObjectNode();
+            root.put("taskType", taskType);
+            root.put("status", status);
+            root.set("result", result);
+            return MAPPER.writeValueAsString(root);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String scalarOutput(Map<String, String> output, String key) {
+        String value = keyedValue(output, new String[] {key});
+        if (!hasText(value)) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.length() >= 2 && trimmed.charAt(0) == '"'
+                && trimmed.charAt(trimmed.length() - 1) == '"') {
+            try {
+                return MAPPER.readValue(trimmed, String.class).trim();
+            } catch (Exception ignored) {
+                return trimmed;
+            }
+        }
+        return trimmed;
+    }
+
+    private boolean isFurtherStudyEnvelope(String candidate) {
+        if (!hasText(candidate)) {
+            return false;
+        }
+        try {
+            com.fasterxml.jackson.databind.JsonNode root = MAPPER.readTree(candidate);
+            return root != null && root.isObject()
+                    && root.has("taskType") && root.get("taskType").isTextual()
+                    && root.has("status") && root.get("status").isTextual()
+                    && root.has("result") && root.get("result").isObject();
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private String keyedValue(Map<String, String> output, String[] keys) {

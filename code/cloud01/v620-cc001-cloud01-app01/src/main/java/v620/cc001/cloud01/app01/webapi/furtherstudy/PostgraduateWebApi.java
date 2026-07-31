@@ -8,6 +8,9 @@ import kd.bos.openapi.common.custom.annotation.ApiRequestBody;
 import kd.bos.openapi.common.custom.annotation.ApiResponseBody;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeAnalysisResult;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeAnalyzeRequest;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookEntryDto;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookPageDto;
+import v620.cc001.base.common.dto.furtherstudy.PostgraduateMistakeBookQueryRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduatePlanRequest;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduatePlanResult;
 import v620.cc001.base.common.dto.furtherstudy.PostgraduateReexamPreparationResult;
@@ -54,6 +57,18 @@ public class PostgraduateWebApi {
             @ApiRequestBody(value = "用户ID", required = true) String userId,
             @ApiRequestBody(value = "错题请求", required = true) PostgraduateMistakeAnalyzeRequest request) {
         return applicationService.analyzeMistake(identityBoundary.requireUser(userId), request);
+    }
+
+    public PostgraduateMistakeBookPageDto listMistakeBook(String userId, PostgraduateMistakeBookQueryRequest request) {
+        return applicationService.listMistakeBook(identityBoundary.requireUser(userId), request);
+    }
+
+    public PostgraduateMistakeBookEntryDto loadMistakeBookEntry(String userId, String mistakeId) {
+        return applicationService.loadMistakeBookEntry(identityBoundary.requireUser(userId), mistakeId);
+    }
+
+    public void deleteMistakeBookEntry(String userId, String mistakeId) {
+        applicationService.deleteMistakeBookEntry(identityBoundary.requireUser(userId), mistakeId);
     }
 
     @ApiPostMapping(value = "/reexam/prepare", desc = "生成考研复试准备清单", methodParamNames = {"userId", "request"})

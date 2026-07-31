@@ -3,6 +3,7 @@ package v620.cc001.base.common.dto.furtherstudy;
 /** Request for tutor contact letter generation. */
 public class RecommendationTutorLetterRequest {
     private String tutorName;
+    private String currentSchool;
     private String targetSchool;
     private String targetMajor;
     private String researchDirection;
@@ -11,6 +12,8 @@ public class RecommendationTutorLetterRequest {
 
     public String getTutorName() { return tutorName; }
     public void setTutorName(String tutorName) { this.tutorName = tutorName; }
+    public String getCurrentSchool() { return currentSchool; }
+    public void setCurrentSchool(String currentSchool) { this.currentSchool = currentSchool; }
     public String getTargetSchool() { return targetSchool; }
     public void setTargetSchool(String targetSchool) { this.targetSchool = targetSchool; }
     public String getTargetMajor() { return targetMajor; }

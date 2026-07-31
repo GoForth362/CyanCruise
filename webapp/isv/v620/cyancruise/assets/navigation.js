@@ -15,6 +15,8 @@
     "postgraduate-school": "postgraduate",
     "postgraduate-plan": "postgraduate",
     "postgraduate-mistake": "postgraduate",
+    "postgraduate-mistake-book": "postgraduate-mistake",
+    "postgraduate-mistake-detail": "postgraduate-mistake-book",
     "postgraduate-reexam": "postgraduate",
     "postgraduate-recommendation": "",
     "recommendation-ranking": "postgraduate-recommendation",

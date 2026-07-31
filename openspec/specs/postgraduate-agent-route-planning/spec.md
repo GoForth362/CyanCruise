@@ -3,41 +3,22 @@
 ## Purpose
 TBD - created by archiving change integrate-postgraduate-agent-document-planning. Update Purpose after archive.
 ## Requirements
-### Requirement: 考研路线 SHALL 通过已配置的金蝶智能体生成
-CyanCruise SHALL 在用户明确生成考研路线时，通过服务器端金蝶智能体 SDK 调用已发布的考研规划任务流。任务流编码、智能体编码和访问配置 SHALL 来自运行时配置，且 SHALL NOT 暴露给浏览器。
+### Requirement: 考研路线 SHALL 通过已配置的金蝶智能服务生成
 
-#### Scenario: 成功生成考研路线
-- **WHEN** 已登录用户选择考研方向并点击“生成升学规划”，且考研任务流配置可用
-- **THEN** 后端 SHALL 调用考研规划任务流并返回经过结构校验的未来一年路线
-- **AND** 路线 SHALL 包含阶段、阶段行动、阶段达成、每周计划和每日行动
+CyanCruise SHALL 在用户明确生成考研路线时，通过服务器端金蝶智能体 SDK 调用已发布的考研规划任务流。任务流编码存在时 SHALL 优先直连任务流；智能体编码仅作为兼容回退。配置 SHALL 来自运行时且 SHALL NOT 暴露给浏览器。
 
-#### Scenario: 对话智能体会改写任务流结构化输出
-- **WHEN** 已配置的对话智能体在任务流执行后将结构化 JSON 改写为面向用户的说明文字
-- **THEN** 后端 SHALL 优先使用运行时配置的任务流编码直接调用同一已发布任务流
-- **AND** 后端 SHALL NOT 将对话总结文字当作机器可持久化的路线结果
+#### Scenario: 对话智能体只产生工具调用
 
-#### Scenario: 考研任务流返回扩展规划字段
-- **WHEN** 考研任务流在阶段和周计划之外返回考研诊断、院校定位、待确认问题等扩展字段，或将每日建议放在周计划内
-- **THEN** 后端 SHALL 将与应用路线模型等价的字段规范化后保存
-- **AND** 后端 SHALL NOT 因考研任务流未逐字复刻就业规划字段而拒绝一份结构完整、可执行的智能路线
+- **WHEN** 对话智能体返回 `Thought`、`Action` 和 `Action_input`，但没有任务流最终 `answer`
+- **THEN** 后端 SHALL 忽略工具调用参数中的用户输入回显
+- **AND** SHALL NOT 将该响应保存为考研路线
+- **AND** SHALL 提示管理员配置已发布任务流编码或修复智能体工具输出
 
-#### Scenario: 智能体同时返回用户情况与最终规划 JSON
-- **WHEN** 考研智能体回复先包含用户情况整理 JSON，随后包含具有 `targetRole`、`phases` 和 `weeklyPlan` 的最终规划 JSON，且回复前后可能还有说明文字或调试对象
-- **THEN** 后端 SHALL 选择最后一个满足规划契约的合法 JSON 对象进行结构校验
-- **AND** 后端 SHALL 忽略用户情况整理 JSON、调试对象以及最终规划对象之外的文字
-- **AND** 后端 SHALL NOT 将多个相邻 JSON 从第一个左花括号到最后一个右花括号整体交给解析器
+#### Scenario: 已配置考研任务流
 
-#### Scenario: 考研与就业返回相同规划结构
-- **WHEN** 考研智能体与就业智能体返回相同的路线 JSON 契约
-- **THEN** 后端 SHALL 使用就业规划与考研规划共同复用的 JSON 解析器完成 `data` 解包和路线 DTO 映射
-- **AND** 考研规划 SHALL NOT 在共享解析器之后再次扫描或截取 JSON 文本
-- **AND** 考研专属的十二个月覆盖、阶段数量和真实性要求 SHALL 在共享解析完成后独立校验
-
-#### Scenario: 考研智能服务不可用
-- **WHEN** 考研任务流未配置、调用失败或返回结构不完整
-- **THEN** 系统 SHALL 返回普通用户可理解的中文错误
-- **AND** 系统 SHALL 保留用户原有路线、已完成事项和每日行动状态
-- **AND** 系统 SHALL NOT 保存规则结果并将其冒充为智能体结果
+- **WHEN** 运行时配置包含有效考研任务流编码
+- **THEN** 后端 SHALL 直接调用该任务流
+- **AND** SHALL 使用任务流最终输出进行结构校验
 
 ### Requirement: 考研智能体 SHALL 使用服务器聚合的定制资料
 CyanCruise SHALL 由后端聚合当前日期、当前用户画像、考研方向、目标院校、当前路线进度和该用户已成功解析的考研资料作为任务流输入。浏览器提交的用户标识或画像快照 SHALL NOT 覆盖服务器身份和已持久化画像。

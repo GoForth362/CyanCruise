@@ -678,6 +678,22 @@
           "fallback": "Show a clear Chinese error if question text is empty or backend is unavailable."
         },
         {
+          "name": "postgraduate mistake book list",
+          "method": "POST",
+          "path": "/cc001/postgraduate/mistake-book/list",
+          "body": ["userId", "request"],
+          "userIdRequired": true,
+          "dto": "PostgraduateMistakeBookPageDto"
+        },
+        {
+          "name": "postgraduate mistake book detail",
+          "method": "POST",
+          "path": "/cc001/postgraduate/mistake-book/detail",
+          "body": ["userId", "mistakeId"],
+          "userIdRequired": true,
+          "dto": "PostgraduateMistakeBookEntryDto"
+        },
+        {
           "name": "postgraduate reexam preparation",
           "method": "POST",
           "path": "/cc001/postgraduate/reexam/prepare",
